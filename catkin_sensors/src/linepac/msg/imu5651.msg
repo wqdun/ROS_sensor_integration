@@ -1,0 +1,15 @@
+string GPSWeek
+string GPSTime
+string Heading
+string Pitch
+string Roll
+string Lattitude
+string Longitude
+string Altitude
+string Vel_east
+string Vel_north
+string Vel_up
+string Baseline
+string NSV1_num
+string NSV2_num
+string Status

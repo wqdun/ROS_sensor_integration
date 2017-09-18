@@ -18,6 +18,9 @@ public:
         gps_sub = nh.subscribe("message", 1000, &gps_display::gpsCallback, this);
         gps_pub = nh.advertise<visualization_msgs::Marker>("gps_lonlathei", 10);
 
+        // min capacity is 1000, to optimize efficiency
+        points.points.reserve(1000);
+
         points.header.frame_id = "/my_frame";
         line_strip.header.frame_id = "/my_frame";
 
@@ -95,10 +98,10 @@ public:
 
         points.points.push_back(p);
         line_strip.points.push_back(p);
-
-        if(line_strip.points.size() > 1000) {
-            points.points.clear();
-            line_strip.points.clear();
+        int point_cnt = line_strip.points.size();
+        if(point_cnt >= 1000) {
+            points.points.erase(points.points.begin(), points.points.begin() + point_cnt / 2);
+            line_strip.points.erase(line_strip.points.begin(), line_strip.points.begin() + point_cnt / 2);
         }
         cout << points.points.size() << endl;
 

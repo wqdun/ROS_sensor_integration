@@ -59,6 +59,7 @@ public:
         gauss_x_origin = 0;
         gauss_y_origin = 0;
         is_origin_set = false;
+        gps_receive_cnt = 0;
     }
 
     void gpsCallback(const imupac::imu5651::ConstPtr& msg) {
@@ -70,9 +71,16 @@ public:
 
         // loss GPS signal
         if(lat < 0.1) {
-            cout << "Loss GPS signal." << endl;
+            cout << "Loss of GPS signal." << endl;
             return;
         }
+
+        // 1, 2, 3...49, 0, 1, 2...
+        (++gps_receive_cnt) %= 50;
+        if(0 !=gps_receive_cnt) {
+            return;
+        }
+        // if Callback is 100Hz, process below is 100/50 Hz
 
         geometry_msgs::Point p;
         double gauss_x = 0;
@@ -121,6 +129,7 @@ private:
     double gauss_x_origin;
     double gauss_y_origin;
     bool is_origin_set;
+    int gps_receive_cnt;
 
     // template <class T>
     // T string2num(const string& str) {
@@ -137,7 +146,6 @@ private:
         return num;
     }
 };
-
 
 static void GeoToGauss(double jd, double wd, short DH, short DH_width, double *y, double *x, double LP) {
     double t;     //  t=tgB

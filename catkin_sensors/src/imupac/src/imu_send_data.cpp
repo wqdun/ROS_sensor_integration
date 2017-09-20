@@ -28,7 +28,7 @@ int main(int argc, char **argv) {
     vector<string> parsed_data;
 
     while(ros::ok()) {
-        if(0 != read_serial(fd)) {
+        if(read_serial(fd) < 0) {
             continue;
         }
         // what if 2 messages received

@@ -43,21 +43,22 @@ public:
         line_strip.type = visualization_msgs::Marker::LINE_STRIP;
 
         // POINTS markers use x and y scale for width/height respectively
-        points.scale.x = 0.05;
-        points.scale.y = 0.05;
+        points.scale.x = 0.012;
+        points.scale.y = 0.012;
         // LINE_STRIP/LINE_LIST markers use only the x component of scale, for the line width
-        line_strip.scale.x = 0.02;
+        line_strip.scale.x = 0.01;
 
         // Points are green
         points.color.g = 1.0f;
         // set .a = 0 to hide display
         points.color.a = 1.0;
         // Line strip is blue
-        line_strip.color.b = 1.0f;
+        line_strip.color.r = 1.0f;
         line_strip.color.a = 1.0;
 
         gauss_x_origin = 0;
         gauss_y_origin = 0;
+        height_origin = 0;
         is_origin_set = false;
         gps_receive_cnt = 0;
     }
@@ -86,23 +87,21 @@ public:
         double gauss_x = 0;
         double gauss_y = 0;
         GeoToGauss(lon * 3600, lat * 3600, 39, 3, &gauss_y, &gauss_x, 117);
-        // cout << std::fixed << gauss_x << endl;
-        // cout << std::fixed << gauss_y << endl;
 
         // unit: m; when GPS fixed: set origin point; Beijing: 116.251917,40.078302
         if(!is_origin_set) {
             gauss_x_origin = gauss_x;
             gauss_y_origin = gauss_y;
+            height_origin = hei;
             is_origin_set = true;
         }
 
-        // 1 grid is 10 m
-        p.x = (gauss_x - gauss_x_origin) / 10;
-        p.y = (gauss_y - gauss_y_origin) / 10;
+        // 1 grid is 100 m; gauss_x: North; gauss_y: East
+        p.y = (gauss_x - gauss_x_origin) / 100;
+        p.x = (gauss_y - gauss_y_origin) / 100;
+        p.z = (hei - height_origin) / 10;
         cout << std::fixed << p.x << endl;
         cout << std::fixed << p.y << endl;
-        // p.x = 2;
-        // p.y = 1;
 
         points.points.push_back(p);
         line_strip.points.push_back(p);
@@ -111,7 +110,7 @@ public:
             points.points.erase(points.points.begin(), points.points.begin() + point_cnt / 2);
             line_strip.points.erase(line_strip.points.begin(), line_strip.points.begin() + point_cnt / 2);
         }
-        cout << points.points.size() << endl;
+        // cout << points.points.size() << endl;
 
         gps_pub.publish(points);
         gps_pub.publish(line_strip);
@@ -128,6 +127,7 @@ private:
 
     double gauss_x_origin;
     double gauss_y_origin;
+    double height_origin;
     bool is_origin_set;
     int gps_receive_cnt;
 
@@ -197,8 +197,3 @@ int main(int argc, char** argv) {
 
     return 0;
 }
-
-
-
-
-

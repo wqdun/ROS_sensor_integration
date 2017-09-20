@@ -111,7 +111,7 @@ int read_serial(int fd) {
     memset(buf, 0, 1024);
     int nread = read(fd, buf, 1024);
     if(nread < 0) {
-        ROS_WARN("Failed to read Com port.");
+        // ROS_WARN("Failed to read Com port.");
         return nread;
     }
     ROS_DEBUG("Read %d char.", nread);

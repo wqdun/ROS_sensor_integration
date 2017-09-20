@@ -32,15 +32,16 @@ int main(int argc, char **argv) {
             continue;
         }
         // what if 2 messages received
-        if('#' != frame2pub[frame2pub.size() - 1]) {
-            cout << "Error frame." << endl;
+        if(frame2pub.empty()) {
+            ROS_INFO("No complete frame received.");
             continue;
         }
         boost::split(parsed_data, frame2pub, boost::is_any_of( ",*" ), boost::token_compress_on);
-        if(parsed_data.size() <= 16) {
-            cout << "Error when parsing." << endl;
+        if(17 != parsed_data.size()) {
+            ROS_INFO("Error frame, size is: %d.", (int)parsed_data.size());
             continue;
         }
+
         msg.GPSWeek = parsed_data[1];
         msg.GPSTime = parsed_data[2];
         msg.Heading = parsed_data[3];
@@ -71,5 +72,3 @@ int main(int argc, char **argv) {
     close(fd);
     return 0;
 }
-
-

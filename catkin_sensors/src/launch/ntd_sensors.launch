@@ -1,5 +1,5 @@
 <?xml version="1.0"?>
 <launch>
-  <node name ="imu_send" pkg="imupac" type="imu_send" output="log"/>
-  <node name ="receive" pkg="imupac" type="receive" output="log"/>
+  <node name ="imu_send" pkg="imupac" type="imu_send" output="screen"/>
+  <node name ="receive" pkg="imupac" type="receive" output="screen"/>
 </launch>

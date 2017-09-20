@@ -12,6 +12,7 @@
 #include <termios.h>
 #include <string.h>
 #include <error.h>
+#include "ros/ros.h"
 
 extern std::string frame2pub;
 

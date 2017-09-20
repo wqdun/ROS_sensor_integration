@@ -43,10 +43,10 @@ public:
         line_strip.type = visualization_msgs::Marker::LINE_STRIP;
 
         // POINTS markers use x and y scale for width/height respectively
-        points.scale.x = 0.2;
-        points.scale.y = 0.2;
+        points.scale.x = 0.05;
+        points.scale.y = 0.05;
         // LINE_STRIP/LINE_LIST markers use only the x component of scale, for the line width
-        line_strip.scale.x = 0.1;
+        line_strip.scale.x = 0.02;
 
         // Points are green
         points.color.g = 1.0f;

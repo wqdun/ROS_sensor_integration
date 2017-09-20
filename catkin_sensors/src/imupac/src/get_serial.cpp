@@ -1,10 +1,5 @@
 #include "get_serial.h"
 
-using std::cout;
-using std::endl;
-
-// std::string frame2pub;
-
 int set_opt(int fd, int nSpeed, int nBits, char nEvent, int nStop) {
     struct termios newtio, oldtio;
     if(tcgetattr(fd, &oldtio) != 0) {
@@ -89,22 +84,20 @@ int set_opt(int fd, int nSpeed, int nBits, char nEvent, int nStop) {
         return -1;
     }
 
-    // printf("set done!\n\r");
-
     return 0;
 }
 
 int open_serial(void) {
-    // open serial port: ttyS0
-    int fd1 = open("/dev/ttyS0", O_RDONLY | O_NONBLOCK); // 打开串口 // fd1 = open("/dev/ttyUSB0", O_RDWR);
+    int fd1 = open("/dev/ttyUSB0", O_RDONLY | O_NONBLOCK);
     if(-1 == fd1) {
-        printf("fd1 == -1\n");
+        ROS_FATAL("Failed to open Com port, check the port name and permission.");
         exit(1);
     }
 
     // setup port properties
-    int nset1 = set_opt(fd1, 115200, 8, 'N', 1); // 设置串口属性
+    int nset1 = set_opt(fd1, 115200, 8, 'N', 1);
     if(-1 == nset1) {
+        ROS_FATAL("Failed to setup port properties.");
         exit(1);
     }
 
@@ -114,46 +107,31 @@ int open_serial(void) {
 int read_serial(int fd) {
     static std::string frameBuf;
     static char buf[1024];
-    static long last_time_ns = 0;
-    static timespec t1, t2;
-
-    long freq = 0;
 
     memset(buf, 0, 1024);
-    int nread = read(fd, buf, 1024); // 读串口
+    int nread = read(fd, buf, 1024);
     if(nread < 0) {
-        cout <<"Failed to read Com port." << endl;
-        return -1;// continue;
+        ROS_WARN("Failed to read Com port.");
+        return nread;
     }
-    if(0 == nread) {
-        cout << "Read 0 char." << endl;
-        return 0;// continue;
-    }
+    ROS_DEBUG("Read %d char.", nread);
 
-    for(int i = 0; i < nread; ++i) {
-        // cout << __FUNCTION__ << buf[i] << endl;
+    for(size_t i = 0; i < nread; ++i) {
         switch(buf[i]) {
+
         // frame header
         case '$':
-            clock_gettime(CLOCK_MONOTONIC, &t2);
-            // cout << "time_end  :" << t2.tv_nsec << endl;
-            freq = 1000000000 / (t2.tv_nsec - last_time_ns);
-            cout << "The Freq is: " << freq << endl;
             frameBuf = buf[i];
-
-            clock_gettime(CLOCK_MONOTONIC, &t1);
-            // cout << "time_start:" << t1.tv_nsec << endl;
-            last_time_ns = t1.tv_nsec;
             break;
+
         // frame footer
         case '\r':
             break;
         case '\n':
-            // cout << frameBuf << endl;
             // add # as new frame footer
             frameBuf += '#';
             frame2pub = frameBuf;
-            frameBuf = "";
+            frameBuf.clear();
             break;
 
         default:
@@ -161,5 +139,5 @@ int read_serial(int fd) {
         }
     }
 
-    return 0;
+    return nread;
 }

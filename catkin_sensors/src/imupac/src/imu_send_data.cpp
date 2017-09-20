@@ -29,7 +29,6 @@ int main(int argc, char **argv) {
 
     while(ros::ok()) {
         if(0 != read_serial(fd)) {
-            // cout << "Failed to read Com port." << endl;
             continue;
         }
         // what if 2 messages received
@@ -57,6 +56,13 @@ int main(int argc, char **argv) {
         msg.NSV1_num = parsed_data[13];
         msg.NSV2_num = parsed_data[14];
         msg.Status = parsed_data[15];
+
+        //TODO: BELOW test
+        // 116.251917,40.078302
+        // msg.Lattitude = "40.078302";
+        // msg.Longitude = "116.251917";
+        // msg.Altitude = "0";
+        // ABOVE test
 
         pub.publish(msg);
         ros::spinOnce();

@@ -7,10 +7,13 @@
 
 using std::string;
 using std::istringstream;
+using std::vector;
 using std::cout;
 using std::endl;
 
+
 static void GeoToGauss(double jd, double wd, short DH, short DH_width, double *y, double *x, double LP);
+static void transform_coordinate(const vector<geometry_msgs::Point> &points_gauss, vector<geometry_msgs::Point> &points_transformed);
 
 class gps_display {
 public:
@@ -21,40 +24,54 @@ public:
         // min capacity is 1000, to optimize efficiency
         points.points.reserve(1000);
 
-        points.header.frame_id = "/my_frame";
-        line_strip.header.frame_id = "/my_frame";
+        points.header.frame_id = "/velodyne";
+        line_strip.header.frame_id = "/velodyne";
+        arrow.header.frame_id = "/velodyne";
 
         points.header.stamp = ros::Time::now();
         line_strip.header.stamp = ros::Time::now();
+        arrow.header.stamp = ros::Time::now();
 
         points.ns = "points_and_lines";
         line_strip.ns = "points_and_lines";
+        arrow.ns = "points_and_lines";
 
         points.action = visualization_msgs::Marker::ADD;
         line_strip.action = visualization_msgs::Marker::ADD;
+        arrow.action = visualization_msgs::Marker::ADD;
 
         points.pose.orientation.w = 1.0;
         line_strip.pose.orientation.w = 1.0;
+        // arrow.pose.orientation.w = 1.0;
 
         points.id = 0;
         line_strip.id = 1;
+        arrow.id = 2;
 
         points.type = visualization_msgs::Marker::POINTS;
         line_strip.type = visualization_msgs::Marker::LINE_STRIP;
+        arrow.type = visualization_msgs::Marker::ARROW;
 
         // POINTS markers use x and y scale for width/height respectively
         points.scale.x = 0.012;
         points.scale.y = 0.012;
         // LINE_STRIP/LINE_LIST markers use only the x component of scale, for the line width
         line_strip.scale.x = 0.01;
+        // scale.x is the shaft diameter, and scale.y is the head diameter. If scale.z is not zero, it specifies the head length.
+        arrow.scale.x = 0.01;
+        arrow.scale.y = 0.015;
+        arrow.scale.z = 0.03;
 
         // Points are green
         points.color.g = 1.0f;
         // set .a = 0 to hide display
-        points.color.a = 1.0;
+        points.color.a = 0.0;
         // Line strip is blue
         line_strip.color.r = 1.0f;
         line_strip.color.a = 1.0;
+        // arrow is red
+        arrow.color.g = 1.0f;
+        arrow.color.a = 1.0;
 
         gauss_x_origin = 0;
         gauss_y_origin = 0;
@@ -77,40 +94,46 @@ public:
         }
 
         // 1, 2, 3...49, 0, 1, 2...
-        (++gps_receive_cnt) %= 50;
+        (++gps_receive_cnt) %= 20;
         if(0 !=gps_receive_cnt) {
             return;
         }
-        // if Callback is 100Hz, process below is 100/50 Hz
+        // if Callback is 100Hz, process below is 100/20 Hz
 
         geometry_msgs::Point p;
         double gauss_x = 0;
         double gauss_y = 0;
         GeoToGauss(lon * 3600, lat * 3600, 39, 3, &gauss_y, &gauss_x, 117);
 
-        // unit: m; when GPS fixed: set origin point; Beijing: 116.251917,40.078302
-        if(!is_origin_set) {
-            gauss_x_origin = gauss_x;
-            gauss_y_origin = gauss_y;
-            height_origin = hei;
-            is_origin_set = true;
-        }
-
         // 1 grid is 100 m; gauss_x: North; gauss_y: East
-        p.y = (gauss_x - gauss_x_origin) / 100;
-        p.x = (gauss_y - gauss_y_origin) / 100;
-        p.z = (hei - height_origin) / 10;
+        p.y = gauss_x ;// 100;
+        p.x = gauss_y ;// 100;
+        p.z = hei ;// 100;
         cout << std::fixed << p.x << endl;
         cout << std::fixed << p.y << endl;
 
-        points.points.push_back(p);
-        line_strip.points.push_back(p);
-        int point_cnt = line_strip.points.size();
+        static vector<geometry_msgs::Point> gauss_coordinations;
+        gauss_coordinations.push_back(p);
+        int point_cnt = gauss_coordinations.size();
         if(point_cnt >= 1000) {
-            points.points.erase(points.points.begin(), points.points.begin() + point_cnt / 2);
-            line_strip.points.erase(line_strip.points.begin(), line_strip.points.begin() + point_cnt / 2);
+            gauss_coordinations.erase(gauss_coordinations.begin(), gauss_coordinations.begin() + point_cnt / 2);
         }
-        // cout << points.points.size() << endl;
+        ROS_INFO("Now I have got %d way points.", point_cnt);
+
+        transform_coordinate(gauss_coordinations, points.points);
+        if(point_cnt >= 2) {
+            arrow.points.clear();
+            arrow.points.push_back(points.points[point_cnt - 2]);
+            arrow.points.push_back(points.points[point_cnt - 1]); // 0
+            // arrow.points[0].z = 0;
+
+            gps_pub.publish(arrow);
+            cout << arrow.points.size() << arrow.points[0].x << arrow.points[0].y << arrow.points[0].z << arrow.points[1].x << arrow.points[1].y
+                    << arrow.points[1].z << endl;
+        }
+
+        points.points.pop_back();
+        line_strip.points = points.points;
 
         gps_pub.publish(points);
         gps_pub.publish(line_strip);
@@ -124,6 +147,7 @@ private:
 
     visualization_msgs::Marker points;
     visualization_msgs::Marker line_strip;
+    visualization_msgs::Marker arrow;
 
     double gauss_x_origin;
     double gauss_y_origin;
@@ -188,6 +212,19 @@ static void GeoToGauss(double jd, double wd, short DH, short DH_width, double *y
     *x = X + N * t * (0.5 * pow(m, 2) + (5.0 - pow(t, 2) + 9.0 * et2 + 4 * pow(et2, 2)) * pow(m, 4) / 24.0 + (61.0 - 58.0 * pow(t, 2) + pow(t, 4)) * pow(m, 6) / 720.0);
 
     *y = 500000 + N * (m + (1.0 - pow(t, 2) + et2) * pow(m, 3) / 6.0 + (5.0 - 18.0 * pow(t, 2) + pow(t, 4) + 14.0 * et2 - 58.0 * et2 * pow(t, 2)) * pow(m, 5) / 120.0);
+}
+
+static void transform_coordinate(const vector<geometry_msgs::Point> &points_gauss, vector<geometry_msgs::Point> &points_transformed) {
+    ROS_DEBUG("transform_coordinate start.");
+    points_transformed.clear();
+    geometry_msgs::Point temp_point;
+    geometry_msgs::Point last_point_gauss = points_gauss.back();
+    for(auto point: points_gauss) {
+        temp_point.x = point.x - last_point_gauss.x;
+        temp_point.y = point.y - last_point_gauss.y;
+        temp_point.z = point.z - last_point_gauss.z;
+        points_transformed.push_back(temp_point);
+    }
 }
 
 int main(int argc, char** argv) {

@@ -3,6 +3,10 @@
   <node name ="imu_send" pkg="imupac" type="imu_send" output="screen"/>
   <!-- node name ="receive" pkg="imupac" type="receive" output="screen"/ -->
   <node name ="show_way" pkg="linepac" type="linepac" output="screen"/>
-  <node name ="imgDetectInterface" pkg="imgDetectInterface" type="imgDetectInterface" output="screen"/>
+  <!-- <node name ="imgDetectInterface" pkg="imgDetectInterface" type="imgDetectInterface" output="screen"/> -->
+
+  <!-- launch velodyne -->
+  <include file="$(find velodyne_pointcloud)/launch/VLP16_points.launch"/>
+
   <node name ="rviz" pkg="rviz" type="rviz" args="-f /velodyne" output="screen"/>
 </launch>

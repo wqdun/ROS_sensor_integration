@@ -326,6 +326,8 @@ void transform_coordinate(const point_t &in_xyz, const point_t &angle_xyz, const
 
     const raw_packet_t *raw = (const raw_packet_t *) &pkt.data[0];
 
+    ros::Time time_of_packet = pkt.stamp;
+
     for (int block = 0; block < BLOCKS_PER_PACKET; block++) {
 
       // ignore packets with mangled or otherwise different contents
@@ -447,16 +449,16 @@ void transform_coordinate(const point_t &in_xyz, const point_t &angle_xyz, const
              */
             z = distance_y * sin_vert_angle + vert_offset*cos_vert_angle;
 
-            VPoint point;
-            point_t in_point = {x, y, z};
-            point_t angle_xyz = {M_PI / 6.0, 0, 0};
-            point_t offset = {0, 0, 0.3187};
-            transform_coordinate(in_point, angle_xyz, offset, point);
+            // VPoint point;
+            // point_t in_point = {x, y, z};
+            // point_t angle_xyz = {M_PI / 6.0, 0, 0};
+            // point_t offset = {0, 0, 0.3187};
+            // transform_coordinate(in_point, angle_xyz, offset, point);
 
             /** Use standard ROS coordinate system (right-hand rule) */
-            float x_coord = point.y;
-            float y_coord = -point.x;
-            float z_coord = point.z;
+            // float x_coord = point.y;
+            // float y_coord = -point.x;
+            // float z_coord = point.z;
 
             /** Intensity Calculation */
             float min_intensity = corrections.min_intensity;
@@ -479,9 +481,16 @@ void transform_coordinate(const point_t &in_xyz, const point_t &angle_xyz, const
               VPoint point;
               point.ring = corrections.laser_ring;
               point.intensity = intensity;
-              point.x = x_coord / 10.0;
-              point.y = y_coord / 10.0;
-              point.z = z_coord / 10.0;
+
+              point_t in_point = {x, y, z};
+              point_t angle_xyz = {M_PI / 6.0, 0, heading / 180.0 * M_PI};
+              point_t offset = {0, 0, 0.3187};
+              transform_coordinate(in_point, angle_xyz, offset, point);
+              // ROS_INFO_STREAM("My heading is: " << heading);
+
+              point.x /= 10.0;
+              point.y /= 10.0;
+              point.z /= 10.0;
 
               pc.points.push_back(point);
               ++pc.width;

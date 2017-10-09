@@ -27,7 +27,7 @@ void messageCallback(const imupac::imu5651::ConstPtr& msg) {
 int main(int argc, char **argv) {
     ros::init(argc, argv, "receive");
     ros::NodeHandle n;
-    ros::Subscriber sub = n.subscribe("message", 1000, messageCallback);
+    ros::Subscriber sub = n.subscribe("gps_msg", 1000, messageCallback);
     ros::spin();
     return 0;
 }

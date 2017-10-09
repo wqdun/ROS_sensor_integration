@@ -19,7 +19,7 @@ std::string frame2pub;
 int main(int argc, char **argv) {
     ros::init(argc, argv, "imu_send");
     ros::NodeHandle n;
-    ros::Publisher pub = n.advertise<imupac::imu5651>("message", 1000);
+    ros::Publisher pub = n.advertise<imupac::imu5651>("gps_msg", 1000);
     ros::Rate loop_rate(100);
     int fd = open_serial();
     // std_msgs::String msg;

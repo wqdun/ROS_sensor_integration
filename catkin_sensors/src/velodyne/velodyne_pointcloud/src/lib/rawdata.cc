@@ -326,7 +326,7 @@ void transform_coordinate(const point_t &in_xyz, const point_t &angle_xyz, const
 
     const raw_packet_t *raw = (const raw_packet_t *) &pkt.data[0];
 
-    ros::Time time_of_packet = pkt.stamp;
+    // ros::Time time_of_packet = pkt.stamp;
 
     for (int block = 0; block < BLOCKS_PER_PACKET; block++) {
 
@@ -483,7 +483,7 @@ void transform_coordinate(const point_t &in_xyz, const point_t &angle_xyz, const
               point.intensity = intensity;
 
               point_t in_point = {x, y, z};
-              point_t angle_xyz = {M_PI / 6.0, 0, heading / 180.0 * M_PI};
+              point_t angle_xyz = {M_PI / 9.0, 0, heading / 180.0 * M_PI};
               point_t offset = {0, 0, 0.3187};
               transform_coordinate(in_point, angle_xyz, offset, point);
               // ROS_INFO_STREAM("My heading is: " << heading);

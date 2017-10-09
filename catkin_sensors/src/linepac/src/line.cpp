@@ -18,7 +18,7 @@ static void transform_coordinate(const vector<geometry_msgs::Point> &points_gaus
 class gps_display {
 public:
     gps_display() {
-        gps_sub = nh.subscribe("message", 1000, &gps_display::gpsCallback, this);
+        gps_sub = nh.subscribe("gps_msg", 1000, &gps_display::gpsCallback, this);
         gps_pub = nh.advertise<visualization_msgs::Marker>("gps_lonlathei", 10);
 
         // min capacity is 1000, to optimize efficiency
@@ -106,7 +106,7 @@ public:
         GeoToGauss(lon * 3600, lat * 3600, 39, 3, &gauss_y, &gauss_x, 117);
 
         // 1 grid is 100 m; gauss_x: North; gauss_y: East
-        p.y = gauss_x /10;// 100;
+        p.y = gauss_x / 10;// 100;
         p.x = gauss_y / 10;// 100;
         p.z = hei / 10;// 100;
         cout << std::fixed << p.x << endl;
@@ -134,6 +134,9 @@ public:
 
         points.points.pop_back();
         line_strip.points = points.points;
+
+        // publish current WGS84 coordination
+        gps_pub.publish(p);
 
         gps_pub.publish(points);
         gps_pub.publish(line_strip);

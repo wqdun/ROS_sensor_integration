@@ -192,6 +192,9 @@ namespace velodyne_rawdata
     }
   };
 
+void tf_rotate(const point_t &in_xyz, const point_t &angle_xyz, const point_t &offset, VPoint &out_xyz);
+double deg2rad(const double deg);
+
 } // namespace velodyne_rawdata
 
 #endif // __VELODYNE_RAWDATA_H

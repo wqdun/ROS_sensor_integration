@@ -21,14 +21,19 @@ using std::string;
 
 namespace velodyne_pointcloud
 {
+  using velodyne_rawdata::point_t;
+  using velodyne_rawdata::deg2rad;
+  using velodyne_rawdata::tf_rotate;
+
   /** @brief Constructor. */
   Convert::Convert(ros::NodeHandle node, ros::NodeHandle private_nh):
     data_(new velodyne_rawdata::RawData()),
-    heading_(0)
+    mHeading(0)
   {
     data_->setup(private_nh);
 
-    gps_sub_ = node.subscribe("message", 1000, &Convert::getHeadingCallback, this);
+    gps_sub_ = node.subscribe("processed_infor_msg", 1000, &Convert::getStatusCB, this);
+
 
     // advertise output point cloud (before subscribing to input data)
     output_ =
@@ -46,6 +51,9 @@ namespace velodyne_pointcloud
       node.subscribe("velodyne_packets", 10,
                      &Convert::processScan, (Convert *) this,
                      ros::TransportHints().tcpNoDelay(true));
+
+    // min capacity is 100, to optimize efficiency
+    mWGSCloudArr.reserve(100);
   }
 
   void Convert::callback(velodyne_pointcloud::CloudNodeConfig &config,
@@ -73,26 +81,98 @@ namespace velodyne_pointcloud
     // process each packet provided by the driver
     for (size_t i = 0; i < scanMsg->packets.size(); ++i)
       {
-        data_->unpack(scanMsg->packets[i], *outMsg, heading_);
+        data_->unpack(scanMsg->packets[i], *outMsg, mHeading);
       }
 
     // publish the accumulated cloud message
-    ROS_DEBUG_STREAM("Publishing " << outMsg->height * outMsg->width
-                     << " Velodyne points, time: " << outMsg->header.stamp);
-    output_.publish(outMsg);
+    // ROS_INFO_STREAM("Publishing " << outMsg->height * outMsg->width
+                     // << " Velodyne points, time: " << outMsg->header.stamp);
+    // output_.publish(outMsg);
+
+    // customized code: outMsg is array of VPoint; traverse it to WGS
+    size_t pointCloudSize = outMsg->points.size();
+    // about 20000
+    ROS_INFO_STREAM("pointCloudSize: " << pointCloudSize);
+    // ROS_INFO_STREAM("mCurrentWGS.x: " << mCurrentWGS.x << "; mCurrentWGS.y: " << mCurrentWGS.y << "; mCurrentWGS.z: " << mCurrentWGS.z);
+    for(size_t i = 0; i < pointCloudSize; ++i) {
+      point_t in_point = {
+        outMsg->points[i].x,
+        outMsg->points[i].y,
+        outMsg->points[i].z
+      };
+
+      point_t angle_xyz = {
+        deg2rad(mPitch),
+        deg2rad(mRoll),
+        deg2rad(mHeading)
+      };
+
+      point_t offset = {
+        mCurrentWGS.x,
+        mCurrentWGS.y,
+        mCurrentWGS.z
+      };
+
+      tf_rotate(in_point, angle_xyz, offset, outMsg->points[i]);
+    }
+
+    // output_.publish(outMsg);
+
+    // now outMsg is WGS, unit: m; and it contains history data
+    mWGSCloudArr.push_back(*outMsg);
+
+    // system crash when set 1000
+    static const int MAX_SIZE = 60;
+    // give WGS points to HuangBo when size reaches 60: about 100'000 points
+    if(mWGSCloudArr.size() < MAX_SIZE) {
+      // mWGSCloudArr.erase(mWGSCloudArr.begin(), mWGSCloudArr.begin() + MAX_SIZE / 2);
+      return;
+    }
+
+    // BELOW ONLY for display DEBUG
+    // modify history WGS coordinate: keep car(or IMU) position Origin
+    velodyne_rawdata::VPointCloud::Ptr pWGSCoordCloud(new velodyne_rawdata::VPointCloud());
+
+    // outMsg's header is a pcl::PCLHeader, convert it before stamp assignment
+    // time of last frame
+    pWGSCoordCloud->header.stamp = outMsg->header.stamp;
+    pWGSCoordCloud->header.frame_id = outMsg->header.frame_id;
+    pWGSCoordCloud->height = 1;
+
+    velodyne_rawdata::VPoint imuCoord;
+    for(size_t i = 0; i < mWGSCloudArr.size(); ++i) {
+      for(size_t j = 0; j < mWGSCloudArr[i].points.size(); ++j) {
+        imuCoord.x = mWGSCloudArr[i].points[j].x - mCurrentWGS.x;
+        imuCoord.y = mWGSCloudArr[i].points[j].y - mCurrentWGS.y;
+        imuCoord.z = mWGSCloudArr[i].points[j].z - mCurrentWGS.z;
+
+        imuCoord.ring = mWGSCloudArr[i].points[j].ring;
+        imuCoord.intensity = mWGSCloudArr[i].points[j].intensity;
+        pWGSCoordCloud->points.push_back(imuCoord);
+        ++(pWGSCoordCloud->width);
+      }
+    }
+
+    ROS_INFO_STREAM("Publishing " << pWGSCoordCloud->height * pWGSCoordCloud->width
+                     << " Velodyne points, time: " << pWGSCoordCloud->header.stamp);
+    output_.publish(pWGSCoordCloud);
+    mWGSCloudArr.clear();
   }
 
-  void Convert::getHeadingCallback(const imupac::imu5651::ConstPtr& imuMsg) {
-    heading_ = string2num(imuMsg->Heading);
-    ROS_INFO_STREAM("imuMsg->Heading:" << heading_);
+  void Convert::getStatusCB(const ntd_info_process::processed_infor_msg::ConstPtr& imuMsg) {
+    mPitch = imuMsg->current_pitch;
+    mRoll = imuMsg->current_roll;
+    mHeading = imuMsg->current_heading;
+    mCurrentWGS = imuMsg->current_wgs;
+    mGPStime = imuMsg->GPStime;
+
+    ROS_INFO_STREAM("imuMsg->Heading:" << mHeading << " at " << mGPStime << ":" << mPitch << ":" << mRoll << ":" << mCurrentWGS.x);
   }
 
-double string2num(const string& str) {
-        std::istringstream iss(str);
-        double num;
-        iss >> num;
-        return num;
-}
+  // static tm GpsWeekTime2HumanTime(const double ) {
+
+  // }
+
 
 
 } // namespace velodyne_pointcloud

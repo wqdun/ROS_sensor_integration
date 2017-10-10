@@ -2,11 +2,10 @@
 using std::vector;
 using std::istringstream;
 
-
-
 InforProcess::InforProcess() {
     mSub = nh.subscribe("gps_msg", 1000, &InforProcess::gpsCB, this);
-    mPub = nh.advertise<geometry_msgs::Point>("current_wgs84_msg", 1000);
+    // mPub = nh.advertise<geometry_msgs::Point>("current_wgs84_msg", 1000);
+    mPub = nh.advertise<ntd_info_process::processed_infor_msg>("processed_infor_msg", 1000);
 }
 
 InforProcess::~InforProcess() {
@@ -19,6 +18,11 @@ void InforProcess::gpsCB(const imupac::imu5651::ConstPtr& pGPSmsg) {
     double lon = string2num(pGPSmsg->Longitude);
     double hei = string2num(pGPSmsg->Altitude);
 
+    double pitch = string2num(pGPSmsg->Pitch);
+    double roll = string2num(pGPSmsg->Roll);
+    double heading = string2num(pGPSmsg->Heading);
+    double gpsTime = string2num(pGPSmsg->GPSTime);
+
     // loss GPS signal, abandon it
     if(lat < 0.1) {
         ROS_INFO_STREAM("Loss of GPS signal.");
@@ -29,13 +33,21 @@ void InforProcess::gpsCB(const imupac::imu5651::ConstPtr& pGPSmsg) {
     double gauss_y = 0;
     GeoToGauss(lon * 3600, lat * 3600, 39, 3, &gauss_y, &gauss_x, 117);
 
+    ntd_info_process::processed_infor_msg out_msg;
+    // ntd_info_process::point_wgs p;
     geometry_msgs::Point p;
     // gauss_x: North; gauss_y: East
     p.x = gauss_y;
     p.y = gauss_x;
     p.z = hei;
+    out_msg.current_wgs = p;
 
-    mPub.publish(p);
+    out_msg.current_pitch = pitch;
+    out_msg.current_roll = roll;
+    out_msg.current_heading = heading;
+    out_msg.GPStime = gpsTime;
+
+    mPub.publish(out_msg);
 }
 
 

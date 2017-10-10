@@ -24,7 +24,8 @@
 
 #include <dynamic_reconfigure/server.h>
 #include <velodyne_pointcloud/CloudNodeConfig.h>
-#include "imupac/imu5651.h"
+// #include "imupac/imu5651.h"
+#include "ntd_info_process/processed_infor_msg.h"
 
 namespace velodyne_pointcloud
 {
@@ -40,8 +41,8 @@ namespace velodyne_pointcloud
     void callback(velodyne_pointcloud::CloudNodeConfig &config,
                 uint32_t level);
     void processScan(const velodyne_msgs::VelodyneScan::ConstPtr &scanMsg);
-    void getHeadingCallback(const imupac::imu5651::ConstPtr& imuMsg);
-
+    // void getHeadingCallback(const imupac::imu5651::ConstPtr& imuMsg);
+    void getStatusCB(const ntd_info_process::processed_infor_msg::ConstPtr& imuMsg);
 
     ///Pointer to dynamic reconfigure service srv_
     boost::shared_ptr<dynamic_reconfigure::Server<velodyne_pointcloud::
@@ -59,10 +60,14 @@ namespace velodyne_pointcloud
     } Config;
     Config config_;
 
-    double heading_;
-  };
+    double mPitch;
+    double mRoll;
+    double mHeading;
+    double mGPStime;
 
-static double string2num(const std::string& str);
+    geometry_msgs::Point mCurrentWGS;
+    std::vector<velodyne_rawdata::VPointCloud> mWGSCloudArr;
+  };
 
 } // namespace velodyne_pointcloud
 

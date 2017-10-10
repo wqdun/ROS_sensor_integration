@@ -307,7 +307,7 @@ namespace velodyne_rawdata
     }
   }
 
-void transform_coordinate(const point_t &in_xyz, const point_t &angle_xyz, const point_t &offset, VPoint &out_xyz);
+
   /** @brief convert raw VLP16 packet to point cloud
    *
    *  @param pkt raw packet to unpack
@@ -453,7 +453,7 @@ void transform_coordinate(const point_t &in_xyz, const point_t &angle_xyz, const
             // point_t in_point = {x, y, z};
             // point_t angle_xyz = {M_PI / 6.0, 0, 0};
             // point_t offset = {0, 0, 0.3187};
-            // transform_coordinate(in_point, angle_xyz, offset, point);
+            // tf_rotate(in_point, angle_xyz, offset, point);
 
             /** Use standard ROS coordinate system (right-hand rule) */
             // float x_coord = point.y;
@@ -483,14 +483,15 @@ void transform_coordinate(const point_t &in_xyz, const point_t &angle_xyz, const
               point.intensity = intensity;
 
               point_t in_point = {x, y, z};
-              point_t angle_xyz = {M_PI / 9.0, 0, heading / 180.0 * M_PI};
+              // calibration: angle relate to IMU sensor
+              point_t angle_xyz = {deg2rad(20), 0, 0};
               point_t offset = {0, 0, 0.3187};
-              transform_coordinate(in_point, angle_xyz, offset, point);
+              tf_rotate(in_point, angle_xyz, offset, point);
               // ROS_INFO_STREAM("My heading is: " << heading);
 
-              point.x /= 10.0;
-              point.y /= 10.0;
-              point.z /= 10.0;
+              // point.x /= 10.0;
+              // point.y /= 10.0;
+              // point.z /= 10.0;
 
               pc.points.push_back(point);
               ++pc.width;
@@ -506,7 +507,7 @@ void multiply_matrix(const point_t &in_xyz, const double tf_matrix[][3], point_t
     out_xyz.y = tf_matrix[1][0] * in_xyz.x + tf_matrix[1][1] * in_xyz.y + tf_matrix[1][2] * in_xyz.z;
     out_xyz.z = tf_matrix[2][0] * in_xyz.x + tf_matrix[2][1] * in_xyz.y + tf_matrix[2][2] * in_xyz.z;
   }
-void transform_coordinate(const point_t &in_xyz, const point_t &angle_xyz, const point_t &offset, VPoint &out_xyz) {
+void tf_rotate(const point_t &in_xyz, const point_t &angle_xyz, const point_t &offset, VPoint &out_xyz) {
     double Ax[3][3], Ay[3][3], Az[3][3];
     Ax[0][0] = 1; Ax[0][1] = 0; Ax[0][2] = 0;
     Ax[1][0] = 0; Ax[1][1] = cos(angle_xyz.x); Ax[1][2] = sin(angle_xyz.x);
@@ -525,4 +526,10 @@ void transform_coordinate(const point_t &in_xyz, const point_t &angle_xyz, const
     out_xyz.y = offset.y + out3_xyz.y;
     out_xyz.z = offset.z + out3_xyz.z;
 }
+
+// degree to radian
+double deg2rad(const double deg) {
+  return deg * M_PI / 180;
+}
+
 } // namespace velodyne_rawdata

@@ -7,6 +7,7 @@
 // #include <vector>
 
 #include "imupac/imu5651.h"
+#include "ntd_info_process/processed_infor_msg.h"
 
 using std::vector;
 using std::string;
@@ -23,8 +24,6 @@ public:
 
 private:
     void gpsCB(const imupac::imu5651::ConstPtr& pGPSmsg);
-
-
 
     ros::NodeHandle nh;
     ros::Subscriber mSub;

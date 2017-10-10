@@ -135,9 +135,6 @@ public:
         points.points.pop_back();
         line_strip.points = points.points;
 
-        // publish current WGS84 coordination
-        gps_pub.publish(p);
-
         gps_pub.publish(points);
         gps_pub.publish(line_strip);
     }

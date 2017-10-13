@@ -36,7 +36,17 @@ namespace velodyne_pointcloud
   /** @brief Nodelet initialization. */
   void CloudNodelet::onInit()
   {
+
     conv_.reset(new Convert(getNodeHandle(), getPrivateNodeHandle()));
+    conv_->Run();
+    // Convert *pCon = new Convert(getNodeHandle(), getPrivateNodeHandle());
+    // pCon->Run();
+    // conv_.reset(pCon);
+    // Convert conv(getNodeHandle(), getPrivateNodeHandle());
+    // conv.Run();
+
+    // ROS_INFO_STREAM(__FUNCTION__);
+
   }
 
 } // namespace velodyne_pointcloud

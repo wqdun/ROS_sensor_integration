@@ -18,6 +18,7 @@
 #define _VELODYNE_POINTCLOUD_CONVERT_H_ 1
 
 #include <ros/ros.h>
+#include <map>
 
 #include <sensor_msgs/PointCloud2.h>
 #include <velodyne_pointcloud/rawdata.h>
@@ -29,12 +30,24 @@
 
 namespace velodyne_pointcloud
 {
+  using std::vector;
+  using std::map;
+
+  typedef struct {
+    double pitch;
+    double roll;
+    double heading;
+    geometry_msgs::Point currentWGS;
+  } imuInfo_t;
+
   class Convert
   {
   public:
 
     Convert(ros::NodeHandle node, ros::NodeHandle private_nh);
     ~Convert() {}
+
+    void Run();
 
   private:
 
@@ -43,6 +56,8 @@ namespace velodyne_pointcloud
     void processScan(const velodyne_msgs::VelodyneScan::ConstPtr &scanMsg);
     // void getHeadingCallback(const imupac::imu5651::ConstPtr& imuMsg);
     void getStatusCB(const ntd_info_process::processed_infor_msg::ConstPtr& imuMsg);
+    imuInfo_t LookUpMap(const map<double, imuInfo_t> &map, const double x);
+
 
     ///Pointer to dynamic reconfigure service srv_
     boost::shared_ptr<dynamic_reconfigure::Server<velodyne_pointcloud::
@@ -53,6 +68,7 @@ namespace velodyne_pointcloud
     ros::Subscriber gps_sub_;
 
     ros::Publisher output_;
+    ros::Publisher m_output4calc;
 
     /// configuration parameters
     typedef struct {
@@ -60,13 +76,15 @@ namespace velodyne_pointcloud
     } Config;
     Config config_;
 
-    double mPitch;
-    double mRoll;
-    double mHeading;
-    double mGPStime;
+    imuInfo_t mImuInfo;
+    map<double, imuInfo_t> mTime2ImuInfo;
 
-    geometry_msgs::Point mCurrentWGS;
-    std::vector<velodyne_rawdata::VPointCloud> mWGSCloudArr;
+    map<double, velodyne_rawdata::VPointCloud> mTime2Pc;
+    // actually no time needed below
+    // map<double, velodyne_rawdata::VPointCloud> mTime2PcWGS;
+    velodyne_rawdata::VPointCloud mPcWGS;
+
+    bool mIsSavedEnoughPackets;
   };
 
 } // namespace velodyne_pointcloud

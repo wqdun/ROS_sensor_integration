@@ -107,10 +107,11 @@ namespace velodyne_rawdata
    */
   typedef struct raw_packet
   {
-    raw_block_t blocks[BLOCKS_PER_PACKET];
-    uint16_t revolution;
+    raw_block_t blocks[BLOCKS_PER_PACKET]; // 12 * 100
+    // uint16_t revolution;
     uint8_t status[PACKET_STATUS_SIZE];
-  } raw_packet_t;
+    uint16_t revolution;
+  } raw_packet_t;                          // 1206
 
   typedef struct point {
     double x;
@@ -154,7 +155,7 @@ namespace velodyne_rawdata
      */
     int setupOffline(std::string calibration_file, double max_range_, double min_range_);
 
-    void unpack(const velodyne_msgs::VelodynePacket &pkt, VPointCloud &pc, const double heading = 0);
+    void unpack(const velodyne_msgs::VelodynePacket &pkt, VPointCloud &pc);
 
     void setParameters(double min_range, double max_range, double view_direction,
                        double view_width);
@@ -182,7 +183,7 @@ namespace velodyne_rawdata
     float cos_rot_table_[ROTATION_MAX_UNITS];
 
     /** add private function to handle the VLP16 **/
-    void unpack_vlp16(const velodyne_msgs::VelodynePacket &pkt, VPointCloud &pc, const double heading = 0);
+    void unpack_vlp16(const velodyne_msgs::VelodynePacket &pkt, VPointCloud &pc);
 
     /** in-line test whether a point is in range */
     bool pointInRange(float range)

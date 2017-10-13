@@ -35,6 +35,7 @@
 
 namespace velodyne_driver
 {
+  static double getDaySecond(const double rosTime, const double pktTime);
   static const size_t packet_size =
     sizeof(velodyne_msgs::VelodynePacket().data);
 
@@ -70,10 +71,10 @@ namespace velodyne_driver
     Input(private_nh, port)
   {
     sockfd_ = -1;
-    
+
     if (!devip_str_.empty()) {
       inet_aton(devip_str_.c_str(),&devip_);
-    }    
+    }
 
     // connect to Velodyne UDP port
     ROS_INFO_STREAM("Opening UDP socket: port " << port);
@@ -83,19 +84,19 @@ namespace velodyne_driver
         perror("socket");               // TODO: ROS_ERROR errno
         return;
       }
-  
+
     sockaddr_in my_addr;                     // my address information
     memset(&my_addr, 0, sizeof(my_addr));    // initialize to zeros
     my_addr.sin_family = AF_INET;            // host byte order
     my_addr.sin_port = htons(port);          // port in network byte order
     my_addr.sin_addr.s_addr = INADDR_ANY;    // automatically fill in my IP
-  
+
     if (bind(sockfd_, (sockaddr *)&my_addr, sizeof(sockaddr)) == -1)
       {
         perror("bind");                 // TODO: ROS_ERROR errno
         return;
       }
-  
+
     if (fcntl(sockfd_,F_SETFL, O_NONBLOCK|FASYNC) < 0)
       {
         perror("non-block");
@@ -202,9 +203,34 @@ namespace velodyne_driver
     // Average the times at which we begin and end reading.  Use that to
     // estimate when the scan occurred. Add the time offset.
     double time2 = ros::Time::now().toSec();
-    pkt->stamp = ros::Time((time2 + time1) / 2.0 + time_offset);
+    // pkt->stamp = ros::Time((time2 + time1) / 2.0 + time_offset);
 
+    assert(pkt->data.size() >= 1204);
+
+    double pktTimeInS = ( (pkt->data[1203] << 24) + (pkt->data[1202] << 16) + (pkt->data[1201] << 8) + pkt->data[1200] ) / 1000000.0;
+
+    ros::Time pkt_time(getDaySecond(time2, pktTimeInS));
+    pkt->stamp = pkt_time;
     return 0;
+  }
+
+  static double getDaySecond(const double rosTime, const double pktTime) {
+    int rosHour = (int)rosTime / 3600 % 24;
+    const int rosMinute = (int)rosTime / 60 % 60;
+    const int pktMinute = (int)pktTime / 60;
+    const int errMinute = rosMinute - pktMinute;
+    if(errMinute > 10) {
+      ++rosHour;
+    }
+    else
+    if(errMinute < -10) {
+      --rosHour;
+    }
+    // else {
+    //   // do nothing when errMinute in [-10, 10]
+    // }
+
+    return pktTime + 3600 * rosHour;
   }
 
   ////////////////////////////////////////////////////////////////////////
@@ -225,7 +251,7 @@ namespace velodyne_driver
     packet_rate_(packet_rate),
     filename_(filename)
   {
-    pcap_ = NULL;  
+    pcap_ = NULL;
     empty_ = true;
 
     // get parameters using private node handle
@@ -286,16 +312,26 @@ namespace velodyne_driver
             // Keep the reader from blowing through the file.
             if (read_fast_ == false)
               packet_rate_.sleep();
-            
+
             memcpy(&pkt->data[0], pkt_data+42, packet_size);
-            pkt->stamp = ros::Time::now(); // time_offset not considered here, as no synchronization required
+
+            assert(pkt->data.size() >= 1204);
+            double rosTime = ros::Time::now().toSec();
+
+            double pktTimeInS = ( (pkt->data[1203] << 24) + (pkt->data[1202] << 16) + (pkt->data[1201] << 8) + pkt->data[1200] ) / 1000000.0;
+
+            ros::Time pkt_time(getDaySecond(rosTime, pktTimeInS));
+
+            pkt->stamp = pkt_time;
+            // pkt->stamp = ros::Time::now(); // time_offset not considered here, as no synchronization required
+            // ROS_INFO_STREAM("Reconfigure Request: time_offset: " << __LINE__ << time_offset); // it's 0
             empty_ = false;
             return 0;                   // success
           }
 
         if (empty_)                 // no data in file?
           {
-            ROS_WARN("Error %d reading Velodyne packet: %s", 
+            ROS_WARN("Error %d reading Velodyne packet: %s",
                      res, pcap_geterr(pcap_));
             return -1;
           }
@@ -305,7 +341,7 @@ namespace velodyne_driver
             ROS_INFO("end of file reached -- done reading.");
             return -1;
           }
-        
+
         if (repeat_delay_ > 0.0)
           {
             ROS_INFO("end of file reached -- delaying %.3f seconds.",

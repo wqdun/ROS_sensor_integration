@@ -144,14 +144,14 @@ namespace velodyne_rawdata
    *  @param pc shared pointer to point cloud (points are appended)
    */
   void RawData::unpack(const velodyne_msgs::VelodynePacket &pkt,
-                       VPointCloud &pc, const double heading)
+                       VPointCloud &pc)
   {
     ROS_DEBUG_STREAM("Received packet, time: " << pkt.stamp);
 
     /** special parsing for the VLP16 **/
     if (calibration_.num_lasers == 16)
     {
-      unpack_vlp16(pkt, pc, heading);
+      unpack_vlp16(pkt, pc);
       return;
     }
 
@@ -314,7 +314,7 @@ namespace velodyne_rawdata
    *  @param pc shared pointer to point cloud (points are appended)
    */
   void RawData::unpack_vlp16(const velodyne_msgs::VelodynePacket &pkt,
-                             VPointCloud &pc, const double heading)
+                             VPointCloud &pc)
   {
     float azimuth;
     float azimuth_diff;
@@ -325,8 +325,6 @@ namespace velodyne_rawdata
     float intensity;
 
     const raw_packet_t *raw = (const raw_packet_t *) &pkt.data[0];
-
-    // ros::Time time_of_packet = pkt.stamp;
 
     for (int block = 0; block < BLOCKS_PER_PACKET; block++) {
 
@@ -492,7 +490,6 @@ namespace velodyne_rawdata
               // point.x /= 10.0;
               // point.y /= 10.0;
               // point.z /= 10.0;
-
               pc.points.push_back(point);
               ++pc.width;
             }

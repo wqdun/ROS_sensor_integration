@@ -161,7 +161,7 @@ bool VelodyneDriver::poll(void)
 void VelodyneDriver::callback(velodyne_driver::VelodyneNodeConfig &config,
               uint32_t level)
 {
-  ROS_INFO_STREAM("Reconfigure Request: config.time_offset: " << config.time_offset);
+  ROS_INFO("Reconfigure Request");
   config_.time_offset = config.time_offset;
 }
 

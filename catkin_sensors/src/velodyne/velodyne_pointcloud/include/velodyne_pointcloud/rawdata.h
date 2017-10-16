@@ -113,14 +113,6 @@ namespace velodyne_rawdata
     uint16_t revolution;
   } raw_packet_t;                          // 1206
 
-  typedef struct point {
-    double x;
-    double y;
-    double z;
-  } point_t;
-
-
-
   /** \brief Velodyne data conversion class */
   class RawData
   {
@@ -193,8 +185,6 @@ namespace velodyne_rawdata
     }
   };
 
-void tf_rotate(const point_t &in_xyz, const point_t &angle_xyz, const point_t &offset, VPoint &out_xyz);
-double deg2rad(const double deg);
 
 } // namespace velodyne_rawdata
 

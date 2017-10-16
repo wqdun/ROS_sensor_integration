@@ -21,10 +21,7 @@ using std::string;
 
 namespace velodyne_pointcloud
 {
-  using velodyne_rawdata::point_t;
-  using velodyne_rawdata::deg2rad;
-  using velodyne_rawdata::tf_rotate;
-
+  // using velodyne_rawdata::VPoint;
   /** @brief Constructor. */
   Convert::Convert(ros::NodeHandle node, ros::NodeHandle private_nh):
     data_(new velodyne_rawdata::RawData()),
@@ -71,38 +68,41 @@ namespace velodyne_pointcloud
       return;
     }
 
-    if (output_.getNumSubscribers() == 0)         // no one listening?
+    if (output_.getNumSubscribers() == 0 && 0 == m_output4calc.getNumSubscribers())         // no one listening?
       return;                                     // avoid much work
 
     // allocate a point cloud with same time and frame ID as raw data
     velodyne_rawdata::VPointCloud::Ptr
-      outMsg(new velodyne_rawdata::VPointCloud());
-    // outMsg's header is a pcl::PCLHeader, convert it before stamp assignment
-    outMsg->header.stamp = pcl_conversions::toPCL(scanMsg->header).stamp;
-    outMsg->header.frame_id = scanMsg->header.frame_id;
-    outMsg->height = 1;
+      pTempPktPc(new velodyne_rawdata::VPointCloud());
+    // pTempPktPc's header is a pcl::PCLHeader, convert it before stamp assignment
+    // actually each packet has a stamp, here use last packet stamp, refer VelodyneDriver::poll
+    pTempPktPc->header.stamp = pcl_conversions::toPCL(scanMsg->header).stamp;
+    pTempPktPc->header.frame_id = scanMsg->header.frame_id;
+    pTempPktPc->height = 1;
 
-    // process each packet provided by the driver
+    // process each packet provided by the driver; generally 75 packets per scan
     for (size_t i = 0; i < scanMsg->packets.size(); ++i)
       {
-        outMsg->points.clear();
-        data_->unpack(scanMsg->packets[i], *outMsg);
+        pTempPktPc->points.clear();
+        data_->unpack(scanMsg->packets[i], *pTempPktPc);
+        // now packet point cloud is in lidar coord, unit: m
+        // TODO: consider using pointer map to raise efficiency
+        mTime2Pc[scanMsg->packets[i].stamp.toSec()] = *pTempPktPc;
 
-        mTime2Pc[scanMsg->packets[i].stamp.toSec()] = *outMsg;
-        ROS_INFO_STREAM("scanMsg->packets[" << i << "].stamp.toSec():" << std::fixed << scanMsg->packets[i].stamp.toSec());
-        // TODO: notice its size
+        ROS_INFO_STREAM("Receive scanMsg->packets[" << i << "] with stamp: " << std::fixed << scanMsg->packets[i].stamp.toSec());
       }
 
-    ROS_INFO_STREAM(mTime2Pc.size());
-
     if(1000 <= mTime2Pc.size()) {
+      // when mTime2Pc contains 1000 packets
       mIsSavedEnoughPackets = true;
     }
-
-    // publish the accumulated cloud message
-    // ROS_INFO_STREAM("Publishing " << outMsg->height * outMsg->width
-                     // << " Velodyne points, time: " << outMsg->header.stamp);
-    // output_.publish(outMsg);
+    // TODO: below for debug, which can be commented.
+    size_t pointCntInTime2Pc = 0;
+    for(const auto& time2Pc: mTime2Pc) {
+      pointCntInTime2Pc += time2Pc.second.points.size();
+    }
+    ROS_INFO_STREAM("This scan contains packets: " << scanMsg->packets.size() << ", points: " << pTempPktPc->height * pTempPktPc->width);
+    ROS_INFO_STREAM("Now mTime2Pc contains packets: " << mTime2Pc.size() << ", points: " << pointCntInTime2Pc);
   }
 
   void Convert::getStatusCB(const ntd_info_process::processed_infor_msg::ConstPtr& imuMsg) {
@@ -164,7 +164,6 @@ namespace velodyne_pointcloud
     return tempImuInfo;
   }
 
-
   void Convert::Run() {
     // Since I've got gps map and lidar map, interpolate gps position and convert
     // lidar data to WGS using interpolated gps.
@@ -172,90 +171,97 @@ namespace velodyne_pointcloud
     while(ros::ok()) {
       ros::spinOnce();
       loop_rate.sleep();
-      ROS_INFO_STREAM("Convert::Run start." << int(mIsSavedEnoughPackets));
-      if(!mIsSavedEnoughPackets) {
-        continue;
-      }
-      mPcWGS.clear();
 
-      velodyne_rawdata::VPointCloud::Ptr pWgsCloud4debug(new velodyne_rawdata::VPointCloud());
-      mPcWGS.header.stamp = pWgsCloud4debug->header.stamp = mTime2Pc.cbegin()->second.header.stamp;
-      mPcWGS.header.frame_id = pWgsCloud4debug->header.frame_id = mTime2Pc.cbegin()->second.header. frame_id;
-      mPcWGS.height = pWgsCloud4debug->height = 1;
-      // specify a lidar time, and find nearest gps time
-      auto iter = mTime2Pc.begin();
-      // for each packet
-      for(; iter != mTime2Pc.end(); ++iter) {
-        velodyne_rawdata::VPoint tempVPoint;
-        // ROS_INFO_STREAM("mTime2ImuInfo.size():" << mTime2ImuInfo.size() << ":x:" << iter->first);
-        imuInfo_t imuInfo = LookUpMap(mTime2ImuInfo, iter->first);
-        // now iter->first is related to imuInfo, so we can convert point cloud
-        // packet to WGS using imuInfo
-        point_t angle_xyz = {
-          deg2rad(imuInfo.pitch),
-          deg2rad(imuInfo.roll),
-          deg2rad(imuInfo.heading)
-        };
-        point_t offset = {
-          imuInfo.currentWGS.x,
-          imuInfo.currentWGS.y,
-          imuInfo.currentWGS.z
-        };
-        // for each point in packet
-        for(const auto point: iter->second.points) {
-          point_t in_point = {
-            point.x,
-            point.y,
-            point.z
-          };
-
-          tempVPoint = point;
-          // TODO: converted pcloud saved to new pcloud(how to do converted data, we can
-          // pick it using Time stamp)
-          tf_rotate(in_point, angle_xyz, offset, tempVPoint);
-          mPcWGS.points.push_back(tempVPoint);
-          tempVPoint.x -= offset.x;
-          tempVPoint.y -= offset.y;
-          tempVPoint.z -= offset.z;
-          pWgsCloud4debug->points.push_back(tempVPoint);
-        }
-
-      }
-      // all packets converted, empty pointCloud
-      mTime2Pc.clear();
-      mIsSavedEnoughPackets = false;
-      // pub converted pcloud
-      m_output4calc.publish(mPcWGS);
-      output_.publish(pWgsCloud4debug);
-      // display for debug
-      // modify history WGS coordinate: keep car(or IMU) position Origin
-      // velodyne_rawdata::VPointCloud::Ptr pWGSCoordCloud(new velodyne_rawdata::VPointCloud());
-
-      // // outMsg's header is a pcl::PCLHeader, convert it before stamp assignment
-      // // time of last frame
-      // pWGSCoordCloud->header.stamp = outMsg->header.stamp;
-      // pWGSCoordCloud->header.frame_id = outMsg->header.frame_id;
-      // pWGSCoordCloud->height = 1;
-
-      // velodyne_rawdata::VPoint imuCoord;
-      // for(size_t i = 0; i < mWGSCloudArr.size(); ++i) {
-      //   for(size_t j = 0; j < mWGSCloudArr[i].points.size(); ++j) {
-      //     imuCoord.x = mWGSCloudArr[i].points[j].x - mCurrentWGS.x;
-      //     imuCoord.y = mWGSCloudArr[i].points[j].y - mCurrentWGS.y;
-      //     imuCoord.z = mWGSCloudArr[i].points[j].z - mCurrentWGS.z;
-
-      //     imuCoord.ring = mWGSCloudArr[i].points[j].ring;
-      //     imuCoord.intensity = mWGSCloudArr[i].points[j].intensity;
-      //     pWGSCoordCloud->points.push_back(imuCoord);
-      //     ++(pWGSCoordCloud->width);
-      //   }
-      // }
-
-      // ROS_INFO_STREAM("Publishing " << pWGSCoordCloud->height * pWGSCoordCloud->width
-      //                  << " Velodyne points, time: " << pWGSCoordCloud->header.stamp);
-      // output_.publish(pWGSCoordCloud);
-      // mWGSCloudArr.clear();
+      TfCoord();
     }
   }
+
+void Convert::TfCoord() {
+  ROS_INFO_STREAM("Convert::TfCoord start.");
+  if(!mIsSavedEnoughPackets) {
+    return;
+  }
+
+  velodyne_rawdata::VPointCloud::Ptr pWgsCloud(new velodyne_rawdata::VPointCloud());
+  velodyne_rawdata::VPointCloud::Ptr pWgsCloud4debug(new velodyne_rawdata::VPointCloud());
+  pWgsCloud->header.stamp = pWgsCloud4debug->header.stamp = mTime2Pc.cbegin()->second.header.stamp;
+  pWgsCloud->header.frame_id = pWgsCloud4debug->header.frame_id = mTime2Pc.cbegin()->second.header. frame_id;
+  pWgsCloud->height = pWgsCloud4debug->height = 1;
+
+  // for each packet
+  for(const auto& time2Pc: mTime2Pc) {
+    const imuInfo_t imuInfo = LookUpMap(mTime2ImuInfo, time2Pc.first);
+    // now time2Pc.first is related to imuInfo, so we can convert point cloud
+    // packet to WGS using imuInfo
+    const point_t angleXyzImu2Wgs = {
+      deg2rad(imuInfo.pitch),
+      deg2rad(imuInfo.roll),
+      deg2rad(imuInfo.heading)
+    };
+    const point_t offsetXyzImu2Wgs = {
+      imuInfo.currentWGS.x,
+      imuInfo.currentWGS.y,
+      imuInfo.currentWGS.z
+    };
+    // for each point in packet
+    for(const auto& point: time2Pc.second.points) {
+      // 1st convert: lidar to imu coord
+      static velodyne_rawdata::VPoint imuPoint;
+      static const point_t angleXyzLidar2Imu = {deg2rad(20), 0, 0};
+      static const point_t offsetXyzLidar2Imu = {0, 0, 0.3187};
+      tf_rotate(point, angleXyzLidar2Imu, offsetXyzLidar2Imu, imuPoint);
+
+      // 2nd convert: imu to WGS coord
+      static velodyne_rawdata::VPoint wgsPoint;
+      tf_rotate(imuPoint, angleXyzImu2Wgs, offsetXyzImu2Wgs, wgsPoint);
+      wgsPoint.ring = point.ring;
+      wgsPoint.intensity = point.intensity;
+
+      pWgsCloud->points.push_back(wgsPoint);
+
+      // TODO: below for debug
+      wgsPoint.x -= offsetXyzImu2Wgs.x;
+      wgsPoint.y -= offsetXyzImu2Wgs.y;
+      wgsPoint.z -= offsetXyzImu2Wgs.z;
+      pWgsCloud4debug->points.push_back(wgsPoint);
+    }
+  }
+  // all packets converted, empty pointCloud
+  mTime2Pc.clear();
+  mIsSavedEnoughPackets = false;
+  // pub converted pcloud
+  m_output4calc.publish(pWgsCloud);
+  output_.publish(pWgsCloud4debug);
+}
+
+static void multiply_matrix(const velodyne_rawdata::VPoint &in_xyz, const double tf_matrix[][3], velodyne_rawdata::VPoint &out_xyz) {
+    out_xyz.x = tf_matrix[0][0] * in_xyz.x + tf_matrix[0][1] * in_xyz.y + tf_matrix[0][2] * in_xyz.z;
+    out_xyz.y = tf_matrix[1][0] * in_xyz.x + tf_matrix[1][1] * in_xyz.y + tf_matrix[1][2] * in_xyz.z;
+    out_xyz.z = tf_matrix[2][0] * in_xyz.x + tf_matrix[2][1] * in_xyz.y + tf_matrix[2][2] * in_xyz.z;
+  }
+static void tf_rotate(const velodyne_rawdata::VPoint &in_xyz, const point_t &angle_xyz, const point_t &offset, velodyne_rawdata::VPoint &out_xyz) {
+    double Ax[3][3], Ay[3][3], Az[3][3];
+    Ax[0][0] = 1; Ax[0][1] = 0; Ax[0][2] = 0;
+    Ax[1][0] = 0; Ax[1][1] = cos(angle_xyz.x); Ax[1][2] = sin(angle_xyz.x);
+    Ax[2][0] = 0; Ax[2][1] = -sin(angle_xyz.x); Ax[2][2] = cos(angle_xyz.x);
+    Ay[0][0] = cos(angle_xyz.y); Ay[0][1] = 0; Ay[0][2] = -sin(angle_xyz.y);
+    Ay[1][0] = 0; Ay[1][1] = 1; Ay[1][2] = 0;
+    Ay[2][0] = sin(angle_xyz.y); Ay[2][1] = 0; Ay[2][2] = cos(angle_xyz.y);
+    Az[0][0] = cos(angle_xyz.z); Az[0][1] = sin(angle_xyz.z); Az[0][2] = 0;
+    Az[1][0] = -sin(angle_xyz.z); Az[1][1] = cos(angle_xyz.z); Az[1][2] = 0;
+    Az[2][0] = 0; Az[2][1] = 0; Az[2][2] = 1;
+    velodyne_rawdata::VPoint out1_xyz, out2_xyz, out3_xyz;
+    multiply_matrix(in_xyz, Ax, out1_xyz);
+    multiply_matrix(out1_xyz, Ay, out2_xyz);
+    multiply_matrix(out2_xyz, Az, out3_xyz);
+    out_xyz.x = offset.x + out3_xyz.x;
+    out_xyz.y = offset.y + out3_xyz.y;
+    out_xyz.z = offset.z + out3_xyz.z;
+}
+
+// degree to radian
+static double deg2rad(const double deg) {
+  return deg * M_PI / 180;
+}
 
 } // namespace velodyne_pointcloud

@@ -447,16 +447,11 @@ namespace velodyne_rawdata
              */
             z = distance_y * sin_vert_angle + vert_offset*cos_vert_angle;
 
-            // VPoint point;
-            // point_t in_point = {x, y, z};
-            // point_t angle_xyz = {M_PI / 6.0, 0, 0};
-            // point_t offset = {0, 0, 0.3187};
-            // tf_rotate(in_point, angle_xyz, offset, point);
 
             /** Use standard ROS coordinate system (right-hand rule) */
-            // float x_coord = point.y;
-            // float y_coord = -point.x;
-            // float z_coord = point.z;
+            // float x_coord = y;
+            // float y_coord = -x;
+            // float z_coord = z;
 
             /** Intensity Calculation */
             float min_intensity = corrections.min_intensity;
@@ -478,18 +473,11 @@ namespace velodyne_rawdata
               // append this point to the cloud
               VPoint point;
               point.ring = corrections.laser_ring;
+              point.x = x;
+              point.y = y;
+              point.z = z;
               point.intensity = intensity;
 
-              point_t in_point = {x, y, z};
-              // calibration: angle relate to IMU sensor
-              point_t angle_xyz = {deg2rad(20), 0, 0};
-              point_t offset = {0, 0, 0.3187};
-              tf_rotate(in_point, angle_xyz, offset, point);
-              // ROS_INFO_STREAM("My heading is: " << heading);
-
-              // point.x /= 10.0;
-              // point.y /= 10.0;
-              // point.z /= 10.0;
               pc.points.push_back(point);
               ++pc.width;
             }
@@ -498,35 +486,5 @@ namespace velodyne_rawdata
       }
     }
   }
-
-void multiply_matrix(const point_t &in_xyz, const double tf_matrix[][3], point_t &out_xyz) {
-    out_xyz.x = tf_matrix[0][0] * in_xyz.x + tf_matrix[0][1] * in_xyz.y + tf_matrix[0][2] * in_xyz.z;
-    out_xyz.y = tf_matrix[1][0] * in_xyz.x + tf_matrix[1][1] * in_xyz.y + tf_matrix[1][2] * in_xyz.z;
-    out_xyz.z = tf_matrix[2][0] * in_xyz.x + tf_matrix[2][1] * in_xyz.y + tf_matrix[2][2] * in_xyz.z;
-  }
-void tf_rotate(const point_t &in_xyz, const point_t &angle_xyz, const point_t &offset, VPoint &out_xyz) {
-    double Ax[3][3], Ay[3][3], Az[3][3];
-    Ax[0][0] = 1; Ax[0][1] = 0; Ax[0][2] = 0;
-    Ax[1][0] = 0; Ax[1][1] = cos(angle_xyz.x); Ax[1][2] = sin(angle_xyz.x);
-    Ax[2][0] = 0; Ax[2][1] = -sin(angle_xyz.x); Ax[2][2] = cos(angle_xyz.x);
-    Ay[0][0] = cos(angle_xyz.y); Ay[0][1] = 0; Ay[0][2] = -sin(angle_xyz.y);
-    Ay[1][0] = 0; Ay[1][1] = 1; Ay[1][2] = 0;
-    Ay[2][0] = sin(angle_xyz.y); Ay[2][1] = 0; Ay[2][2] = cos(angle_xyz.y);
-    Az[0][0] = cos(angle_xyz.z); Az[0][1] = sin(angle_xyz.z); Az[0][2] = 0;
-    Az[1][0] = -sin(angle_xyz.z); Az[1][1] = cos(angle_xyz.z); Az[1][2] = 0;
-    Az[2][0] = 0; Az[2][1] = 0; Az[2][2] = 1;
-    point_t out1_xyz, out2_xyz, out3_xyz;
-    multiply_matrix(in_xyz, Ax, out1_xyz);
-    multiply_matrix(out1_xyz, Ay, out2_xyz);
-    multiply_matrix(out2_xyz, Az, out3_xyz);
-    out_xyz.x = offset.x + out3_xyz.x;
-    out_xyz.y = offset.y + out3_xyz.y;
-    out_xyz.z = offset.z + out3_xyz.z;
-}
-
-// degree to radian
-double deg2rad(const double deg) {
-  return deg * M_PI / 180;
-}
 
 } // namespace velodyne_rawdata

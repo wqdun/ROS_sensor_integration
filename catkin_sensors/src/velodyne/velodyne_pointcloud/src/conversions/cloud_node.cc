@@ -23,11 +23,9 @@ int main(int argc, char **argv)
 
   // create conversion class, which subscribes to raw data
   velodyne_pointcloud::Convert conv(node, priv_nh);
-  // roslaunch .. VLP16...launch command call cloud_nodelet.cc, not this main
-  conv.Run();
 
   // handle callbacks until shut down
-  // ros::spin();
+  ros::spin();
 
   return 0;
 }

@@ -40,6 +40,12 @@ namespace velodyne_pointcloud
     geometry_msgs::Point currentWGS;
   } imuInfo_t;
 
+  typedef struct point {
+    double x;
+    double y;
+    double z;
+  } point_t;
+
   class Convert
   {
   public:
@@ -57,7 +63,7 @@ namespace velodyne_pointcloud
     // void getHeadingCallback(const imupac::imu5651::ConstPtr& imuMsg);
     void getStatusCB(const ntd_info_process::processed_infor_msg::ConstPtr& imuMsg);
     imuInfo_t LookUpMap(const map<double, imuInfo_t> &map, const double x);
-
+    void TfCoord();
 
     ///Pointer to dynamic reconfigure service srv_
     boost::shared_ptr<dynamic_reconfigure::Server<velodyne_pointcloud::
@@ -80,12 +86,13 @@ namespace velodyne_pointcloud
     map<double, imuInfo_t> mTime2ImuInfo;
 
     map<double, velodyne_rawdata::VPointCloud> mTime2Pc;
-    // actually no time needed below
-    // map<double, velodyne_rawdata::VPointCloud> mTime2PcWGS;
-    velodyne_rawdata::VPointCloud mPcWGS;
 
     bool mIsSavedEnoughPackets;
   };
+
+  static void multiply_matrix(const velodyne_rawdata::VPoint &in_xyz, const double tf_matrix[][3], point_t &out_xyz);
+  static void tf_rotate(const velodyne_rawdata::VPoint &in_xyz, const point_t &angle_xyz, const point_t &offset, velodyne_rawdata::VPoint &out_xyz);
+  static double deg2rad(const double deg);
 
 } // namespace velodyne_pointcloud
 

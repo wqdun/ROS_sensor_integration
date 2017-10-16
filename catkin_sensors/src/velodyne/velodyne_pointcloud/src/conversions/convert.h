@@ -32,6 +32,7 @@ namespace velodyne_pointcloud
 {
   using std::vector;
   using std::map;
+  using std::multimap;
 
   typedef struct {
     double pitch;
@@ -64,6 +65,8 @@ namespace velodyne_pointcloud
     void getStatusCB(const ntd_info_process::processed_infor_msg::ConstPtr& imuMsg);
     imuInfo_t LookUpMap(const map<double, imuInfo_t> &map, const double x);
     void TfCoord();
+    void removeOutdatedImuInfo(const double beginTime);
+
 
     ///Pointer to dynamic reconfigure service srv_
     boost::shared_ptr<dynamic_reconfigure::Server<velodyne_pointcloud::
@@ -82,10 +85,9 @@ namespace velodyne_pointcloud
     } Config;
     Config config_;
 
-    imuInfo_t mImuInfo;
     map<double, imuInfo_t> mTime2ImuInfo;
 
-    map<double, velodyne_rawdata::VPointCloud> mTime2Pc;
+    multimap<double, velodyne_rawdata::VPointCloud> mTime2Pc;
 
     bool mIsSavedEnoughPackets;
   };
@@ -93,6 +95,7 @@ namespace velodyne_pointcloud
   static void multiply_matrix(const velodyne_rawdata::VPoint &in_xyz, const double tf_matrix[][3], point_t &out_xyz);
   static void tf_rotate(const velodyne_rawdata::VPoint &in_xyz, const point_t &angle_xyz, const point_t &offset, velodyne_rawdata::VPoint &out_xyz);
   static double deg2rad(const double deg);
+  static double getDaySecond(const double rosTime, const double pktTime);
 
 } // namespace velodyne_pointcloud
 

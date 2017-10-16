@@ -86,13 +86,21 @@ namespace velodyne_pointcloud
         pTempPktPc->points.clear();
         data_->unpack(scanMsg->packets[i], *pTempPktPc);
         // now packet point cloud is in lidar coord, unit: m
-        // TODO: consider using pointer map to raise efficiency
-        mTime2Pc[scanMsg->packets[i].stamp.toSec()] = *pTempPktPc;
+        // get lidar day second by ros time
+        const double rosTimeInS = ros::Time::now().toSec();
+        const double pktTimeInS = scanMsg->packets[i].stamp.toSec();
+        const double pktDaySecond = getDaySecond(rosTimeInS, pktTimeInS);
 
-        ROS_INFO_STREAM("Receive scanMsg->packets[" << i << "] with stamp: " << std::fixed << scanMsg->packets[i].stamp.toSec());
+        // TODO: consider using pointer map to raise efficiency
+        // mTime2Pc[getDaySecond(rosTimeInS, pktTimeInS)] = *pTempPktPc;
+        mTime2Pc.insert(std::make_pair(getDaySecond(rosTimeInS, pktTimeInS), *pTempPktPc));
+
+        // ROS_INFO_STREAM("Receive scanMsg->packets[" << i << "] with stamp: " << std::fixed << scanMsg->packets[i].stamp.toSec() << ":daySecond:" << pktDaySecond);
       }
 
-    if(1000 <= mTime2Pc.size()) {
+    // output_.publish(pTempPktPc);
+
+    if(60 <= mTime2Pc.size()) {
       // when mTime2Pc contains 1000 packets
       mIsSavedEnoughPackets = true;
     }
@@ -106,23 +114,24 @@ namespace velodyne_pointcloud
   }
 
   void Convert::getStatusCB(const ntd_info_process::processed_infor_msg::ConstPtr& imuMsg) {
-    mImuInfo.pitch = imuMsg->current_pitch;
-    mImuInfo.roll = imuMsg->current_roll;
-    mImuInfo.heading = imuMsg->current_heading;
-    mImuInfo.currentWGS = imuMsg->current_wgs;
+    imuInfo_t tempImuInfo;
 
-    double daySecond = fmod(imuMsg->GPStime, 86400); // GPStime % (3600 * 24)
+    tempImuInfo.pitch = imuMsg->current_pitch;
+    tempImuInfo.roll = imuMsg->current_roll;
+    tempImuInfo.heading = imuMsg->current_heading;
+    tempImuInfo.currentWGS = imuMsg->current_wgs;
 
-    mTime2ImuInfo[daySecond] = mImuInfo;
+    const double daySecond = fmod(imuMsg->GPStime, 86400); // GPStime % (3600 * 24)
 
+    mTime2ImuInfo[daySecond] = tempImuInfo;
     // TODO: Not too big, gotta erase some
 
-    ROS_INFO_STREAM("imuMsg->Heading:" << mImuInfo.heading << " at " << daySecond << ":" << mImuInfo.pitch << ":" << mImuInfo.roll << ":" << mImuInfo.currentWGS.x);
+    ROS_INFO_STREAM("imuMsg->Heading:" << tempImuInfo.heading << " at " << daySecond << ":" << tempImuInfo.pitch << ":" << tempImuInfo.roll << ":" << tempImuInfo.currentWGS.x);
   }
 
   imuInfo_t Convert::LookUpMap(const map<double, imuInfo_t> &map, const double x) {
     if(map.empty()) {
-      ROS_WARN_STREAM("I got no GPS info.");
+      // ROS_WARN_STREAM("I got no GPS info.");
       imuInfo_t zeroImuInfo;
       zeroImuInfo.pitch = zeroImuInfo.roll = zeroImuInfo.heading = 0;
       zeroImuInfo.currentWGS.x = zeroImuInfo.currentWGS.y = zeroImuInfo.currentWGS.z = 0;
@@ -177,20 +186,39 @@ namespace velodyne_pointcloud
   }
 
 void Convert::TfCoord() {
-  ROS_INFO_STREAM("Convert::TfCoord start.");
+  // ROS_INFO_STREAM("Convert::TfCoord start.");
   if(!mIsSavedEnoughPackets) {
     return;
   }
 
   velodyne_rawdata::VPointCloud::Ptr pWgsCloud(new velodyne_rawdata::VPointCloud());
   velodyne_rawdata::VPointCloud::Ptr pWgsCloud4debug(new velodyne_rawdata::VPointCloud());
-  pWgsCloud->header.stamp = pWgsCloud4debug->header.stamp = mTime2Pc.cbegin()->second.header.stamp;
+  pWgsCloud->header.stamp = mTime2Pc.cbegin()->second.header.stamp;
+
+  velodyne_msgs::VelodyneScanPtr pScan(new velodyne_msgs::VelodyneScan);
+  pScan->header.stamp = ros::Time::now();
+  pWgsCloud4debug->header.stamp = pcl_conversions::toPCL(pScan->header).stamp;
+
   pWgsCloud->header.frame_id = pWgsCloud4debug->header.frame_id = mTime2Pc.cbegin()->second.header. frame_id;
   pWgsCloud->height = pWgsCloud4debug->height = 1;
+
+  const double _1stTimePc = mTime2Pc.cbegin()->first;
+  ROS_INFO_STREAM("PC time 1:" << _1stTimePc << "; time end:" << mTime2Pc.crbegin()->first);
+
+  if(!mTime2ImuInfo.empty()) {
+    ROS_INFO_STREAM("IMU time 1:" << mTime2ImuInfo.cbegin()->first << "; time end:" << mTime2ImuInfo.crbegin()->first);
+    // remove some outdated data in mTime2ImuInfo
+    removeOutdatedImuInfo(_1stTimePc);
+  }
+  else {
+    ROS_WARN_STREAM("mTime2ImuInfo is empty.");
+  }
 
   // for each packet
   for(const auto& time2Pc: mTime2Pc) {
     const imuInfo_t imuInfo = LookUpMap(mTime2ImuInfo, time2Pc.first);
+    // TODO: see if could find PC time in IMU
+
     // now time2Pc.first is related to imuInfo, so we can convert point cloud
     // packet to WGS using imuInfo
     const point_t angleXyzImu2Wgs = {
@@ -213,7 +241,12 @@ void Convert::TfCoord() {
 
       // 2nd convert: imu to WGS coord
       static velodyne_rawdata::VPoint wgsPoint;
-      tf_rotate(imuPoint, angleXyzImu2Wgs, offsetXyzImu2Wgs, wgsPoint);
+      if(!mTime2ImuInfo.empty()) {
+        tf_rotate(imuPoint, angleXyzImu2Wgs, offsetXyzImu2Wgs, wgsPoint);
+      }
+      else {
+        wgsPoint = imuPoint;
+      }
       wgsPoint.ring = point.ring;
       wgsPoint.intensity = point.intensity;
 
@@ -223,15 +256,39 @@ void Convert::TfCoord() {
       wgsPoint.x -= offsetXyzImu2Wgs.x;
       wgsPoint.y -= offsetXyzImu2Wgs.y;
       wgsPoint.z -= offsetXyzImu2Wgs.z;
+      // wgsPoint.x /= 10;
+      // wgsPoint.y /= 10;
+      // wgsPoint.z /= 10;
+
       pWgsCloud4debug->points.push_back(wgsPoint);
     }
   }
+
   // all packets converted, empty pointCloud
   mTime2Pc.clear();
   mIsSavedEnoughPackets = false;
   // pub converted pcloud
   m_output4calc.publish(pWgsCloud);
+  ROS_INFO_STREAM(pWgsCloud->points.size());
+
+  ROS_INFO_STREAM(pWgsCloud4debug->size() << "pWgsCloud4debug->header.frame_id:" << pWgsCloud4debug->header.frame_id);
+  ROS_INFO_STREAM("pWgsCloud4debug->points:" << pWgsCloud4debug->points[2000].x << ":" << pWgsCloud4debug->points[2000].y << ":" << pWgsCloud4debug->points[2000].z);
+
   output_.publish(pWgsCloud4debug);
+}
+
+void Convert::removeOutdatedImuInfo(const double beginTime) {
+  auto beginIter = mTime2ImuInfo.lower_bound(beginTime);
+  if(beginIter == mTime2ImuInfo.cbegin()) {
+    ROS_INFO_STREAM(beginTime << " <= 1st imu time:" << mTime2ImuInfo.cbegin()->first);
+    return;
+  }
+  --beginIter;
+  ROS_INFO_STREAM("Origin mTime2ImuInfo size is: " << mTime2ImuInfo.size());
+  mTime2ImuInfo.erase(mTime2ImuInfo.cbegin(), beginIter);
+  ROS_INFO_STREAM("Now mTime2ImuInfo size is: " << mTime2ImuInfo.size());
+
+  return;
 }
 
 static void multiply_matrix(const velodyne_rawdata::VPoint &in_xyz, const double tf_matrix[][3], velodyne_rawdata::VPoint &out_xyz) {
@@ -262,6 +319,28 @@ static void tf_rotate(const velodyne_rawdata::VPoint &in_xyz, const point_t &ang
 // degree to radian
 static double deg2rad(const double deg) {
   return deg * M_PI / 180;
+}
+
+static double getDaySecond(const double rosTime, const double pktTime) {
+  int rosHour = (int)rosTime / 3600 % 24;
+  const int rosMinute = (int)rosTime / 60 % 60;
+  const int pktMinute = (int)pktTime / 60;
+  const int errMinute = rosMinute - pktMinute;
+  if(errMinute > 10) {
+    ++rosHour;
+  }
+  else
+  if(errMinute < -10) {
+    --rosHour;
+  }
+  // else {
+  //   // do nothing when errMinute in [-10, 10]
+  // }
+
+  // in case: -1 || 24
+  rosHour = (rosHour + 24) % 24;
+
+  return pktTime + 3600 * rosHour;
 }
 
 } // namespace velodyne_pointcloud

@@ -35,7 +35,6 @@
 
 namespace velodyne_driver
 {
-  static double getDaySecond(const double rosTime, const double pktTime);
   static const size_t packet_size =
     sizeof(velodyne_msgs::VelodynePacket().data);
 
@@ -206,32 +205,11 @@ namespace velodyne_driver
     // pkt->stamp = ros::Time((time2 + time1) / 2.0 + time_offset);
 
     assert(pkt->data.size() >= 1204);
-
-    double pktTimeInS = ( (pkt->data[1203] << 24) + (pkt->data[1202] << 16) + (pkt->data[1201] << 8) + pkt->data[1200] ) / 1000000.0;
-
-    ros::Time pkt_time(getDaySecond(time2, pktTimeInS));
-    pkt->stamp = pkt_time;
+    pkt->stamp = ros::Time(((pkt->data[1203] << 24) + (pkt->data[1202] << 16) + (pkt->data[1201] << 8) + pkt->data[1200] ) / 1000000.0);
     return 0;
   }
 
-  static double getDaySecond(const double rosTime, const double pktTime) {
-    int rosHour = (int)rosTime / 3600 % 24;
-    const int rosMinute = (int)rosTime / 60 % 60;
-    const int pktMinute = (int)pktTime / 60;
-    const int errMinute = rosMinute - pktMinute;
-    if(errMinute > 10) {
-      ++rosHour;
-    }
-    else
-    if(errMinute < -10) {
-      --rosHour;
-    }
-    // else {
-    //   // do nothing when errMinute in [-10, 10]
-    // }
 
-    return pktTime + 3600 * rosHour;
-  }
 
   ////////////////////////////////////////////////////////////////////////
   // InputPCAP class implementation
@@ -314,17 +292,11 @@ namespace velodyne_driver
               packet_rate_.sleep();
 
             memcpy(&pkt->data[0], pkt_data+42, packet_size);
+            // pkt->stamp = ros::Time::now(); // time_offset not considered here, as no synchronization required
 
             assert(pkt->data.size() >= 1204);
-            double rosTime = ros::Time::now().toSec();
+            pkt->stamp = ros::Time(((pkt->data[1203] << 24) + (pkt->data[1202] << 16) + (pkt->data[1201] << 8) + pkt->data[1200] ) / 1000000.0);
 
-            double pktTimeInS = ( (pkt->data[1203] << 24) + (pkt->data[1202] << 16) + (pkt->data[1201] << 8) + pkt->data[1200] ) / 1000000.0;
-
-            ros::Time pkt_time(getDaySecond(rosTime, pktTimeInS));
-
-            pkt->stamp = pkt_time;
-            // pkt->stamp = ros::Time::now(); // time_offset not considered here, as no synchronization required
-            // ROS_INFO_STREAM("Reconfigure Request: time_offset: " << __LINE__ << time_offset); // it's 0
             empty_ = false;
             return 0;                   // success
           }

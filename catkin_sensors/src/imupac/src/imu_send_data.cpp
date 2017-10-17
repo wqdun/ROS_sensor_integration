@@ -6,6 +6,7 @@
 #include <vector>
 #include <boost/algorithm/string/classification.hpp>
 #include <boost/algorithm/string/split.hpp>
+#include <fstream>
 
 // ROS customized msg
 #include "imupac/imu5651.h"
@@ -14,8 +15,13 @@ using std::cout;
 using std::endl;
 using std::vector;
 using std::string;
+using std::ofstream;
+using std::ios;
+
+int saveFile(const string &str2write);
 
 std::string frame2pub;
+
 int main(int argc, char **argv) {
     ros::init(argc, argv, "imu_send");
     ros::NodeHandle n;
@@ -40,6 +46,12 @@ int main(int argc, char **argv) {
         if(17 != parsed_data.size()) {
             ROS_INFO("Error frame, size is: %d.", (int)parsed_data.size());
             continue;
+        }
+
+        // save raw data to file
+        if(0 != saveFile(frame2pub)) {
+            ROS_WARN("Error!");
+            exit;
         }
 
         msg.GPSWeek = parsed_data[1];
@@ -72,3 +84,33 @@ int main(int argc, char **argv) {
     close(fd);
     return 0;
 }
+
+int saveFile(const string &str2write) {
+    static const int MAXLINE = 200000;
+    static int lineCnt = 0;
+    static char fileName[50];
+    static ofstream outFile;
+    // get unix time stamp as file name
+    if(0 == lineCnt) {
+        time_t tt = time(NULL);
+        tm *t= localtime(&tt);
+        (void)sprintf(fileName, "%02d_%02d_%02d.imu", t->tm_hour, t->tm_min, t->tm_sec);
+
+        outFile.open(fileName, ios::app);
+        if(!outFile) {
+            ROS_WARN_STREAM("Create file:" << fileName << " failed.");
+            return -1;
+        }
+        ROS_INFO_STREAM("Create file:" << fileName << " successfully.");
+    }
+
+    outFile << str2write << endl;
+    ++lineCnt;
+    lineCnt %= MAXLINE;
+
+    if(0 == lineCnt) {
+        outFile.close();
+    }
+    return 0;
+}
+

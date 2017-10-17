@@ -1,5 +1,3 @@
-add_compile_options(-std=c++11)
-
 add_executable(cloud_node cloud_node.cc convert.cc)
 add_dependencies(cloud_node ${${PROJECT_NAME}_EXPORTED_TARGETS})
 target_link_libraries(cloud_node velodyne_rawdata

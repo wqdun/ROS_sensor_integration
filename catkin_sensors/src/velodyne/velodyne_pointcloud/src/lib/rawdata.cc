@@ -307,7 +307,6 @@ namespace velodyne_rawdata
     }
   }
 
-
   /** @brief convert raw VLP16 packet to point cloud
    *
    *  @param pkt raw packet to unpack
@@ -325,6 +324,9 @@ namespace velodyne_rawdata
     float intensity;
 
     const raw_packet_t *raw = (const raw_packet_t *) &pkt.data[0];
+    const double rosTimeInS = ros::Time::now().toSec();
+    const double pktTimeInS = ((raw->status[3] << 24) + (raw->status[2] << 16) + (raw->status[1] << 8) + raw->status[0] ) / 1000000.0;
+    const double pktDaySecond = getDaySecond(rosTimeInS, pktTimeInS);
 
     for (int block = 0; block < BLOCKS_PER_PACKET; block++) {
 
@@ -449,9 +451,9 @@ namespace velodyne_rawdata
 
 
             /** Use standard ROS coordinate system (right-hand rule) */
-            // float x_coord = y;
-            // float y_coord = -x;
-            // float z_coord = z;
+            float x_coord = y;
+            float y_coord = -x;
+            float z_coord = z;
 
             /** Intensity Calculation */
             float min_intensity = corrections.min_intensity;
@@ -473,10 +475,11 @@ namespace velodyne_rawdata
               // append this point to the cloud
               VPoint point;
               point.ring = corrections.laser_ring;
-              point.x = x;
-              point.y = y;
-              point.z = z;
+              point.x = x_coord;
+              point.y = y_coord;
+              point.z = z_coord;
               point.intensity = intensity;
+			  point.pktTime = pktDaySecond;
 
               pc.points.push_back(point);
               ++pc.width;
@@ -486,5 +489,27 @@ namespace velodyne_rawdata
       }
     }
   }
+
+static double getDaySecond(const double rosTime, const double pktTime) {
+  int rosHour = (int)rosTime / 3600 % 24;
+  const int rosMinute = (int)rosTime / 60 % 60;
+  const int pktMinute = (int)pktTime / 60;
+  const int errMinute = rosMinute - pktMinute;
+  if(errMinute > 10) {
+    ++rosHour;
+  }
+  else
+  if(errMinute < -10) {
+    --rosHour;
+  }
+  // else {
+  //   // do nothing when errMinute in [-10, 10]
+  // }
+
+  // in case: -1 || 24
+  rosHour = (rosHour + 24) % 24;
+
+  return pktTime + 3600 * rosHour;
+}
 
 } // namespace velodyne_rawdata

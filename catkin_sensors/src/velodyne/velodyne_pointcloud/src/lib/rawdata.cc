@@ -324,9 +324,12 @@ namespace velodyne_rawdata
     float intensity;
 
     const raw_packet_t *raw = (const raw_packet_t *) &pkt.data[0];
-    const double rosTimeInS = ros::Time::now().toSec();
-    const double pktTimeInS = ((raw->status[3] << 24) + (raw->status[2] << 16) + (raw->status[1] << 8) + raw->status[0] ) / 1000000.0;
-    const double pktDaySecond = getDaySecond(rosTimeInS, pktTimeInS);
+ //    const double rosTimeInS = ros::Time::now().toSec();
+ //    const double pktTimeInS = ((raw->status[3] << 24) + (raw->status[2] << 16) + (raw->status[1] << 8) + raw->status[0] ) / 1000000.0;
+ //    const double pktDaySecond = getDaySecond(rosTimeInS, pktTimeInS);
+
+	// pkt.stamp = ros::Time(pktDaySecond);
+	ROS_INFO_STREAM("Received packet, gps day time: " << pkt.stamp);
 
     for (int block = 0; block < BLOCKS_PER_PACKET; block++) {
 
@@ -479,7 +482,7 @@ namespace velodyne_rawdata
               point.y = y_coord;
               point.z = z_coord;
               point.intensity = intensity;
-			  point.pktTime = pktDaySecond;
+              // point.pktTime = pktDaySecond;
 
               pc.points.push_back(point);
               ++pc.width;

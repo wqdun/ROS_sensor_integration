@@ -53,15 +53,15 @@ namespace velodyne_rawdata
   /** @todo make this work for both big and little-endian machines */
   static const uint16_t UPPER_BANK = 0xeeff;
   static const uint16_t LOWER_BANK = 0xddff;
-  
-  
+
+
   /** Special Defines for VLP16 support **/
   static const int    VLP16_FIRINGS_PER_BLOCK =   2;
   static const int    VLP16_SCANS_PER_FIRING  =  16;
   static const float  VLP16_BLOCK_TDURATION   = 110.592f;   // [µs]
   static const float  VLP16_DSR_TOFFSET       =   2.304f;   // [µs]
   static const float  VLP16_FIRING_TOFFSET    =  55.296f;   // [µs]
-  
+
 
   /** \brief Raw Velodyne data block.
    *
@@ -134,11 +134,11 @@ namespace velodyne_rawdata
      */
     int setup(ros::NodeHandle private_nh);
 
-    /** \brief Set up for data processing offline. 
+    /** \brief Set up for data processing offline.
       * Performs the same initialization as in setup, in the abscence of a ros::NodeHandle.
-      * this method is useful if unpacking data directly from bag files, without passing 
+      * this method is useful if unpacking data directly from bag files, without passing
       * through a communication overhead.
-      * 
+      *
       * @param calibration_file path to the calibration file
       * @param max_range_ cutoff for maximum range
       * @param min_range_ cutoff for minimum range
@@ -148,7 +148,7 @@ namespace velodyne_rawdata
     int setupOffline(std::string calibration_file, double max_range_, double min_range_);
 
     void unpack(const velodyne_msgs::VelodynePacket &pkt, VPointCloud &pc);
-    
+
     void setParameters(double min_range, double max_range, double view_direction,
                        double view_width);
 
@@ -161,20 +161,20 @@ namespace velodyne_rawdata
       double min_range;                ///< minimum range to publish
       int min_angle;                   ///< minimum angle to publish
       int max_angle;                   ///< maximum angle to publish
-      
+
       double tmp_min_angle;
       double tmp_max_angle;
     } Config;
     Config config_;
 
-    /** 
+    /**
      * Calibration file
      */
     velodyne_pointcloud::Calibration calibration_;
     float sin_rot_table_[ROTATION_MAX_UNITS];
     float cos_rot_table_[ROTATION_MAX_UNITS];
-    
-    /** add private function to handle the VLP16 **/ 
+
+    /** add private function to handle the VLP16 **/
     void unpack_vlp16(const velodyne_msgs::VelodynePacket &pkt, VPointCloud &pc);
 
     /** in-line test whether a point is in range */

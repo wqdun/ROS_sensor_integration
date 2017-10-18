@@ -29,7 +29,7 @@ namespace velodyne_pointcloud
     // advertise output point cloud (before subscribing to input data)
     output_ =
       node.advertise<sensor_msgs::PointCloud2>("velodyne_points", 10);
-      
+    mOutputEachPkt = node.advertise<sensor_msgs::PointCloud2>("velodyne_points_each_packet", 1000);
     srv_ = boost::make_shared <dynamic_reconfigure::Server<velodyne_pointcloud::
       CloudNodeConfig> > (private_nh);
     dynamic_reconfigure::Server<velodyne_pointcloud::CloudNodeConfig>::
@@ -43,7 +43,7 @@ namespace velodyne_pointcloud
                      &Convert::processScan, (Convert *) this,
                      ros::TransportHints().tcpNoDelay(true));
   }
-  
+
   void Convert::callback(velodyne_pointcloud::CloudNodeConfig &config,
                 uint32_t level)
   {
@@ -64,12 +64,23 @@ namespace velodyne_pointcloud
     // outMsg's header is a pcl::PCLHeader, convert it before stamp assignment
     outMsg->header.stamp = pcl_conversions::toPCL(scanMsg->header).stamp;
     outMsg->header.frame_id = scanMsg->header.frame_id;
+
+    // scan->header.stamp = scan->packets[config_.npackets - 1].stamp;
+    // scan->header.frame_id = config_.frame_id;
     outMsg->height = 1;
 
     // process each packet provided by the driver
     for (size_t i = 0; i < scanMsg->packets.size(); ++i)
       {
+        outMsg->points.clear();
+        // outMsg->header.stamp = scanMsg->packets[i].stamp;
+        // velodyne_msgs::VelodyneScan tempScan;
+        // tempScan.header.stamp = scanMsg->packets[i].stamp;
+        // tempScan.header.frame_id = scanMsg->header.frame_id;
+        // outMsg->header.stamp = pcl_conversions::toPCL(tempScan.header).stamp;
+        // outMsg->header.stamp = pcl_conversions::toPCL(scanMsg->packets[i]).stamp;
         data_->unpack(scanMsg->packets[i], *outMsg);
+        mOutputEachPkt.publish(outMsg);
       }
 
     // publish the accumulated cloud message

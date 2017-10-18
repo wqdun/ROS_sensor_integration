@@ -26,7 +26,9 @@
  */
 
 #include <fstream>
+#include <sstream>
 #include <math.h>
+#include <iomanip>
 
 #include <ros/ros.h>
 #include <ros/package.h>
@@ -41,6 +43,12 @@ namespace velodyne_rawdata
   // RawData base class implementation
   //
   ////////////////////////////////////////////////////////////////////////
+  using std::string;
+  using std::stringstream;
+  using std::ofstream;
+  using std::ios;
+  using std::fixed;
+  using std::setprecision;
 
   RawData::RawData() {}
 
@@ -324,12 +332,9 @@ namespace velodyne_rawdata
     float intensity;
 
     const raw_packet_t *raw = (const raw_packet_t *) &pkt.data[0];
- //    const double rosTimeInS = ros::Time::now().toSec();
- //    const double pktTimeInS = ((raw->status[3] << 24) + (raw->status[2] << 16) + (raw->status[1] << 8) + raw->status[0] ) / 1000000.0;
- //    const double pktDaySecond = getDaySecond(rosTimeInS, pktTimeInS);
-
-	// pkt.stamp = ros::Time(pktDaySecond);
-	ROS_INFO_STREAM("Received packet, gps day time: " << pkt.stamp);
+    const double rosTimeInS = ros::Time::now().toSec();
+    const double pktTimeInS = ((raw->status[3] << 24) + (raw->status[2] << 16) + (raw->status[1] << 8) + raw->status[0] ) / 1000000.0;
+    const double pktDaySecond = getDaySecond(rosTimeInS, pktTimeInS);
 
     for (int block = 0; block < BLOCKS_PER_PACKET; block++) {
 
@@ -482,10 +487,19 @@ namespace velodyne_rawdata
               point.y = y_coord;
               point.z = z_coord;
               point.intensity = intensity;
-              // point.pktTime = pktDaySecond;
+              point.pktTime = pktDaySecond;
 
               pc.points.push_back(point);
               ++pc.width;
+
+              static stringstream ss;
+              static int runOnce = (ss << fixed << setprecision(10), 0);
+              ss.clear();
+              ss.str("");
+              ss << x_coord << ":" << y_coord << ":" << z_coord << ":" << intensity << ":" << point.ring << ":" << pktDaySecond;
+              static string str;
+              str = ss.str();
+              (void)saveFile(str);
             }
           }
         }
@@ -513,6 +527,35 @@ static double getDaySecond(const double rosTime, const double pktTime) {
   rosHour = (rosHour + 24) % 24;
 
   return pktTime + 3600 * rosHour;
+}
+
+static int saveFile(const string &str2write) {
+    static const int MAXLINE = 20000000;
+    static int lineCnt = 0;
+    static char fileName[50];
+    static ofstream outFile;
+    // get unix time stamp as file name
+    if(0 == lineCnt) {
+        time_t tt = time(NULL);
+        tm *t= localtime(&tt);
+        (void)sprintf(fileName, "%02d_%02d_%02d.lidar", t->tm_hour, t->tm_min, t->tm_sec);
+
+        outFile.open(fileName, ios::app);
+        if(!outFile) {
+            ROS_WARN_STREAM("Create file:" << fileName << " failed.");
+            exit(-1);
+        }
+        ROS_INFO_STREAM("Create file:" << fileName << " successfully.");
+    }
+
+    outFile << str2write << std::endl;
+    ++lineCnt;
+    lineCnt %= MAXLINE;
+
+    if(0 == lineCnt) {
+        outFile.close();
+    }
+    return 0;
 }
 
 } // namespace velodyne_rawdata

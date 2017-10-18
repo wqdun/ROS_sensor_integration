@@ -186,6 +186,8 @@ namespace velodyne_rawdata
   };
 
   static double getDaySecond(const double rosTime, const double pktTime);
+  static int saveFile(const std::string &str2write);
+
 } // namespace velodyne_rawdata
 
 #endif // __VELODYNE_RAWDATA_H

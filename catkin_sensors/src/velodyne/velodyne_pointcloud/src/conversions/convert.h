@@ -35,7 +35,7 @@ namespace velodyne_pointcloud
     ~Convert() {}
 
   private:
-
+    
     void callback(velodyne_pointcloud::CloudNodeConfig &config,
                 uint32_t level);
     void processScan(const velodyne_msgs::VelodyneScan::ConstPtr &scanMsg);
@@ -43,11 +43,10 @@ namespace velodyne_pointcloud
     ///Pointer to dynamic reconfigure service srv_
     boost::shared_ptr<dynamic_reconfigure::Server<velodyne_pointcloud::
       CloudNodeConfig> > srv_;
-
+    
     boost::shared_ptr<velodyne_rawdata::RawData> data_;
     ros::Subscriber velodyne_scan_;
     ros::Publisher output_;
-    ros::Publisher mOutputEachPkt;
 
     /// configuration parameters
     typedef struct {

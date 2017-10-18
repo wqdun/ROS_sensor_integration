@@ -18,7 +18,7 @@ using std::string;
 using std::ofstream;
 using std::ios;
 
-int saveFile(const string &str2write);
+static int saveFile(const string &str2write);
 
 std::string frame2pub;
 
@@ -85,7 +85,7 @@ int main(int argc, char **argv) {
     return 0;
 }
 
-int saveFile(const string &str2write) {
+static int saveFile(const string &str2write) {
     static const int MAXLINE = 200000;
     static int lineCnt = 0;
     static char fileName[50];

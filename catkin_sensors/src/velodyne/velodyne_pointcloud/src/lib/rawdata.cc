@@ -154,7 +154,7 @@ namespace velodyne_rawdata
   void RawData::unpack(const velodyne_msgs::VelodynePacket &pkt,
                        VPointCloud &pc)
   {
-    ROS_DEBUG_STREAM("Received packet, time: " << pkt.stamp);
+    ROS_INFO_STREAM("Received packet, time: " << pkt.stamp);
 
     /** special parsing for the VLP16 **/
     if (calibration_.num_lasers == 16)
@@ -332,9 +332,11 @@ namespace velodyne_rawdata
     float intensity;
 
     const raw_packet_t *raw = (const raw_packet_t *) &pkt.data[0];
+    const double pktTimeInS = pkt.stamp.toSec();
     const double rosTimeInS = ros::Time::now().toSec();
-    const double pktTimeInS = ((raw->status[3] << 24) + (raw->status[2] << 16) + (raw->status[1] << 8) + raw->status[0] ) / 1000000.0;
+    ROS_INFO_STREAM("pktTimeInS:" << fixed << pktTimeInS);
     const double pktDaySecond = getDaySecond(rosTimeInS, pktTimeInS);
+    ROS_INFO_STREAM("pktDaySecond:" << fixed << pktDaySecond);
 
     for (int block = 0; block < BLOCKS_PER_PACKET; block++) {
 
@@ -342,7 +344,10 @@ namespace velodyne_rawdata
       if (UPPER_BANK != raw->blocks[block].header) {
         // Do not flood the log with messages, only issue at most one
         // of these warnings per minute.
-        ROS_WARN_STREAM_THROTTLE(60, "skipping invalid VLP-16 packet: block "
+        // ROS_WARN_STREAM_THROTTLE(60, "skipping invalid VLP-16 packet: block "
+        //                          << block << " header value is "
+        //                          << raw->blocks[block].header);
+        ROS_WARN_STREAM("skipping invalid VLP-16 packet: block "
                                  << block << " header value is "
                                  << raw->blocks[block].header);
         return;                         // bad packet: skip the rest
@@ -373,12 +378,13 @@ namespace velodyne_rawdata
 
           /*condition added to avoid calculating points which are not
             in the interesting defined area (min_angle < area < max_angle)*/
-          if ((azimuth_corrected >= config_.min_angle
-               && azimuth_corrected <= config_.max_angle
-               && config_.min_angle < config_.max_angle)
-               ||(config_.min_angle > config_.max_angle
-               && (azimuth_corrected <= config_.max_angle
-               || azimuth_corrected >= config_.min_angle))){
+          // if ((azimuth_corrected >= config_.min_angle
+          //      && azimuth_corrected <= config_.max_angle
+          //      && config_.min_angle < config_.max_angle)
+          //      ||(config_.min_angle > config_.max_angle
+          //      && (azimuth_corrected <= config_.max_angle
+          //      || azimuth_corrected >= config_.min_angle)))
+          // {
 
             // convert polar coordinates to Euclidean XYZ
             float distance = tmp.uint * DISTANCE_RESOLUTION;
@@ -478,7 +484,7 @@ namespace velodyne_rawdata
             intensity = (intensity < min_intensity) ? min_intensity : intensity;
             intensity = (intensity > max_intensity) ? max_intensity : intensity;
 
-            if (pointInRange(distance)) {
+            // if (pointInRange(distance)) {
 
               // append this point to the cloud
               VPoint point;
@@ -492,16 +498,23 @@ namespace velodyne_rawdata
               pc.points.push_back(point);
               ++pc.width;
 
-              static stringstream ss;
-              static int runOnce = (ss << fixed << setprecision(10), 0);
-              ss.clear();
-              ss.str("");
-              ss << x_coord << ":" << y_coord << ":" << z_coord << ":" << intensity << ":" << point.ring << ":" << pktDaySecond;
-              static string str;
-              str = ss.str();
-              (void)saveFile(str);
-            }
-          }
+              // last time
+              reserve[0] = reserve[1];
+              // this time
+              reserve[1] = pktDaySecond;
+              if(reserve[0] != reserve[1]) {
+              }
+
+              // static stringstream ss;
+              // static int runOnce = (ss << fixed << setprecision(10), 0);
+              // ss.clear();
+              // ss.str("");
+              // ss << x_coord << ":" << y_coord << ":" << z_coord << ":" << intensity << ":" << point.ring << ":" << pktDaySecond;
+              // static string str;
+              // str = ss.str();
+              // (void)saveFile(str);
+            // }
+          // }
         }
       }
     }
@@ -525,6 +538,9 @@ static double getDaySecond(const double rosTime, const double pktTime) {
 
   // in case: -1 || 24
   rosHour = (rosHour + 24) % 24;
+
+  const double pktSecond = fmod(pktTime, 60);
+  ROS_INFO_STREAM("GPS day time is:" << rosHour << ":" << pktMinute << ":" << fixed << pktSecond);
 
   return pktTime + 3600 * rosHour;
 }

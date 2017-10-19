@@ -183,6 +183,9 @@ namespace velodyne_rawdata
       return (range >= config_.min_range
               && range <= config_.max_range);
     }
+
+    //
+    double reserve[2];
   };
 
   static double getDaySecond(const double rosTime, const double pktTime);

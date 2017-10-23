@@ -118,7 +118,7 @@ VelodyneDriver::VelodyneDriver(ros::NodeHandle node,
 
   // raw packet output topic
   output_ =
-    node.advertise<velodyne_msgs::VelodyneScan>("velodyne_packets", 1000);
+    node.advertise<velodyne_msgs::VelodyneScan>("velodyne_packets", 10);
 }
 
 /** poll the device
@@ -150,6 +150,8 @@ bool VelodyneDriver::poll(void)
   scan->header.frame_id = config_.frame_id;
   output_.publish(scan);
 
+  static size_t pubCnt = 0;
+  ROS_INFO_STREAM("Pub count:" << ++pubCnt);
   // notify diagnostics that a message has been published, updating
   // its status
   diag_topic_->tick(scan->header.stamp);

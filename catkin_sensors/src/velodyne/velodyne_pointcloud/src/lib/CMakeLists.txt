@@ -1,5 +1,6 @@
+add_compile_options(-std=c++11)
 add_library(velodyne_rawdata rawdata.cc calibration.cc)
-target_link_libraries(velodyne_rawdata 
+target_link_libraries(velodyne_rawdata
                       ${catkin_LIBRARIES}
                       ${YAML_CPP_LIBRARIES})
 install(TARGETS velodyne_rawdata

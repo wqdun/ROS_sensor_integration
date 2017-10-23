@@ -39,7 +39,7 @@ namespace velodyne_pointcloud
 
     // subscribe to VelodyneScan packets
     velodyne_scan_ =
-      node.subscribe("velodyne_packets", 1000,
+      node.subscribe("velodyne_packets", 10,
                      &Convert::processScan, (Convert *) this,
                      ros::TransportHints().tcpNoDelay(true));
   }
@@ -55,7 +55,8 @@ namespace velodyne_pointcloud
   /** @brief Callback for raw scan messages. */
   void Convert::processScan(const velodyne_msgs::VelodyneScan::ConstPtr &scanMsg)
   {
-    // no longer check for always log record *.lidar
+    static size_t subCnt = 0;
+    ROS_INFO_STREAM("Sub count:" << ++subCnt);
     // if (output_.getNumSubscribers() == 0)         // no one listening?
     //   return;                                     // avoid much work
 
@@ -74,7 +75,7 @@ namespace velodyne_pointcloud
       }
 
     // publish the accumulated cloud message
-    ROS_INFO_STREAM("Publishing " << outMsg->height * outMsg->width
+    ROS_DEBUG_STREAM("Publishing " << outMsg->height * outMsg->width
                      << " Velodyne points, time: " << outMsg->header.stamp);
     output_.publish(outMsg);
   }

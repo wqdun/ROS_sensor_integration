@@ -47,8 +47,8 @@ namespace velodyne_rawdata
   using std::stringstream;
   using std::ofstream;
   using std::ios;
-  using std::fixed;
   using std::setprecision;
+  using std::to_string;
 
   RawData::RawData() {}
 
@@ -154,7 +154,7 @@ namespace velodyne_rawdata
   void RawData::unpack(const velodyne_msgs::VelodynePacket &pkt,
                        VPointCloud &pc)
   {
-    ROS_INFO_STREAM("Received packet, time: " << pkt.stamp);
+    ROS_DEBUG_STREAM("Received packet, time: " << pkt.stamp);
 
     /** special parsing for the VLP16 **/
     if (calibration_.num_lasers == 16)
@@ -334,9 +334,7 @@ namespace velodyne_rawdata
     const raw_packet_t *raw = (const raw_packet_t *) &pkt.data[0];
     const double pktTimeInS = pkt.stamp.toSec();
     const double rosTimeInS = ros::Time::now().toSec();
-    ROS_INFO_STREAM("pktTimeInS:" << fixed << pktTimeInS);
     const double pktDaySecond = getDaySecond(rosTimeInS, pktTimeInS);
-    ROS_INFO_STREAM("pktDaySecond:" << fixed << pktDaySecond);
 
     for (int block = 0; block < BLOCKS_PER_PACKET; block++) {
 
@@ -344,10 +342,7 @@ namespace velodyne_rawdata
       if (UPPER_BANK != raw->blocks[block].header) {
         // Do not flood the log with messages, only issue at most one
         // of these warnings per minute.
-        // ROS_WARN_STREAM_THROTTLE(60, "skipping invalid VLP-16 packet: block "
-        //                          << block << " header value is "
-        //                          << raw->blocks[block].header);
-        ROS_WARN_STREAM("skipping invalid VLP-16 packet: block "
+        ROS_WARN_STREAM_THROTTLE(60, "skipping invalid VLP-16 packet: block "
                                  << block << " header value is "
                                  << raw->blocks[block].header);
         return;                         // bad packet: skip the rest
@@ -484,7 +479,7 @@ namespace velodyne_rawdata
             intensity = (intensity < min_intensity) ? min_intensity : intensity;
             intensity = (intensity > max_intensity) ? max_intensity : intensity;
 
-            // if (pointInRange(distance)) {
+            if (pointInRange(distance)) {
 
               // append this point to the cloud
               VPoint point;
@@ -498,22 +493,11 @@ namespace velodyne_rawdata
               pc.points.push_back(point);
               ++pc.width;
 
-              // last time
-              reserve[0] = reserve[1];
-              // this time
-              reserve[1] = pktDaySecond;
-              if(reserve[0] != reserve[1]) {
-              }
+              static string pointInfo("");
+              pointInfo = to_string(x_coord) + ":" + to_string(y_coord) + ":" + to_string(z_coord) + ":" + to_string(intensity) + ":" + to_string(pktDaySecond) + "\n";
 
-              // static stringstream ss;
-              // static int runOnce = (ss << fixed << setprecision(10), 0);
-              // ss.clear();
-              // ss.str("");
-              // ss << x_coord << ":" << y_coord << ":" << z_coord << ":" << intensity << ":" << point.ring << ":" << pktDaySecond;
-              // static string str;
-              // str = ss.str();
-              // (void)saveFile(str);
-            // }
+              (void)saveFile(pointInfo);
+            }
           // }
         }
       }
@@ -525,11 +509,11 @@ static double getDaySecond(const double rosTime, const double pktTime) {
   const int rosMinute = (int)rosTime / 60 % 60;
   const int pktMinute = (int)pktTime / 60;
   const int errMinute = rosMinute - pktMinute;
-  if(errMinute > 10) {
+  if(errMinute > 20) {
     ++rosHour;
   }
   else
-  if(errMinute < -10) {
+  if(errMinute < -20) {
     --rosHour;
   }
   // else {
@@ -539,37 +523,36 @@ static double getDaySecond(const double rosTime, const double pktTime) {
   // in case: -1 || 24
   rosHour = (rosHour + 24) % 24;
 
-  const double pktSecond = fmod(pktTime, 60);
-  ROS_INFO_STREAM("GPS day time is:" << rosHour << ":" << pktMinute << ":" << fixed << pktSecond);
-
   return pktTime + 3600 * rosHour;
 }
 
 static int saveFile(const string &str2write) {
-    static const int MAXLINE = 20000000;
-    static int lineCnt = 0;
+    static const size_t MAX_PKT_CNT = 2000000000;
+    static size_t pktCnt = 0;
     static char fileName[50];
-    static ofstream outFile;
+    static FILE *pOutFile;
     // get unix time stamp as file name
-    if(0 == lineCnt) {
+    if(0 == pktCnt) {
         time_t tt = time(NULL);
         tm *t= localtime(&tt);
         (void)sprintf(fileName, "%02d_%02d_%02d.lidar", t->tm_hour, t->tm_min, t->tm_sec);
 
-        outFile.open(fileName, ios::app);
-        if(!outFile) {
-            ROS_WARN_STREAM("Create file:" << fileName << " failed.");
-            exit(-1);
+        pOutFile = fopen(fileName, "wb");
+        if(!pOutFile) {
+            ROS_WARN_STREAM("Create file:" << fileName << " failed, errno:" << errno);
         }
-        ROS_INFO_STREAM("Create file:" << fileName << " successfully.");
+        ROS_DEBUG_STREAM("Create file:" << fileName << " successfully.");
     }
 
-    outFile << str2write << std::endl;
-    ++lineCnt;
-    lineCnt %= MAXLINE;
+    const char *cStr2write = str2write.c_str();
+    const size_t len = strlen(cStr2write);
+    fwrite(cStr2write, len, 1, pOutFile);
 
-    if(0 == lineCnt) {
-        outFile.close();
+    ++pktCnt;
+    pktCnt %= MAX_PKT_CNT;
+
+    if(0 == pktCnt) {
+        fclose(pOutFile);
     }
     return 0;
 }

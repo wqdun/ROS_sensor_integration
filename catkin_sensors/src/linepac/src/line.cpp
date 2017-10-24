@@ -1,53 +1,72 @@
 #include "ros/ros.h"
 #include <sstream>
-// #include "std_msgs/String.h"
+#include <fstream>
 
 #include <visualization_msgs/Marker.h>
-#include "imupac/imu5651.h"
+#include "roscameragpsimg/imu5651.h"
 
 using std::string;
 using std::istringstream;
 using std::vector;
 using std::cout;
 using std::endl;
+using std::ios;
+using std::ofstream;
 
-
+static int saveFile(const string &str2write);
+//Geo2Gauss
 static void GeoToGauss(double jd, double wd, short DH, short DH_width, double *y, double *x, double LP);
+//transform_coordinate
 static void transform_coordinate(const vector<geometry_msgs::Point> &points_gauss, vector<geometry_msgs::Point> &points_transformed);
 
 class gps_display {
 public:
+
     gps_display() {
-        gps_sub = nh.subscribe("gps_msg", 1000, &gps_display::gpsCallback, this);
+        //subscribe of gps_msg
+        gps_sub = nh.subscribe("imu_string", 1000, &gps_display::gpsCallback, this);
+        //advertise of gps_lonlathei
         gps_pub = nh.advertise<visualization_msgs::Marker>("gps_lonlathei", 10);
 
         // min capacity is 1000, to optimize efficiency
         points.points.reserve(1000);
-
+        //set points.header
         points.header.frame_id = "/velodyne";
+        //set line_strip.header
         line_strip.header.frame_id = "/velodyne";
+        //set arrow.header
         arrow.header.frame_id = "/velodyne";
 
+        //set points.header.stamp
         points.header.stamp = ros::Time::now();
+        //set line_strip.header.stamp
         line_strip.header.stamp = ros::Time::now();
+        //set arrow.header.stamp
         arrow.header.stamp = ros::Time::now();
 
+        //set points.ns
         points.ns = "points_and_lines";
+        //set line_strip.ns
         line_strip.ns = "points_and_lines";
+        //set arrow.ns
         arrow.ns = "points_and_lines";
 
+        //set points-line_strip-arrow action
         points.action = visualization_msgs::Marker::ADD;
         line_strip.action = visualization_msgs::Marker::ADD;
         arrow.action = visualization_msgs::Marker::ADD;
 
+        //set points-line_strip.pose
         points.pose.orientation.w = 1.0;
         line_strip.pose.orientation.w = 1.0;
         // arrow.pose.orientation.w = 1.0;
 
+        //set points-line_strip-arrow id
         points.id = 0;
         line_strip.id = 1;
         arrow.id = 2;
 
+        //set point-line_strip-arrow type
         points.type = visualization_msgs::Marker::POINTS;
         line_strip.type = visualization_msgs::Marker::LINE_STRIP;
         arrow.type = visualization_msgs::Marker::ARROW;
@@ -80,17 +99,46 @@ public:
         gps_receive_cnt = 0;
     }
 
-    void gpsCallback(const imupac::imu5651::ConstPtr& msg) {
+    void gpsCallback(const roscameragpsimg::imu5651::ConstPtr& msg) {
         // lat: 1 degree is about 100000 m
         double lat = string2num(msg->Lattitude);
         // lon: 1 degree is about 100000 m
         double lon = string2num(msg->Longitude);
         double hei = string2num(msg->Altitude);
 
+        mGpsTime[0] = mGpsTime[1];
+        mGpsTime[1] = string2num(msg->GPSTime);
+        // do nothing if receive same frame
+        if(mGpsTime[0] == mGpsTime[1]) {
+            return;
+        }
+
         // loss GPS signal
         if(lat < 0.1) {
             cout << "Loss of GPS signal." << endl;
             return;
+        }
+
+        string imuStr =
+            msg->GPSWeek + ":" +
+            msg->GPSTime + ":" +
+            msg->Heading + ":" +
+            msg->Pitch + ":" +
+            msg->Roll + ":" +
+            msg->Lattitude + ":" +
+            msg->Longitude + ":" +
+            msg->Altitude + ":" +
+            msg->Vel_east + ":" +
+            msg->Vel_north + ":" +
+            msg->Vel_up + ":" +
+            msg->Baseline + ":" +
+            msg->NSV1_num + ":" +
+            msg->NSV2_num + ":" +
+            msg->Status;
+        // save raw data to file
+        if(0 != saveFile(imuStr)) {
+            ROS_WARN("Error!");
+            exit;
         }
 
         // 1, 2, 3...49, 0, 1, 2...
@@ -126,15 +174,14 @@ public:
             arrow.points.push_back(points.points[point_cnt - 2]);
             arrow.points.push_back(points.points[point_cnt - 1]); // 0
             // arrow.points[0].z = 0;
-
+            //pub arrow
             gps_pub.publish(arrow);
-            cout << arrow.points.size() << arrow.points[0].x << arrow.points[0].y << arrow.points[0].z << arrow.points[1].x << arrow.points[1].y
-                    << arrow.points[1].z << endl;
+            cout << arrow.points.size() << arrow.points[0].x << arrow.points[0].y << arrow.points[0].z << arrow.points[1].x << arrow.points[1].y << arrow.points[1].z << endl;
         }
 
         points.points.pop_back();
         line_strip.points = points.points;
-
+        //pub points && line_strip
         gps_pub.publish(points);
         gps_pub.publish(line_strip);
     }
@@ -154,6 +201,7 @@ private:
     double height_origin;
     bool is_origin_set;
     int gps_receive_cnt;
+    double mGpsTime[2];
 
     // template <class T>
     // T string2num(const string& str) {
@@ -225,6 +273,35 @@ static void transform_coordinate(const vector<geometry_msgs::Point> &points_gaus
         temp_point.z = point.z - last_point_gauss.z;
         points_transformed.push_back(temp_point);
     }
+}
+
+static int saveFile(const string &str2write) {
+    static const int MAXLINE = 200000;
+    static int lineCnt = 0;
+    static char fileName[50];
+    static ofstream outFile;
+    // get unix time stamp as file name
+    if(0 == lineCnt) {
+        time_t tt = time(NULL);
+        tm *t= localtime(&tt);
+        (void)sprintf(fileName, "%02d_%02d_%02d.imu", t->tm_hour, t->tm_min, t->tm_sec);
+
+        outFile.open(fileName, ios::app);
+        if(!outFile) {
+            ROS_WARN_STREAM("Create file:" << fileName << " failed.");
+            return -1;
+        }
+        ROS_INFO_STREAM("Create file:" << fileName << " successfully.");
+    }
+
+    outFile << str2write << endl;
+    ++lineCnt;
+    lineCnt %= MAXLINE;
+
+    if(0 == lineCnt) {
+        outFile.close();
+    }
+    return 0;
 }
 
 int main(int argc, char** argv) {

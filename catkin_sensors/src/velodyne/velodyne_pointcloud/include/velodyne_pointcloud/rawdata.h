@@ -152,6 +152,8 @@ namespace velodyne_rawdata
     void setParameters(double min_range, double max_range, double view_direction,
                        double view_width);
 
+    std::string mPktStr;
+
   private:
 
     /** configuration parameters */
@@ -184,13 +186,9 @@ namespace velodyne_rawdata
       return (range >= 1 && range <= 30);
     }
 
-    //
-    double reserve[2];
   };
 
   static double getDaySecond(const double rosTime, const double pktTime);
-  static int saveFile(const std::string &str2write);
-
 } // namespace velodyne_rawdata
 
 #endif // __VELODYNE_RAWDATA_H

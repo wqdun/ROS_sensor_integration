@@ -50,7 +50,10 @@ namespace velodyne_rawdata
   using std::setprecision;
   using std::to_string;
 
-  RawData::RawData() {}
+  RawData::RawData(): mPktStr("")
+  {
+    mPktStr.reserve(30000);
+  }
 
   /** Update parameters: conversions and update */
   void RawData::setParameters(double min_range,
@@ -479,7 +482,7 @@ namespace velodyne_rawdata
             intensity = (intensity < min_intensity) ? min_intensity : intensity;
             intensity = (intensity > max_intensity) ? max_intensity : intensity;
 
-            if (pointInRange(distance)) {
+            // if (pointInRange(distance)) {
 
               // append this point to the cloud
               VPoint point;
@@ -493,11 +496,8 @@ namespace velodyne_rawdata
               pc.points.push_back(point);
               ++pc.width;
 
-              static string pointInfo("");
-              pointInfo = to_string(x_coord) + ":" + to_string(y_coord) + ":" + to_string(z_coord) + ":" + to_string(intensity) + ":" + to_string(pktDaySecond) + "\n";
-
-              (void)saveFile(pointInfo);
-            }
+              mPktStr += to_string(x_coord) + ":" + to_string(y_coord) + ":" + to_string(z_coord) + ":" + to_string(intensity) + ":" + to_string(pktDaySecond) + "\n";
+            // }
           // }
         }
       }
@@ -524,37 +524,6 @@ static double getDaySecond(const double rosTime, const double pktTime) {
   rosHour = (rosHour + 24) % 24;
 
   return pktTime + 3600 * rosHour;
-}
-
-static int saveFile(const string &str2write) {
-    static const size_t MAX_PKT_CNT = 2000000000;
-    static size_t pktCnt = 0;
-    static char fileName[50];
-    static FILE *pOutFile;
-    // get unix time stamp as file name
-    if(0 == pktCnt) {
-        time_t tt = time(NULL);
-        tm *t= localtime(&tt);
-        (void)sprintf(fileName, "%02d_%02d_%02d.lidar", t->tm_hour, t->tm_min, t->tm_sec);
-
-        pOutFile = fopen(fileName, "wb");
-        if(!pOutFile) {
-            ROS_WARN_STREAM("Create file:" << fileName << " failed, errno:" << errno);
-        }
-        ROS_DEBUG_STREAM("Create file:" << fileName << " successfully.");
-    }
-
-    const char *cStr2write = str2write.c_str();
-    const size_t len = strlen(cStr2write);
-    fwrite(cStr2write, len, 1, pOutFile);
-
-    ++pktCnt;
-    pktCnt %= MAX_PKT_CNT;
-
-    if(0 == pktCnt) {
-        fclose(pOutFile);
-    }
-    return 0;
 }
 
 } // namespace velodyne_rawdata

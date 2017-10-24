@@ -55,6 +55,8 @@ namespace velodyne_pointcloud
     Config config_;
   };
 
+  static int saveFile(const std::string &str2write);
+
 } // namespace velodyne_pointcloud
 
 #endif // _VELODYNE_POINTCLOUD_CONVERT_H_

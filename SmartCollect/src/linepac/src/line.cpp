@@ -13,7 +13,6 @@ using std::endl;
 using std::ios;
 using std::ofstream;
 
-static int saveFile(const string &str2write);
 //Geo2Gauss
 static void GeoToGauss(double jd, double wd, short DH, short DH_width, double *y, double *x, double LP);
 //transform_coordinate
@@ -22,7 +21,7 @@ static void transform_coordinate(const vector<geometry_msgs::Point> &points_gaus
 class gps_display {
 public:
 
-    gps_display() {
+    gps_display(char *path): mRecordPath(path) {
         //subscribe of gps_msg
         gps_sub = nh.subscribe("imu_string", 1000, &gps_display::gpsCallback, this);
         //advertise of gps_lonlathei
@@ -202,6 +201,7 @@ private:
     bool is_origin_set;
     int gps_receive_cnt;
     double mGpsTime[2];
+    string mRecordPath;
 
     // template <class T>
     // T string2num(const string& str) {
@@ -211,6 +211,7 @@ private:
     //     return num;
     // }
 
+    int saveFile(const string &str2write);
     double string2num(const string& str) {
         istringstream iss(str);
         double num;
@@ -218,6 +219,37 @@ private:
         return num;
     }
 };
+
+int gps_display::saveFile(const string &str2write) {
+    static const int MAXLINE = 200000;
+    static int lineCnt = 0;
+    static char fileName[80];
+    static ofstream outFile;
+    // get unix time stamp as file name
+    if(0 == lineCnt) {
+        time_t tt = time(NULL);
+        tm *t= localtime(&tt);
+        (void)sprintf(fileName, "%02d_%02d_%02d.imu", t->tm_hour, t->tm_min, t->tm_sec);
+
+        const string fileNameStr(fileName);
+        const string recordFile(mRecordPath + fileNameStr);
+        outFile.open(recordFile, ios::app);
+        if(!outFile) {
+            ROS_WARN_STREAM("Create file:" << fileName << " failed.");
+            return -1;
+        }
+        ROS_INFO_STREAM("Create file:" << fileName << " successfully.");
+    }
+
+    outFile << str2write << endl;
+    ++lineCnt;
+    lineCnt %= MAXLINE;
+
+    if(0 == lineCnt) {
+        outFile.close();
+    }
+    return 0;
+}
 
 static void GeoToGauss(double jd, double wd, short DH, short DH_width, double *y, double *x, double LP) {
     double t;     //  t=tgB
@@ -275,38 +307,11 @@ static void transform_coordinate(const vector<geometry_msgs::Point> &points_gaus
     }
 }
 
-static int saveFile(const string &str2write) {
-    static const int MAXLINE = 200000;
-    static int lineCnt = 0;
-    static char fileName[50];
-    static ofstream outFile;
-    // get unix time stamp as file name
-    if(0 == lineCnt) {
-        time_t tt = time(NULL);
-        tm *t= localtime(&tt);
-        (void)sprintf(fileName, "%02d_%02d_%02d.imu", t->tm_hour, t->tm_min, t->tm_sec);
 
-        outFile.open(fileName, ios::app);
-        if(!outFile) {
-            ROS_WARN_STREAM("Create file:" << fileName << " failed.");
-            return -1;
-        }
-        ROS_INFO_STREAM("Create file:" << fileName << " successfully.");
-    }
-
-    outFile << str2write << endl;
-    ++lineCnt;
-    lineCnt %= MAXLINE;
-
-    if(0 == lineCnt) {
-        outFile.close();
-    }
-    return 0;
-}
 
 int main(int argc, char** argv) {
     ros::init(argc, argv, "display_gps_point");
-    gps_display gps_displayer;
+    gps_display gps_displayer(argv[1]);
     ros::spin();
 
     return 0;

@@ -152,7 +152,7 @@ namespace velodyne_rawdata
     void setParameters(double min_range, double max_range, double view_direction,
                        double view_width);
 
-    std::string mPktStr;
+    void setRecordPath(const std::string &path);
 
   private:
 
@@ -182,13 +182,15 @@ namespace velodyne_rawdata
     /** in-line test whether a point is in range */
     bool pointInRange(float range)
     {
-      // [1, 30] provided by xiaobo
-      return (range >= 1 && range <= 30);
+      return (range >= config_.min_range
+              && range <= config_.max_range);
     }
-
+    int saveFile(const double *pTimeStamp, const void *pData);
+    std::string mRecordPath;
   };
 
   static double getDaySecond(const double rosTime, const double pktTime);
+
 } // namespace velodyne_rawdata
 
 #endif // __VELODYNE_RAWDATA_H

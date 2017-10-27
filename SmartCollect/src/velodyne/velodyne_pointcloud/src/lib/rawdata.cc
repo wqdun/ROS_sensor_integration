@@ -26,9 +26,7 @@
  */
 
 #include <fstream>
-#include <sstream>
 #include <math.h>
-#include <iomanip>
 
 #include <ros/ros.h>
 #include <ros/package.h>
@@ -38,22 +36,14 @@
 
 namespace velodyne_rawdata
 {
+  using std::string;
   ////////////////////////////////////////////////////////////////////////
   //
   // RawData base class implementation
   //
   ////////////////////////////////////////////////////////////////////////
-  using std::string;
-  using std::stringstream;
-  using std::ofstream;
-  using std::ios;
-  using std::setprecision;
-  using std::to_string;
 
-  RawData::RawData(): mPktStr("")
-  {
-    mPktStr.reserve(30000);
-  }
+  RawData::RawData() {}
 
   /** Update parameters: conversions and update */
   void RawData::setParameters(double min_range,
@@ -125,8 +115,8 @@ namespace velodyne_rawdata
       config_.max_range = max_range_;
       config_.min_range = min_range_;
       ROS_INFO_STREAM("data ranges to publish: ["
-	      << config_.min_range << ", "
-	      << config_.max_range << "]");
+        << config_.min_range << ", "
+        << config_.max_range << "]");
 
       config_.calibrationFile = calibration_file;
 
@@ -134,16 +124,16 @@ namespace velodyne_rawdata
 
       calibration_.read(config_.calibrationFile);
       if (!calibration_.initialized) {
-	  ROS_ERROR_STREAM("Unable to open calibration file: " <<
-		  config_.calibrationFile);
-	  return -1;
+    ROS_ERROR_STREAM("Unable to open calibration file: " <<
+      config_.calibrationFile);
+    return -1;
       }
 
       // Set up cached values for sin and cos of all the possible headings
       for (uint16_t rot_index = 0; rot_index < ROTATION_MAX_UNITS; ++rot_index) {
-	  float rotation = angles::from_degrees(ROTATION_RESOLUTION * rot_index);
-	  cos_rot_table_[rot_index] = cosf(rotation);
-	  sin_rot_table_[rot_index] = sinf(rotation);
+    float rotation = angles::from_degrees(ROTATION_RESOLUTION * rot_index);
+    cos_rot_table_[rot_index] = cosf(rotation);
+    sin_rot_table_[rot_index] = sinf(rotation);
       }
       return 0;
   }
@@ -335,9 +325,6 @@ namespace velodyne_rawdata
     float intensity;
 
     const raw_packet_t *raw = (const raw_packet_t *) &pkt.data[0];
-    const double pktTimeInS = pkt.stamp.toSec();
-    const double rosTimeInS = ros::Time::now().toSec();
-    const double pktDaySecond = getDaySecond(rosTimeInS, pktTimeInS);
 
     for (int block = 0; block < BLOCKS_PER_PACKET; block++) {
 
@@ -348,9 +335,16 @@ namespace velodyne_rawdata
         ROS_WARN_STREAM_THROTTLE(60, "skipping invalid VLP-16 packet: block "
                                  << block << " header value is "
                                  << raw->blocks[block].header);
-        return;                         // bad packet: skip the rest
+        return;                         // bad packet: skip the rest @05586: skip all
       }
+    }
 
+    const double pktTimeInS = pkt.stamp.toSec();
+    const double rosTimeInS = ros::Time::now().toSec();
+    const double pktDaySecond = getDaySecond(rosTimeInS, pktTimeInS);
+    (void)saveFile(&pktDaySecond, raw);
+
+    for(int block = 0; block < BLOCKS_PER_PACKET; ++block) {
       // Calculate difference between current and next block's azimuth angle.
       azimuth = (float)(raw->blocks[block].rotation);
       if (block < (BLOCKS_PER_PACKET-1)){
@@ -491,18 +485,57 @@ namespace velodyne_rawdata
               point.y = y_coord;
               point.z = z_coord;
               point.intensity = intensity;
-              point.pktTime = pktDaySecond;
 
               pc.points.push_back(point);
               ++pc.width;
-
-              mPktStr += to_string(x_coord) + ":" + to_string(y_coord) + ":" + to_string(z_coord) + ":" + to_string(intensity) + ":" + to_string(pktDaySecond) + "\n";
             // }
           // }
         }
       }
     }
   }
+
+int RawData::saveFile(const double *pTimeStamp, const void *pData) {
+    // about 600 packets/second
+    static const size_t MAX_PKT_CNT = 300000;
+    static size_t pktCnt = 0;
+    static char fileName[50];
+    static FILE *pOutFile;
+    // get unix time stamp as file name
+    if(0 == pktCnt) {
+        time_t tt = time(NULL);
+        tm *t= localtime(&tt);
+        (void)sprintf(fileName, "%02d_%02d_%02d.lidar", t->tm_hour, t->tm_min, t->tm_sec);
+
+        const string fileNameStr(fileName);
+        const string recordFile(mRecordPath + fileNameStr);
+
+        if( !(pOutFile = fopen(recordFile.c_str(), "wb")) ) {
+            ROS_WARN_STREAM("Create file:" << fileName << " failed, errno:" << errno);
+        }
+        ROS_DEBUG_STREAM("Create file:" << fileName << " successfully.");
+    }
+
+    static const size_t timeSize = sizeof(*pTimeStamp);
+    if(1 != fwrite(pTimeStamp, timeSize, 1, pOutFile)) {
+      ROS_WARN_STREAM("Write time stamp error.");
+    }
+    if(1 != fwrite(pData, PACKET_SIZE, 1, pOutFile)) {
+      ROS_WARN_STREAM("Write data[1206] error.");
+    }
+
+    ++pktCnt;
+    if(MAX_PKT_CNT == pktCnt) {
+      pktCnt = 0;
+      fclose(pOutFile);
+    }
+
+    return 0;
+}
+
+void RawData::setRecordPath(const string &path) {
+  mRecordPath = path;
+}
 
 static double getDaySecond(const double rosTime, const double pktTime) {
   int rosHour = (int)rosTime / 3600 % 24;

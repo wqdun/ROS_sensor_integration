@@ -1,5 +1,6 @@
 #include <iostream>
 #include <stdio.h>
+#include <cstdlib>
 #pragma pack(2)
 
 using namespace std;
@@ -24,37 +25,52 @@ int main(int argc, char **argv) {
 
     fseek(pInFile, 0, SEEK_END);
     long fileSize = ftell(pInFile);
-    cout << fileSize << "\n";
+    cout << "fileSize:" << fileSize << "\n";
     fseek(pInFile, 0, SEEK_SET);
     const size_t pktSize = sizeof(pktInfo_t);
     cout << "pktSize:" << pktSize << "\n";
+    const size_t pktCnt = fileSize / pktSize;
     cout << argv[1] << " contains " << fileSize / pktSize << " packets.\n";
 
     pktInfo_t pktInfo;
     size_t pos = 0;
     size_t readLen = 0;
-    double time1 = 0;
-    double time2 = 0;
+    double time1 = -1;
+    double time2 = -1;
+    double timeErr = -1;
     // 循环读取文件
     do {
         readLen = fread(&pktInfo, pktSize, 1, pInFile);
-        if(readLen > 0) {
-            pos += pktSize;
-            cout << readLen << "\n";
-            // 对读取的文件做处理
-            cout << fixed << pktInfo.timeStamp << "\n";
+        // cout << readLen << endl;
+        if(0 >= readLen) {
+            cout << "[ERROR] Packet[" << pos / pktSize <<  "] is not a complete packet.\n";
+            exit(-1);
+        }
 
-            time1 = time2;
-            time2 = pktInfo.timeStamp;
-            cout << "timeErr = " << time2 - time1 << "\n";
+        pos += pktSize;
+
+        // cout << fixed << pktInfo.timeStamp << "\n";
+
+        time1 = time2;
+        time2 = pktInfo.timeStamp;
+        timeErr = time2 - time1;
+        // cout << "timeErr = " << timeErr << "\n";
+        if(0 > time1) {
+            continue;
         }
-        else {
-            cout << "It is null.\n";
+        if(timeErr > 0.0015) {
+            cout << "[ERROR] Might lost some packets, time interval:" << timeErr <<
+            "; time1:" << time1 << "; time2:" << time2 << endl;
+            exit(-1);
         }
+
     } while(pos < fileSize);
+
+    cout << argv[1] << " is a valid lidar data.\n";
 
     // 释放资源
     fclose(pInFile);
+
     return 0;
 }
 

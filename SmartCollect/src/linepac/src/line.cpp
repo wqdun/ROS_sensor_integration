@@ -114,7 +114,7 @@ public:
 
         // loss GPS signal
         if(lat < 0.1) {
-            cout << "Loss of GPS signal." << endl;
+            ROS_INFO_STREAM_THROTTLE(10, "Loss of GPS signal.");
             return;
         }
 
@@ -135,10 +135,10 @@ public:
             msg->NSV2_num + ":" +
             msg->Status;
         // save raw data to file
-        if(0 != saveFile(imuStr)) {
-            ROS_WARN("Error!");
-            exit;
-        }
+        // if(0 != saveFile(imuStr)) {
+        //     ROS_WARN("Error!");
+        //     exit;
+        // }
 
         // 1, 2, 3...49, 0, 1, 2...
         (++gps_receive_cnt) %= 20;
@@ -156,8 +156,8 @@ public:
         p.y = gauss_x / 10;// 100;
         p.x = gauss_y / 10;// 100;
         p.z = hei / 10;// 100;
-        cout << std::fixed << p.x << endl;
-        cout << std::fixed << p.y << endl;
+        //cout << std::fixed << p.x << endl;
+        //cout << std::fixed << p.y << endl;
 
         static vector<geometry_msgs::Point> gauss_coordinations;
         gauss_coordinations.push_back(p);
@@ -165,7 +165,7 @@ public:
         if(point_cnt >= 1000) {
             gauss_coordinations.erase(gauss_coordinations.begin(), gauss_coordinations.begin() + point_cnt / 2);
         }
-        ROS_INFO("Now I have got %d way points.", point_cnt);
+        ROS_INFO_STREAM_THROTTLE(10, "Now I have got " << point_cnt << " way points.");
 
         transform_coordinate(gauss_coordinations, points.points);
         if(point_cnt >= 2) {

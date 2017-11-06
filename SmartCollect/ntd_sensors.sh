@@ -7,14 +7,33 @@ if [ ! -f "devel/setup.bash" ]; then
     exit -1
 fi
 . devel/setup.bash
-
+sudo chmod +r /dev/ttyUSB0
+sudo ifconfig eth0 mtu 9000
 # new build a record directory
 record_path=$(date +%H_%M_%S)
 absolute_record_path="${absolute_script_path}/record/${record_path}"
+
 mkdir -p ${absolute_record_path}
 
+# image path
+absolute_record_pimage="${absolute_script_path}/record/${record_path}/Image"
+mkdir -p ${absolute_record_pimage}
+
+# imu  path
+absolute_record_pimu="${absolute_script_path}/record/${record_path}/IMU"
+mkdir -p ${absolute_record_pimu}
+
+# lidar path
+absolute_record_plidar="${absolute_script_path}/record/${record_path}/Lidar"
+mkdir -p ${absolute_record_plidar}
+
 # add record path to launch file
-tools/parseXml.py ${absolute_record_path}
+absolute_record_ptcloud="${absolute_script_path}/src/velodyne/velodyne_pointcloud/launch/cloud_nodelet.launch"
+absolute_record_sensor="${absolute_script_path}/src/launch/ntd_sensors.launch"
 
-roslaunch out.xml
+echo $absolute_record_ptcloud
+echo $absolute_record_sensor
+#exit
+src/tools/parseXml.py ${absolute_record_path} ${absolute_record_sensor} ${absolute_record_ptcloud}
 
+roslaunch ./src/tools/out.xml

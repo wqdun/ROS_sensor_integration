@@ -118,7 +118,7 @@ VelodyneDriver::VelodyneDriver(ros::NodeHandle node,
 
   // raw packet output topic
   output_ =
-    node.advertise<velodyne_msgs::VelodyneScan>("velodyne_packets", 10);
+    node.advertise<velodyne_msgs::VelodyneScan>("velodyne_packets", 50);
 }
 
 /** poll the device

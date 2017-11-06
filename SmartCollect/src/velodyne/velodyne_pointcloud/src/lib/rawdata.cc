@@ -497,7 +497,7 @@ namespace velodyne_rawdata
 
 int RawData::saveFile(const double *pTimeStamp, const void *pData) {
     // about 600 packets/second
-    static const size_t MAX_PKT_CNT = 300000;
+    static const size_t MAX_PKT_CNT = 1000000;
     static size_t pktCnt = 0;
     static char fileName[50];
     static FILE *pOutFile;

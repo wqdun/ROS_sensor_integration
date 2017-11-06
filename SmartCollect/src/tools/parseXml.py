@@ -103,10 +103,16 @@ def del_node_by_tagkeyvalue(nodelist, tag, kv_map):
                 parent_node.remove(child)
 
 if __name__ == "__main__":
-    path = sys.argv[1]
+    path        = sys.argv[1]
+    path_in     = sys.argv[2]
+    path_in_cld = sys.argv[3]
+    print path
+    print path_in
+    print path_in_cld
 
     # 1 读取xml文件
-    tree = read_xml("./src/launch/ntd_sensors.launch")
+    #tree = read_xml("./src/launch/ntd_sensors.launch")
+    tree =  read_xml(path_in);
 
     # 2 属性修改
     # 2.1 找到父节点
@@ -119,9 +125,29 @@ if __name__ == "__main__":
     change_node_properties(result_node, {"args": path})
     #2.3.2 add node roscameragpsimg
     result_node = get_node_by_keyvalue(nodes, {"type": "roscameragpsimg"})
-    path_img = "raw " + path
+    path_img = "jpg " + path +"/Image/"
+    path_imu = path +"/IMU/"
+    path_img = path_img + " " + path_imu
+    print path_img
     change_node_properties(result_node, {"args": path_img})
-    
-    
+
     # 3 输出到结果文件
-    write_xml(tree, "./out.xml")
+    write_xml(tree, "./src/tools/out.xml")
+
+    ###############################################
+    tree_cld = read_xml(path_in_cld);
+
+    # 2 属性修改
+    # 2.1 找到父节点
+    nodes_cld = find_nodes(tree_cld, "node")
+    # 2.2 通过属性准确定位子节点
+    # add child node
+    path_lidar = path + "/Lidar/"
+    result_node_cld = get_node_by_keyvalue(nodes_cld, {"type": "nodelet"})
+    element = create_node("param",{"name":"record_path","value": path_lidar},"")
+    add_child_node(result_node_cld, element)
+    print path_lidar
+    # 3 输出到结果文件
+    write_xml(tree_cld, "./src/velodyne/velodyne_pointcloud/launch/cloud_nodelet.xml")
+    ##############################################
+

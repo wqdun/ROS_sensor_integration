@@ -73,7 +73,7 @@ def change_node_text(nodelist, text, is_add = False, is_delete = False):
         else:
             node.text = text
 
-def create_node(tag, property_map, content):
+def create_node(tag, property_map, content = ""):
     '''新造一个节点
        tag         : 节点标签
        property_map: 属性及属性值map
@@ -130,6 +130,10 @@ if __name__ == "__main__":
     path_img = path_img + " " + path_imu
     print path_img
     change_node_properties(result_node, {"args": path_img})
+    # add mif file path
+    result_node = get_node_by_keyvalue(nodes, {"type": "display_had_node"})
+    element = create_node("param", {"name": "mif_path", "value": path + "/../../src/display_had/data/"})
+    add_child_node(result_node, element)
 
     # 3 输出到结果文件
     write_xml(tree, "./src/tools/out.xml")
@@ -144,7 +148,7 @@ if __name__ == "__main__":
     # add child node
     path_lidar = path + "/Lidar/"
     result_node_cld = get_node_by_keyvalue(nodes_cld, {"type": "nodelet"})
-    element = create_node("param",{"name":"record_path","value": path_lidar},"")
+    element = create_node("param", {"name": "record_path", "value": path_lidar},"")
     add_child_node(result_node_cld, element)
     print path_lidar
     # 3 输出到结果文件

@@ -36,4 +36,10 @@ echo $absolute_record_sensor
 #exit
 src/tools/parseXml.py ${absolute_record_path} ${absolute_record_sensor} ${absolute_record_ptcloud}
 
+# redirect glog path to ./log, default glog path is /tmp
+absolute_log_path="${absolute_script_path}/log"
+mkdir -p ${absolute_log_path}
+# use export, if not: roslaunch cannot get GLOG_log_dir, only rosrun can
+export GLOG_log_dir="${absolute_log_path}"
+
 roslaunch ./src/tools/out.xml

@@ -6,6 +6,7 @@
   <!-- <node name ="data_center" pkg="ntd_info_process" type="ntd_info_process_node" output="screen"/> -->
 
   <node name ="roscameragpsimg" pkg="roscameragpsimg" type="roscameragpsimg" output="screen"/>
+  <node name ="display_had" pkg="display_had" type="display_had_node" output="screen"/>
 
   <!-- launch velodyne -->
   <include file="$(find velodyne_pointcloud)/launch/VLP16_points.launch"/>

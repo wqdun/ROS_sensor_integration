@@ -7,5 +7,5 @@ int main(int argc, char **argv) {
     MifReader mif_reader(ros::NodeHandle(), ros::NodeHandle("~"));
     mif_reader.run();
     DLOG(INFO) << "Had displayer.";
-    PublicTools::tf_example();
+    return 0;
 }

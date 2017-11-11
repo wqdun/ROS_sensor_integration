@@ -173,7 +173,7 @@ public:
             arrow.points.push_back(points.points[point_cnt - 2]);
             arrow.points.push_back(points.points[point_cnt - 1]); // 0
             // arrow.points[0].z = 0;
-            //pub arrow
+            // pub arrow
             gps_pub.publish(arrow);
             cout << arrow.points.size() << arrow.points[0].x << arrow.points[0].y << arrow.points[0].z << arrow.points[1].x << arrow.points[1].y << arrow.points[1].z << endl;
         }

@@ -2,6 +2,9 @@
 #define MIF_READ_H
 
 #include <ros/ros.h>
+#include <fstream>
+#include <sstream>
+#include <iomanip>
 #include <string>
 using std::string;
 #include <vector>
@@ -22,8 +25,11 @@ public:
 private:
     void getFiles(const string& path, vector<string>& files);
     void readFile(const string &file);
+    void getLonLat(const string &line, geometry_msgs::Point &point);
 
+    ros::Publisher mif_pub;
     string mMifPath;
+    visualization_msgs::Marker mLineStrip;
 };
 
 

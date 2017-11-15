@@ -23,6 +23,7 @@ class PublicTools {
 public:
 
     static int string2int(const string& str);
+    static double string2double(const string& str);
     static void GeoToGauss(double jd, double wd, short DH, short DH_width, double *y, double *x, double LP);
 
 };

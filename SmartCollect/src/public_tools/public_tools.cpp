@@ -9,6 +9,13 @@ int PublicTools::string2int(const string& str) {
     return num;
 }
 
+double PublicTools::string2double(const string& str) {
+    std::istringstream iss(str);
+    double num;
+    iss >> num;
+    return num;
+}
+
 void PublicTools::GeoToGauss(double jd, double wd, short DH, short DH_width, double *y, double *x, double LP) {
     double t;     //  t=tgB
     double L;     //  中央经线的经度

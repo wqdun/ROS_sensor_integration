@@ -10,7 +10,7 @@ fi
 sudo chmod +r /dev/ttyUSB0
 sudo ifconfig eth0 mtu 9000
 # new build a record directory
-record_path=$(date +%H_%M_%S)
+record_path=$(date +%Y_%m_%d_%H_%M_%S)
 absolute_record_path="${absolute_script_path}/record/${record_path}"
 
 mkdir -p ${absolute_record_path}

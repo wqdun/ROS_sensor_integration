@@ -118,12 +118,8 @@ if __name__ == "__main__":
     # 2.1 找到父节点
     nodes = find_nodes(tree, "node")
     # 2.2 通过属性准确定位子节点
-    result_node = get_node_by_keyvalue(nodes, {"type": "linepac"})
-    change_node_properties(result_node, {"args": path})
      # 2.3 修改节点属性
-    result_node = get_node_by_keyvalue(nodes, {"type": "ntd_info_process_node"})
-    change_node_properties(result_node, {"args": path})
-    #2.3.2 add node roscameragpsimg
+    # 2.3.2 add node roscameragpsimg
     result_node = get_node_by_keyvalue(nodes, {"type": "roscameragpsimg"})
     path_img = "jpg " + path +"/Image/"
     path_imu = path +"/IMU/"
@@ -132,7 +128,7 @@ if __name__ == "__main__":
     change_node_properties(result_node, {"args": path_img})
     # add mif file path
     result_node = get_node_by_keyvalue(nodes, {"type": "display_had_node"})
-    element = create_node("param", {"name": "mif_path", "value": path + "/../../src/display_had/data/"})
+    element = create_node("param", {"name": "mif_path", "value": path + "/../../src/display_had/data"})
     add_child_node(result_node, element)
 
     # 3 输出到结果文件

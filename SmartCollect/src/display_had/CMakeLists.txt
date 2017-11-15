@@ -116,6 +116,7 @@ catkin_package(
 ## Your package locations should be listed before other locations
 include_directories(
 # include
+  ../../devel/include
   ${catkin_INCLUDE_DIRS}
 )
 
@@ -148,6 +149,7 @@ add_executable(${PROJECT_NAME}_node src/display_had_node.cpp src/mif_read.cpp ..
 target_link_libraries(${PROJECT_NAME}_node
   ${catkin_LIBRARIES}
   glog
+  sqlite3
 )
 
 #############

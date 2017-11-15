@@ -1,0 +1,6 @@
+float64 current_pitch
+float64 current_roll
+float64 current_heading
+float64 GPStime
+# geometry_msgs/Point latlonhei
+point_wgs latlonhei

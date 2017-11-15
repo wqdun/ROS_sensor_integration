@@ -56,6 +56,193 @@ void MifReader::gpsCallback(const ntd_info_process::processed_infor_msg::ConstPt
     mNowLocation.z = pGpsMsg->latlonhei.hei;
 }
 
+long MifReader::getMortonFromLonLat(const double dLon, const double dLat, const int level) {
+    DLOG(INFO) << __FUNCTION__ << " start.";
+    const int LEVEL_MIN = 0;
+    const int LEVEL_MAX = 26;
+    if((level < LEVEL_MIN) || (level > LEVEL_MAX)) {
+        LOG(ERROR) << "Wrong level: " << level;
+        exit(1);
+    }
+
+    long morton = 0;
+    // how many columns in current level
+    int col = pow(2, level);
+    // how many rows in current level
+    int row = col;
+    // mesh size in current level
+    double width = 180.0 / col;
+    int rowNum = getDimensionCode(dLat, width, col);
+    int colNum = getDimensionCode(dLon, width, row);
+    morton = interleave(rowNum, colNum);
+    // 0 level highest bit
+    // 0级最高位
+    if(dLon < 0) {
+        morton |= 1 << (2 * level);
+    }
+    if(dLat < 0) {
+        morton |= 1 << (2 * level - 1);
+    }
+    return morton;
+}
+
+/******************************************************************************
+// Author     : Wuhan
+// Date       : *
+// Description: calculate row/column by longitude and latitude
+// Input      : x:
+                    longitude or latitude
+                width:
+                    mesh size(unit: degree)
+                nBlockNum:
+                    number of meshes in current longitude/latitude
+// Output     :
+// Return     : row/column
+// Others     : NA
+******************************************************************************/
+int MifReader::getDimensionCode(double x, double width, int nBlockNum) {
+    return (x < 0)? (nBlockNum - 1) + (int)(x / width): (int)(x / width);
+}
+
+/******************************************************************************
+// Author     : Wuhan
+// Date       : *
+// Description: interweave the code according to column values
+                根据行列值交织编码
+// Input      : dLon
+                dLat
+                level
+// Output     : NA
+// Return     : Morton code
+// Others     : NA
+******************************************************************************/
+long MifReader::interleave(int rowNum, int colNum) {
+    long morton = 0;
+    int s = getBinaryLength(rowNum);
+    int e = getBinaryLength(colNum);
+    int size = s > e ? s : e;
+    for (int i = 0; i < size; ++i) {
+        morton |= (colNum & (1 << i)) << i | (rowNum & (1 << i)) << (i + 1);
+    }
+    return morton;
+}
+
+int MifReader::getBinaryLength(int in) {
+    for(int i = 0; i < 64; ++i) {
+        if(!(in >> i)) {
+            return i;
+        }
+    }
+
+    LOG(ERROR) << "Number too big: " << in;
+    exit(1);
+}
+
+
+/******************************************************************************
+// Author     : Wuhan
+// Date       : *
+// Description: get grid ID by row/column number
+                通过行列号获得格网ID
+// Input      : row/column number
+// Output     : NA
+// Return     : grid ID
+// Others     : NA
+******************************************************************************/
+int MifReader::getTileNum(const vector<int> &xy) {
+    DLOG(INFO) << __FUNCTION__ << " start.";
+    string binaryStrX = toBinaryString(xy[0]);
+    string binaryStrY = toBinaryString(xy[1]);
+    string binaryStr("");
+    for (int i = 0; i < binaryStrX.length() || i < binaryStrY.length(); ++i) {
+        if (i >= binaryStrX.length()) {
+            binaryStr.append("0");
+        }
+        else {
+            binaryStr.append(binaryStrX.substr(binaryStrX.length() - i - 1, 1));
+        }
+        if (i >= binaryStrY.length()) {
+            binaryStr.append("0");
+        } else {
+            binaryStr.append(binaryStrY.substr(binaryStrY.length() - i - 1, 1));
+        }
+    }
+    (void)reverse(binaryStr.begin(), binaryStr.end());
+    return stoi(binaryStr, nullptr, 2);
+}
+
+// get tile numbers(including itself)
+vector<int> MifReader::getTileNumList(int id, int level) {
+    DLOG(INFO) << __FUNCTION__ << " start.";
+    // get max row number
+    // 获得最大行列号
+    int maxY = pow(2, level);
+    int maxX = pow(2, level + 1);
+
+    vector<int> listTileNum;
+    vector<int> res = getXY(id);
+    for(int i = -1; i < 2; ++i) {
+        for(int j = -1; j < 2; ++j) {
+            if(res[0] + i >= 0 && res[1] + j >= 0 &&
+               res[0] + i < maxX && res[1] + j < maxY) {
+                const vector<int> rowColumn { res[0] + i, res[1] + j };
+                listTileNum.push_back(getTileNum(rowColumn));
+            }
+        }
+    }
+    DLOG(INFO) << __FUNCTION__ << " end.";
+    return listTileNum;
+}
+
+
+string MifReader::toBinaryString(int inNum) {
+    const int BIT = (sizeof(inNum) << 3);
+    std::bitset<BIT> bst(inNum);
+
+    std::ostringstream oss;
+    oss << bst;
+    string binaryStringWith0Ahead(oss.str());
+    return binaryStringWith0Ahead.substr(binaryStringWith0Ahead.find("1"));
+}
+
+
+/******************************************************************************
+// Author     : Wuhan
+// Date       : *
+// Description: get row number by mesh ID
+// Input      : mesh ID
+// Output     : NA
+// Return     :
+// Others     : NA
+******************************************************************************/
+vector<int> MifReader::getXY(int id) {
+    DLOG(INFO) << __FUNCTION__ << " start.";
+    string binaryStr = toBinaryString(id);
+    int length = binaryStr.length();
+    if(length % 2 != 0) {
+        binaryStr = "0" + binaryStr;
+    }
+    // column
+    string binaryXStr("");
+    // row
+    string binaryYStr("");
+    DLOG(INFO) << "binaryStr: " << binaryStr;
+    for(int i = 0; i < binaryStr.length(); i += 2) {
+        binaryYStr.append(binaryStr.substr(i, 1));
+        if(binaryStr.length() > i + 1) {
+            binaryXStr.append(binaryStr.substr(i + 1, 1));
+        }
+    }
+    DLOG(INFO) << binaryXStr << " : " << binaryYStr;
+
+    const vector<int> xy {
+        stoi(binaryXStr, nullptr, 2),
+        stoi(binaryYStr, nullptr, 2)
+    };
+    DLOG(INFO) << __FUNCTION__ << " end.";
+    return xy;
+}
+
 void MifReader::getFiles(const string &basePath, vector<string> &files) {
     DIR *dir;
     dirent *ptr;
@@ -99,8 +286,9 @@ void MifReader::getFiles(const string &basePath, vector<string> &files) {
     return;
 }
 
-static int queryCB(void *in_param, int argc, char **argv, char **colNames){
-    LOG(INFO) << __FUNCTION__ << " start, param: " << (const char *)in_param;
+
+static int querySqlCB(void *in_param, int argc, char **argv, char **colNames) {
+    DLOG(INFO) << __FUNCTION__ << " start, param: " << (const char *)in_param;
     for(int i = 0; i < argc; ++i) {
         DLOG(INFO) << colNames[i] << ":" << argv[i]? argv[i] : "NULL";
     }
@@ -120,22 +308,9 @@ void MifReader::readFile(const string &file) {
     int errNo;
     char *errMsg = 0;
 
-    // sql = "CREATE TABLE COMPANY(" \
-    //             "ID INT PRIMARY KEY     NOT NULL," \
-    //             "NAME           TEXT    NOT NULL," \
-    //             "AGE            INT     NOT NULL," \
-    //             "ADDRESS        CHAR(50)," \
-    //             "SALARY         REAL );";
-    // errNo = sqlite3_exec(db, sql.c_str(), queryCB, 0, &errMsg);
-    // if(SQLITE_OK != errNo) {
-    //     LOG(ERROR) << "SQL error: " << errMsg;
-    //     sqlite3_free(errMsg);
-    //     exit(1);
-    // }
-
     const string inParam = "Callback function called.";
     sql = "SELECT * from ROAD WHERE ID = 1000189";
-    errNo = sqlite3_exec(db, sql.c_str(), queryCB, (void *)inParam.c_str(), &errMsg);
+    errNo = sqlite3_exec(db, sql.c_str(), &querySqlCB, (void *)inParam.c_str(), &errMsg);
     if(SQLITE_OK != errNo) {
         LOG(ERROR) << "SQL error: " << errMsg;
         sqlite3_free(errMsg);
@@ -145,42 +320,13 @@ void MifReader::readFile(const string &file) {
     sqlite3_close(db);
 
 
-    // std::ifstream inFile(file);
-    // if(!inFile) {
-    //     LOG(ERROR) << "Failed to open " << file;
-    //     exit(1);
-    // }
-
-    // const size_t BUFFER_SIZE = 100;
-    // char *pLine = new char[BUFFER_SIZE];
-    // string line("");
-    // std::stringstream ss;
-    // size_t plineCnt;
-    // while(inFile.getline(pLine, BUFFER_SIZE)) {
-    //     line.assign(pLine);
-    //     if(0 != line.find("Pline")) {
-    //         DLOG(INFO) << "Not begin with Pline.";
-    //         continue;
-    //     }
-
-    //     ss.str(line);
-    //     string tmpStr;
-    //     ss >> tmpStr >> tmpStr;
-    //     plineCnt = public_tools::PublicTools::string2int(tmpStr);
-    //     DLOG(INFO) << "This Pline contains " << plineCnt << " points.";
-    //     for(size_t i = 0; i < plineCnt; ++i) {
-    //         inFile.getline(pLine, BUFFER_SIZE);
-    //         line.assign(pLine);
-    //         geometry_msgs::Point point3d;
-    //         (void)getLonLat(line, point3d);
-    //         mLineStrip.points.push_back(point3d);
-    //     }
-
-    // }
-    // delete[] pLine;
-
-    // // auto closed when exit scope
-    // // inFile.close();
+    long mesh = getMortonFromLonLat(121, 43, 13);
+    LOG(INFO) << mesh << "::Morton.";
+    vector<int> anses = getTileNumList(mesh, 13);
+    for(auto ans: anses) {
+        LOG(INFO) << "ans:" << ans;
+    }
+    LOG(INFO) << "ans Size:" << anses.size();
 }
 
 

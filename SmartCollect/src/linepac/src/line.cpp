@@ -108,9 +108,9 @@ public:
         public_tools::PublicTools::GeoToGauss(lon * 3600, lat * 3600, 39, 3, &gauss_y, &gauss_x, 117);
 
         // 1 grid is 100 m; gauss_x: North; gauss_y: East
-        p.y = gauss_x / 10;// 100;
-        p.x = gauss_y / 10;// 100;
-        p.z = hei / 10;// 100;
+        p.y = gauss_x / 100.;// 100;
+        p.x = gauss_y / 100.;// 100;
+        p.z = hei / 100.;// 100;
 
         static vector<geometry_msgs::Point> gauss_coordinations;
         gauss_coordinations.push_back(p);

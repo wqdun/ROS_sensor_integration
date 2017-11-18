@@ -7,10 +7,10 @@ if [ ! -f "devel/setup.bash" ]; then
     exit -1
 fi
 . devel/setup.bash
-sudo chmod +r /dev/ttyUSB0
+sudo chmod +r /dev/ttyS0
 sudo ifconfig eth0 mtu 9000
 # new build a record directory
-record_path=$(date +%Y_%m_%d_%H_%M_%S)
+record_path=project_$(date +%Y_%m_%d_%H_%M_%S)
 absolute_record_path="${absolute_script_path}/record/${record_path}"
 
 mkdir -p ${absolute_record_path}
@@ -34,6 +34,8 @@ absolute_record_sensor="${absolute_script_path}/src/launch/ntd_sensors.launch"
 echo $absolute_record_ptcloud
 echo $absolute_record_sensor
 #exit
+
+chmod +x src/tools/parseXml.py
 src/tools/parseXml.py ${absolute_record_path} ${absolute_record_sensor} ${absolute_record_ptcloud}
 
 # redirect glog path to ./log, default glog path is /tmp

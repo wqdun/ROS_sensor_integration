@@ -217,4 +217,5 @@ add_dependencies(${PROJECT_NAME}_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catk
 
 target_link_libraries(${PROJECT_NAME}_node
   ${catkin_LIBRARIES}
+  glog
 )

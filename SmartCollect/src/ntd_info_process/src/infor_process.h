@@ -7,6 +7,9 @@
 #include "roscameragpsimg/imu5651.h"
 #include "ntd_info_process/processed_infor_msg.h"
 #include "../../public_tools/public_tools.h"
+// #define NDEBUG
+#undef NDEBUG
+#include <glog/logging.h>
 
 using std::vector;
 using std::string;

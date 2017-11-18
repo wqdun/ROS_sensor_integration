@@ -15,6 +15,10 @@ void InforProcess::run() {
     while(ros::ok()) {
         ros::spinOnce();
         rate.sleep();
+        if(mOutMsg.latlonhei.lat < 0.1) {
+            DLOG(INFO) << "GPS not fixed, lat: " << mOutMsg.latlonhei.lat;
+            continue;
+        }
         mPub.publish(mOutMsg);
     }
 }
@@ -50,6 +54,7 @@ void InforProcess::gpsCB(const roscameragpsimg::imu5651::ConstPtr& pGPSmsg) {
     p.lon = lon;
     p.hei = hei;
     mOutMsg.latlonhei = p;
+    DLOG(INFO) << "lat: " << mOutMsg.latlonhei.lat;
 
     mOutMsg.current_pitch = pitch;
     mOutMsg.current_roll = roll;

@@ -6,6 +6,6 @@ int main(int argc, char **argv) {
 
     MifReader mif_reader(ros::NodeHandle(), ros::NodeHandle("~"));
     mif_reader.run();
-    DLOG(INFO) << "Had displayer.";
+    LOG(INFO) << "HAD displayer.";
     return 0;
 }

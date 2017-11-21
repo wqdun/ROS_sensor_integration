@@ -1,7 +1,9 @@
 #include <iostream>
 #include <stdio.h>
 #include <cstdlib>
+// pack declaration should be placed before struct declaration
 #pragma pack(2)
+
 
 using namespace std;
 

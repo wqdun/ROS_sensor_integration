@@ -152,23 +152,24 @@ int main() {
     int nread = 0;
 
     while(1) {
-        FD_ZERO(&rd);
-        FD_SET(fd, &rd);
-        switch(select(fd + 1, &rd, NULL, NULL, NULL) ) {
-        case -1:
-            cerr << "Select error.\n";
-            exit(1);
-        case 0:
-            // cout << "Fd not ready, select again.\n";
-            break;
-        default:
-            if(FD_ISSET(fd, &rd) ) {
+        // FD_ZERO(&rd);
+        // FD_SET(fd, &rd);
+        // switch(select(fd + 1, &rd, NULL, NULL, NULL) ) {
+        // case -1:
+        //     cerr << "Select error.\n";
+        //     exit(1);
+        // case 0:
+        //     // cout << "Fd not ready, select again.\n";
+        //     break;
+        // default:
+        //     if(FD_ISSET(fd, &rd) ) {
                 int t1 = 0;
-                while(1) {
+                // while(1) {
                     nread = read(fd, buf, sizeof(buf) );
                     cout << dec << "nread: " << nread << "; t1: " << t1 << "\n";
                     if(nread <= 0)
-                        break;
+                        // break;
+                        continue;
 
                     // for(int k = 0; k < nread; ++k) {
                     // // printf("%d\n", buf[k]);
@@ -177,9 +178,9 @@ int main() {
                     // cout << "\n";
                     memset(buf, 0, sizeof(buf) );
                     ++t1;
-                }
-            }
-        }
+                // }
+        //     }
+        // }
     }
 
     close(fd);

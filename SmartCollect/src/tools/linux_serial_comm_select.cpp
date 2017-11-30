@@ -134,7 +134,7 @@ int main() {
     //     cerr << "Error.\n";
     // }
     struct timeval timeout={0, 0};
-    int fd = open("/dev/ttyUSB0", O_RDONLY | O_NONBLOCK);
+    int fd = open("/dev/ttyUSB0", O_RDONLY);// | O_NONBLOCK);
     if(fd == -1) {
         perror("Serial port error\n");
         exit(1);
@@ -147,7 +147,7 @@ int main() {
         exit(0);
     }
 
-    unsigned char buf[2000];
+    unsigned char buf[200];
     fd_set rd;
     int nread = 0;
 

@@ -18,10 +18,11 @@ int main(int argc, char **argv) {
     LOG(INFO) << "Set " << ttyname(fd) << " successfully";
 
     ros::init(argc, argv, "hdop_publisher");
+    ros::NodeHandle private_nh("~");
     ros::NodeHandle nh;
     ros::Publisher pubHdop = nh.advertise<std_msgs::String>("imu422_hdop", 0);
     string rawInsFile("");
-    nh.param("raw_ins_path", rawInsFile, rawInsFile);
+    private_nh.param("raw_ins_path", rawInsFile, rawInsFile);
     rawInsFile += "rawINS.5651";
 
     FILE *pOutFile;
@@ -36,6 +37,7 @@ int main(int argc, char **argv) {
     int nread = 0;
     string completeGpgga("");
     bool isGpggaStart = false;
+    std_msgs::String hdopMsg;
 
     while(ros::ok() ) {
         bzero(buf, BUFFER_SIZE);
@@ -46,7 +48,7 @@ int main(int argc, char **argv) {
         }
 
 #ifndef NDEBUG
-        for(int i = 0; i < nread; ++i) {
+        for(size_t i = 0; i < nread; ++i) {
             DLOG(INFO) << std::hex << (int)buf[i];
         }
 #endif
@@ -63,6 +65,8 @@ int main(int argc, char **argv) {
             continue;
         }
         LOG(INFO) << "hdop: " << hdop;
+        hdopMsg.data = hdop;
+        pubHdop.publish(hdopMsg);
     }
 
     fclose(pOutFile);
@@ -72,6 +76,7 @@ int main(int argc, char **argv) {
 
 bool getGpgga(const unsigned char *inBuf, const size_t &bufSize, string &gpgga, bool &isGpggaStart) {
     DLOG(INFO) << __FUNCTION__ << " start.";
+    bool isGpggaComplete = false;
     for(size_t i = 0; i < bufSize; ++i) {
         switch(inBuf[i]) {
         case '$':
@@ -81,12 +86,21 @@ bool getGpgga(const unsigned char *inBuf, const size_t &bufSize, string &gpgga, 
         case '\r':
             break;
         case '\n':
-            isGpggaStart = false;
-            DLOG(INFO) << "gpgga: " << gpgga;
-            if(gpgga.size() > 6) {
-                return true;
+            if(!isGpggaStart) {
+                LOG(INFO) << "Met \\n before $: " << gpgga;
+                break;
             }
-            // else: might be: "$ \n"
+            if(gpgga.size() < 6) {
+                LOG(INFO) << "Met $**\\n: " << gpgga;
+                gpgga.clear();
+                isGpggaStart = false;
+                break;
+            }
+            // when size > 6 && isGpggaStart: it must be $GPGGA..
+            isGpggaComplete = true;
+            isGpggaStart = false;
+             // break loop
+            i = bufSize;
             break;
         default:
             if(!isGpggaStart) {
@@ -94,17 +108,16 @@ bool getGpgga(const unsigned char *inBuf, const size_t &bufSize, string &gpgga, 
             }
             gpgga += inBuf[i];
             if(6 == gpgga.size() ) {
-                if(gpgga != "$GPGGA") {
-                    DLOG(INFO) << "Though contains $, not $GPGGA.";
+                if("$GPGGA" != gpgga) {
+                    LOG(INFO) << "Met $, but not $GPGGA: " << gpgga;
                     gpgga.clear();
                     isGpggaStart = false;
                 }
             }
         }
     }
-
     DLOG(INFO) << "gpgga: " << gpgga;
-    return false;
+    return isGpggaComplete;
 }
 
 bool getGdopFromGpgga(const string &inGpgga, string &outGdop) {

@@ -126,9 +126,15 @@ if __name__ == "__main__":
     path_img = path_img + " " + path_imu
     print path_img
     change_node_properties(result_node, {"args": path_img})
+
     # add mif file path
     result_node = get_node_by_keyvalue(nodes, {"type": "display_had_node"})
     element = create_node("param", {"name": "mif_path", "value": path + "/../../src/display_had/data"})
+    add_child_node(result_node, element)
+
+    # add raw ins record path
+    result_node = get_node_by_keyvalue(nodes, {"type": "hdop_teller_node"})
+    element = create_node("param", {"name": "raw_ins_path", "value": path_imu})
     add_child_node(result_node, element)
 
     # 3 输出到结果文件
@@ -143,11 +149,11 @@ if __name__ == "__main__":
     # 2.2 通过属性准确定位子节点
     # add child node
     path_lidar = path + "/Lidar/"
-    result_node_cld = get_node_by_keyvalue(nodes_cld, {"type": "nodelet"})
-    element = create_node("param", {"name": "record_path", "value": path_lidar},"")
+    result_node_cld = get_node_by_keyvalue(nodes_cld, {"name": "$(arg manager)_driver"})
+    element = create_node("param", {"name": "record_path", "value": path_lidar}, "")
     add_child_node(result_node_cld, element)
     print path_lidar
     # 3 输出到结果文件
-    write_xml(tree_cld, "./src/velodyne/velodyne_pointcloud/launch/cloud_nodelet.xml")
+    write_xml(tree_cld, "src/velodyne/velodyne_driver/launch/nodelet_manager.xml")
     ##############################################
 

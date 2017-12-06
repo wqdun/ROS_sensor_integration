@@ -2,6 +2,13 @@
 
 namespace public_tools
 {
+uint8_t PublicTools::string2uchar(const string& str) {
+    std::istringstream iss(str);
+    uint8_t num;
+    iss >> num;
+    return num;
+}
+
 int PublicTools::string2int(const string& str) {
     std::istringstream iss(str);
     int num;
@@ -59,6 +66,21 @@ void PublicTools::GeoToGauss(double jd, double wd, short DH, short DH_width, dou
     *y = 500000 + N * (m + (1.0 - pow(t, 2) + et2) * pow(m, 3) / 6.0 + (5.0 - 18.0 * pow(t, 2) + pow(t, 4) + 14.0 * et2 - 58.0 * et2 * pow(t, 2)) * pow(m, 5) / 120.0);
 }
 
+void PublicTools::transform_coordinate(const vector<geometry_msgs::Point> &points_gauss, const geometry_msgs::Point &current_gauss, vector<geometry_msgs::Point> &points_transformed) {
+    DLOG_EVERY_N(INFO, 100) << __FUNCTION__ << " start.";
+    points_transformed.clear();
+    geometry_msgs::Point temp_point;
+    for(auto &point: points_gauss) {
+        // 100 m/grid
+        temp_point.x = (point.x - current_gauss.x); // * 0.01;
+        temp_point.y = (point.y - current_gauss.y); // * 0.01;
+        // temp_point.z = (point.z - current_gauss.z);
+        // ignore height, always 0
+        temp_point.z = 0;
+        points_transformed.push_back(temp_point);
+    }
+}
+
 }
 // namespace public_tools
 
@@ -67,3 +89,4 @@ void PublicTools::GeoToGauss(double jd, double wd, short DH, short DH_width, dou
 //     PublicTools test;
 //     PublicTools::tf_example();
 // }
+

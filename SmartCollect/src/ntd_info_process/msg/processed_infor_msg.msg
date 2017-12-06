@@ -1,6 +1,10 @@
+float64 GPStime
+point_wgs latlonhei
 float64 current_pitch
 float64 current_roll
 float64 current_heading
-float64 GPStime
-# geometry_msgs/Point latlonhei
-point_wgs latlonhei
+float64 current_speed
+uint8 nsv1_num
+uint8 nsv2_num
+string pps_status
+float64 hdop

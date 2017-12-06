@@ -24,6 +24,7 @@ using std::vector;
 #include "../../public_tools/coordtrans.h"
 #include "ntd_info_process/processed_infor_msg.h"
 #include "MortonCodecTransJava.h"
+#include "display_track.h"
 
 typedef vector<geometry_msgs::Point> MifLine_t;
 typedef vector<MifLine_t> MifLines_t;
@@ -41,7 +42,7 @@ private:
     void getFiles(const string& path, vector<string>& files);
     void readFile(const string &file);
     void gpsCallback(const ntd_info_process::processed_infor_msg::ConstPtr& pGpsMsg);
-    void initMarker(visualization_msgs::Marker &marker, const size_t id);
+    void initMarker(visualization_msgs::Marker &marker, const size_t id, const ros::Time &now);
 
     ros::Subscriber mSubGps;
     ros::Publisher mPubArray;
@@ -51,8 +52,7 @@ private:
     visualization_msgs::MarkerArray mLineArray;
     bool mIsInSameMesh;
     std::ofstream mTrackMarsFile;
+    TrackDisplayer *mpTrackDisplayer;
 };
-
-static void transform_coordinate(const vector<geometry_msgs::Point> &points_gauss, const geometry_msgs::Point &current_gauss, vector<geometry_msgs::Point> &points_transformed);
 
 #endif

@@ -35,6 +35,15 @@ VelodyneDriver::VelodyneDriver(ros::NodeHandle node,
 
   // get model name, validate string, determine packet rate
   private_nh.param("model", config_.model, std::string("64E"));
+
+  private_nh.param("record_path", mRecordFile, mRecordFile);
+  // get unix time stamp as file name
+  time_t tt = time(NULL);
+  tm *t= localtime(&tt);
+  char fileName[50];
+  (void)sprintf(fileName, "%02d_%02d_%02d.lidar", t->tm_hour, t->tm_min, t->tm_sec);
+  mRecordFile += fileName;
+
   double packet_rate;                   // packet frequency (Hz)
   std::string model_full_name;
   if ((config_.model == "64E_S2") ||
@@ -119,6 +128,36 @@ VelodyneDriver::VelodyneDriver(ros::NodeHandle node,
   // raw packet output topic
   output_ =
     node.advertise<velodyne_msgs::VelodyneScan>("velodyne_packets", 50);
+  mPubPpsStatus = node.advertise<std_msgs::String>("velodyne_pps_status", 0);
+}
+
+static bool parsePositionPkt(const char *pkt, std::string &parsedRes) {
+    ROS_DEBUG_STREAM(__FUNCTION__ << " start.");
+    if('$' != pkt[206]) {
+      ROS_INFO_STREAM("No $GPRMC received: " << pkt[206]);
+      return false;
+    }
+
+    // 00 .. 03
+    parsedRes = std::to_string(pkt[202]);
+
+    // $GPRMC,,V,,,,,,,,,,N*53
+    // A validity - A-ok, V-invalid, refer VLP-16 manual
+    std::stringstream isGprmcValid;
+    size_t dotCnt = 0;
+    for(size_t i = 210; i < 230; ++i) {
+      if(',' == pkt[i]) {
+        ++dotCnt;
+      }
+      if(2 == dotCnt) {
+        isGprmcValid << pkt[i + 1];
+        break;
+      }
+    }
+
+    // "3,A"
+    parsedRes += ("," + isGprmcValid.str() );
+    return true;
 }
 
 /** poll the device
@@ -133,13 +172,22 @@ bool VelodyneDriver::poll(void)
 
   // Since the velodyne delivers data at a very high rate, keep
   // reading and publishing scans as fast as possible.
-  for (int i = 0; i < config_.npackets; ++i)
+  std_msgs::String ppsStatus;
+  bool isPositionPkt = false;
+  char positionPkt[POSITION_PACKET_SIZE];
+  bzero(positionPkt, POSITION_PACKET_SIZE);
+  for (int i = 0; i < config_.npackets; )// ++i)
     {
       while (true)
         {
           // keep reading until full packet received
-          int rc = input_->getPacket(&scan->packets[i], config_.time_offset);
-          if (rc == 0) break;       // got a full packet?
+          int rc = input_->getPacket(&scan->packets[i], config_.time_offset, isPositionPkt, positionPkt);
+          if (rc == 0) {
+            if(!isPositionPkt) {
+              ++i;
+            }
+            break;       // got a full packet?
+          }
           if (rc < 0) return false; // end of file reached?
         }
     }
@@ -148,10 +196,31 @@ bool VelodyneDriver::poll(void)
   ROS_DEBUG("Publishing a full Velodyne scan.");
   scan->header.stamp = scan->packets[config_.npackets - 1].stamp;
   scan->header.frame_id = config_.frame_id;
+
+  FILE *pOutFile;
+  if(!(pOutFile = fopen(mRecordFile.c_str(), "ab") ) ) {
+    ROS_ERROR_STREAM("Create file:" << mRecordFile << " failed, errno:" << errno);
+    exit(1);
+  }
+  ROS_DEBUG_STREAM("Create file:" << mRecordFile << " successfully.");
+
+  for(size_t i = 0; i < scan->packets.size(); ++i) {
+    const double pktDaySecond = getDaySecond(ros::Time::now().toSec(), scan->packets[i].stamp.toSec());
+
+    (void)fwrite(&pktDaySecond, sizeof(pktDaySecond), 1, pOutFile);
+    (void)fwrite(&(scan->packets[i].data[0]), packet_size, 1, pOutFile);
+  }
+
+  fclose(pOutFile);
+
+  // only last position pkt be published, ignore the rest
+  if(parsePositionPkt(positionPkt, ppsStatus.data) ) {
+    mPubPpsStatus.publish(ppsStatus);
+  }
+  // else: do nothing when no position pkt received in this scan
+
   output_.publish(scan);
 
-  static size_t pubCnt = 0;
-  ROS_INFO_STREAM("Pub count:" << ++pubCnt);
   // notify diagnostics that a message has been published, updating
   // its status
   diag_topic_->tick(scan->header.stamp);
@@ -165,6 +234,30 @@ void VelodyneDriver::callback(velodyne_driver::VelodyneNodeConfig &config,
 {
   ROS_INFO("Reconfigure Request");
   config_.time_offset = config.time_offset;
+}
+
+
+static double getDaySecond(const double rosTime, const double pktTime) {
+  // Ros time is UTC time(+0), not local time(Beijing: +8)
+  int rosHour = (int)rosTime / 3600 % 24;
+  const int rosMinute = (int)rosTime / 60 % 60;
+  const int pktMinute = (int)pktTime / 60;
+  const int errMinute = rosMinute - pktMinute;
+  if(errMinute > 20) {
+    ++rosHour;
+  }
+  else
+  if(errMinute < -20) {
+    --rosHour;
+  }
+  // else {
+  //   // do nothing when errMinute in [-10, 10]
+  // }
+
+  // in case: -1 || 24
+  rosHour = (rosHour + 24) % 24;
+
+  return pktTime + 3600 * rosHour;
 }
 
 } // namespace velodyne_driver

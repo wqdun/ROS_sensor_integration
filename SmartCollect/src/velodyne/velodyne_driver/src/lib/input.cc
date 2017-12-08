@@ -35,9 +35,6 @@
 
 namespace velodyne_driver
 {
-  static const size_t packet_size =
-    sizeof(velodyne_msgs::VelodynePacket().data);
-
   ////////////////////////////////////////////////////////////////////////
   // Input base class implementation
   ////////////////////////////////////////////////////////////////////////
@@ -70,6 +67,7 @@ namespace velodyne_driver
     Input(private_nh, port)
   {
     sockfd_ = -1;
+    mSockfdPosition = -1;
 
     if (!devip_str_.empty()) {
       inet_aton(devip_str_.c_str(),&devip_);
@@ -78,7 +76,8 @@ namespace velodyne_driver
     // connect to Velodyne UDP port
     ROS_INFO_STREAM("Opening UDP socket: port " << port);
     sockfd_ = socket(PF_INET, SOCK_DGRAM, 0);
-    if (sockfd_ == -1)
+    mSockfdPosition = socket(PF_INET, SOCK_DGRAM, 0);
+    if (sockfd_ == -1 || -1 == mSockfdPosition)
       {
         perror("socket");               // TODO: ROS_ERROR errno
         return;
@@ -90,15 +89,31 @@ namespace velodyne_driver
     my_addr.sin_port = htons(port);          // port in network byte order
     my_addr.sin_addr.s_addr = INADDR_ANY;    // automatically fill in my IP
 
+    sockaddr_in my_addr_position;
+    memset(&my_addr_position, 0, sizeof(my_addr_position));
+    my_addr_position.sin_family = AF_INET;
+    my_addr_position.sin_port = htons(POSITION_PORT_NUMBER);
+    my_addr_position.sin_addr.s_addr = INADDR_ANY;
+
     if (bind(sockfd_, (sockaddr *)&my_addr, sizeof(sockaddr)) == -1)
       {
         perror("bind");                 // TODO: ROS_ERROR errno
+        return;
+      }
+    if (bind(mSockfdPosition, (sockaddr *)&my_addr_position, sizeof(sockaddr)) == -1)
+      {
+        perror("mSockfdPosition bind");
         return;
       }
 
     if (fcntl(sockfd_,F_SETFL, O_NONBLOCK|FASYNC) < 0)
       {
         perror("non-block");
+        return;
+      }
+    if (fcntl(mSockfdPosition, F_SETFL, O_NONBLOCK|FASYNC) < 0)
+      {
+        perror("mSockfdPosition non-block");
         return;
       }
 
@@ -112,13 +127,15 @@ namespace velodyne_driver
   }
 
   /** @brief Get one velodyne packet. */
-  int InputSocket::getPacket(velodyne_msgs::VelodynePacket *pkt, const double time_offset)
+  int InputSocket::getPacket(velodyne_msgs::VelodynePacket *pkt, const double time_offset, bool &_isPositionPkt, char *_positionPkt)
   {
     double time1 = ros::Time::now().toSec();
 
-    struct pollfd fds[1];
+    struct pollfd fds[2];
     fds[0].fd = sockfd_;
     fds[0].events = POLLIN;
+    fds[1].fd = mSockfdPosition;
+    fds[1].events = POLLIN;
     static const int POLL_TIMEOUT = 1000; // one second (in msec)
 
     sockaddr_in sender_address;
@@ -146,7 +163,7 @@ namespace velodyne_driver
         // poll() until input available
         do
           {
-            int retval = poll(fds, 1, POLL_TIMEOUT);
+            int retval = poll(fds, 2, POLL_TIMEOUT);
             if (retval < 0)             // poll() error?
               {
                 if (errno != EINTR)
@@ -165,26 +182,27 @@ namespace velodyne_driver
                 ROS_ERROR("poll() reports Velodyne error");
                 return 1;
               }
-          } while ((fds[0].revents & POLLIN) == 0);
-
-        // Receive packets that should now be available from the
-        // socket using a blocking read.
-        ssize_t nbytes = recvfrom(sockfd_, &pkt->data[0],
-                                  packet_size,  0,
-                                  (sockaddr*) &sender_address,
-                                  &sender_address_len);
-
-        if (nbytes < 0)
-          {
-            if (errno != EWOULDBLOCK)
+            if ((fds[1].revents & POLLERR)
+                || (fds[1].revents & POLLHUP)
+                || (fds[1].revents & POLLNVAL)) // device error?
               {
-                perror("recvfail");
-                ROS_INFO("recvfail");
+                ROS_ERROR("mSockfdPosition poll() reports Velodyne error");
                 return 1;
               }
           }
-        else if ((size_t) nbytes == packet_size)
-          {
+        while(((fds[0].revents & POLLIN) == 0) && (0 == (fds[1].revents & POLLIN)));
+
+        _isPositionPkt = (fds[0].revents & POLLIN)? false: true;
+        // Receive packets that should now be available from the
+        // socket using a blocking read.
+        ssize_t nbytes = -1;
+        // get packet from 2368 port: long frame
+        if(!_isPositionPkt) {
+          nbytes = recvfrom(sockfd_, &pkt->data[0],
+                                    packet_size,  0,
+                                    (sockaddr*) &sender_address,
+                                    &sender_address_len);
+          if((size_t) nbytes == packet_size) {
             // read successful,
             // if packet is not from the lidar scanner we selected by IP,
             // continue otherwise we are done
@@ -194,17 +212,43 @@ namespace velodyne_driver
             else
               break; //done
           }
-
+        }
+        // get packet from 8308 port: short frame/position packet
+        else {
+          nbytes = recvfrom(mSockfdPosition, _positionPkt,
+                                    POSITION_PACKET_SIZE,  0,
+                                    (sockaddr*) &sender_address,
+                                    &sender_address_len);
+          if((size_t) nbytes == POSITION_PACKET_SIZE) {
+            // read successful,
+            // if packet is not from the lidar scanner we selected by IP,
+            // continue otherwise we are done
+            if(devip_str_ != ""
+               && sender_address.sin_addr.s_addr != devip_.s_addr)
+              continue;
+            else
+              break; //done
+          }
+        }
+        if(nbytes < 0) {
+          if (errno != EWOULDBLOCK) {
+            perror("recvfail");
+            ROS_INFO("recvfail");
+            return 1;
+          }
+        }
         ROS_DEBUG_STREAM("incomplete Velodyne packet read: "
-                         << nbytes << " bytes");
+                       << nbytes << " bytes");
       }
 
+    if(_isPositionPkt) {
+      return 0;
+    }
     // Average the times at which we begin and end reading.  Use that to
     // estimate when the scan occurred. Add the time offset.
     // double time2 = ros::Time::now().toSec();
     // pkt->stamp = ros::Time((time2 + time1) / 2.0 + time_offset);
 
-    assert(pkt->data.size() >= 1204);
     const uint32_t pktTimeHourSInUs = (pkt->data[1203] << 24) + (pkt->data[1202] << 16) + (pkt->data[1201] << 8) + pkt->data[1200];
     pkt->stamp = ros::Time(pktTimeHourSInUs / 1000000.0);
 
@@ -270,7 +314,7 @@ namespace velodyne_driver
   }
 
   /** @brief Get one velodyne packet. */
-  int InputPCAP::getPacket(velodyne_msgs::VelodynePacket *pkt, const double time_offset)
+  int InputPCAP::getPacket(velodyne_msgs::VelodynePacket *pkt, const double time_offset, bool &_isPositionPkt, char *_positionPkt)
   {
     struct pcap_pkthdr *header;
     const u_char *pkt_data;
@@ -294,7 +338,6 @@ namespace velodyne_driver
             memcpy(&pkt->data[0], pkt_data+42, packet_size);
             // pkt->stamp = ros::Time::now(); // time_offset not considered here, as no synchronization required
 
-            assert(pkt->data.size() >= 1204);
             const uint32_t pktTimeHourSInUs = (pkt->data[1203] << 24) + (pkt->data[1202] << 16) + (pkt->data[1201] << 8) + pkt->data[1200];
             pkt->stamp = ros::Time(pktTimeHourSInUs / 1000000.0);
 

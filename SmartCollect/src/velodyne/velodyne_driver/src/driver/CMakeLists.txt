@@ -1,3 +1,4 @@
+add_compile_options(-std=c++11)
 # build the driver node
 add_executable(velodyne_node velodyne_node.cc driver.cc)
 add_dependencies(velodyne_node velodyne_driver_gencfg)

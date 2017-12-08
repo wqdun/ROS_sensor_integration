@@ -17,6 +17,7 @@
 
 #include <string>
 #include <ros/ros.h>
+#include <std_msgs/String.h>
 #include <diagnostic_updater/diagnostic_updater.h>
 #include <diagnostic_updater/publisher.h>
 #include <dynamic_reconfigure/server.h>
@@ -26,6 +27,8 @@
 
 namespace velodyne_driver
 {
+
+static double getDaySecond(const double rosTime, const double pktTime);
 
 class VelodyneDriver
 {
@@ -59,12 +62,14 @@ private:
 
   boost::shared_ptr<Input> input_;
   ros::Publisher output_;
+  ros::Publisher mPubPpsStatus;
 
   /** diagnostics updater */
   diagnostic_updater::Updater diagnostics_;
   double diag_min_freq_;
   double diag_max_freq_;
   boost::shared_ptr<diagnostic_updater::TopicDiagnostic> diag_topic_;
+  std::string mRecordFile;
 };
 
 } // namespace velodyne_driver

@@ -44,6 +44,8 @@ namespace velodyne_driver
 {
   static uint16_t DATA_PORT_NUMBER = 2368;     // default data port
   static uint16_t POSITION_PORT_NUMBER = 8308; // default position port
+  static const size_t packet_size = sizeof(velodyne_msgs::VelodynePacket().data);
+  static const size_t POSITION_PACKET_SIZE = 512;
 
   /** @brief Velodyne input base class */
   class Input
@@ -61,7 +63,7 @@ namespace velodyne_driver
      *          > 0 if incomplete packet (is this possible?)
      */
     virtual int getPacket(velodyne_msgs::VelodynePacket *pkt,
-                          const double time_offset) = 0;
+                          const double time_offset, bool &_isPositionPkt, char *_positionPkt) = 0;
 
   protected:
     ros::NodeHandle private_nh_;
@@ -77,13 +79,13 @@ namespace velodyne_driver
                 uint16_t port = DATA_PORT_NUMBER);
     virtual ~InputSocket();
 
-    virtual int getPacket(velodyne_msgs::VelodynePacket *pkt, 
-                          const double time_offset);
+    virtual int getPacket(velodyne_msgs::VelodynePacket *pkt, const double time_offset, bool &_isPositionPkt, char *_positionPkt);
     void setDeviceIP( const std::string& ip );
   private:
 
   private:
     int sockfd_;
+    int mSockfdPosition;
     in_addr devip_;
   };
 
@@ -105,8 +107,8 @@ namespace velodyne_driver
               double repeat_delay=0.0);
     virtual ~InputPCAP();
 
-    virtual int getPacket(velodyne_msgs::VelodynePacket *pkt, 
-                          const double time_offset);
+    virtual int getPacket(velodyne_msgs::VelodynePacket *pkt,
+                          const double time_offset, bool &_isPositionPkt, char *_positionPkt);
     void setDeviceIP( const std::string& ip );
 
   private:

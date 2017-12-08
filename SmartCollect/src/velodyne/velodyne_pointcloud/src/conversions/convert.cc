@@ -19,16 +19,11 @@
 
 namespace velodyne_pointcloud
 {
-  using std::string;
-
   /** @brief Constructor. */
   Convert::Convert(ros::NodeHandle node, ros::NodeHandle private_nh):
     data_(new velodyne_rawdata::RawData())
   {
     data_->setup(private_nh);
-
-    private_nh.param("record_path", mVPrecordPath, mVPrecordPath);
-    data_->setRecordPath(mVPrecordPath);
 
     // advertise output point cloud (before subscribing to input data)
     output_ =
@@ -43,7 +38,7 @@ namespace velodyne_pointcloud
 
     // subscribe to VelodyneScan packets
     velodyne_scan_ =
-      node.subscribe("velodyne_packets", 50,
+      node.subscribe("velodyne_packets", 10,
                      &Convert::processScan, (Convert *) this,
                      ros::TransportHints().tcpNoDelay(true));
   }
@@ -59,12 +54,8 @@ namespace velodyne_pointcloud
   /** @brief Callback for raw scan messages. */
   void Convert::processScan(const velodyne_msgs::VelodyneScan::ConstPtr &scanMsg)
   {
-    const double time1 = ros::Time::now().toSec();
-    static size_t subCnt = 0;
-    ROS_INFO_STREAM("Sub count:" << ++subCnt);
-
-    // if (output_.getNumSubscribers() == 0)         // no one listening?
-    //   return;                                     // avoid much work
+    if (output_.getNumSubscribers() == 0)         // no one listening?
+      return;                                     // avoid much work
 
     // allocate a point cloud with same time and frame ID as raw data
     velodyne_rawdata::VPointCloud::Ptr
@@ -84,8 +75,6 @@ namespace velodyne_pointcloud
     ROS_DEBUG_STREAM("Publishing " << outMsg->height * outMsg->width
                      << " Velodyne points, time: " << outMsg->header.stamp);
     output_.publish(outMsg);
-
-    ROS_INFO_STREAM(__FUNCTION__ << " cost:" << ros::Time::now().toSec() - time1);
   }
 
 } // namespace velodyne_pointcloud

@@ -53,8 +53,6 @@ namespace velodyne_pointcloud
       int npackets;                    ///< number of packets to combine
     } Config;
     Config config_;
-
-    std::string mVPrecordPath;
   };
 
 } // namespace velodyne_pointcloud

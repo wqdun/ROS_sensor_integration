@@ -36,7 +36,6 @@
 
 namespace velodyne_rawdata
 {
-  using std::string;
   ////////////////////////////////////////////////////////////////////////
   //
   // RawData base class implementation
@@ -335,16 +334,9 @@ namespace velodyne_rawdata
         ROS_WARN_STREAM_THROTTLE(60, "skipping invalid VLP-16 packet: block "
                                  << block << " header value is "
                                  << raw->blocks[block].header);
-        return;                         // bad packet: skip the rest @05586: skip all
+        return;                         // bad packet: skip the rest
       }
-    }
 
-    const double pktTimeInS = pkt.stamp.toSec();
-    const double rosTimeInS = ros::Time::now().toSec();
-    const double pktDaySecond = getDaySecond(rosTimeInS, pktTimeInS);
-    (void)saveFile(&pktDaySecond, raw);
-
-    for(int block = 0; block < BLOCKS_PER_PACKET; ++block) {
       // Calculate difference between current and next block's azimuth angle.
       azimuth = (float)(raw->blocks[block].rotation);
       if (block < (BLOCKS_PER_PACKET-1)){
@@ -370,13 +362,12 @@ namespace velodyne_rawdata
 
           /*condition added to avoid calculating points which are not
             in the interesting defined area (min_angle < area < max_angle)*/
-          // if ((azimuth_corrected >= config_.min_angle
-          //      && azimuth_corrected <= config_.max_angle
-          //      && config_.min_angle < config_.max_angle)
-          //      ||(config_.min_angle > config_.max_angle
-          //      && (azimuth_corrected <= config_.max_angle
-          //      || azimuth_corrected >= config_.min_angle)))
-          // {
+          if ((azimuth_corrected >= config_.min_angle
+               && azimuth_corrected <= config_.max_angle
+               && config_.min_angle < config_.max_angle)
+               ||(config_.min_angle > config_.max_angle
+               && (azimuth_corrected <= config_.max_angle
+               || azimuth_corrected >= config_.min_angle))){
 
             // convert polar coordinates to Euclidean XYZ
             float distance = tmp.uint * DISTANCE_RESOLUTION;
@@ -476,7 +467,7 @@ namespace velodyne_rawdata
             intensity = (intensity < min_intensity) ? min_intensity : intensity;
             intensity = (intensity > max_intensity) ? max_intensity : intensity;
 
-            // if (pointInRange(distance)) {
+            if (pointInRange(distance)) {
 
               // append this point to the cloud
               VPoint point;
@@ -488,75 +479,11 @@ namespace velodyne_rawdata
 
               pc.points.push_back(point);
               ++pc.width;
-            // }
-          // }
+            }
+          }
         }
       }
     }
   }
-
-int RawData::saveFile(const double *pTimeStamp, const void *pData) {
-    // about 600 packets/second
-    static const size_t MAX_PKT_CNT = 1000000;
-    static size_t pktCnt = 0;
-    static char fileName[50];
-    static FILE *pOutFile;
-    // get unix time stamp as file name
-    if(0 == pktCnt) {
-        time_t tt = time(NULL);
-        tm *t= localtime(&tt);
-        (void)sprintf(fileName, "%02d_%02d_%02d.lidar", t->tm_hour, t->tm_min, t->tm_sec);
-
-        const string fileNameStr(fileName);
-        const string recordFile(mRecordPath + fileNameStr);
-
-        if( !(pOutFile = fopen(recordFile.c_str(), "wb")) ) {
-            ROS_WARN_STREAM("Create file:" << fileName << " failed, errno:" << errno);
-        }
-        ROS_DEBUG_STREAM("Create file:" << fileName << " successfully.");
-    }
-
-    static const size_t timeSize = sizeof(*pTimeStamp);
-    if(1 != fwrite(pTimeStamp, timeSize, 1, pOutFile)) {
-      ROS_WARN_STREAM("Write time stamp error.");
-    }
-    if(1 != fwrite(pData, PACKET_SIZE, 1, pOutFile)) {
-      ROS_WARN_STREAM("Write data[1206] error.");
-    }
-
-    ++pktCnt;
-    if(MAX_PKT_CNT == pktCnt) {
-      pktCnt = 0;
-      fclose(pOutFile);
-    }
-
-    return 0;
-}
-
-void RawData::setRecordPath(const string &path) {
-  mRecordPath = path;
-}
-
-static double getDaySecond(const double rosTime, const double pktTime) {
-  int rosHour = (int)rosTime / 3600 % 24;
-  const int rosMinute = (int)rosTime / 60 % 60;
-  const int pktMinute = (int)pktTime / 60;
-  const int errMinute = rosMinute - pktMinute;
-  if(errMinute > 20) {
-    ++rosHour;
-  }
-  else
-  if(errMinute < -20) {
-    --rosHour;
-  }
-  // else {
-  //   // do nothing when errMinute in [-10, 10]
-  // }
-
-  // in case: -1 || 24
-  rosHour = (rosHour + 24) % 24;
-
-  return pktTime + 3600 * rosHour;
-}
 
 } // namespace velodyne_rawdata

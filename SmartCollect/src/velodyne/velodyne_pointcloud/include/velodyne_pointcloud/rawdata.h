@@ -152,7 +152,7 @@ namespace velodyne_rawdata
     void setParameters(double min_range, double max_range, double view_direction,
                        double view_width);
 
-    void setRecordPath(const std::string &path);
+
 
   private:
 
@@ -185,11 +185,7 @@ namespace velodyne_rawdata
       return (range >= config_.min_range
               && range <= config_.max_range);
     }
-    int saveFile(const double *pTimeStamp, const void *pData);
-    std::string mRecordPath;
   };
-
-  static double getDaySecond(const double rosTime, const double pktTime);
 
 } // namespace velodyne_rawdata
 

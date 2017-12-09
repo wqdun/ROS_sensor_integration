@@ -6,8 +6,10 @@ InforProcess::InforProcess() {
     mSub = nh.subscribe("imu_string", 0, &InforProcess::gpsCB, this);
     mSubVelodyne = nh.subscribe("velodyne_pps_status", 0, &InforProcess::velodyneCB, this);
     mSub422 = nh.subscribe("imu422_hdop", 0, &InforProcess::rawImuCB, this);
+    mSubCameraImg = nh.subscribe("cam_speed", 0, &InforProcess::cameraImgCB, this);
+
     mPub = nh.advertise<ntd_info_process::processed_infor_msg>("processed_infor_msg", 0);
-    mIsVelodyneUpdated = mIsRawImuUpdated = false;
+    mIsVelodyneUpdated = mIsRawImuUpdated = mIsGpsUpdated = false;
 
 #ifdef SIMULATION
     mOutMsg.latlonhei.lat = 40.071975;
@@ -33,49 +35,75 @@ void InforProcess::run() {
         mOutMsg.latlonhei.lon -= 0.00002;
 #endif
 
+        if(!mIsGpsUpdated) {
+            mOutMsg.GPStime = mOutMsg.latlonhei.lat = mOutMsg.latlonhei.lon = mOutMsg.latlonhei.hei = mOutMsg.current_pitch = mOutMsg.current_roll = mOutMsg.current_heading = mOutMsg.current_speed = -1.;
+            mOutMsg.nsv1_num = mOutMsg.nsv2_num = -1;
+        }
+        mIsGpsUpdated = false;
+
         // for rawImuCB is 1Hz, my freq should <= 1Hz: 0.5Hz
         if(0 == (freqDivider % 16) ) {
             if(!mIsRawImuUpdated) {
                 // -1: hdop not updated
-                mOutMsg.hdop = -1;
+                mOutMsg.hdop = mOutMsg.latitude = mOutMsg.longitude = mOutMsg.noSV_422 = -1;
             }
             mIsRawImuUpdated = false;
         }
 
+        // 8Hz
         if(!mIsVelodyneUpdated) {
-            mOutMsg.pps_status = "Signal not Received";
+            mOutMsg.pps_status = mOutMsg.is_gprmc_valid = "No GPRMC received";
         }
         mIsVelodyneUpdated = false;
 
         mPub.publish(mOutMsg);
-
     }
+}
+
+void InforProcess::cameraImgCB(const std_msgs::Float64::ConstPtr& pCameraImgMsg) {
+    mOutMsg.camera_fps = pCameraImgMsg->data;
 }
 
 void InforProcess::velodyneCB(const std_msgs::String::ConstPtr& pVelodyneMsg) {
     // 10Hz
     mIsVelodyneUpdated = true;
-    const uint8_t status_index = public_tools::PublicTools::string2uchar(pVelodyneMsg->data);
-    mOutMsg.pps_status = (status_index <= 3)? PPS_STATUS[status_index]: ("Out range: " + pVelodyneMsg->data);
-    if(status_index > 3) {
-        LOG(ERROR) << "Invalid PPS status: " << status_index;
+    if(pVelodyneMsg->data.empty() ) {
+        LOG(ERROR) << "Got no GPRMC from LIDAR.";
+        exit(1);
     }
 
+    vector<string> pps_gprmc;
+    boost::split(pps_gprmc, pVelodyneMsg->data, boost::is_any_of(",") );
+    if(pps_gprmc.size() < 2) {
+        LOG(ERROR) << "Wrong pps_gprmc: " << pVelodyneMsg->data;
+        exit(1);
+    }
+
+    const int status_index = public_tools::PublicTools::string2int(pps_gprmc[0]);
+    if(status_index > 3) {
+        LOG(ERROR) << "Invalid PPS status: " << pps_gprmc[0];
+        exit(1);
+    }
+
+    mOutMsg.pps_status = PPS_STATUS[status_index];
+    // A validity - A-ok, V-invalid, refer VLP-16 manual
+    mOutMsg.is_gprmc_valid = pps_gprmc[1];
 }
 
-void InforProcess::rawImuCB(const std_msgs::String::ConstPtr& pRawImuMsg) {
+void InforProcess::rawImuCB(const hdop_teller::imu5651_422::ConstPtr& pRawImuMsg) {
     // $GPGGA sentence is set 1Hz
     mIsRawImuUpdated = true;
-    if("" == pRawImuMsg->data) {
-        // in case: $GPGGA,,,,,,0,,,,,,,,*66
-        mOutMsg.hdop = 0;
-        return;
-    }
-    mOutMsg.hdop = public_tools::PublicTools::string2double(pRawImuMsg->data);
+
+    // in case: $GPGGA,,,,,,0,,,,,,,,*66
+    mOutMsg.latitude = (pRawImuMsg->Latitude.empty() )? 0: (public_tools::PublicTools::string2double(pRawImuMsg->Latitude) );
+    mOutMsg.longitude = (pRawImuMsg->Longitude.empty() )? 0: (public_tools::PublicTools::string2double(pRawImuMsg->Longitude) );
+    mOutMsg.hdop = (pRawImuMsg->Hdop.empty() )? 0: (public_tools::PublicTools::string2double(pRawImuMsg->Hdop) );
+    mOutMsg.noSV_422 = (pRawImuMsg->NoSV.empty() )? 0: (public_tools::PublicTools::string2int(pRawImuMsg->NoSV) );
 }
 
 void InforProcess::gpsCB(const roscameragpsimg::imu5651::ConstPtr& pGPSmsg) {
 #ifndef SIMULATION
+    mIsGpsUpdated = true;
     mGpsTime[0] = mGpsTime[1];
     mGpsTime[1] = public_tools::PublicTools::string2double(pGPSmsg->GPSTime);
     // do nothing if receive same frame
@@ -99,8 +127,8 @@ void InforProcess::gpsCB(const roscameragpsimg::imu5651::ConstPtr& pGPSmsg) {
     double vUp = public_tools::PublicTools::string2double(pGPSmsg->Vel_up);
     double vAbs = sqrt(vEast * vEast + vNorth * vNorth + vUp * vUp);
 
-    uint8_t nsv1_num = public_tools::PublicTools::string2uchar(pGPSmsg->NSV1_num);
-    uint8_t nsv2_num = public_tools::PublicTools::string2uchar(pGPSmsg->NSV2_num);
+    int nsv1_num = public_tools::PublicTools::string2int(pGPSmsg->NSV1_num);
+    int nsv2_num = public_tools::PublicTools::string2int(pGPSmsg->NSV2_num);
 
     mOutMsg.GPStime = gpsTime;
 

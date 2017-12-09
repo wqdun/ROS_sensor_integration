@@ -4,7 +4,12 @@ float64 current_pitch
 float64 current_roll
 float64 current_heading
 float64 current_speed
-uint8 nsv1_num
-uint8 nsv2_num
+int32 nsv1_num
+int32 nsv2_num
 string pps_status
+string is_gprmc_valid
+float64 latitude
+float64 longitude
 float64 hdop
+int32 noSV_422
+float64 camera_fps

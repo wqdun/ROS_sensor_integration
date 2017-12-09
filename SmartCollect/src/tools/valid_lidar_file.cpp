@@ -48,7 +48,7 @@ int main(int argc, char **argv) {
         readLen = fread(&pktInfo, pktSize, 1, pInFile);
         // cout << readLen << endl;
         if(0 >= readLen) {
-            cout << "[ERROR] Packet[" << pos / pktSize <<  "] is not a complete packet.\n";
+            cout << "[ERROR] Packet[" << pos / pktSize << "] is not a complete packet.\n";
             isValid = false;
             // exit(-1);
         }
@@ -67,13 +67,15 @@ int main(int argc, char **argv) {
             continue;
         }
         if(timeErr > 0.0015) {
-            cout << "[ERROR] Might lost some packets, time interval:" << timeErr <<
+            cout << "[ERROR] Packet[" << pos / pktSize << "] time interval:" << timeErr <<
             "; time1:" << time1 << "; time2:" << time2 << endl;
+            cout << "pktTimeHourSInUs: " << pktTimeHourSInUs / 1000000. << endl;
             isValid = false;
             // exit(-1);
         }
         if(timeErr < -1) {
             cout << "Record ends here:" << time1 << "; start:" << time2 << endl;
+            cout << "pktTimeHourSInUs: " << pktTimeHourSInUs / 1000000. << endl;
         }
 
     } while(pos < fileSize);

@@ -2,13 +2,6 @@
 
 namespace public_tools
 {
-uint8_t PublicTools::string2uchar(const string& str) {
-    std::istringstream iss(str);
-    uint8_t num;
-    iss >> num;
-    return num;
-}
-
 int PublicTools::string2int(const string& str) {
     std::istringstream iss(str);
     int num;

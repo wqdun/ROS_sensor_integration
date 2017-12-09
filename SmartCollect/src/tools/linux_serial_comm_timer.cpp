@@ -39,22 +39,31 @@ int set_opt(int fd, int nSpeed, int nBits, char nEvent, int nStop) {
     case 8:
         newtio.c_cflag |= CS8;
         break;
+    default:
+        perror("Unsupported data size\n");
+        return -1;
     }
 
     switch(nEvent) {
+    case 'o':
     case 'O':
         newtio.c_cflag |= PARENB;
         newtio.c_cflag |= PARODD;
         newtio.c_iflag |= (INPCK | ISTRIP);
         break;
+    case 'e':
     case 'E':
         newtio.c_iflag |= (INPCK | ISTRIP);
         newtio.c_cflag |= PARENB;
         newtio.c_cflag &= ~PARODD;
         break;
+    case 'n':
     case 'N':
         newtio.c_cflag &= ~PARENB;
         break;
+    default:
+        perror("Unsupported parity\n");
+        return -1;
     }
 
     switch(nSpeed) {
@@ -98,16 +107,67 @@ int set_opt(int fd, int nSpeed, int nBits, char nEvent, int nStop) {
 
     tcflush(fd, TCIFLUSH);
 
-    newtio.c_cc[VTIME] = 100; // time out 15s重要
-    newtio.c_cc[VMIN] = 0; // Update the option and do it now 返回的最小值  重要
+     // time out 15s重要
+    newtio.c_cc[VTIME] = 100;
+    // Update the option and do it now 返回的最小值  重要
+    newtio.c_cc[VMIN] = 0;
 
-    if(0 != tcsetattr(fd, TCSANOW, &newtio)) {
+    if(0 != tcsetattr(fd, TCSANOW, &newtio) ) {
         perror("Com setup error.");
         return -1;
     }
 
-    // printf("set done!\n\r");
+    printf("set done!\n\r");
     return 0;
+}
+
+bool getGpgga(const char *inBuf, const size_t &bufSize, string &gpgga, bool &isGpggaStart) {
+    cout << __FUNCTION__ << " start.\n";
+    for(size_t i = 0; i < bufSize; ++i) {
+        switch(inBuf[i]) {
+        case '$':
+            isGpggaStart = true;
+            gpgga = "$";
+            break;
+        case '\r':
+            break;
+        case '\n':
+            isGpggaStart = false;
+            if(gpgga.size() > 6) {
+                cout << "gpgga: " << gpgga << endl;
+                return true;
+            }
+            // else: might be: "$ \n"
+            break;
+        default:
+            if(!isGpggaStart) {
+                break;
+            }
+            gpgga += inBuf[i];
+            if(6 == gpgga.size() ) {
+                if(gpgga != "$GPGGA") {
+                    cout << "Though contains $, not $GPGGA.\n";
+                    isGpggaStart = false;
+                }
+            }
+        }
+    }
+
+    cout << "gpgga: " << gpgga << endl;
+    return false;
+}
+
+bool getGdopFromGpgga(const string &inGpgga, string &outGdop) {
+    cout << __FUNCTION__ << " start.\n";
+    vector<string> parsedGpgga;
+    boost::split(parsedGpgga, inGpgga, boost::is_any_of(",") );
+    if(15 != parsedGpgga.size() ) {
+        // 1st frame might be wrong, 'cause no '$'
+        cout << "Error parsing: " << parsedGpgga.size() << endl;
+        return false;
+    }
+    outGdop = parsedGpgga[8];
+    return true;
 }
 
 int main(int argc, char **argv) {
@@ -131,44 +191,49 @@ int main(int argc, char **argv) {
     }
     cout << "Set " << ttyname(fd) << " successfully\n";
 
-
     FILE *pOutFile;
     if(!(pOutFile = fopen("5651_422.dat", "wb") ) ) {
         cout << "Create file: failed.";
         exit(1);
     }
-    cout << "Create file successfully: 5651_422.dat";
-    unsigned char buf[50];
+    cout << "Create file successfully: 5651_422.dat\n";
+    const size_t BUFFER_SIZE = 1000;
+
+    char buf[BUFFER_SIZE];
     fd_set rd;
     int nread = 0;
-    string frameBuf("");
+    string completeGpgga("");
+    bool isGpggaStart = false;
 
     while(1) {
-        nread = read(fd, buf, sizeof(buf) );
-        // string bufStr(buf);
-        // fill_frame(bufStr, frameBuf);
-        // now frameBuf should be human readable
-
-
-        // parse
-        // (void)fwrite(buf, nread, 1, pOutFile); // << C txt
-        // if() set a member; then pub -> infor
-
-        // cout << dec << "nread: " << nread << "\n";
-        if(nread <= 0)
-            // break;
+        bzero(buf, BUFFER_SIZE);
+        nread = read(fd, buf, BUFFER_SIZE);
+        cout << dec << "nread: " << nread << "\n";
+        if(nread <= 0) {
             continue;
-
-        for(int k = 0; k < nread; ++k) {
-            printf("%02X ", buf[k]);
-            // cout << hex << (int)buf[k]; // or nread
         }
-        // cout << "\n";
-        bzero(buf, sizeof(buf) );
+        for(int k = 0; k < nread; ++k) {
+            printf("%02X ", (unsigned char)buf[k]);
+        }
+        cout << "\n";
+
+        (void)fwrite(buf, nread, 1, pOutFile);
+
+        if(!getGpgga(buf, nread, completeGpgga, isGpggaStart) ) {
+            cout << "Gpgga not complete or is old.\n";
+            continue;
+        }
+        string hdop("");
+        if(!getGdopFromGpgga(completeGpgga, hdop) ) {
+            cout << "Failed to get hdop, completeGpgga: " << completeGpgga << endl;
+            continue;
+        }
+        cout << "hdop: " << hdop << endl;
     }
 
     fclose(pOutFile);
-
     close(fd);
     return 0;
 }
+
+

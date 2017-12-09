@@ -20,7 +20,7 @@ int main(int argc, char **argv) {
     ros::init(argc, argv, "hdop_publisher");
     ros::NodeHandle private_nh("~");
     ros::NodeHandle nh;
-    ros::Publisher pubHdop = nh.advertise<std_msgs::String>("imu422_hdop", 0);
+    ros::Publisher pubHdop = nh.advertise<hdop_teller::imu5651_422>("imu422_hdop", 0);
     string rawInsFile("");
     private_nh.param("raw_ins_path", rawInsFile, rawInsFile);
     rawInsFile += "rawINS.5651";
@@ -37,7 +37,7 @@ int main(int argc, char **argv) {
     int nread = 0;
     string completeGpgga("");
     bool isGpggaStart = false;
-    std_msgs::String hdopMsg;
+    hdop_teller::imu5651_422 hdopMsg;
 
     while(ros::ok() ) {
         bzero(buf, BUFFER_SIZE);
@@ -59,13 +59,12 @@ int main(int argc, char **argv) {
             DLOG(INFO) << "Gpgga not complete or not updated.";
             continue;
         }
-        string hdop("");
-        if(!getGdopFromGpgga(completeGpgga, hdop) ) {
+        if(!getGdopFromGpgga(completeGpgga, hdopMsg) ) {
             LOG(ERROR) << "Failed to get hdop, completeGpgga: " << completeGpgga;
             continue;
         }
-        LOG(INFO) << "hdop: " << hdop;
-        hdopMsg.data = hdop;
+
+        LOG(INFO) << "Hdop: " << hdopMsg.Hdop;
         pubHdop.publish(hdopMsg);
     }
 
@@ -120,7 +119,7 @@ bool getGpgga(const unsigned char *inBuf, const size_t &bufSize, string &gpgga, 
     return isGpggaComplete;
 }
 
-bool getGdopFromGpgga(const string &inGpgga, string &outGdop) {
+bool getGdopFromGpgga(const string &inGpgga, hdop_teller::imu5651_422 &out422Msg) {
     LOG(INFO) << __FUNCTION__ << " start.";
     vector<string> parsedGpgga;
     boost::split(parsedGpgga, inGpgga, boost::is_any_of(",") );
@@ -129,7 +128,11 @@ bool getGdopFromGpgga(const string &inGpgga, string &outGdop) {
         LOG(ERROR) << "Error parsing: " << parsedGpgga.size();
         return false;
     }
-    outGdop = parsedGpgga[8];
+    out422Msg.Latitude = parsedGpgga[2];
+    out422Msg.Longitude = parsedGpgga[4];
+    out422Msg.NoSV = parsedGpgga[7];
+    out422Msg.Hdop = parsedGpgga[8];
+
     return true;
 }
 

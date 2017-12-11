@@ -43,7 +43,7 @@ VelodyneDriver::VelodyneDriver(ros::NodeHandle node,
   char fileName[50];
   (void)sprintf(fileName, "%02d_%02d_%02d.lidar", t->tm_hour, t->tm_min, t->tm_sec);
   mRecordFile += fileName;
-
+  ROS_INFO_STREAM("mRecordFile: " << mRecordFile);
   double packet_rate;                   // packet frequency (Hz)
   std::string model_full_name;
   if ((config_.model == "64E_S2") ||

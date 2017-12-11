@@ -76,10 +76,3 @@ void PublicTools::transform_coordinate(const vector<geometry_msgs::Point> &point
 
 }
 // namespace public_tools
-
-
-// int main() {
-//     PublicTools test;
-//     PublicTools::tf_example();
-// }
-

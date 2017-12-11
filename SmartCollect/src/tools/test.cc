@@ -12,22 +12,8 @@
 using namespace std;
 
 int main() {
-    char str1[] = "Hello";
-    char c = '1';
-    for(int i = 0; i < 5; ++i) {
-        cout << hex << (int)str1[i] << endl; // or nread
-    }
-
-    char str2[5000] = "Hello";
-
-    cout << strlen(str2) << endl;
-    cout << dec << sizeof(str2) << endl;
-
-    string str3(str2);
-    printf("%c\n", str3[2]);
-    cout << (str3[2] == '2');
-    // printf("%s\n", str3);
-
-
-
+    char cs[] = "Worl\0ddd";
+    const string bufStr(cs);
+    cout << bufStr << endl;
+    cout << sizeof(int64_t) << endl;
 }

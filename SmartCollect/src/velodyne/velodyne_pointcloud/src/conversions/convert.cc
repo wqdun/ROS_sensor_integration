@@ -25,6 +25,7 @@ namespace velodyne_pointcloud
   {
     data_->setup(private_nh);
 
+
     // advertise output point cloud (before subscribing to input data)
     output_ =
       node.advertise<sensor_msgs::PointCloud2>("velodyne_points", 10);

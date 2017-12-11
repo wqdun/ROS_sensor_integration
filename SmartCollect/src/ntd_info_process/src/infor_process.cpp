@@ -36,8 +36,8 @@ void InforProcess::run() {
 #endif
 
         if(!mIsGpsUpdated) {
-            mOutMsg.GPStime = mOutMsg.latlonhei.lat = mOutMsg.latlonhei.lon = mOutMsg.latlonhei.hei = mOutMsg.current_pitch = mOutMsg.current_roll = mOutMsg.current_heading = mOutMsg.current_speed = -1.;
-            mOutMsg.nsv1_num = mOutMsg.nsv2_num = -1;
+            mOutMsg.GPStime = mOutMsg.latlonhei.lat = mOutMsg.latlonhei.lon = mOutMsg.latlonhei.hei = mOutMsg.current_pitch = mOutMsg.current_roll = mOutMsg.current_heading = mOutMsg.current_speed = -2.;
+            mOutMsg.nsv1_num = mOutMsg.nsv2_num = -2;
         }
         mIsGpsUpdated = false;
 
@@ -45,7 +45,7 @@ void InforProcess::run() {
         if(0 == (freqDivider % 16) ) {
             if(!mIsRawImuUpdated) {
                 // -1: hdop not updated
-                mOutMsg.hdop = mOutMsg.latitude = mOutMsg.longitude = mOutMsg.noSV_422 = -1;
+                mOutMsg.hdop = mOutMsg.latitude = mOutMsg.longitude = mOutMsg.noSV_422 = -2;
             }
             mIsRawImuUpdated = false;
         }
@@ -95,10 +95,10 @@ void InforProcess::rawImuCB(const hdop_teller::imu5651_422::ConstPtr& pRawImuMsg
     mIsRawImuUpdated = true;
 
     // in case: $GPGGA,,,,,,0,,,,,,,,*66
-    mOutMsg.latitude = (pRawImuMsg->Latitude.empty() )? 0: (public_tools::PublicTools::string2double(pRawImuMsg->Latitude) );
-    mOutMsg.longitude = (pRawImuMsg->Longitude.empty() )? 0: (public_tools::PublicTools::string2double(pRawImuMsg->Longitude) );
-    mOutMsg.hdop = (pRawImuMsg->Hdop.empty() )? 0: (public_tools::PublicTools::string2double(pRawImuMsg->Hdop) );
-    mOutMsg.noSV_422 = (pRawImuMsg->NoSV.empty() )? 0: (public_tools::PublicTools::string2int(pRawImuMsg->NoSV) );
+    mOutMsg.latitude = (pRawImuMsg->Latitude.empty() )? -1: (public_tools::PublicTools::string2double(pRawImuMsg->Latitude) );
+    mOutMsg.longitude = (pRawImuMsg->Longitude.empty() )? -1: (public_tools::PublicTools::string2double(pRawImuMsg->Longitude) );
+    mOutMsg.hdop = (pRawImuMsg->Hdop.empty() )? -1: (public_tools::PublicTools::string2double(pRawImuMsg->Hdop) );
+    mOutMsg.noSV_422 = (pRawImuMsg->NoSV.empty() )? -1: (public_tools::PublicTools::string2int(pRawImuMsg->NoSV) );
 }
 
 void InforProcess::gpsCB(const roscameragpsimg::imu5651::ConstPtr& pGPSmsg) {

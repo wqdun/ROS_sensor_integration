@@ -12,7 +12,7 @@ MifReader::MifReader(ros::NodeHandle nh, ros::NodeHandle private_nh) {
     mCurrentWGS.x = -0.5;
 
     // got /home/dun/projects/SmartCollect/record/project_2017_11_21_13_21_18/
-    const string trackfileInImuPath(mMifPath.substr(0, mMifPath.find("..") ) + "IMU/trackMars.txt");
+    const string trackfileInImuPath(mMifPath.substr(0, mMifPath.find("..") ) + "IMU/track_mars.txt");
     mTrackMarsFile.open(trackfileInImuPath);
     if(!mTrackMarsFile.is_open() ) {
         LOG(ERROR) << "Failed to open " << trackfileInImuPath;

@@ -10,8 +10,8 @@
 #include "hdop_teller/imu5651_422.h"
 #include "ntd_info_process/processed_infor_msg.h"
 #include "../../public_tools/public_tools.h"
-// #define NDEBUG
-#undef NDEBUG
+#define NDEBUG
+// #undef NDEBUG
 #include <glog/logging.h>
 #include <boost/algorithm/string/classification.hpp>
 #include <boost/algorithm/string/split.hpp>

@@ -12,8 +12,8 @@ using std::vector;
 #include <termios.h>
 #include "hdop_teller/imu5651_422.h"
 
-// #define NDEBUG
-#undef NDEBUG
+#define NDEBUG
+// #undef NDEBUG
 #include <glog/logging.h>
 
 int set_opt(int fd, int nSpeed, int nBits, char nEvent, int nStop);

@@ -9,8 +9,8 @@ using std::string;
 #include <vector>
 using std::vector;
 #include <visualization_msgs/Marker.h>
-// #define NDEBUG
-#undef NDEBUG
+#define NDEBUG
+// #undef NDEBUG
 #include <glog/logging.h>
 
 namespace public_tools

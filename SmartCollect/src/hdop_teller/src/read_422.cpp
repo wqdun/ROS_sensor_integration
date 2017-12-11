@@ -3,6 +3,11 @@
 int main(int argc, char **argv) {
     google::InitGoogleLogging(argv[0]);
 
+    if(2 != argc) {
+        LOG(ERROR) << "I need a record path, argc: " << argc;
+        exit(1);
+    }
+
     int fd = open("/dev/ttyUSB0", O_RDONLY);
     if(-1 == fd) {
         LOG(ERROR) << "Failed to open /dev/ttyUSB0.";
@@ -22,8 +27,9 @@ int main(int argc, char **argv) {
     ros::NodeHandle nh;
     ros::Publisher pubHdop = nh.advertise<hdop_teller::imu5651_422>("imu422_hdop", 0);
     string rawInsFile("");
-    private_nh.param("raw_ins_path", rawInsFile, rawInsFile);
-    rawInsFile += "rawINS.5651";
+    // private_nh.param("raw_ins_path", rawInsFile, rawInsFile);
+    rawInsFile = argv[1];
+    rawInsFile += "/raw_imu.dat";
 
     FILE *pOutFile;
     if(!(pOutFile = fopen(rawInsFile.c_str(), "wb") ) ) {

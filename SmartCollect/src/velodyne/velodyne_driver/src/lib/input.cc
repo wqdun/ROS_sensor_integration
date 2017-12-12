@@ -129,8 +129,6 @@ namespace velodyne_driver
   /** @brief Get one velodyne packet. */
   int InputSocket::getPacket(velodyne_msgs::VelodynePacket *pkt, const double time_offset, bool &_isPositionPkt, char *_positionPkt)
   {
-    double time1 = ros::Time::now().toSec();
-
     struct pollfd fds[2];
     fds[0].fd = sockfd_;
     fds[0].events = POLLIN;
@@ -244,10 +242,6 @@ namespace velodyne_driver
     if(_isPositionPkt) {
       return 0;
     }
-    // Average the times at which we begin and end reading.  Use that to
-    // estimate when the scan occurred. Add the time offset.
-    // double time2 = ros::Time::now().toSec();
-    // pkt->stamp = ros::Time((time2 + time1) / 2.0 + time_offset);
 
     const uint32_t pktTimeHourSInUs = (pkt->data[1203] << 24) + (pkt->data[1202] << 16) + (pkt->data[1201] << 8) + pkt->data[1200];
     pkt->stamp = ros::Time(pktTimeHourSInUs / 1000000.0);
@@ -336,7 +330,6 @@ namespace velodyne_driver
               packet_rate_.sleep();
 
             memcpy(&pkt->data[0], pkt_data+42, packet_size);
-            // pkt->stamp = ros::Time::now(); // time_offset not considered here, as no synchronization required
 
             const uint32_t pktTimeHourSInUs = (pkt->data[1203] << 24) + (pkt->data[1202] << 16) + (pkt->data[1201] << 8) + pkt->data[1200];
             pkt->stamp = ros::Time(pktTimeHourSInUs / 1000000.0);

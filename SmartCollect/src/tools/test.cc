@@ -11,6 +11,11 @@
 
 using namespace std;
 
+double fun1() {
+    return 1.;
+}
+
+
 int main(int argc, char **argv) {
     char cs[] = "Worl\0ddd";
     const string bufStr(cs);
@@ -20,5 +25,7 @@ int main(int argc, char **argv) {
     cout << argv[1] << endl;
     string param;
     param = argv[1];
-    cout << param;
+    cout << param << endl;
+    // error: lvalue required as unary ‘&’ operand
+    cout << &(fun1() ) << endl;
 }

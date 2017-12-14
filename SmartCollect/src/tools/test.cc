@@ -11,21 +11,51 @@
 
 using namespace std;
 
-double fun1() {
-    return 1.;
-}
+typedef struct {
+    double d;
+    vector<int> i;
+} vec_t;
 
+typedef struct {
+    double d;
+    int i[40];
+} vec2_t;
 
 int main(int argc, char **argv) {
-    char cs[] = "Worl\0ddd";
-    const string bufStr(cs);
-    cout << bufStr << endl;
-    cout << sizeof(int64_t) << endl;
-    cout << argc << endl;
-    cout << argv[1] << endl;
-    string param;
-    param = argv[1];
-    cout << param << endl;
-    // error: lvalue required as unary ‘&’ operand
-    cout << &(fun1() ) << endl;
+    vec_t vec;
+    vec.d = 4;
+    vec.i.push_back(1);
+    vec.i.push_back(2);
+        vec.i.push_back(1);
+    vec.i.push_back(2);
+        vec.i.push_back(1);
+    vec.i.push_back(2);
+        vec.i.push_back(1);
+    vec.i.push_back(2);
+vec.i.push_back(2);
+        vec.i.push_back(1);
+    vec.i.push_back(2);
+        vec.i.push_back(1);
+    vec.i.push_back(2);
+        vec.i.push_back(1);
+    vec.i.push_back(1);
+    vec.i.push_back(2);
+        vec.i.push_back(1);
+    vec.i.push_back(2);
+        vec.i.push_back(1);
+    vec.i.push_back(2);
+        vec.i.push_back(1);
+    vec.i.push_back(2);
+vec.i.push_back(2);
+        vec.i.push_back(1);
+    vec.i.push_back(2);
+        vec.i.push_back(1);
+    vec.i.push_back(2);
+        vec.i.push_back(1);
+
+
+    cout << vec.i[0] << endl;
+    cout << sizeof(vec.i) << endl;
+    cout << sizeof(vec2_t) << endl;
+
 }

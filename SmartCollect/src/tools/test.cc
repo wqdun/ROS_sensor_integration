@@ -11,51 +11,14 @@
 
 using namespace std;
 
-typedef struct {
-    double d;
-    vector<int> i;
-} vec_t;
-
-typedef struct {
-    double d;
-    int i[40];
-} vec2_t;
-
+double string2double(const string& str) {
+    std::istringstream iss(str);
+    double num;
+    iss >> num;
+    return num;
+}
 int main(int argc, char **argv) {
-    vec_t vec;
-    vec.d = 4;
-    vec.i.push_back(1);
-    vec.i.push_back(2);
-        vec.i.push_back(1);
-    vec.i.push_back(2);
-        vec.i.push_back(1);
-    vec.i.push_back(2);
-        vec.i.push_back(1);
-    vec.i.push_back(2);
-vec.i.push_back(2);
-        vec.i.push_back(1);
-    vec.i.push_back(2);
-        vec.i.push_back(1);
-    vec.i.push_back(2);
-        vec.i.push_back(1);
-    vec.i.push_back(1);
-    vec.i.push_back(2);
-        vec.i.push_back(1);
-    vec.i.push_back(2);
-        vec.i.push_back(1);
-    vec.i.push_back(2);
-        vec.i.push_back(1);
-    vec.i.push_back(2);
-vec.i.push_back(2);
-        vec.i.push_back(1);
-    vec.i.push_back(2);
-        vec.i.push_back(1);
-    vec.i.push_back(2);
-        vec.i.push_back(1);
 
-
-    cout << vec.i[0] << endl;
-    cout << sizeof(vec.i) << endl;
-    cout << sizeof(vec2_t) << endl;
+    cout << string2double("0") << endl;
 
 }

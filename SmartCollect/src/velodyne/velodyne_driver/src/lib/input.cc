@@ -191,7 +191,6 @@ namespace velodyne_driver
         while(((fds[0].revents & POLLIN) == 0) && (0 == (fds[1].revents & POLLIN)));
 
         _isPositionPkt = (fds[0].revents & POLLIN)? false: true;
-        ROS_INFO_STREAM("_isPositionPkt: " << _isPositionPkt);
         // Receive packets that should now be available from the
         // socket using a blocking read.
         ssize_t nbytes = -1;

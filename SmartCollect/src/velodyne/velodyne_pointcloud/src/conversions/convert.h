@@ -27,8 +27,6 @@
 
 namespace velodyne_pointcloud
 {
-
-
   class Convert
   {
   public:
@@ -55,9 +53,6 @@ namespace velodyne_pointcloud
       int npackets;                    ///< number of packets to combine
     } Config;
     Config config_;
-
-    std::vector<velodyne_rawdata::VPointCloud> mPcVec;
-
   };
 
 } // namespace velodyne_pointcloud

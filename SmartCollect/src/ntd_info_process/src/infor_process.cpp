@@ -9,6 +9,7 @@ InforProcess::InforProcess() {
     mSubCameraImg = nh.subscribe("cam_speed", 0, &InforProcess::cameraImgCB, this);
 
     mPub = nh.advertise<ntd_info_process::processed_infor_msg>("processed_infor_msg", 0);
+    mGpsTime[0] = mGpsTime[1] = -1;
     mIsVelodyneUpdated = mIsRawImuUpdated = mIsGpsUpdated = false;
 
 #ifdef SIMULATION
@@ -52,7 +53,7 @@ void InforProcess::run() {
 
         // 8Hz
         if(!mIsVelodyneUpdated) {
-            mOutMsg.pps_status = mOutMsg.is_gprmc_valid = "No GPRMC received";
+            mOutMsg.pps_status = mOutMsg.is_gprmc_valid = "No link";
         }
         mIsVelodyneUpdated = false;
 
@@ -103,32 +104,38 @@ void InforProcess::rawImuCB(const hdop_teller::imu5651_422::ConstPtr& pRawImuMsg
 
 void InforProcess::gpsCB(const roscameragpsimg::imu5651::ConstPtr& pGPSmsg) {
 #ifndef SIMULATION
-    mIsGpsUpdated = true;
     mGpsTime[0] = mGpsTime[1];
-    mGpsTime[1] = public_tools::PublicTools::string2double(pGPSmsg->GPSTime);
+    mGpsTime[1] = (pGPSmsg->GPSTime.empty() )? -1: (public_tools::PublicTools::string2double(pGPSmsg->GPSTime) );
     // do nothing if receive same frame
     if(mGpsTime[0] == mGpsTime[1]) {
         return;
     }
+    mIsGpsUpdated = true;
 
     double gpsTime = mGpsTime[1];
     // lat: 1 degree is about 100000 m
-    double lat = public_tools::PublicTools::string2double(pGPSmsg->Latitude);
+    double lat = (pGPSmsg->Latitude.empty() )? -1: (public_tools::PublicTools::string2double(pGPSmsg->Latitude) );
     // lon: 1 degree is about 100000 m
-    double lon = public_tools::PublicTools::string2double(pGPSmsg->Longitude);
-    double hei = public_tools::PublicTools::string2double(pGPSmsg->Altitude);
+    double lon = (pGPSmsg->Longitude.empty() )? -1: (public_tools::PublicTools::string2double(pGPSmsg->Longitude) );
+    double hei = (pGPSmsg->Altitude.empty() )? -1: (public_tools::PublicTools::string2double(pGPSmsg->Altitude) );
 
-    double pitch = public_tools::PublicTools::string2double(pGPSmsg->Pitch);
-    double roll = public_tools::PublicTools::string2double(pGPSmsg->Roll);
-    double heading = public_tools::PublicTools::string2double(pGPSmsg->Heading);
+    double pitch = (pGPSmsg->Pitch.empty() )? -1: (public_tools::PublicTools::string2double(pGPSmsg->Pitch) );
+    double roll = (pGPSmsg->Roll.empty() )? -1: (public_tools::PublicTools::string2double(pGPSmsg->Roll) );
+    double heading = (pGPSmsg->Heading.empty() )? -1: (public_tools::PublicTools::string2double(pGPSmsg->Heading) );
 
-    double vEast = public_tools::PublicTools::string2double(pGPSmsg->Vel_east);
-    double vNorth = public_tools::PublicTools::string2double(pGPSmsg->Vel_north);
-    double vUp = public_tools::PublicTools::string2double(pGPSmsg->Vel_up);
-    double vAbs = sqrt(vEast * vEast + vNorth * vNorth + vUp * vUp);
+    double vAbs = -1.;
+    if(pGPSmsg->Vel_east.empty() || pGPSmsg->Vel_north.empty() || pGPSmsg->Vel_up.empty() ) {
+        // vAbs = -1: invalid
+    }
+    else {
+        double vEast = public_tools::PublicTools::string2double(pGPSmsg->Vel_east);
+        double vNorth = public_tools::PublicTools::string2double(pGPSmsg->Vel_north);
+        double vUp = public_tools::PublicTools::string2double(pGPSmsg->Vel_up);
+        vAbs = sqrt(vEast * vEast + vNorth * vNorth + vUp * vUp);
+    }
 
-    int nsv1_num = public_tools::PublicTools::string2int(pGPSmsg->NSV1_num);
-    int nsv2_num = public_tools::PublicTools::string2int(pGPSmsg->NSV2_num);
+    int nsv1_num = (pGPSmsg->NSV1_num.empty() )? -1: (public_tools::PublicTools::string2int(pGPSmsg->NSV1_num) );
+    int nsv2_num = (pGPSmsg->NSV2_num.empty() )? -1: (public_tools::PublicTools::string2int(pGPSmsg->NSV2_num) );
 
     mOutMsg.GPStime = gpsTime;
 

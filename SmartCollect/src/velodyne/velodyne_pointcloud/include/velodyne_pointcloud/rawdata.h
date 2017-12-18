@@ -31,19 +31,12 @@
 #include <velodyne_msgs/VelodyneScan.h>
 #include <velodyne_pointcloud/point_types.h>
 #include <velodyne_pointcloud/calibration.h>
-#include "../../../../public_tools/public_tools.h"
-
 
 namespace velodyne_rawdata
 {
   // Shorthand typedefs for point cloud representations
   typedef velodyne_pointcloud::PointXYZIR VPoint;
   typedef pcl::PointCloud<VPoint> VPointCloud;
-
-  typedef struct {
-    double daytime;
-    std::vector<VPoint> vPoints;
-  } time2vPoints_t;
 
   /**
    * Raw Velodyne packet constants and structures.
@@ -155,8 +148,6 @@ namespace velodyne_rawdata
     int setupOffline(std::string calibration_file, double max_range_, double min_range_);
 
     void unpack(const velodyne_msgs::VelodynePacket &pkt, VPointCloud &pc);
-    /** add private function to handle the VLP16 **/
-    void unpack_vlp16(const velodyne_msgs::VelodynePacket &pkt, VPointCloud &pc, std::vector<VPointCloud> &pcVec);
 
     void setParameters(double min_range, double max_range, double view_direction,
                        double view_width);
@@ -183,9 +174,8 @@ namespace velodyne_rawdata
     float sin_rot_table_[ROTATION_MAX_UNITS];
     float cos_rot_table_[ROTATION_MAX_UNITS];
 
-    // 1st convert: LIDAR to IMU coordination
-    public_tools::pointXYZ_t mAngleLidar2Imu;
-    public_tools::pointXYZ_t mOffsetLidar2Imu;
+    /** add private function to handle the VLP16 **/
+    void unpack_vlp16(const velodyne_msgs::VelodynePacket &pkt, VPointCloud &pc);
 
     /** in-line test whether a point is in range */
     bool pointInRange(float range)

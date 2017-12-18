@@ -131,11 +131,13 @@ VelodyneDriver::VelodyneDriver(ros::NodeHandle node,
   mPubPpsStatus = node.advertise<std_msgs::String>("velodyne_pps_status", 0);
 }
 
-static bool parsePositionPkt(const char *pkt, std::string &parsedRes) {
+static void parsePositionPkt(const char *pkt, std::string &parsedRes) {
     ROS_DEBUG_STREAM(__FUNCTION__ << " start.");
     if('$' != pkt[206]) {
       ROS_INFO_STREAM("No $GPRMC received: " << pkt[206]);
-      return false;
+      // 4: "No position packet"; V-invalid, refer VLP-16 manual
+      parsedRes = "4,V";
+      return;
     }
 
     // 00 .. 03
@@ -157,7 +159,7 @@ static bool parsePositionPkt(const char *pkt, std::string &parsedRes) {
 
     // "3,A"
     parsedRes += ("," + isGprmcValid.str() );
-    return true;
+    return;
 }
 
 /** poll the device
@@ -214,10 +216,8 @@ bool VelodyneDriver::poll(void)
   fclose(pOutFile);
 
   // only last position pkt be published, ignore the rest
-  if(parsePositionPkt(positionPkt, ppsStatus.data) ) {
-    mPubPpsStatus.publish(ppsStatus);
-  }
-  // else: do nothing when no position pkt received in this scan
+  (void)parsePositionPkt(positionPkt, ppsStatus.data);
+  mPubPpsStatus.publish(ppsStatus);
 
   output_.publish(scan);
 

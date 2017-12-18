@@ -40,8 +40,8 @@ private:
     ros::Subscriber mSubCameraImg;
     ros::Publisher mPub;
     ntd_info_process::processed_infor_msg mOutMsg;
-    const string PPS_STATUS[4] {
-      "No PPS", "Synchronizing PPS", "PPS locked", "PPS Error"
+    const string PPS_STATUS[5] {
+      "No PPS", "Synchronizing PPS", "PPS locked", "PPS Error", "No position packet"
     };
     bool mIsVelodyneUpdated;
     bool mIsRawImuUpdated;

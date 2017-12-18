@@ -23,8 +23,6 @@ namespace velodyne_pointcloud
   Convert::Convert(ros::NodeHandle node, ros::NodeHandle private_nh):
     data_(new velodyne_rawdata::RawData())
   {
-    mTime2PointsVec.clear();
-
     data_->setup(private_nh);
 
 
@@ -71,15 +69,8 @@ namespace velodyne_pointcloud
     // process each packet provided by the driver
     for (size_t i = 0; i < scanMsg->packets.size(); ++i)
       {
-        data_->unpack_vlp16(scanMsg->packets[i], *outMsg, mTime2PointsVec);
+        data_->unpack(scanMsg->packets[i], *outMsg);
       }
-
-    ROS_INFO_STREAM("mTime2PointsVec.size(): " << mTime2PointsVec.size() );
-    // ~~760/s
-    if(mTime2PointsVec.size() > 10000) {
-      // process and clear
-      mTime2PointsVec.clear();
-    }
 
     // publish the accumulated cloud message
     ROS_DEBUG_STREAM("Publishing " << outMsg->height * outMsg->width

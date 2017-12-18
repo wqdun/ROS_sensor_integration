@@ -1,0 +1,12 @@
+<?xml version="1.0"?>
+<launch>
+  <node name ="hdop_teller" pkg="hdop_teller" type="hdop_teller_node" output="screen"/>
+  <node name ="data_center" pkg="ntd_info_process" type="ntd_info_process_node" output="screen"/>
+  <node name ="roscameragpsimg" pkg="roscameragpsimg" type="roscameragpsimg" output="screen"/>
+  <node name ="display_had" pkg="display_had" type="display_had_node" output="screen"/>
+
+  <!-- launch velodyne -->
+  <include file="$(find velodyne_pointcloud)/launch/VLP16_points.launch"/>
+
+  <node name ="rviz" pkg="rviz" type="rviz" args="-f /velodyne" output="screen"/>
+</launch>

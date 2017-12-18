@@ -21,6 +21,7 @@ private:
     ros::Subscriber subPc_;
 
     void pcCB(const velodyne_msgs::VelodynePcVec::Ptr &pPcMsg);
+    // void
 
 };
 

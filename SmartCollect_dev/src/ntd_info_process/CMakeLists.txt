@@ -12,6 +12,8 @@ find_package(catkin REQUIRED COMPONENTS
   visualization_msgs
   std_msgs
   message_generation
+  roscameragpsimg
+  hdop_teller
 )
 
 ## System dependencies are found with CMake's conventions
@@ -55,6 +57,8 @@ add_message_files(
   # point_wgs.msg
   processed_infor_msg.msg
   point_wgs.msg
+  imuPoint.msg
+  imuPoints.msg
 )
 
 ## Generate services in the 'srv' folder
@@ -122,7 +126,6 @@ catkin_package(
 ## Your package locations should be listed before other locations
 include_directories(
   include
-  ../../devel/include
   ${catkin_INCLUDE_DIRS}
 )
 

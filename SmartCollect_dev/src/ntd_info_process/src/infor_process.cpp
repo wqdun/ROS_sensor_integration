@@ -11,11 +11,11 @@ InforProcess::InforProcess() {
     mPub = nh.advertise<ntd_info_process::processed_infor_msg>("processed_infor_msg", 0);
     mGpsTime[0] = mGpsTime[1] = -1;
     mIsVelodyneUpdated = mIsRawImuUpdated = mIsGpsUpdated = false;
-    mTime2LocalVec.clear();
+    time2LocalMsg_.imu_points.clear();
 
 #ifdef SIMULATION
-    mOutMsg.latlonhei.lat = 40.071975;
-    mOutMsg.latlonhei.lon = 116.239563;
+    mOutMsg.latlonhei.x = 40.071975;
+    mOutMsg.latlonhei.y = 116.239563;
 #endif
 }
 
@@ -33,12 +33,12 @@ void InforProcess::run() {
         rate.sleep();
 
 #ifdef SIMULATION
-        mOutMsg.latlonhei.lat += 0.00002;
-        mOutMsg.latlonhei.lon -= 0.00002;
+        mOutMsg.latlonhei.x += 0.00002;
+        mOutMsg.latlonhei.y -= 0.00002;
 #endif
 
         if(!mIsGpsUpdated) {
-            mOutMsg.GPStime = mOutMsg.latlonhei.lat = mOutMsg.latlonhei.lon = mOutMsg.latlonhei.hei = mOutMsg.current_pitch = mOutMsg.current_roll = mOutMsg.current_heading = mOutMsg.current_speed = -2.;
+            mOutMsg.GPStime = mOutMsg.latlonhei.x = mOutMsg.latlonhei.y = mOutMsg.latlonhei.z = mOutMsg.current_pitch = mOutMsg.current_roll = mOutMsg.current_heading = mOutMsg.current_speed = -2.;
             mOutMsg.nsv1_num = mOutMsg.nsv2_num = -2;
         }
         mIsGpsUpdated = false;
@@ -161,18 +161,17 @@ void InforProcess::gpsCB(const roscameragpsimg::imu5651::ConstPtr& pGPSmsg) {
     double currentGaussY;
     public_tools::PublicTools::GeoToGauss(lon * 3600, lat * 3600, 39, 3, &currentGaussY, &currentGaussX, 117);
 
-
     time2local.point.x = currentGaussY;
     time2local.point.y = currentGaussX;
     time2local.point.z = hei;
 
     // 100/s
-    mTime2LocalVec.push_back(time2local);
-    DLOG(INFO) << "mTime2LocalVec.size(): " << mTime2LocalVec.size();
-    if(mTime2LocalVec.size() > 2000) {
-        // process and clear
-        mTime2LocalVec.clear();
-    }
+    // time2LocalMsg_.imu_points.push_back(time2local);
+    // DLOG(INFO) << "time2LocalMsg_.imu_points.size(): " << time2LocalMsg_.imu_points.size();
+    // if(time2LocalMsg_.imu_points.size() > 2000) {
+    //     // process and clear
+    //     time2LocalMsg_.imu_points.clear();
+    // }
 
 #endif
 }

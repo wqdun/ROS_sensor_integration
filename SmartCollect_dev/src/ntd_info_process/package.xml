@@ -44,6 +44,12 @@
   <build_depend>visualization_msgs</build_depend>
   <run_depend>roscpp</run_depend>
   <run_depend>visualization_msgs</run_depend>
+  <build_depend>message_generation</build_depend>
+  <run_depend>message_generation</run_depend>
+  <build_depend>roscameragpsimg</build_depend>
+  <run_depend>roscameragpsimg</run_depend>
+  <build_depend>hdop_teller</build_depend>
+  <run_depend>hdop_teller</run_depend>
 
 
   <!-- The export tag contains other, unspecified, tags -->

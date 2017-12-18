@@ -10,6 +10,7 @@ add_compile_options(-std=c++11)
 find_package(catkin REQUIRED COMPONENTS
   roscpp
   std_msgs
+  ntd_info_process
 )
 
 ## System dependencies are found with CMake's conventions
@@ -116,7 +117,6 @@ catkin_package(
 ## Your package locations should be listed before other locations
 include_directories(
 # include
-  ../../devel/include
   ${catkin_INCLUDE_DIRS}
 )
 

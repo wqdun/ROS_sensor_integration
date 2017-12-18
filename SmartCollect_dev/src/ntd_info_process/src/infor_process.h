@@ -10,6 +10,7 @@ using std::vector;
 #include "roscameragpsimg/imu5651.h"
 #include "hdop_teller/imu5651_422.h"
 #include "ntd_info_process/processed_infor_msg.h"
+#include "ntd_info_process/imuPoints.h"
 #include "../../public_tools/public_tools.h"
 #define NDEBUG
 // #undef NDEBUG
@@ -52,7 +53,7 @@ private:
     bool mIsRawImuUpdated;
     bool mIsGpsUpdated;
 
-    vector<time2point_t> mTime2LocalVec;
+    ntd_info_process::imuPoints time2LocalMsg_;
 };
 
 

@@ -24,7 +24,6 @@ void pointCloudRegistration::pcCB(const velodyne_msgs::VelodynePcVec::Ptr &pPcMs
     LOG(INFO) << pc.header.stamp;
     ros::Time beginTime(pcl_conversions::fromPCL(pc.header.stamp) );
 
-
 }
 
 

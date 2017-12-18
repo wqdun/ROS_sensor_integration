@@ -12,6 +12,7 @@ find_package(catkin REQUIRED COMPONENTS
   sensor_msgs
   std_msgs
   pcl_ros
+  #velodyne_msgs
 )
 
 ## System dependencies are found with CMake's conventions
@@ -118,7 +119,6 @@ catkin_package(
 ## Your package locations should be listed before other locations
 include_directories(
   include
-  ../../devel/include
   ../velodyne/velodyne_pointcloud/include
   ${catkin_INCLUDE_DIRS}
 )

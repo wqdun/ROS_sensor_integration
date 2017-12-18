@@ -103,9 +103,9 @@ void MifReader::initMarker(visualization_msgs::Marker &marker, const size_t id, 
 
 void MifReader::gpsCallback(const ntd_info_process::processed_infor_msg::ConstPtr& pGpsMsg) {
     // lat: 1 degree is about 100000 m
-    const double lat = pGpsMsg->latlonhei.lat;
+    const double lat = pGpsMsg->latlonhei.x;
     // lon: 1 degree is about 100000 m
-    const double lng = pGpsMsg->latlonhei.lon;
+    const double lng = pGpsMsg->latlonhei.y;
     DLOG(INFO) << __FUNCTION__ << " start, lat: " << lat;
     if(lng < 115) {
         LOG(INFO) << "Wrong coordination (" << lng << ", " << lat << ").";
@@ -129,7 +129,7 @@ void MifReader::gpsCallback(const ntd_info_process::processed_infor_msg::ConstPt
     public_tools::PublicTools::GeoToGauss(newlng * 3600, newlat * 3600, 39, 3, &currentGaussY, &currentGaussX, 117);
     mCurrentWGS.x = currentGaussY;
     mCurrentWGS.y = currentGaussX;
-    mCurrentWGS.z = pGpsMsg->latlonhei.hei;
+    mCurrentWGS.z = pGpsMsg->latlonhei.z;
 
     const int MESH_LEVEL = 15;
     static long mesh_last = -1;

@@ -26,17 +26,26 @@ void *thread1(void *arg) {
 }
 
 int main(int argc, char **argv) {
-    int err = pthread_create(&ntid, NULL, thread1, NULL);
-    if(0 != err) {
-        return 1;
+    const vector<int> v1 {1, 2, 3, 4};
+    vector<int> v2 {6, 7, 8, 9};
+
+    // v1.insert(v1.end(), v2.begin(), v2.end() );
+    // cout << v1.size() << endl;
+    // for(size_t i = 0; i < v1.size(); ++i) {
+    //     cout << v1[i] << " ";
+    // }
+    // cout << endl;
+
+    std::move(v1.begin(), v1.end(), std::back_inserter(v2) );
+    for(auto i: v2) {
+        cout << i << " ";
     }
-    while(1) {
-        for(int i = 0; i < g_i; ++i) {
-            cout << i << endl;
-            usleep(100000);
-            cout << ":g_i:" << g_i << endl;
-        }
-        usleep(100000);
+    cout << "\n";
+
+    for(auto i: v1) {
+        cout << i << " ";
     }
-    return 0;
+
+    cout << "\n";
+
 }

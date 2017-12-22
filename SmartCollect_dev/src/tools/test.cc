@@ -26,7 +26,8 @@ void *thread1(void *arg) {
 }
 
 int main(int argc, char **argv) {
-    const vector<int> v1 {1, 2, 3, 4};
+    // const
+    vector<int> v1 {1, 2, 3, 4};
     vector<int> v2 {6, 7, 8, 9};
 
     // v1.insert(v1.end(), v2.begin(), v2.end() );
@@ -47,5 +48,13 @@ int main(int argc, char **argv) {
     }
 
     cout << "\n";
+
+    v1.clear();
+    for(auto iter = v1.begin(); iter != v1.end(); ++iter) {
+        cout << *iter << " ";
+    }
+    cout << "\n";
+    // ! back is illegal operation: check not empty before .back()
+    cout << v1.size() << ":" << v1.back() << endl;
 
 }

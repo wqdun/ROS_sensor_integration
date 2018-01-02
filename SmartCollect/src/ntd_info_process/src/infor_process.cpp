@@ -7,8 +7,10 @@ InforProcess::InforProcess() {
     mSubVelodyne = nh.subscribe("velodyne_pps_status", 0, &InforProcess::velodyneCB, this);
     mSub422 = nh.subscribe("imu422_hdop", 0, &InforProcess::rawImuCB, this);
     mSubCameraImg = nh.subscribe("cam_speed", 0, &InforProcess::cameraImgCB, this);
+    mSubMyViz = nh.subscribe("msg_save_control", 0, &InforProcess::myVizCB, this);
 
     mPub = nh.advertise<ntd_info_process::processed_infor_msg>("processed_infor_msg", 0);
+    mPubIsSaveFile = nh.advertise<std_msgs::Int64>("center_msg_save_control", 0);
     mGpsTime[0] = mGpsTime[1] = -1;
     mIsVelodyneUpdated = mIsRawImuUpdated = mIsGpsUpdated = false;
 
@@ -34,13 +36,13 @@ void InforProcess::run() {
 #ifdef SIMULATION
         mOutMsg.latlonhei.lat += 0.00002;
         mOutMsg.latlonhei.lon -= 0.00002;
-#endif
-
+#else
         if(!mIsGpsUpdated) {
             mOutMsg.GPStime = mOutMsg.latlonhei.lat = mOutMsg.latlonhei.lon = mOutMsg.latlonhei.hei = mOutMsg.current_pitch = mOutMsg.current_roll = mOutMsg.current_heading = mOutMsg.current_speed = -2.;
             mOutMsg.nsv1_num = mOutMsg.nsv2_num = -2;
         }
         mIsGpsUpdated = false;
+#endif
 
         // for rawImuCB is 1Hz, my freq should <= 1Hz: 0.5Hz
         if(0 == (freqDivider % 16) ) {
@@ -65,30 +67,23 @@ void InforProcess::cameraImgCB(const std_msgs::Float64::ConstPtr& pCameraImgMsg)
     mOutMsg.camera_fps = pCameraImgMsg->data;
 }
 
-void InforProcess::velodyneCB(const std_msgs::String::ConstPtr& pVelodyneMsg) {
+void InforProcess::myVizCB(const std_msgs::Int64::ConstPtr& pMyVizMsg) {
+    // only do transmit
+    mPubIsSaveFile.publish(pMyVizMsg);
+}
+
+void InforProcess::velodyneCB(const velodyne_msgs::Velodyne2Center::ConstPtr& pVelodyneMsg) {
     // 10Hz
     mIsVelodyneUpdated = true;
-    if(pVelodyneMsg->data.empty() ) {
-        LOG(ERROR) << "Got no GPRMC from LIDAR.";
+
+    if( (pVelodyneMsg->pps_status_index) > 3) {
+        LOG(ERROR) << "Invalid PPS status: " << pVelodyneMsg->pps_status_index;
         exit(1);
     }
 
-    vector<string> pps_gprmc;
-    boost::split(pps_gprmc, pVelodyneMsg->data, boost::is_any_of(",") );
-    if(pps_gprmc.size() < 2) {
-        LOG(ERROR) << "Wrong pps_gprmc: " << pVelodyneMsg->data;
-        exit(1);
-    }
-
-    const int status_index = public_tools::PublicTools::string2int(pps_gprmc[0]);
-    if(status_index > 3) {
-        LOG(ERROR) << "Invalid PPS status: " << pps_gprmc[0];
-        exit(1);
-    }
-
-    mOutMsg.pps_status = PPS_STATUS[status_index];
+    mOutMsg.pps_status = PPS_STATUS[pVelodyneMsg->pps_status_index];
     // A validity - A-ok, V-invalid, refer VLP-16 manual
-    mOutMsg.is_gprmc_valid = pps_gprmc[1];
+    mOutMsg.is_gprmc_valid = pVelodyneMsg->is_gprmc_valid;
 }
 
 void InforProcess::rawImuCB(const hdop_teller::imu5651_422::ConstPtr& pRawImuMsg) {

@@ -1,0 +1,2 @@
+
+echo ${log_file}

@@ -106,9 +106,6 @@ if __name__ == "__main__":
     path        = sys.argv[1]
     path_in     = sys.argv[2]
     path_in_cld = sys.argv[3]
-    print path
-    print path_in
-    print path_in_cld
 
     # 1 读取xml文件
     #tree = read_xml("./src/launch/ntd_sensors.launch")
@@ -118,13 +115,12 @@ if __name__ == "__main__":
     # 2.1 找到父节点
     nodes = find_nodes(tree, "node")
     # 2.2 通过属性准确定位子节点
-     # 2.3 修改节点属性
+    # 2.3 修改节点属性
     # 2.3.2 add node roscameragpsimg
     result_node = get_node_by_keyvalue(nodes, {"type": "roscameragpsimg"})
     path_img = "jpg " + path +"/Image/"
     path_imu = path +"/IMU/"
     path_img = path_img + " " + path_imu
-    print path_img
     change_node_properties(result_node, {"args": path_img})
 
     # add mif file path
@@ -152,8 +148,5 @@ if __name__ == "__main__":
     result_node_cld = get_node_by_keyvalue(nodes_cld, {"name": "$(arg manager)_driver"})
     element = create_node("param", {"name": "record_path", "value": path_lidar}, "")
     add_child_node(result_node_cld, element)
-    print path_lidar
     # 3 输出到结果文件
     write_xml(tree_cld, "src/velodyne/velodyne_driver/launch/nodelet_manager.xml")
-    ##############################################
-

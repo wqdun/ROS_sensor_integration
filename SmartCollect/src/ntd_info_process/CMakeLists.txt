@@ -9,9 +9,12 @@ add_compile_options(-std=c++11)
 ## is used, also find other catkin packages
 find_package(catkin REQUIRED COMPONENTS
   roscpp
-  visualization_msgs
   std_msgs
+  visualization_msgs
   message_generation
+  roscameragpsimg
+  hdop_teller
+  velodyne_msgs
 )
 
 ## System dependencies are found with CMake's conventions
@@ -50,11 +53,9 @@ find_package(catkin REQUIRED COMPONENTS
 ## Generate messages in the 'msg' folder
 add_message_files(
   FILES
-  # Message1.msg
-  # Message2.msg
-  # point_wgs.msg
-  processed_infor_msg.msg
   point_wgs.msg
+
+  processed_infor_msg.msg
 )
 
 ## Generate services in the 'srv' folder
@@ -120,11 +121,10 @@ catkin_package(
 
 ## Specify additional locations of header files
 ## Your package locations should be listed before other locations
-include_directories(
-  include
-  ../../devel/include
-  ${catkin_INCLUDE_DIRS}
-)
+# include_directories(
+#   include
+#   ${catkin_INCLUDE_DIRS}
+# )
 
 ## Declare a C++ library
 # add_library(${PROJECT_NAME}
@@ -207,7 +207,6 @@ include_directories(
 # user defined
 include_directories(
   include
-  ../../devel/include
   ${catkin_INCLUDE_DIRS}
 )
 

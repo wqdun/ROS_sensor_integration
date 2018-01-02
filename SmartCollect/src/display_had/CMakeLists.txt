@@ -10,6 +10,7 @@ add_compile_options(-std=c++11)
 find_package(catkin REQUIRED COMPONENTS
   roscpp
   std_msgs
+  ntd_info_process
 )
 
 ## System dependencies are found with CMake's conventions
@@ -116,7 +117,6 @@ catkin_package(
 ## Your package locations should be listed before other locations
 include_directories(
 # include
-  ../../devel/include
   ${catkin_INCLUDE_DIRS}
 )
 
@@ -143,7 +143,7 @@ add_executable(${PROJECT_NAME}_node src/display_had_node.cpp src/mif_read.cpp sr
 
 ## Add cmake target dependencies of the executable
 ## same as for the library above
-# add_dependencies(${PROJECT_NAME}_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+add_dependencies(${PROJECT_NAME}_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
 ## Specify libraries to link a library or executable target against
 target_link_libraries(${PROJECT_NAME}_node

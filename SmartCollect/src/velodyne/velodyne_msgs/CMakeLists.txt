@@ -8,6 +8,7 @@ add_message_files(
   FILES
   VelodynePacket.msg
   VelodyneScan.msg
+  Velodyne2Center.msg
 )
 generate_messages(DEPENDENCIES std_msgs)
 

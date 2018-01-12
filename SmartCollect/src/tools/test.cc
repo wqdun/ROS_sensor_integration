@@ -10,6 +10,15 @@
 #include <boost/algorithm/string/split.hpp>
 #include <pthread.h>
 #include <unistd.h>
+// GDAL library
+#include <gdal.h>
+#include "gdal_alg.h"
+#include "cpl_conv.h"
+#include "cpl_port.h"
+#include "cpl_multiproc.h"
+#include "ogr_srs_api.h"
+// #include "proj_api.h"
+
 using namespace std;
 
 pthread_t ntid;
@@ -37,9 +46,42 @@ bool isLeapYear(int year) {
     );
 }
 
-int main(int argc, char **argv) {
+static void generateFileName(const string &path, string &fileName) {
+  // get project name from path
+  const string prj_start("/record/");
+  string::size_type prj_start_index = path.find(prj_start) + prj_start.size();
+  string::size_type prj_end_index = path.find("/rawdata/");
+  if( (path.npos == prj_start_index) || (path.npos == prj_end_index) ) {
+    cout << "Wrong path, path " << path << endl;
+    exit(1);
+  }
+  const string prj_name(path.substr(prj_start_index, prj_end_index - prj_start_index) );
 
+  // remove "-" from project name to get file name
+  vector<string> parsed_prj_name;
+  boost::split(parsed_prj_name, prj_name, boost::is_any_of( "-" ) );
+  if(4 != parsed_prj_name.size() ) {
+    cout << "Wrong project name, parsed_prj_name.size(): " << parsed_prj_name.size() << endl;
+    exit(1);
+  }
+  fileName = parsed_prj_name[0] + parsed_prj_name[1] + parsed_prj_name[2] + parsed_prj_name[3];
 
-
-
+  // append UNIX local time (Beijing time) stamp to file name
+  time_t tt = time(NULL);
+  tm *t= localtime(&tt);
+  char nowTime[50];
+  (void)sprintf(nowTime, "%02d%02d%02d", t->tm_hour, t->tm_min, t->tm_sec);
+  fileName += nowTime;
 }
+
+
+
+int main(int argc, char **argv) {
+  string mRecordFile = "/home/navi/catkin_ws/record/1005-1-077-180110/rawdata/Lidar/";
+  string lidarFileName("");
+  (void)generateFileName(mRecordFile, lidarFileName);
+  mRecordFile += (lidarFileName + "_lidar.dat");
+  cout << mRecordFile << endl;
+}
+
+

@@ -1,8 +1,12 @@
 #include "mif_read.h"
+#define NDEBUG
+// #undef NDEBUG
+#include <glog/logging.h>
 
-MifReader::MifReader(ros::NodeHandle nh, ros::NodeHandle private_nh) {
-    private_nh.param("mif_path", mMifPath, mMifPath);
-    LOG(INFO) << "Mif data is:" << mMifPath;
+MifReader::MifReader(ros::NodeHandle nh, ros::NodeHandle private_nh, const string& _imuRecordPath) {
+    mMifPath = _imuRecordPath + "/../../../../data/";
+    LOG(INFO) << "Mif data is: " << mMifPath;
+    const string planLayerPath(_imuRecordPath + "/../Task/Planlayer/");
 
     mLineArray.markers.reserve(2000);
     mSubGps = nh.subscribe("processed_infor_msg", 0, &MifReader::gpsCallback, this);
@@ -11,8 +15,10 @@ MifReader::MifReader(ros::NodeHandle nh, ros::NodeHandle private_nh) {
     mIsInSameMesh = false;
     mCurrentWGS.x = -0.5;
 
-    // got /home/dun/projects/SmartCollect/record/project_2017_11_21_13_21_18/
-    const string trackfileInImuPath(mMifPath.substr(0, mMifPath.find("..") ) + "IMU/track_mars.txt");
+    // e.g., _imuRecordPath: /home/navi/catkin_ws/record/1005-1-077-180110/rawdata/IMU/
+    string encrypTrackFileName("");
+    (void)public_tools::PublicTools::generateFileName(_imuRecordPath, encrypTrackFileName);
+    const string trackfileInImuPath(_imuRecordPath + encrypTrackFileName + "_encryp_track.txt");
     mTrackMarsFile.open(trackfileInImuPath);
     if(!mTrackMarsFile.is_open() ) {
         LOG(ERROR) << "Failed to open " << trackfileInImuPath;
@@ -23,18 +29,25 @@ MifReader::MifReader(ros::NodeHandle nh, ros::NodeHandle private_nh) {
 
     // Below for display GPS track
     mpTrackDisplayer = new TrackDisplayer();
+    // for display plan layer
+    pPlanLayerDisplayer_ = new PlanLayerDisplayer(planLayerPath);
 }
 
 MifReader::~MifReader() {
     mTrackMarsFile.close();
     delete mpTrackDisplayer;
+    delete pPlanLayerDisplayer_;
     LOG(INFO) << "Goodbye.";
 }
 
 void MifReader::run() {
     vector<string> roadDBs;
-    (void)getFiles(mMifPath, roadDBs);
-    LOG(INFO) << "Got " << roadDBs.size() << " road DB files.";
+    (void)public_tools::PublicTools::getFilesInDir(mMifPath, "road_15.db", roadDBs);
+    if(1 != roadDBs.size() ) {
+        LOG(ERROR) << "Got " << roadDBs.size() << " roadDBs, should be 1.";
+        exit(1);
+    }
+    string roadDB(roadDBs[0]);
 
     ros::Rate rate(2);
     while(ros::ok() ) {
@@ -46,16 +59,15 @@ void MifReader::run() {
             continue;
         }
         mpTrackDisplayer->displayTrack(mCurrentWGS);
+        pPlanLayerDisplayer_->displayPlanLayer(mCurrentWGS);
 
         if(mTileList.empty()) {
             LOG(INFO) << "mTileList is empty.";
             continue;
         }
 
-        for(auto &roadDB: roadDBs) {
-            // fill gAbsGaussList using road.db and current WGS
-            readFile(roadDB);
-        }
+        // fill gAbsGaussList using road.db and current WGS
+        (void)readFile(roadDB);
 
         DLOG(INFO) << "gAbsLines contains " << gAbsLines.size() << " lines.";
         if(gAbsLines.empty()) {
@@ -67,8 +79,7 @@ void MifReader::run() {
         // mLineStrip coordination transfer to current position
         for(size_t markerId = 0; markerId < gAbsLines.size(); ++markerId) {
             visualization_msgs::Marker offsetLine;
-            ros::Time nowTime = ros::Time::now();
-            initMarker(offsetLine, markerId, nowTime);
+            initMarker(offsetLine, markerId);
             public_tools::PublicTools::transform_coordinate(gAbsLines[markerId], mCurrentWGS, offsetLine.points);
             mLineArray.markers.push_back(offsetLine);
         }
@@ -77,35 +88,29 @@ void MifReader::run() {
     }
 }
 
-void MifReader::initMarker(visualization_msgs::Marker &marker, const size_t id, const ros::Time &now) {
+void MifReader::initMarker(visualization_msgs::Marker &marker, const size_t id) {
     marker.points.clear();
-    // marker.points.reserve(50);
     marker.header.frame_id = "/velodyne";
-    // marker.header.stamp = now;
     marker.ns = "sd_map";
     marker.action = visualization_msgs::Marker::ADD;
     marker.pose.orientation.w = 1.0;
     marker.id = id;
     marker.type = visualization_msgs::Marker::LINE_STRIP;
-    // marker.type = visualization_msgs::Marker::POINTS;
-    // LINE_STRIP/LINE_LIST markers use only the x component of scale, for the line width
-    // POINTS markers use x and y scale for width/height respectively
+    // LINE_STRIP/LINE_LIST markers use only the x component of scale, for the line width; POINTS markers use x and y scale for width/height respectively
     marker.scale.x = .5;
-    // marker.scale.y = 0.01;
-    // Line strip is blue
-    // set .a = 0 to hide display
     marker.color.r = 1.0f;
     marker.color.g = 1.0f;
     marker.color.b = 0.0f;
+    // set .a = 0 to hide display
     marker.color.a = 1.0;
     marker.lifetime = ros::Duration(1.0);
 }
 
 void MifReader::gpsCallback(const ntd_info_process::processed_infor_msg::ConstPtr& pGpsMsg) {
     // lat: 1 degree is about 100000 m
-    const double lat = pGpsMsg->latlonhei.x;
+    const double lat = pGpsMsg->latlonhei.lat;
     // lon: 1 degree is about 100000 m
-    const double lng = pGpsMsg->latlonhei.y;
+    const double lng = pGpsMsg->latlonhei.lon;
     DLOG(INFO) << __FUNCTION__ << " start, lat: " << lat;
     if(lng < 115) {
         LOG(INFO) << "Wrong coordination (" << lng << ", " << lat << ").";
@@ -129,7 +134,7 @@ void MifReader::gpsCallback(const ntd_info_process::processed_infor_msg::ConstPt
     public_tools::PublicTools::GeoToGauss(newlng * 3600, newlat * 3600, 39, 3, &currentGaussY, &currentGaussX, 117);
     mCurrentWGS.x = currentGaussY;
     mCurrentWGS.y = currentGaussX;
-    mCurrentWGS.z = pGpsMsg->latlonhei.z;
+    mCurrentWGS.z = pGpsMsg->latlonhei.hei;
 
     const int MESH_LEVEL = 15;
     static long mesh_last = -1;
@@ -151,49 +156,6 @@ void MifReader::gpsCallback(const ntd_info_process::processed_infor_msg::ConstPt
     DLOG(INFO) << "mTileList Size: " << mTileList.size();
 }
 
-void MifReader::getFiles(const string &basePath, vector<string> &files) {
-    DIR *dir;
-    dirent *ptr;
-
-    // if dir == NULL
-    if( !(dir = opendir(basePath.c_str())) ) {
-        LOG(ERROR) << "Failed to open " << basePath;
-        exit(1);
-    }
-
-    // while ptr != NULL
-    while(ptr = readdir(dir)) {
-        // ignore . and ..
-        if( !(strcmp(ptr->d_name, ".")) ||
-            !(strcmp(ptr->d_name, "..")) ) {
-            continue;
-        }
-
-        // regular file
-        if(8 == ptr->d_type) {
-            // only deal ROAD_LANE_MARKING_GEO mif & mid
-            const string fileName(ptr->d_name);
-            if(string::npos != fileName.find("road_15.db")) {
-                files.push_back(basePath + "/" + fileName);
-            }
-            // else do nothing
-            // else {}
-        }
-        // directory
-        else
-        if(4 == ptr->d_type) {
-            const string subDir(basePath + "/" + ptr->d_name);
-            getFiles(subDir, files);
-        }
-        // else {
-        //     // ignore links(10) & others
-        // }
-    }
-
-    closedir(dir);
-    return;
-}
-
 static int querySqlCB(void *itemCnt, int argc, char **argv, char **colNames) {
     DLOG_EVERY_N(INFO, 100) << __FUNCTION__ << " start.";
     ++(*((size_t *)itemCnt));
@@ -213,7 +175,7 @@ static int querySqlCB(void *itemCnt, int argc, char **argv, char **colNames) {
         return 0;
     }
 
-    MifLine_t mifLine;
+    public_tools::geoPoints_t mifLine;
     mifLine.clear();
     for(int i = 1; i < latLonlist.size() - 1; ++i) {
         std::istringstream iss(latLonlist[i]);

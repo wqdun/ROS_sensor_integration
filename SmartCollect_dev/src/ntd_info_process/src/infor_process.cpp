@@ -1,22 +1,29 @@
 #include "infor_process.h"
+#define NDEBUG
+// #undef NDEBUG
+#include <glog/logging.h>
 // simulate car moving
-#define SIMULATION
+// #define SIMULATION
 
-InforProcess::InforProcess() {
+InforProcess::InforProcess(const string &_eventFilePath) {
+    eventFilePath_ = _eventFilePath;
     mSub = nh.subscribe("imu_string", 0, &InforProcess::gpsCB, this);
     mSubVelodyne = nh.subscribe("velodyne_pps_status", 0, &InforProcess::velodyneCB, this);
     mSub422 = nh.subscribe("imu422_hdop", 0, &InforProcess::rawImuCB, this);
     mSubCameraImg = nh.subscribe("cam_speed", 0, &InforProcess::cameraImgCB, this);
+    mSubMyViz = nh.subscribe("msg_save_control", 0, &InforProcess::myVizCB, this);
+
     mPub = nh.advertise<ntd_info_process::processed_infor_msg>("processed_infor_msg", 0);
     pubTime2Local_ = nh.advertise<ntd_info_process::imuPoints>("imu_time2local", 0);
+	mPubIsSaveFile = nh.advertise<std_msgs::Int64>("center_msg_save_control", 0);
 
     mGpsTime[0] = mGpsTime[1] = -1;
     mIsVelodyneUpdated = mIsRawImuUpdated = mIsGpsUpdated = false;
     time2LocalMsg_.imu_points.clear();
 
 #ifdef SIMULATION
-    mOutMsg.latlonhei.x = 40.071975;
-    mOutMsg.latlonhei.y = 116.239563;
+    mOutMsg.latlonhei.lat = 40.071975;
+    mOutMsg.latlonhei.lon = 116.239563;
 #endif
 }
 
@@ -34,11 +41,11 @@ void InforProcess::run() {
         rate.sleep();
 
 #ifdef SIMULATION
-        mOutMsg.latlonhei.x += 0.00002;
-        mOutMsg.latlonhei.y -= 0.00002;
+        mOutMsg.latlonhei.lat += 0.00002;
+        mOutMsg.latlonhei.lon -= 0.00002;
 #else
         if(!mIsGpsUpdated) {
-            mOutMsg.GPStime = mOutMsg.latlonhei.x = mOutMsg.latlonhei.y = mOutMsg.latlonhei.z = mOutMsg.current_pitch = mOutMsg.current_roll = mOutMsg.current_heading = mOutMsg.current_speed = -2.;
+            mOutMsg.GPStime = mOutMsg.latlonhei.lat = mOutMsg.latlonhei.lon = mOutMsg.latlonhei.hei = mOutMsg.current_pitch = mOutMsg.current_roll = mOutMsg.current_heading = mOutMsg.current_speed = -2.;
             mOutMsg.nsv1_num = mOutMsg.nsv2_num = -2;
         }
         mIsGpsUpdated = false;
@@ -67,30 +74,41 @@ void InforProcess::cameraImgCB(const std_msgs::Float64::ConstPtr& pCameraImgMsg)
     mOutMsg.camera_fps = pCameraImgMsg->data;
 }
 
-void InforProcess::velodyneCB(const std_msgs::String::ConstPtr& pVelodyneMsg) {
+void InforProcess::myVizCB(const std_msgs::Int64::ConstPtr& pMyVizMsg) {
+    // static std::fstream eventFile_;
+#ifdef _SC_V2_0_
+    eventFile_.open(eventFilePath_, std::ios::out | std::ios::app);
+    if(!eventFile_) {
+        LOG(ERROR) << "Failed to open: " << eventFilePath_;
+        exit(1);
+    }
+    DLOG(INFO) << "Create "<< eventFilePath_ << " successfully.";
+
+    // TODO: whether record according to event ID
+    eventFile_ << mOutMsg.latlonhei.lat << ","
+        << mOutMsg.latlonhei.lon << ","
+        // << event classification << ","
+        // << "start/end/null" << ";"
+        ;
+
+    eventFile_.close();
+#endif
+    // only publish isSaveFile
+    mPubIsSaveFile.publish(pMyVizMsg);
+}
+
+void InforProcess::velodyneCB(const velodyne_msgs::Velodyne2Center::ConstPtr& pVelodyneMsg) {
     // 10Hz
     mIsVelodyneUpdated = true;
-    if(pVelodyneMsg->data.empty() ) {
-        LOG(ERROR) << "Got no GPRMC from LIDAR.";
+
+    if( (pVelodyneMsg->pps_status_index) > 3) {
+        LOG(ERROR) << "Invalid PPS status: " << pVelodyneMsg->pps_status_index;
         exit(1);
     }
 
-    vector<string> pps_gprmc;
-    boost::split(pps_gprmc, pVelodyneMsg->data, boost::is_any_of(",") );
-    if(pps_gprmc.size() < 2) {
-        LOG(ERROR) << "Wrong pps_gprmc: " << pVelodyneMsg->data;
-        exit(1);
-    }
-
-    const int status_index = public_tools::PublicTools::string2num(pps_gprmc[0], 4);
-    if(status_index > 3) {
-        LOG(ERROR) << "Invalid PPS status: " << pps_gprmc[0];
-        exit(1);
-    }
-
-    mOutMsg.pps_status = PPS_STATUS[status_index];
+    mOutMsg.pps_status = PPS_STATUS[pVelodyneMsg->pps_status_index];
     // A validity - A-ok, V-invalid, refer VLP-16 manual
-    mOutMsg.is_gprmc_valid = pps_gprmc[1];
+    mOutMsg.is_gprmc_valid = pVelodyneMsg->is_gprmc_valid;
 }
 
 void InforProcess::rawImuCB(const hdop_teller::imu5651_422::ConstPtr& pRawImuMsg) {
@@ -142,9 +160,9 @@ void InforProcess::gpsCB(const roscameragpsimg::imu5651::ConstPtr& pGPSmsg) {
     mOutMsg.GPStime = gpsTime;
 
     ntd_info_process::point_wgs p;
-    p.x = lat;
-    p.y = lon;
-    p.z = hei;
+    p.lat = lat;
+    p.lon = lon;
+    p.hei = hei;
     mOutMsg.latlonhei = p;
     DLOG(INFO) << "lat: " << lat;
 

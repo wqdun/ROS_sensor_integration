@@ -11,10 +11,7 @@ using std::vector;
 #include <boost/algorithm/string/classification.hpp>
 #include <termios.h>
 #include "hdop_teller/imu5651_422.h"
-
-#define NDEBUG
-// #undef NDEBUG
-#include <glog/logging.h>
+#include "../../public_tools/public_tools.h"
 
 int set_opt(int fd, int nSpeed, int nBits, char nEvent, int nStop);
 bool getGpgga(const unsigned char *inBuf, const size_t &bufSize, string &gpgga, bool &isGpggaStart);

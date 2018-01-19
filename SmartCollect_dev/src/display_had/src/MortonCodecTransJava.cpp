@@ -5,7 +5,9 @@
 // Description: calculate mesh by longitude and latitude
 ******************************************************************************/
 #include "MortonCodecTransJava.h"
-
+#define NDEBUG
+// #undef NDEBUG
+#include <glog/logging.h>
 
 long MortonCodec::getMortonFromLonLat(const double dLon, const double dLat, const int level) {
     DLOG(INFO) << __FUNCTION__ << " start.";

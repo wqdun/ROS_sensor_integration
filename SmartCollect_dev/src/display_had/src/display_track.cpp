@@ -1,4 +1,7 @@
 #include "display_track.h"
+#define NDEBUG
+// #undef NDEBUG
+#include <glog/logging.h>
 
 TrackDisplayer::TrackDisplayer() {
     mEncryptedGausses.clear();

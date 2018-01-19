@@ -12,9 +12,6 @@ using std::string;
 using std::stoi;
 #include <vector>
 using std::vector;
-#define NDEBUG
-// #undef NDEBUG
-#include <glog/logging.h>
 #include <dirent.h>
 #include <bitset>
 #include <boost/algorithm/string/classification.hpp>
@@ -25,24 +22,22 @@ using std::vector;
 #include "ntd_info_process/processed_infor_msg.h"
 #include "MortonCodecTransJava.h"
 #include "display_track.h"
+#include "display_plan_layer.h"
 
-typedef vector<geometry_msgs::Point> MifLine_t;
-typedef vector<MifLine_t> MifLines_t;
-static MifLines_t gAbsLines;
+static public_tools::geoLines_t gAbsLines;
 
 class MifReader {
 
 public:
-    MifReader(ros::NodeHandle nh, ros::NodeHandle private_nh);
+    MifReader(ros::NodeHandle nh, ros::NodeHandle private_nh, const string& _imuRecordPath);
     ~MifReader();
     void run();
 
 
 private:
-    void getFiles(const string& path, vector<string>& files);
     void readFile(const string &file);
     void gpsCallback(const ntd_info_process::processed_infor_msg::ConstPtr& pGpsMsg);
-    void initMarker(visualization_msgs::Marker &marker, const size_t id, const ros::Time &now);
+    void initMarker(visualization_msgs::Marker &marker, const size_t id);
 
     ros::Subscriber mSubGps;
     ros::Publisher mPubArray;
@@ -53,6 +48,7 @@ private:
     bool mIsInSameMesh;
     std::ofstream mTrackMarsFile;
     TrackDisplayer *mpTrackDisplayer;
+    PlanLayerDisplayer *pPlanLayerDisplayer_;
 };
 
 #endif

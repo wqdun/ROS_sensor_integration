@@ -17,13 +17,14 @@
 
 #include <string>
 #include <ros/ros.h>
-#include <std_msgs/String.h>
 #include <diagnostic_updater/diagnostic_updater.h>
 #include <diagnostic_updater/publisher.h>
 #include <dynamic_reconfigure/server.h>
 
 #include <velodyne_driver/input.h>
 #include <velodyne_driver/VelodyneNodeConfig.h>
+#include "velodyne_msgs/Velodyne2Center.h"
+#include "../../../../public_tools/public_tools.h"
 
 namespace velodyne_driver
 {
@@ -38,7 +39,7 @@ public:
                  ros::NodeHandle private_nh);
   ~VelodyneDriver() {}
 
-  bool poll(void);
+  bool poll(int64_t isSaveLidar);
 
 private:
 
@@ -62,7 +63,7 @@ private:
 
   boost::shared_ptr<Input> input_;
   ros::Publisher output_;
-  ros::Publisher mPubPpsStatus;
+  ros::Publisher pub2Center_;
 
   /** diagnostics updater */
   diagnostic_updater::Updater diagnostics_;

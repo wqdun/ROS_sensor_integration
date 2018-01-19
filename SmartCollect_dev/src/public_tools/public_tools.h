@@ -9,9 +9,9 @@ using std::string;
 #include <vector>
 using std::vector;
 #include <visualization_msgs/Marker.h>
-#define NDEBUG
-// #undef NDEBUG
-#include <glog/logging.h>
+#include <boost/algorithm/string/classification.hpp>
+#include <boost/algorithm/string/split.hpp>
+#include <dirent.h>
 
 namespace public_tools
 {
@@ -21,6 +21,11 @@ typedef struct {
     double y;
     double z;
 } pointXYZ_t;
+
+typedef geometry_msgs::Point geoPoint_t;
+typedef vector<geometry_msgs::Point> geoPoints_t;
+typedef vector<geoPoints_t> geoLines_t;
+
 
 class PublicTools {
 public:
@@ -34,12 +39,13 @@ public:
     static double getDaySecond(const double rosTime, const double pktTime);
     template <typename T>
     static void tf_rotate(const T &in_xyz, const pointXYZ_t &angle_xyz, const pointXYZ_t &offset, T &out_xyz);
+    static void generateFileName(const std::string &path, std::string &fileName);
+    static void getFilesInDir(const std::string &baseDir, const std::string &keyWord, std::vector<std::string> &files);
 
 private:
     // only used by tf_rotate
     template <typename T>
     static void multiply_matrix(const T &in_xyz, const double tf_matrix[][3], T &out_xyz);
-
 };
 
 // template function should placed in header file, else report undefined reference error

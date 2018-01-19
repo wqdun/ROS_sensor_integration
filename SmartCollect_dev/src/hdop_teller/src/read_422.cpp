@@ -1,4 +1,7 @@
 #include "read_422.h"
+#define NDEBUG
+// #undef NDEBUG
+#include <glog/logging.h>
 
 int main(int argc, char **argv) {
     google::InitGoogleLogging(argv[0]);
@@ -29,7 +32,9 @@ int main(int argc, char **argv) {
     string rawInsFile("");
     // private_nh.param("raw_ins_path", rawInsFile, rawInsFile);
     rawInsFile = argv[1];
-    rawInsFile += "/raw_imu.dat";
+    string rtImuFileName("");
+    (void)public_tools::PublicTools::generateFileName(rawInsFile, rtImuFileName);
+    rawInsFile += (rtImuFileName + "_integrate_imu.dat");
 
     FILE *pOutFile;
     if(!(pOutFile = fopen(rawInsFile.c_str(), "wb") ) ) {
@@ -227,7 +232,7 @@ int set_opt(int fd, int nSpeed, int nBits, char nEvent, int nStop) {
 
     tcflush(fd, TCIFLUSH);
 
-     // time out 15s重要
+    // time out 15s重要
     newtio.c_cc[VTIME] = 100;
     // Update the option and do it now 返回的最小值  重要
     newtio.c_cc[VMIN] = 0;

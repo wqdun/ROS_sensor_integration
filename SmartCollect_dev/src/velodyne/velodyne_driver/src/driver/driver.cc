@@ -36,14 +36,14 @@ VelodyneDriver::VelodyneDriver(ros::NodeHandle node,
   // get model name, validate string, determine packet rate
   private_nh.param("model", config_.model, std::string("64E"));
 
+  // e.g., mRecordFile: /home/navi/catkin_ws/record/1005-1-077-180110/rawdata/Lidar/
   private_nh.param("record_path", mRecordFile, mRecordFile);
-  // get unix time stamp as file name
-  time_t tt = time(NULL);
-  tm *t= localtime(&tt);
-  char fileName[50];
-  (void)sprintf(fileName, "%02d_%02d_%02d.lidar", t->tm_hour, t->tm_min, t->tm_sec);
-  mRecordFile += fileName;
+  std::string lidarFileName("");
+  // e.g., lidarFileName: 10051077180110150921
+  (void)public_tools::PublicTools::generateFileName(mRecordFile, lidarFileName);
+  mRecordFile += (lidarFileName + "_lidar.dat");
   ROS_INFO_STREAM("mRecordFile: " << mRecordFile);
+
   double packet_rate;                   // packet frequency (Hz)
   std::string model_full_name;
   if ((config_.model == "64E_S2") ||
@@ -128,21 +128,23 @@ VelodyneDriver::VelodyneDriver(ros::NodeHandle node,
   // raw packet output topic
   output_ =
     node.advertise<velodyne_msgs::VelodyneScan>("velodyne_packets", 50);
-  mPubPpsStatus = node.advertise<std_msgs::String>("velodyne_pps_status", 0);
+  pub2Center_ = node.advertise<velodyne_msgs::Velodyne2Center>("velodyne_pps_status", 0);
 }
 
-static bool parsePositionPkt(const char *pkt, std::string &parsedRes) {
+static bool parsePositionPkt(const char *pkt, velodyne_msgs::Velodyne2Center &parsedRes) {
     ROS_DEBUG_STREAM(__FUNCTION__ << " start.");
     if('$' != pkt[206]) {
-      ROS_WARN_STREAM_THROTTLE(10, "No $GPRMC received: " << std::hex << pkt[206]);
+      ROS_INFO_STREAM("No position packet received: " << std::hex << (int)pkt[206]);
+      // PPS_STATUS[0] is "No PPS", refer infor_process.h
+      parsedRes.pps_status_index = 0;
+      // A validity - A-ok, V-invalid, refer VLP-16 manual
+      parsedRes.is_gprmc_valid = "V";
       return false;
     }
 
     // 00 .. 03
-    parsedRes = std::to_string(pkt[202]);
-
+    parsedRes.pps_status_index = pkt[202];
     // $GPRMC,,V,,,,,,,,,,N*53
-    // A validity - A-ok, V-invalid, refer VLP-16 manual
     std::stringstream isGprmcValid;
     size_t dotCnt = 0;
     for(size_t i = 210; i < 230; ++i) {
@@ -156,7 +158,7 @@ static bool parsePositionPkt(const char *pkt, std::string &parsedRes) {
     }
 
     // "3,A"
-    parsedRes += ("," + isGprmcValid.str() );
+    parsedRes.is_gprmc_valid = isGprmcValid.str();
     return true;
 }
 
@@ -164,15 +166,15 @@ static bool parsePositionPkt(const char *pkt, std::string &parsedRes) {
  *
  *  @returns true unless end of file reached
  */
-bool VelodyneDriver::poll(void)
+bool VelodyneDriver::poll(int64_t isSaveLidar)
 {
+  ROS_DEBUG_STREAM("isSaveLidar: " << isSaveLidar);
   // Allocate a new shared pointer for zero-copy sharing with other nodelets.
   velodyne_msgs::VelodyneScanPtr scan(new velodyne_msgs::VelodyneScan);
   scan->packets.resize(config_.npackets);
 
   // Since the velodyne delivers data at a very high rate, keep
   // reading and publishing scans as fast as possible.
-  std_msgs::String ppsStatus;
   bool isPositionPkt = false;
   char positionPkt[POSITION_PACKET_SIZE];
   bzero(positionPkt, POSITION_PACKET_SIZE);
@@ -196,7 +198,22 @@ bool VelodyneDriver::poll(void)
   ROS_DEBUG("Publishing a full Velodyne scan.");
   scan->header.stamp = scan->packets[config_.npackets - 1].stamp;
   scan->header.frame_id = config_.frame_id;
+  output_.publish(scan);
 
+  velodyne_msgs::Velodyne2Center pps_status;
+  // only last position pkt be published, ignore the rest
+  (void)parsePositionPkt(positionPkt, pps_status);
+  pub2Center_.publish(pps_status);
+
+  // notify diagnostics that a message has been published, updating
+  // its status
+  diag_topic_->tick(scan->header.stamp);
+  diagnostics_.update();
+
+  if(!isSaveLidar) {
+    return true;
+  }
+  // write LIDAR file
   FILE *pOutFile;
   if(!(pOutFile = fopen(mRecordFile.c_str(), "ab") ) ) {
     ROS_ERROR_STREAM("Create file:" << mRecordFile << " failed, errno:" << errno);
@@ -211,19 +228,6 @@ bool VelodyneDriver::poll(void)
   }
 
   fclose(pOutFile);
-
-  // only last position pkt be published, ignore the rest
-  if(parsePositionPkt(positionPkt, ppsStatus.data) ) {
-    mPubPpsStatus.publish(ppsStatus);
-  }
-  // else: do nothing when no position pkt received in this scan
-
-  output_.publish(scan);
-
-  // notify diagnostics that a message has been published, updating
-  // its status
-  diag_topic_->tick(scan->header.stamp);
-  diagnostics_.update();
 
   return true;
 }

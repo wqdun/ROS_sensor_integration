@@ -19,6 +19,7 @@
 #include <nodelet/nodelet.h>
 
 #include "driver.h"
+#include "center_subscriber.h"
 
 namespace velodyne_driver
 {
@@ -51,12 +52,14 @@ private:
   boost::shared_ptr<boost::thread> deviceThread_;
 
   boost::shared_ptr<VelodyneDriver> dvr_; ///< driver implementation class
+  boost::shared_ptr<CenterSubscriber> sub_;
 };
 
 void DriverNodelet::onInit()
 {
   // start the driver
   dvr_.reset(new VelodyneDriver(getNodeHandle(), getPrivateNodeHandle()));
+  sub_.reset(new CenterSubscriber(getNodeHandle(), getPrivateNodeHandle()));
 
   // spawn device poll thread
   running_ = true;
@@ -70,7 +73,7 @@ void DriverNodelet::devicePoll()
   while(ros::ok())
     {
       // poll device until end of file
-      running_ = dvr_->poll();
+      running_ = dvr_->poll(sub_->isSaveLidar_);
       if (!running_)
         break;
     }

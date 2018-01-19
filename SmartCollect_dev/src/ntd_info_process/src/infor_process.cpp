@@ -1,14 +1,15 @@
 #include "infor_process.h"
 // simulate car moving
-// #define SIMULATION
+#define SIMULATION
 
 InforProcess::InforProcess() {
     mSub = nh.subscribe("imu_string", 0, &InforProcess::gpsCB, this);
     mSubVelodyne = nh.subscribe("velodyne_pps_status", 0, &InforProcess::velodyneCB, this);
     mSub422 = nh.subscribe("imu422_hdop", 0, &InforProcess::rawImuCB, this);
     mSubCameraImg = nh.subscribe("cam_speed", 0, &InforProcess::cameraImgCB, this);
-
     mPub = nh.advertise<ntd_info_process::processed_infor_msg>("processed_infor_msg", 0);
+    pubTime2Local_ = nh.advertise<ntd_info_process::imuPoints>("imu_time2local", 0);
+
     mGpsTime[0] = mGpsTime[1] = -1;
     mIsVelodyneUpdated = mIsRawImuUpdated = mIsGpsUpdated = false;
     time2LocalMsg_.imu_points.clear();
@@ -35,13 +36,13 @@ void InforProcess::run() {
 #ifdef SIMULATION
         mOutMsg.latlonhei.x += 0.00002;
         mOutMsg.latlonhei.y -= 0.00002;
-#endif
-
+#else
         if(!mIsGpsUpdated) {
             mOutMsg.GPStime = mOutMsg.latlonhei.x = mOutMsg.latlonhei.y = mOutMsg.latlonhei.z = mOutMsg.current_pitch = mOutMsg.current_roll = mOutMsg.current_heading = mOutMsg.current_speed = -2.;
             mOutMsg.nsv1_num = mOutMsg.nsv2_num = -2;
         }
         mIsGpsUpdated = false;
+#endif
 
         // for rawImuCB is 1Hz, my freq should <= 1Hz: 0.5Hz
         if(0 == (freqDivider % 16) ) {
@@ -154,24 +155,25 @@ void InforProcess::gpsCB(const roscameragpsimg::imu5651::ConstPtr& pGPSmsg) {
     mOutMsg.nsv1_num = nsv1_num;
     mOutMsg.nsv2_num = nsv2_num;
 
-    time2point_t time2local;
+    ntd_info_process::imuPoint time2local;
     // gpsTime is week second
-    time2local.daytime = fmod(gpsTime, 3600 * 24);
+    time2local.day_second = fmod(gpsTime, 3600 * 24);
     double currentGaussX;
     double currentGaussY;
     public_tools::PublicTools::GeoToGauss(lon * 3600, lat * 3600, 39, 3, &currentGaussY, &currentGaussX, 117);
 
-    time2local.point.x = currentGaussY;
-    time2local.point.y = currentGaussX;
-    time2local.point.z = hei;
+    p.x = currentGaussY;
+    p.y = currentGaussX;
+    time2local.east_north_up = p;
 
-    // 100/s
-    // time2LocalMsg_.imu_points.push_back(time2local);
-    // DLOG(INFO) << "time2LocalMsg_.imu_points.size(): " << time2LocalMsg_.imu_points.size();
-    // if(time2LocalMsg_.imu_points.size() > 2000) {
-    //     // process and clear
-    //     time2LocalMsg_.imu_points.clear();
-    // }
+    // 100 Hz
+    time2LocalMsg_.imu_points.push_back(time2local);
+    DLOG(INFO) << "time2LocalMsg_.imu_points.size(): " << time2LocalMsg_.imu_points.size();
+    if(time2LocalMsg_.imu_points.size() >= 100) {
+        // 1 Hz
+        pubTime2Local_.publish(time2LocalMsg_);
+        time2LocalMsg_.imu_points.clear();
+    }
 
 #endif
 }

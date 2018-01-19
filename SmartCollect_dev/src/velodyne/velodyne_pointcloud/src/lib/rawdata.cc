@@ -161,10 +161,11 @@ namespace velodyne_rawdata
     float intensity;
 
     pcImuCoord.points.clear();
-    // LIDAR day second: UTC time, should +18 to GPS time
+    pcImuCoord.width = 0;
+    // LIDAR day second: UTC time, should +18 sec to GPS time
     pcImuCoord.header.stamp = pcl_conversions::toPCL(pkt.stamp);
 
-    ROS_DEBUG_STREAM("Day Time: " << std::fixed << pcImuCoord.header.stamp);
+    ROS_INFO_STREAM_THROTTLE(1000, "Day Time: " << std::fixed << pcImuCoord.header.stamp);
     const raw_packet_t *raw = (const raw_packet_t *) &pkt.data[0];
     for (int block = 0; block < BLOCKS_PER_PACKET; block++) {
 
@@ -324,6 +325,7 @@ namespace velodyne_rawdata
 
               public_tools::PublicTools::tf_rotate(point, mAngleLidar2Imu, mOffsetLidar2Imu, imuPoint);
               pcImuCoord.points.push_back(imuPoint);
+              ++pcImuCoord.width;
             }
           }
         }

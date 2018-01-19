@@ -4,8 +4,9 @@ int main(int argc, char **argv) {
     google::InitGoogleLogging(argv[0]);
     ros::init(argc, argv, "point_cloud_registration");
 
+    LOG(INFO) << "Point Cloud Registration.";
     pointCloudRegistration pointCloudRegistrar;
     pointCloudRegistrar.run();
-    LOG(INFO) << "Point Cloud Registration.";
+
     return 0;
 }

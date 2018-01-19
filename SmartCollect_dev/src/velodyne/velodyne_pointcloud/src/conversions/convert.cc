@@ -56,8 +56,8 @@ namespace velodyne_pointcloud
   /** @brief Callback for raw scan messages. */
   void Convert::processScan(const velodyne_msgs::VelodyneScan::ConstPtr &scanMsg)
   {
-    if (output_.getNumSubscribers() == 0)         // no one listening?
-      return;                                     // avoid much work
+    // if (output_.getNumSubscribers() == 0)         // no one listening?
+    //   return;                                     // avoid much work
 
     // allocate a point cloud with same time and frame ID as raw data
     velodyne_rawdata::VPointCloud::Ptr
@@ -77,7 +77,7 @@ namespace velodyne_pointcloud
 
     ROS_INFO_STREAM("pPcVecMsg_->pc_vec.size(): " << pPcVecMsg_->pc_vec.size() );
     // ~~760/s
-    if(pPcVecMsg_->pc_vec.size() > 10000) {
+    if(pPcVecMsg_->pc_vec.size() >= 10000) {
       // process and clear
       outputPcVec_.publish(pPcVecMsg_);
       pPcVecMsg_->pc_vec.clear();

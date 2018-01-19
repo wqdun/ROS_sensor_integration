@@ -45,6 +45,7 @@ private:
     ros::Subscriber mSub422;
     ros::Subscriber mSubCameraImg;
     ros::Publisher mPub;
+    ros::Publisher pubTime2Local_;
     ntd_info_process::processed_infor_msg mOutMsg;
     const string PPS_STATUS[4] {
       "No PPS", "Synchronizing PPS", "PPS locked", "PPS Error"

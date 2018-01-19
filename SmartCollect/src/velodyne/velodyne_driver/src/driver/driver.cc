@@ -36,14 +36,14 @@ VelodyneDriver::VelodyneDriver(ros::NodeHandle node,
   // get model name, validate string, determine packet rate
   private_nh.param("model", config_.model, std::string("64E"));
 
+  // e.g., mRecordFile: /home/navi/catkin_ws/record/1005-1-077-180110/rawdata/Lidar/
   private_nh.param("record_path", mRecordFile, mRecordFile);
-  // get unix time stamp as file name
-  time_t tt = time(NULL);
-  tm *t= localtime(&tt);
-  char fileName[50];
-  (void)sprintf(fileName, "%02d_%02d_%02d.lidar", t->tm_hour, t->tm_min, t->tm_sec);
-  mRecordFile += fileName;
+  std::string lidarFileName("");
+  // e.g., lidarFileName: 10051077180110150921
+  (void)public_tools::PublicTools::generateFileName(mRecordFile, lidarFileName);
+  mRecordFile += (lidarFileName + "_lidar.dat");
   ROS_INFO_STREAM("mRecordFile: " << mRecordFile);
+
   double packet_rate;                   // packet frequency (Hz)
   std::string model_full_name;
   if ((config_.model == "64E_S2") ||

@@ -9,7 +9,7 @@ add_compile_options(-std=c++11)
 # )
 
 # build the nodelet version
-add_library(driver_nodelet nodelet.cc driver.cc center_subscriber.cpp)
+add_library(driver_nodelet nodelet.cc driver.cc center_subscriber.cpp ../../../../public_tools/public_tools.cpp)
 add_dependencies(driver_nodelet velodyne_driver_gencfg)
 target_link_libraries(driver_nodelet
   velodyne_input

@@ -25,7 +25,8 @@ using namespace std;
 int main(int argc, char **argv) {
     GDALAllRegister();
     GDALDataset *poDS;
-    poDS = (GDALDataset*)GDALOpenEx("PlanLayer/2501-1-104-180108.TAB", GDAL_OF_VECTOR, NULL, NULL, NULL);
+    const string fileName("PlanLayer/2501-1-104-180108.TAB");
+    poDS = (GDALDataset*)GDALOpenEx(fileName.c_str(), GDAL_OF_VECTOR, NULL, NULL, NULL);
     if(!poDS) {
         cout << "Open failed.\n";
         exit(1);
@@ -50,9 +51,36 @@ int main(int argc, char **argv) {
     }
     cout << "Gotcha you." << endl;
 
-    OGRFeature *poFeature;
     poLayer->ResetReading();
-    int featureCnt = 0;
+    GIntBig featureCnt = poLayer->GetFeatureCount();
+    cout << featureCnt << endl;
+
+    for(GIntBig i = 0; i < featureCnt; ++i) {
+        OGRFeature *poFeature = poLayer->GetFeature(i);
+        OGRGeometry *poGeometry = poFeature->GetGeometryRef();
+        if(!poGeometry) {
+            cout << "poGeometry is NULL." << endl;
+            OGRFeature::DestroyFeature(poFeature);
+            continue;
+        }
+
+        if(wkbLineString != wkbFlatten(poGeometry->getGeometryType() ) ) {
+            cout << "poGeometry->getGeometryType(): " << poGeometry->getGeometryType() << endl;
+            continue;
+        }
+        OGRSimpleCurve *poSimpleCurve = (OGRSimpleCurve *)poGeometry;
+        cout << "poSimpleCurve->getNumPoints(): " << poSimpleCurve->getNumPoints() << endl;
+        // cout << "poSimpleCurve->getDimension(): " << poSimpleCurve->getDimension() << endl;
+        for(int i = 0; i < poSimpleCurve->getNumPoints(); ++i) {
+            cout << fixed << i << ": " << poSimpleCurve->getX(i) << ": " << poSimpleCurve->getY(i) << ": " << poSimpleCurve->getZ(i) << endl;
+
+
+    }
+
+
+
+    exit(1);
+
     while( (poFeature = poLayer->GetNextFeature() ) ) {
         ++featureCnt;
         cout << "featureCnt: " << featureCnt << endl;
@@ -216,3 +244,92 @@ int main(int argc, char **argv) {
         //         printf("%s,", poFeature->GetFieldAsString(iField) );
         //     }
         // }
+
+
+
+#if 0 // using getfeatureCount may fail it returns: !!
+E0116 15:02:47.204110  8068 display_plan_layer.cpp:53] Feature[0]: poFeature is NULL.
+E0116 15:02:47.207525  8068 display_plan_layer.cpp:53] Feature[35]: poFeature is NULL.
+E0116 15:02:47.207577  8068 display_plan_layer.cpp:53] Feature[37]: poFeature is NULL.
+E0116 15:02:47.231138  8068 display_plan_layer.cpp:53] Feature[284]: poFeature is NULL.
+E0116 15:02:47.238708  8068 display_plan_layer.cpp:53] Feature[400]: poFeature is NULL.
+E0116 15:02:47.238728  8068 display_plan_layer.cpp:53] Feature[401]: poFeature is NULL.
+E0116 15:02:47.238963  8068 display_plan_layer.cpp:53] Feature[404]: poFeature is NULL.
+E0116 15:02:47.238982  8068 display_plan_layer.cpp:53] Feature[405]: poFeature is NULL.
+E0116 15:02:47.238993  8068 display_plan_layer.cpp:53] Feature[406]: poFeature is NULL.
+E0116 15:02:47.239003  8068 display_plan_layer.cpp:53] Feature[407]: poFeature is NULL.
+E0116 15:02:47.239014  8068 display_plan_layer.cpp:53] Feature[408]: poFeature is NULL.
+E0116 15:02:47.239035  8068 display_plan_layer.cpp:53] Feature[409]: poFeature is NULL.
+
+
+void PlanLayerDisplayer::getPlanLines(const std::string &planLayerFile) {
+    LOG(INFO) << __FUNCTION__ << " start, reading " << planLayerFile;
+    // open file and get elements
+    GDALAllRegister();
+    GDALDataset *poDS = (GDALDataset*)GDALOpenEx(planLayerFile.c_str(), GDAL_OF_VECTOR, NULL, NULL, NULL);
+    if(!poDS) {
+        LOG(ERROR) << "Failed to open " << planLayerFile;
+        exit(1);
+    }
+
+    const int layerNum = poDS->GetLayerCount();
+    if(1 != layerNum) {
+        LOG(ERROR) << "Got " << layerNum << " layer in " << planLayerFile << "; should be 1.";
+        exit(1);
+    }
+    OGRLayer *poLayer = poDS->GetLayer(0);
+    if(!poLayer) {
+        LOG(ERROR) << "poLayer is NULL.";
+        exit(1);
+    }
+    LOG(INFO) << "Layer name: " << poLayer->GetName();
+
+    const GIntBig featureNum = poLayer->GetFeatureCount();
+    planLayerLines_.clear();
+    planLayerLines_.reserve(featureNum);
+    planLayerLines2Show_.markers.reserve(featureNum);
+    public_tools::geoPoints_t planLayerLine;
+
+    for(GIntBig i = 1; i < featureNum + 100; ++i) {
+        OGRFeature *poFeature = poLayer->GetFeature(i);
+        if(!poFeature) {
+            LOG(ERROR) << "Feature[" << i << "]: poFeature is NULL.";
+            continue;
+        }
+        OGRGeometry *poGeometry = poFeature->GetGeometryRef();
+        if(!poGeometry) {
+            LOG(ERROR) << "poGeometry is NULL.";
+            OGRFeature::DestroyFeature(poFeature);
+            continue;
+        }
+
+        if(wkbLineString != wkbFlatten(poGeometry->getGeometryType() ) ) {
+            LOG(ERROR) << "GeometryType should be wkbLineString(2), but it's " << poGeometry->getGeometryType();
+            continue;
+        }
+
+        OGRSimpleCurve *poSimpleCurve = (OGRSimpleCurve *)poGeometry;
+        DLOG(INFO) << "Feature[" << i << "] dimension: " << poSimpleCurve->getDimension() << ", contains " << poSimpleCurve->getNumPoints() << " points.";
+
+        planLayerLine.clear();
+        geometry_msgs::Point gaussXY;
+        for(int j = 0; j < poSimpleCurve->getNumPoints(); ++j) {
+            const double lng = poSimpleCurve->getX(j);
+            const double lat = poSimpleCurve->getY(j);
+            double gaussX;
+            double gaussY;
+            (void)public_tools::PublicTools::GeoToGauss(lng * 3600, lat * 3600, 39, 3, &gaussY, &gaussX, 117);
+            DLOG(INFO) << std::fixed << "longitude: " << poSimpleCurve->getX(j) << "; latitude: " << poSimpleCurve->getY(j);
+            gaussXY.x = gaussY;
+            gaussXY.y = gaussX;
+            gaussXY.z = 0;
+            planLayerLine.push_back(gaussXY);
+        }
+        planLayerLines_.push_back(planLayerLine);
+
+        OGRFeature::DestroyFeature(poFeature);
+    }
+    GDALClose(poDS);
+
+}
+#endif

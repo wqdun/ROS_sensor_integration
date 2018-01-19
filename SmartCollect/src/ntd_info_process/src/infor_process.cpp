@@ -1,8 +1,13 @@
 #include "infor_process.h"
+#define NDEBUG
+// #undef NDEBUG
+#include <glog/logging.h>
 // simulate car moving
 // #define SIMULATION
 
-InforProcess::InforProcess() {
+InforProcess::InforProcess(const string &_eventFilePath) {
+    eventFilePath_ = _eventFilePath;
+
     mSub = nh.subscribe("imu_string", 0, &InforProcess::gpsCB, this);
     mSubVelodyne = nh.subscribe("velodyne_pps_status", 0, &InforProcess::velodyneCB, this);
     mSub422 = nh.subscribe("imu422_hdop", 0, &InforProcess::rawImuCB, this);
@@ -68,7 +73,25 @@ void InforProcess::cameraImgCB(const std_msgs::Float64::ConstPtr& pCameraImgMsg)
 }
 
 void InforProcess::myVizCB(const std_msgs::Int64::ConstPtr& pMyVizMsg) {
-    // only do transmit
+    // static std::fstream eventFile_;
+#ifdef _SC_V2_0_
+    eventFile_.open(eventFilePath_, std::ios::out | std::ios::app);
+    if(!eventFile_) {
+        LOG(ERROR) << "Failed to open: " << eventFilePath_;
+        exit(1);
+    }
+    DLOG(INFO) << "Create "<< eventFilePath_ << " successfully.";
+
+    // TODO: whether record according to event ID
+    eventFile_ << mOutMsg.latlonhei.lat << ","
+        << mOutMsg.latlonhei.lon << ","
+        // << event classification << ","
+        // << "start/end/null" << ";"
+        ;
+
+    eventFile_.close();
+#endif
+    // only publish isSaveFile
     mPubIsSaveFile.publish(pMyVizMsg);
 }
 

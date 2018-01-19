@@ -1,9 +1,6 @@
 #ifndef __MORTON_CODEC_TRANS_JAVA_H
 #define __MORTON_CODEC_TRANS_JAVA_H
 
-#define NDEBUG
-// #undef NDEBUG
-#include <glog/logging.h>
 #include <dirent.h>
 #include <bitset>
 #include <boost/algorithm/string/classification.hpp>

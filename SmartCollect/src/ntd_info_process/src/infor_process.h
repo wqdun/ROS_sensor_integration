@@ -12,11 +12,9 @@
 #include "ntd_info_process/processed_infor_msg.h"
 #include "velodyne_msgs/Velodyne2Center.h"
 #include "../../public_tools/public_tools.h"
-#define NDEBUG
-// #undef NDEBUG
-#include <glog/logging.h>
 #include <boost/algorithm/string/classification.hpp>
 #include <boost/algorithm/string/split.hpp>
+#include <fstream>
 
 using std::vector;
 using std::string;
@@ -24,7 +22,7 @@ using std::istringstream;
 
 class InforProcess {
 public:
-    InforProcess();
+    InforProcess(const string &_eventFilePath);
     ~InforProcess();
     void run();
 
@@ -53,6 +51,7 @@ private:
     bool mIsVelodyneUpdated;
     bool mIsRawImuUpdated;
     bool mIsGpsUpdated;
+    string eventFilePath_;
 };
 
 

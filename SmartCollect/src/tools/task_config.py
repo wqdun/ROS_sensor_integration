@@ -6,10 +6,11 @@
 # date   : 2017-12-27
 # version: 0.1
 
+import sys
 import json
 
 # Read JSON data
-with open('task_config.json', 'r') as config_file:
+with open(sys.argv[1], 'r') as config_file:
     task_property = json.load(config_file)
     task_name = task_property["task_name"]["city_code"]
     task_name += "-" + task_property["task_name"]["day_night"]

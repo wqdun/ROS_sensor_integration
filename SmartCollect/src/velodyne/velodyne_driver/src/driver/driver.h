@@ -24,6 +24,7 @@
 #include <velodyne_driver/input.h>
 #include <velodyne_driver/VelodyneNodeConfig.h>
 #include "velodyne_msgs/Velodyne2Center.h"
+#include "../../../../public_tools/public_tools.h"
 
 namespace velodyne_driver
 {

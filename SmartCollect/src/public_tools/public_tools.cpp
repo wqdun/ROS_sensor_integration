@@ -5,20 +5,6 @@
 
 namespace public_tools
 {
-int PublicTools::string2int(const string& str) {
-    std::istringstream iss(str);
-    int num;
-    iss >> num;
-    return num;
-}
-
-double PublicTools::string2double(const string& str) {
-    std::istringstream iss(str);
-    double num;
-    iss >> num;
-    return num;
-}
-
 void PublicTools::GeoToGauss(double jd, double wd, short DH, short DH_width, double *y, double *x, double LP) {
     double t;     //  t=tgB
     double L;     //  中央经线的经度
@@ -148,6 +134,34 @@ void PublicTools::getFilesInDir(const std::string &baseDir, const std::string &k
 
     closedir(dir);
     return;
+}
+
+// degree to radian
+double PublicTools::deg2rad(const double deg) {
+  return deg * M_PI / 180;
+}
+
+double PublicTools::getDaySecond(const double rosTime, const double pktTime) {
+  // Ros time is UTC time(+0), not local time(Beijing: +8)
+  int rosHour = (int)rosTime / 3600 % 24;
+  const int rosMinute = (int)rosTime / 60 % 60;
+  const int pktMinute = (int)pktTime / 60;
+  const int errMinute = rosMinute - pktMinute;
+  if(errMinute > 20) {
+    ++rosHour;
+  }
+  else
+  if(errMinute < -20) {
+    --rosHour;
+  }
+  // else {
+  //   // do nothing when errMinute in [-10, 10]
+  // }
+
+  // in case: -1 || 24
+  rosHour = (rosHour + 24) % 24;
+
+  return pktTime + 3600 * rosHour;
 }
 
 }

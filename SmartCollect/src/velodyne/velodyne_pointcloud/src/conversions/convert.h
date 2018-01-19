@@ -20,6 +20,8 @@
 #include <ros/ros.h>
 
 #include <sensor_msgs/PointCloud2.h>
+#include <velodyne_msgs/VelodynePcVec.h>
+
 #include <velodyne_pointcloud/rawdata.h>
 
 #include <dynamic_reconfigure/server.h>
@@ -27,6 +29,8 @@
 
 namespace velodyne_pointcloud
 {
+
+
   class Convert
   {
   public:
@@ -47,12 +51,16 @@ namespace velodyne_pointcloud
     boost::shared_ptr<velodyne_rawdata::RawData> data_;
     ros::Subscriber velodyne_scan_;
     ros::Publisher output_;
+    ros::Publisher outputPcVec_;
 
     /// configuration parameters
     typedef struct {
       int npackets;                    ///< number of packets to combine
     } Config;
     Config config_;
+
+    velodyne_msgs::VelodynePcVecPtr pPcVecMsg_;
+
   };
 
 } // namespace velodyne_pointcloud

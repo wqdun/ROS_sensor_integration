@@ -7,7 +7,6 @@
 
 InforProcess::InforProcess(const string &_eventFilePath) {
     eventFilePath_ = _eventFilePath;
-
     mSub = nh.subscribe("imu_string", 0, &InforProcess::gpsCB, this);
     mSubVelodyne = nh.subscribe("velodyne_pps_status", 0, &InforProcess::velodyneCB, this);
     mSub422 = nh.subscribe("imu422_hdop", 0, &InforProcess::rawImuCB, this);
@@ -15,9 +14,12 @@ InforProcess::InforProcess(const string &_eventFilePath) {
     mSubMyViz = nh.subscribe("msg_save_control", 0, &InforProcess::myVizCB, this);
 
     mPub = nh.advertise<ntd_info_process::processed_infor_msg>("processed_infor_msg", 0);
+    pubTime2Local_ = nh.advertise<ntd_info_process::imuPoints>("imu_time2local", 0);
     mPubIsSaveFile = nh.advertise<std_msgs::Int64>("center_msg_save_control", 0);
+
     mGpsTime[0] = mGpsTime[1] = -1;
     mIsVelodyneUpdated = mIsRawImuUpdated = mIsGpsUpdated = false;
+    time2LocalMsg_.imu_points.clear();
 
 #ifdef SIMULATION
     mOutMsg.latlonhei.lat = 40.071975;
@@ -39,11 +41,11 @@ void InforProcess::run() {
         rate.sleep();
 
 #ifdef SIMULATION
-        mOutMsg.latlonhei.lat += 0.00002;
-        mOutMsg.latlonhei.lon -= 0.00002;
+        mOutMsg.latlonhei.x += 0.00002;
+        mOutMsg.latlonhei.y -= 0.00002;
 #else
         if(!mIsGpsUpdated) {
-            mOutMsg.GPStime = mOutMsg.latlonhei.lat = mOutMsg.latlonhei.lon = mOutMsg.latlonhei.hei = mOutMsg.current_pitch = mOutMsg.current_roll = mOutMsg.current_heading = mOutMsg.current_speed = -2.;
+            mOutMsg.GPStime = mOutMsg.latlonhei.x = mOutMsg.latlonhei.y = mOutMsg.latlonhei.z = mOutMsg.current_pitch = mOutMsg.current_roll = mOutMsg.current_heading = mOutMsg.current_speed = -2.;
             mOutMsg.nsv1_num = mOutMsg.nsv2_num = -2;
         }
         mIsGpsUpdated = false;
@@ -114,16 +116,16 @@ void InforProcess::rawImuCB(const hdop_teller::imu5651_422::ConstPtr& pRawImuMsg
     mIsRawImuUpdated = true;
 
     // in case: $GPGGA,,,,,,0,,,,,,,,*66
-    mOutMsg.latitude = (pRawImuMsg->Latitude.empty() )? -1: (public_tools::PublicTools::string2double(pRawImuMsg->Latitude) );
-    mOutMsg.longitude = (pRawImuMsg->Longitude.empty() )? -1: (public_tools::PublicTools::string2double(pRawImuMsg->Longitude) );
-    mOutMsg.hdop = (pRawImuMsg->Hdop.empty() )? -1: (public_tools::PublicTools::string2double(pRawImuMsg->Hdop) );
-    mOutMsg.noSV_422 = (pRawImuMsg->NoSV.empty() )? -1: (public_tools::PublicTools::string2int(pRawImuMsg->NoSV) );
+    mOutMsg.latitude = public_tools::PublicTools::string2num(pRawImuMsg->Latitude, -1.0);
+    mOutMsg.longitude = public_tools::PublicTools::string2num(pRawImuMsg->Longitude, -1.0);
+    mOutMsg.hdop = public_tools::PublicTools::string2num(pRawImuMsg->Hdop, -1.0);
+    mOutMsg.noSV_422 = public_tools::PublicTools::string2num(pRawImuMsg->NoSV, -1);
 }
 
 void InforProcess::gpsCB(const roscameragpsimg::imu5651::ConstPtr& pGPSmsg) {
 #ifndef SIMULATION
     mGpsTime[0] = mGpsTime[1];
-    mGpsTime[1] = (pGPSmsg->GPSTime.empty() )? -1: (public_tools::PublicTools::string2double(pGPSmsg->GPSTime) );
+    mGpsTime[1] = public_tools::PublicTools::string2num(pGPSmsg->GPSTime, -1.0);
     // do nothing if receive same frame
     if(mGpsTime[0] == mGpsTime[1]) {
         return;
@@ -132,37 +134,37 @@ void InforProcess::gpsCB(const roscameragpsimg::imu5651::ConstPtr& pGPSmsg) {
 
     double gpsTime = mGpsTime[1];
     // lat: 1 degree is about 100000 m
-    double lat = (pGPSmsg->Latitude.empty() )? -1: (public_tools::PublicTools::string2double(pGPSmsg->Latitude) );
+    double lat = public_tools::PublicTools::string2num(pGPSmsg->Latitude, -1.0);
     // lon: 1 degree is about 100000 m
-    double lon = (pGPSmsg->Longitude.empty() )? -1: (public_tools::PublicTools::string2double(pGPSmsg->Longitude) );
-    double hei = (pGPSmsg->Altitude.empty() )? -1: (public_tools::PublicTools::string2double(pGPSmsg->Altitude) );
+    double lon = public_tools::PublicTools::string2num(pGPSmsg->Longitude, -1.0);
+    double hei = public_tools::PublicTools::string2num(pGPSmsg->Altitude, -1.0);
 
-    double pitch = (pGPSmsg->Pitch.empty() )? -1: (public_tools::PublicTools::string2double(pGPSmsg->Pitch) );
-    double roll = (pGPSmsg->Roll.empty() )? -1: (public_tools::PublicTools::string2double(pGPSmsg->Roll) );
-    double heading = (pGPSmsg->Heading.empty() )? -1: (public_tools::PublicTools::string2double(pGPSmsg->Heading) );
+    double pitch = public_tools::PublicTools::string2num(pGPSmsg->Pitch, -1.0);
+    double roll = public_tools::PublicTools::string2num(pGPSmsg->Roll, -1.0);
+    double heading = public_tools::PublicTools::string2num(pGPSmsg->Heading, -1.0);
 
     double vAbs = -1.;
     if(pGPSmsg->Vel_east.empty() || pGPSmsg->Vel_north.empty() || pGPSmsg->Vel_up.empty() ) {
         // vAbs = -1: invalid
     }
     else {
-        double vEast = public_tools::PublicTools::string2double(pGPSmsg->Vel_east);
-        double vNorth = public_tools::PublicTools::string2double(pGPSmsg->Vel_north);
-        double vUp = public_tools::PublicTools::string2double(pGPSmsg->Vel_up);
+        double vEast = public_tools::PublicTools::string2num(pGPSmsg->Vel_east, 0.0);
+        double vNorth = public_tools::PublicTools::string2num(pGPSmsg->Vel_north, 0.0);
+        double vUp = public_tools::PublicTools::string2num(pGPSmsg->Vel_up, 0.0);
         vAbs = sqrt(vEast * vEast + vNorth * vNorth + vUp * vUp);
     }
 
-    int nsv1_num = (pGPSmsg->NSV1_num.empty() )? -1: (public_tools::PublicTools::string2int(pGPSmsg->NSV1_num) );
-    int nsv2_num = (pGPSmsg->NSV2_num.empty() )? -1: (public_tools::PublicTools::string2int(pGPSmsg->NSV2_num) );
+    int nsv1_num = public_tools::PublicTools::string2num(pGPSmsg->NSV1_num, -1);
+    int nsv2_num = public_tools::PublicTools::string2num(pGPSmsg->NSV2_num, -1);
 
     mOutMsg.GPStime = gpsTime;
 
     ntd_info_process::point_wgs p;
-    p.lat = lat;
-    p.lon = lon;
-    p.hei = hei;
+    p.x = lat;
+    p.y = lon;
+    p.z = hei;
     mOutMsg.latlonhei = p;
-    DLOG(INFO) << "lat: " << mOutMsg.latlonhei.lat;
+    DLOG(INFO) << "lat: " << lat;
 
     mOutMsg.current_pitch = pitch;
     mOutMsg.current_roll = roll;
@@ -170,6 +172,27 @@ void InforProcess::gpsCB(const roscameragpsimg::imu5651::ConstPtr& pGPSmsg) {
     mOutMsg.current_speed = vAbs;
     mOutMsg.nsv1_num = nsv1_num;
     mOutMsg.nsv2_num = nsv2_num;
+
+    ntd_info_process::imuPoint time2local;
+    // gpsTime is week second
+    time2local.day_second = fmod(gpsTime, 3600 * 24);
+    double currentGaussX;
+    double currentGaussY;
+    public_tools::PublicTools::GeoToGauss(lon * 3600, lat * 3600, 39, 3, &currentGaussY, &currentGaussX, 117);
+
+    p.x = currentGaussY;
+    p.y = currentGaussX;
+    time2local.east_north_up = p;
+
+    // 100 Hz
+    time2LocalMsg_.imu_points.push_back(time2local);
+    DLOG(INFO) << "time2LocalMsg_.imu_points.size(): " << time2LocalMsg_.imu_points.size();
+    if(time2LocalMsg_.imu_points.size() >= 100) {
+        // 1 Hz
+        pubTime2Local_.publish(time2LocalMsg_);
+        time2LocalMsg_.imu_points.clear();
+    }
+
 #endif
 }
 

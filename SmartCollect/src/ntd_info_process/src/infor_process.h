@@ -7,18 +7,28 @@
 #include <std_msgs/Int64.h>
 #include <visualization_msgs/Marker.h>
 #include <vector>
+using std::vector;
 #include "roscameragpsimg/imu5651.h"
 #include "hdop_teller/imu5651_422.h"
 #include "ntd_info_process/processed_infor_msg.h"
+#include "ntd_info_process/imuPoints.h"
 #include "velodyne_msgs/Velodyne2Center.h"
 #include "../../public_tools/public_tools.h"
+
+#define NDEBUG
+// #undef NDEBUG
+#include <glog/logging.h>
 #include <boost/algorithm/string/classification.hpp>
 #include <boost/algorithm/string/split.hpp>
 #include <fstream>
 
-using std::vector;
 using std::string;
 using std::istringstream;
+
+typedef struct {
+    double daytime;
+    public_tools::pointXYZ_t point;
+} time2point_t;
 
 class InforProcess {
 public:
@@ -42,6 +52,7 @@ private:
     ros::Subscriber mSubMyViz;
 
     ros::Publisher mPub;
+    ros::Publisher pubTime2Local_;
     ros::Publisher mPubIsSaveFile;
 
     ntd_info_process::processed_infor_msg mOutMsg;
@@ -52,6 +63,7 @@ private:
     bool mIsRawImuUpdated;
     bool mIsGpsUpdated;
     string eventFilePath_;
+    ntd_info_process::imuPoints time2LocalMsg_;
 };
 
 

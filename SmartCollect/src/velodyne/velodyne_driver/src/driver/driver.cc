@@ -222,7 +222,7 @@ bool VelodyneDriver::poll(int64_t isSaveLidar)
   ROS_DEBUG_STREAM("Create file:" << mRecordFile << " successfully.");
 
   for(size_t i = 0; i < scan->packets.size(); ++i) {
-    const double pktDaySecond = getDaySecond(ros::Time::now().toSec(), scan->packets[i].stamp.toSec());
+    const double pktDaySecond = scan->packets[i].stamp.toSec();
     (void)fwrite(&pktDaySecond, sizeof(pktDaySecond), 1, pOutFile);
     (void)fwrite(&(scan->packets[i].data[0]), packet_size, 1, pOutFile);
   }
@@ -237,30 +237,6 @@ void VelodyneDriver::callback(velodyne_driver::VelodyneNodeConfig &config,
 {
   ROS_INFO("Reconfigure Request");
   config_.time_offset = config.time_offset;
-}
-
-
-static double getDaySecond(const double rosTime, const double pktTime) {
-  // Ros time is UTC time(+0), not local time(Beijing: +8)
-  int rosHour = (int)rosTime / 3600 % 24;
-  const int rosMinute = (int)rosTime / 60 % 60;
-  const int pktMinute = (int)pktTime / 60;
-  const int errMinute = rosMinute - pktMinute;
-  if(errMinute > 20) {
-    ++rosHour;
-  }
-  else
-  if(errMinute < -20) {
-    --rosHour;
-  }
-  // else {
-  //   // do nothing when errMinute in [-10, 10]
-  // }
-
-  // in case: -1 || 24
-  rosHour = (rosHour + 24) % 24;
-
-  return pktTime + 3600 * rosHour;
 }
 
 } // namespace velodyne_driver

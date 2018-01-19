@@ -1,4 +1,6 @@
+/cv_bridge/
+/fileso/
 /roscameragps_rviz/
 /roscameragpsimg/
-/cv_bridge/
+/CMakeLists.txt
 /pic/

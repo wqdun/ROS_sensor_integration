@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 2.8.3)
-project(ntd_info_process)
+project(SmartCollector)
 
 ## Compile as C++11, supported in ROS Kinetic and newer
 add_compile_options(-std=c++11)
@@ -8,17 +8,26 @@ add_compile_options(-std=c++11)
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages
 find_package(catkin REQUIRED COMPONENTS
+  cv_bridge
+  image_transport
   roscpp
+  sensor_msgs
   std_msgs
-  visualization_msgs
-  message_generation
-  roscameragpsimg
-  hdop_teller
-  velodyne_msgs
+  rviz
 )
 
 ## System dependencies are found with CMake's conventions
 # find_package(Boost REQUIRED COMPONENTS system)
+## include Qt widgets
+find_package(Qt4 COMPONENTS QtCore QtGui REQUIRED)
+include(${QT_USE_FILE})
+
+add_definitions(-DQT_NO_KEYWORDS)
+
+## Qt' meta-object compiler
+qt4_wrap_cpp(MOC_FILES
+    src/myviz.h
+)
 
 
 ## Uncomment this if the package has a setup.py. This macro ensures
@@ -51,15 +60,11 @@ find_package(catkin REQUIRED COMPONENTS
 ##   * add every package in MSG_DEP_SET to generate_messages(DEPENDENCIES ...)
 
 ## Generate messages in the 'msg' folder
-add_message_files(
-  FILES
-  # Message1.msg
-  # Message2.msg
-  processed_infor_msg.msg
-  point_wgs.msg
-  imuPoint.msg
-  imuPoints.msg
-)
+# add_message_files(
+#   FILES
+#   Message1.msg
+#   Message2.msg
+# )
 
 ## Generate services in the 'srv' folder
 # add_service_files(
@@ -76,11 +81,10 @@ add_message_files(
 # )
 
 ## Generate added messages and services with any dependencies listed here
-generate_messages(
-  DEPENDENCIES
-  std_msgs
-  visualization_msgs
-)
+# generate_messages(
+#   DEPENDENCIES
+#   sensor_msgs#   std_msgs
+# )
 
 ################################################
 ## Declare ROS dynamic reconfigure parameters ##
@@ -113,8 +117,8 @@ generate_messages(
 ## DEPENDS: system dependencies of this project that dependent projects also need
 catkin_package(
 #  INCLUDE_DIRS include
-#  LIBRARIES ntd_info_process
-#  CATKIN_DEPENDS roscpp visualization_msgs
+#  LIBRARIES rosopencv
+#  CATKIN_DEPENDS cv_bridge image_transport roscpp sensor_msgs std_msgs
 #  DEPENDS system_lib
 )
 
@@ -124,14 +128,15 @@ catkin_package(
 
 ## Specify additional locations of header files
 ## Your package locations should be listed before other locations
-# include_directories(
-#   include
-#   ${catkin_INCLUDE_DIRS}
-# )
+include_directories(
+# include
+  ${catkin_INCLUDE_DIRS}
+  ../../devel/include
+)
 
 ## Declare a C++ library
 # add_library(${PROJECT_NAME}
-#   src/${PROJECT_NAME}/ntd_info_process.cpp
+#   src/${PROJECT_NAME}/rosopencv.cpp
 # )
 
 ## Add cmake target dependencies of the library
@@ -142,7 +147,7 @@ catkin_package(
 ## Declare a C++ executable
 ## With catkin_make all packages are built within a single CMake context
 ## The recommended prefix ensures that target names across packages don't collide
-# add_executable(${PROJECT_NAME}_node src/ntd_info_process_node.cpp)
+# add_executable(${PROJECT_NAME}_node src/rosopencv_node.cpp)
 
 ## Rename C++ executable without prefix
 ## The above recommended prefix causes long target names, the following renames the
@@ -199,25 +204,29 @@ catkin_package(
 #############
 
 ## Add gtest based cpp test target and link libraries
-# catkin_add_gtest(${PROJECT_NAME}-test test/test_ntd_info_process.cpp)
+# catkin_add_gtest(${PROJECT_NAME}-test test/test_rosopencv.cpp)
 # if(TARGET ${PROJECT_NAME}-test)
 #   target_link_libraries(${PROJECT_NAME}-test ${PROJECT_NAME})
 # endif()
 
 ## Add folders to be run by python nosetests
 # catkin_add_nosetests(test)
+set(CMAKE_CXX_STANDARD 11)
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
+FIND_PACKAGE(OpenCV REQUIRED)
+INCLUDE_DIRECTORIES(${OpenCV_INCLUDE_DIRS})
 
-# user defined
-include_directories(
-  include
-  ${catkin_INCLUDE_DIRS}
-)
+add_executable(SmartCollector src/myviz.h src/myviz.cpp src/smartc_show.cpp src/Dialog.h src/Dialog.cpp ${MOC_FILES})
 
-add_executable(${PROJECT_NAME}_node src/infor_process_node.cpp src/infor_process.cpp ../public_tools/public_tools.cpp)
+target_link_libraries(SmartCollector ${CMAKE_DL_LIBS})
+TARGET_LINK_LIBRARIES(SmartCollector ${OpenCV_LIBS})
 
-add_dependencies(${PROJECT_NAME}_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+INCLUDE_DIRECTORIES(/usr/include)
+INCLUDE_DIRECTORIES(/usr/include/flycapture)
+link_directories(/usr/lib)
+TARGET_LINK_LIBRARIES(SmartCollector libflycapture-c.so libflycapturegui-c.so libflycapture.so libflycapturegui.so)
+target_link_libraries(SmartCollector  ${QT_LIBRARIES} ${catkin_LIBRARIES})
+target_link_libraries(SmartCollector ${CMAKE_DL_LIBS})
+target_link_libraries(SmartCollector glog)
 
-target_link_libraries(${PROJECT_NAME}_node
-  ${catkin_LIBRARIES}
-  glog
-)
+

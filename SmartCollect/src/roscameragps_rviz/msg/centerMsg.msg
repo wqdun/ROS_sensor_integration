@@ -1,7 +1,7 @@
 # below from RS232
 
 float64 GPStime
-point_wgs latlonhei
+point3D latlonhei
 float64 current_pitch
 float64 current_roll
 float64 current_heading
@@ -27,3 +27,9 @@ string is_gprmc_valid
 # below from camera
 
 float64 camera_fps
+
+
+# below from server
+
+int8 is_server_connected
+

@@ -1,20 +1,21 @@
-#include "infor_process.h"
-#define NDEBUG
-// #undef NDEBUG
+#include "center.h"
+// #define NDEBUG
+#undef NDEBUG
 #include <glog/logging.h>
 // simulate car moving
 // #define SIMULATION
 
 InforProcess::InforProcess(const string &_eventFilePath) {
     eventFilePath_ = _eventFilePath;
-    mSub = nh.subscribe("imu_string", 0, &InforProcess::gpsCB, this);
+    mSub232 = nh.subscribe("imu_string", 0, &InforProcess::gpsCB, this);
     mSubVelodyne = nh.subscribe("velodyne_pps_status", 0, &InforProcess::velodyneCB, this);
     mSub422 = nh.subscribe("imu422_hdop", 0, &InforProcess::rawImuCB, this);
     mSubCameraImg = nh.subscribe("cam_speed", 0, &InforProcess::cameraImgCB, this);
     mSubMyViz = nh.subscribe("msg_save_control", 0, &InforProcess::myVizCB, this);
+    mSubServer = nh.subscribe("sc_server_daemon_pulse", 0, &InforProcess::sub_server_CB, this);
 
-    mPub = nh.advertise<ntd_info_process::processed_infor_msg>("processed_infor_msg", 0);
-    pubTime2Local_ = nh.advertise<ntd_info_process::imuPoints>("imu_time2local", 0);
+    mPub = nh.advertise<sc_center::centerMsg>("processed_infor_msg", 0);
+    pubTime2Local_ = nh.advertise<sc_center::imuPoints>("imu_time2local", 0);
     mPubIsSaveFile = nh.advertise<std_msgs::Int64>("center_msg_save_control", 0);
 
     mGpsTime[0] = mGpsTime[1] = -1;
@@ -50,19 +51,25 @@ void InforProcess::run() {
         }
         mIsGpsUpdated = false;
 #endif
-
-        // for rawImuCB is 1Hz, my freq should <= 1Hz: 0.5Hz
+        // 0.5Hz
         if(0 == (freqDivider % 16) ) {
+            // for rawImuCB is 1Hz
             if(!mIsRawImuUpdated) {
                 // -1: hdop not updated
                 mOutMsg.hdop = mOutMsg.latitude = mOutMsg.longitude = mOutMsg.noSV_422 = -2;
             }
             mIsRawImuUpdated = false;
+
+            // for server pulse is 1Hz
+            if(!mIsServerConnected) {
+                mOutMsg.is_server_connected = false;
+            }
+            mIsServerConnected = false;
         }
 
         // 8Hz
         if(!mIsVelodyneUpdated) {
-            mOutMsg.pps_status = mOutMsg.is_gprmc_valid = "No link";
+            mOutMsg.pps_status = mOutMsg.is_gprmc_valid = "Signal Lost";
         }
         mIsVelodyneUpdated = false;
 
@@ -111,7 +118,7 @@ void InforProcess::velodyneCB(const velodyne_msgs::Velodyne2Center::ConstPtr& pV
     mOutMsg.is_gprmc_valid = pVelodyneMsg->is_gprmc_valid;
 }
 
-void InforProcess::rawImuCB(const hdop_teller::imu5651_422::ConstPtr& pRawImuMsg) {
+void InforProcess::rawImuCB(const sc_integrate_imu_recorder::scIntegrateImu::ConstPtr& pRawImuMsg) {
     // $GPGGA sentence is set 1Hz
     mIsRawImuUpdated = true;
 
@@ -159,7 +166,7 @@ void InforProcess::gpsCB(const roscameragpsimg::imu5651::ConstPtr& pGPSmsg) {
 
     mOutMsg.GPStime = gpsTime;
 
-    ntd_info_process::point_wgs p;
+    sc_center::point3D p;
     p.x = lat;
     p.y = lon;
     p.z = hei;
@@ -173,7 +180,9 @@ void InforProcess::gpsCB(const roscameragpsimg::imu5651::ConstPtr& pGPSmsg) {
     mOutMsg.nsv1_num = nsv1_num;
     mOutMsg.nsv2_num = nsv2_num;
 
-    ntd_info_process::imuPoint time2local;
+
+#ifdef __PC_REGISTRATION__
+    sc_center::imuPoint time2local;
     // gpsTime is week second
     time2local.day_second = fmod(gpsTime, 3600 * 24);
     double currentGaussX;
@@ -192,6 +201,7 @@ void InforProcess::gpsCB(const roscameragpsimg::imu5651::ConstPtr& pGPSmsg) {
         pubTime2Local_.publish(time2LocalMsg_);
         time2LocalMsg_.imu_points.clear();
     }
+#endif
 
 #endif
 }

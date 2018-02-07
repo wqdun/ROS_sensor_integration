@@ -1,6 +1,6 @@
-#include "infor_process.h"
-#define NDEBUG
-// #undef NDEBUG
+#include "center.h"
+// #define NDEBUG
+#undef NDEBUG
 #include <glog/logging.h>
 
 int main(int argc, char **argv) {

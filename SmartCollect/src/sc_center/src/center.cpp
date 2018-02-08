@@ -12,7 +12,6 @@ InforProcess::InforProcess(const string &_eventFilePath) {
     mSub422 = nh.subscribe("imu422_hdop", 0, &InforProcess::rawImuCB, this);
     mSubCameraImg = nh.subscribe("cam_speed", 0, &InforProcess::cameraImgCB, this);
     mSubMyViz = nh.subscribe("msg_save_control", 0, &InforProcess::myVizCB, this);
-    mSubServer = nh.subscribe("sc_server_daemon_pulse", 0, &InforProcess::sub_server_CB, this);
 
     mPub = nh.advertise<sc_center::centerMsg>("processed_infor_msg", 0);
     pubTime2Local_ = nh.advertise<sc_center::imuPoints>("imu_time2local", 0);
@@ -59,12 +58,6 @@ void InforProcess::run() {
                 mOutMsg.hdop = mOutMsg.latitude = mOutMsg.longitude = mOutMsg.noSV_422 = -2;
             }
             mIsRawImuUpdated = false;
-
-            // for server pulse is 1Hz
-            if(!mIsServerConnected) {
-                mOutMsg.is_server_connected = false;
-            }
-            mIsServerConnected = false;
         }
 
         // 8Hz
@@ -179,29 +172,6 @@ void InforProcess::gpsCB(const roscameragpsimg::imu5651::ConstPtr& pGPSmsg) {
     mOutMsg.current_speed = vAbs;
     mOutMsg.nsv1_num = nsv1_num;
     mOutMsg.nsv2_num = nsv2_num;
-
-
-#ifdef __PC_REGISTRATION__
-    sc_center::imuPoint time2local;
-    // gpsTime is week second
-    time2local.day_second = fmod(gpsTime, 3600 * 24);
-    double currentGaussX;
-    double currentGaussY;
-    public_tools::PublicTools::GeoToGauss(lon * 3600, lat * 3600, 39, 3, &currentGaussY, &currentGaussX, 117);
-
-    p.x = currentGaussY;
-    p.y = currentGaussX;
-    time2local.east_north_up = p;
-
-    // 100 Hz
-    time2LocalMsg_.imu_points.push_back(time2local);
-    DLOG(INFO) << "time2LocalMsg_.imu_points.size(): " << time2LocalMsg_.imu_points.size();
-    if(time2LocalMsg_.imu_points.size() >= 100) {
-        // 1 Hz
-        pubTime2Local_.publish(time2LocalMsg_);
-        time2LocalMsg_.imu_points.clear();
-    }
-#endif
 
 #endif
 }

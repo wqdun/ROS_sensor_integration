@@ -5,7 +5,6 @@
 #include <std_msgs/String.h>
 #include <std_msgs/Float64.h>
 #include <std_msgs/Int64.h>
-#include <std_msgs/Int8.h>
 #include <visualization_msgs/Marker.h>
 #include <vector>
 using std::vector;
@@ -40,7 +39,6 @@ private:
     void rawImuCB(const sc_integrate_imu_recorder::scIntegrateImu::ConstPtr& pRawImuMsg);
     void cameraImgCB(const std_msgs::Float64::ConstPtr& pCameraImgMsg);
     void myVizCB(const std_msgs::Int64::ConstPtr& pMyVizMsg);
-    void sub_server_CB(const std_msgs::Int8::ConstPtr &pServerPulse);
 
     double mGpsTime[2];
     ros::NodeHandle nh;
@@ -49,7 +47,6 @@ private:
     ros::Subscriber mSub422;
     ros::Subscriber mSubCameraImg;
     ros::Subscriber mSubMyViz;
-    ros::Subscriber mSubServer;
 
     ros::Publisher mPub;
     ros::Publisher pubTime2Local_;

@@ -88,7 +88,7 @@ public:
 
 private:
     void modifyHostsFile(const std::string &serverIp, const std::string &serverName, const std::string &clientPasswd);
-    bool run_center_node(const std::string &_prjName);
+    void run_center_node();
 
     std::vector<std::string> CITY_NAME2CODE = {
         "Beijing-1001",
@@ -97,9 +97,7 @@ private:
     };
 
     void setLabelColor(QLabel *label, const QColor &color);
-
-
-
+    char *string_as_array(string *str);
 
 };
 

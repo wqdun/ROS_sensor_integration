@@ -24,8 +24,6 @@ static bool is_almost_equal(double d1, double d2, double compare_factor) {
     return ( (d1-d2) >= -compare_factor && (d1-d2) <= compare_factor);
 }
 
-// BEGIN_TUTORIAL
-// Constructor for MyViz. This does most of the work of the class.
 MyViz::MyViz(int paramNum, char **params, QWidget* parent): QWidget(parent) {
     // normal parameters
     paramNum_ = paramNum;
@@ -175,23 +173,18 @@ void MyViz::launch_project() {
     std::string cityCode(parsedCityName[1]);
     std::string dayOrNight(pDayNightBox_->currentText().toStdString() );
     dayOrNight = ("Day" == dayOrNight)? "1": "2";
-
     std::string deviceId(pDeviceIdEdit_->text().toStdString() );
     std::string taskId(pTaskIdEdit_->text().toStdString() );
-
     std::string prjName(cityCode + "-" + dayOrNight + "-" + taskId + deviceId);
-
     DLOG(INFO) << "Project cityName: " << cityName << "; cityCode: " << cityCode << "; dayOrNight: " << dayOrNight << "; projectName: " << prjName;
-
-    (void)run_center_node(prjName);
 
     clientCmdMsg_.project_name = prjName;
 
+    (void)run_center_node();
+    return;
 }
 
-
-// return true if this project does not exist in client, else false
-bool MyViz::run_center_node(const std::string &_prjName) {
+void MyViz::run_center_node() {
     LOG(INFO) << __FUNCTION__ << " start.";
 
     // put ENV again, or ROS_MASTER_URI is NULL
@@ -206,52 +199,30 @@ bool MyViz::run_center_node(const std::string &_prjName) {
         LOG(ERROR) << "Failed to get currentDir: " << currentDir;
         exit(1);
     }
-    const std::string current_dir(currentDir);
-    LOG(INFO) << "Get current_dir: " << current_dir;
+    LOG(INFO) << "Get currentDir: " << currentDir;
+    const std::string _currentDir(currentDir);
 
-    time_t now = time(NULL);
-    tm tmNow = { 0 };
-    (void)localtime_r(&now, &tmNow);
-    char today[50];
-    sprintf(today, "%04d%02d%02d", (1900 + tmNow.tm_year), (1 + tmNow.tm_mon), tmNow.tm_mday);
-    std::string prj_date(today);
-    // get 180208 from 20180208
-    prj_date = prj_date.substr(2);
-
-    const std::string prjDir(current_dir + "/record/" + _prjName + "-" + prj_date);
-    LOG(INFO) << "Get prjDir: " << prjDir;
-    if(0 == access(prjDir.c_str(), 0) ) {
-        LOG(WARNING) << "Project: " << prjDir << " already exist.";
-        return false;
-    }
-
-    const std::string centerNodeExe(current_dir + "/devel/lib/sc_center/sc_center_node");
+    std::string centerNodeExe(_currentDir + "/devel/lib/sc_center/sc_center_node");
     if(0 != access(centerNodeExe.c_str(), 0) ) {
         LOG(ERROR) << "centerNodeExe: " << centerNodeExe << " does not exist.";
-        return false;
+        exit(1);
     }
 
-    const std::string cmd("mkdir -p " + prjDir + " " + centerNodeExe + " " + );
-
-    LOG(INFO) <<"Run " << cmd;
+    centerNodeExe += " &";
+    LOG(INFO) <<"Run " << centerNodeExe;
 
     FILE *fpin;
-    if(NULL == (fpin = popen(cmd.c_str(), "r") ) ) {
-        LOG(ERROR) << "Failed to " << cmd;
+    if(NULL == (fpin = popen(centerNodeExe.c_str(), "r") ) ) {
+        LOG(ERROR) << "Failed to " << centerNodeExe;
         exit(1);
     }
-    int err = 0;
     if(0 != (err = pclose(fpin) ) ) {
-        LOG(ERROR) << "Failed to " << cmd << ", returns: " << err;
+        LOG(ERROR) << "Failed to " << centerNodeExe << ", returns: " << err;
         exit(1);
     }
-    LOG(INFO) << "Run: " << cmd << " end.";
-    return true;
-
-
+    LOG(INFO) << "Run: " << centerNodeExe << " end.";
+    return;
 }
-
-
 
 
 void MyViz::setLabelColor(QLabel *label, const QColor &color) {
@@ -340,12 +311,6 @@ void *ros_thread(void *ptr) {
     }
 }
 
-// https://stackoverflow.com/questions/7352099/stdstring-to-char
-// string to char *
-static char* string_as_array(string* str) {
-    return str->empty() ? NULL : &*str->begin();
-}
-
 void MyViz::set_ip() {
     LOG(INFO) << __FUNCTION__ << " start.";
 
@@ -423,4 +388,8 @@ QSize MyViz::sizeHint() const {
     return QSize(600, 300);
 }
 
-
+// https://stackoverflow.com/questions/7352099/stdstring-to-char
+// string to char *
+char * MyViz::string_as_array(string *str) {
+    return str->empty()? NULL: &*str->begin();
+}

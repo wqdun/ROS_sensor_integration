@@ -6,25 +6,19 @@
 #include <iostream>
 #include <stdlib.h>
 #include <stdio.h>
-#include <QtCore/QString>
+#include <string>
 
 using namespace std;
 
 
-// g++ test.cc -I/usr/include/qt4/ -lQtCore
 
-
-
-
-
-
-
-int main( void )
+int main(void)
 {
-    double a = 63.673456789;
-
-    QString s = QString::number(a, 'f', 6);
-
-    cout << s.toStdString() << endl;
-    return 0;
+    string dir="./hello";
+    if (access("hello", 0) == -1)
+    {
+        cout<<dir<<" is not existing"<<endl;
+        cout<<"now make it"<<endl;
+    }
 }
+

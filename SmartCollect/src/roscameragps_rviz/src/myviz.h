@@ -3,6 +3,7 @@
 
 #include <ros/ros.h>
 #include <std_msgs/Int64.h>
+#include <std_msgs/Int8.h>
 #include <std_msgs/String.h>
 #include <QSlider>
 #include <QLabel>
@@ -21,6 +22,7 @@
 #include "sc_center/centerMsg.h"
 #include <boost/algorithm/string/split.hpp>
 #include <boost/algorithm/string/classification.hpp>
+#include "SmartCollector/clientCmd.h"
 
 
 using namespace std;
@@ -44,12 +46,19 @@ public:
 public Q_SLOTS:
     void launch_project();
     void set_ip();
-
+    void power_off_cmd();
+    void reboot_cmd();
+    void collect_ctrl_onclick();
+    void monitor_ctrl_onclick();
 
 
 public:
-    QLineEdit *pMaterIpEdit_;
+    int paramNum_;
+    char **params_;
 
+    QLineEdit *pMaterIpEdit_;
+    QLineEdit *pMasterNameEdit_;
+    QLineEdit *pClientPasswdEdit_;
 
     QLabel *pConnStatusLabel_;
 
@@ -65,23 +74,32 @@ public:
     QLabel *pSpeedLabel_;
     QLabel *pCamFpsLabel_;
     QLabel *pPpsLabel_;
+    QLabel *pGprmcLabel_;
+
+    QLineEdit *pPasswordEdit_;
 
     QEventLoop eventloop;
-    ros::NodeHandle *pNode;
     bool isMasterIpSet_;
     // window size
     QSize sizeHint() const;
 
+    SmartCollector::clientCmd clientCmdMsg_;
+
 
 private:
-    int paramNum_;
-    char **params_;
+    void modifyHostsFile(const std::string &serverIp, const std::string &serverName, const std::string &clientPasswd);
+    bool run_center_node(const std::string &_prjName);
 
     std::vector<std::string> CITY_NAME2CODE = {
         "Beijing-1001",
         "Tianjin-1002",
         "Shanghai-1003",
     };
+
+    void setLabelColor(QLabel *label, const QColor &color);
+
+
+
 
 };
 

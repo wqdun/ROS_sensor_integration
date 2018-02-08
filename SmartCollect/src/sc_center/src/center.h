@@ -28,7 +28,7 @@ typedef struct {
 
 class InforProcess {
 public:
-    InforProcess(const string &_eventFilePath);
+    InforProcess();
     ~InforProcess();
     void run();
 
@@ -60,7 +60,6 @@ private:
     bool mIsRawImuUpdated;
     bool mIsGpsUpdated;
     bool mIsServerConnected;
-    string eventFilePath_;
     sc_center::imuPoints time2LocalMsg_;
 };
 

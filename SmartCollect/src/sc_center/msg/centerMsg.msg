@@ -32,4 +32,4 @@ float64 camera_fps
 # below from server
 
 int8 is_server_connected
-
+int8 is_project_already_exist

@@ -11,6 +11,7 @@ InforProcess::InforProcess() {
     mSub422 = nh.subscribe("imu422_hdop", 0, &InforProcess::rawImuCB, this);
     mSubCameraImg = nh.subscribe("cam_speed", 0, &InforProcess::cameraImgCB, this);
     mSubMyViz = nh.subscribe("msg_save_control", 0, &InforProcess::myVizCB, this);
+    subServer_ = nh.subscribe("sc_server2center", 0, &InforProcess::serverCB, this);
 
     mPub = nh.advertise<sc_center::centerMsg>("processed_infor_msg", 0);
     pubTime2Local_ = nh.advertise<sc_center::imuPoints>("imu_time2local", 0);
@@ -67,6 +68,11 @@ void InforProcess::run() {
 
         mPub.publish(mOutMsg);
     }
+}
+
+void InforProcess::serverCB(const sc_server_daemon::serverMsg::ConstPtr &pServerMsg) {
+    DLOG(INFO) << __FUNCTION__ << " start.";
+    mOutMsg.is_project_already_exist = pServerMsg->is_project_already_exist;
 }
 
 void InforProcess::cameraImgCB(const std_msgs::Float64::ConstPtr& pCameraImgMsg) {

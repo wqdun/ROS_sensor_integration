@@ -47,6 +47,7 @@ private:
     ros::Subscriber mSub422;
     ros::Subscriber mSubCameraImg;
     ros::Subscriber mSubMyViz;
+    ros::Subscriber subServer_;
 
     ros::Publisher mPub;
     ros::Publisher pubTime2Local_;

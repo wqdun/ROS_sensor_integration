@@ -319,6 +319,7 @@ void MyViz::set_ip() {
     pClientPasswdEdit_->setEnabled(false);
     pSetIpBtn_->setEnabled(false);
 
+
     const std::string masterIp(pMaterIpEdit_->text().toStdString() );
     std::string rosMaterUri("ROS_MASTER_URI=http://" + masterIp + ":11311");
     char *rosMaterUriData = string_as_array(&rosMaterUri);

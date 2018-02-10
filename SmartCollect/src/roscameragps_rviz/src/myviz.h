@@ -33,6 +33,7 @@ namespace rviz {
     class VisualizationManager;
 }
 
+static char * string_as_array(string *str);
 // Class "MyViz" implements the top level widget for this example.
 class MyViz: public QWidget
 {
@@ -99,8 +100,6 @@ private:
     };
 
     void setLabelColor(QLabel *label, const QColor &color);
-    char *string_as_array(string *str);
-
 };
 
 #endif // MYVIZ_H

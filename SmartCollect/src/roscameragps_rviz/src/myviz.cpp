@@ -303,15 +303,6 @@ void *ros_thread(void *pViz) {
     LOG(INFO) << "getenv(ROS_MASTER_URI): " << getenv("ROS_MASTER_URI");
     LOG(INFO) << "getenv(ROS_IP): " << getenv("ROS_IP");
 
-    unsetenv("ROS_IP");
-    LOG(INFO) << "Unset ROS_IP.";
-    std::string putMyIp("ROS_IP=172.21.14.226");
-    char *putMyIpData = string_as_array2(&putMyIp);
-    int err = putenv(putMyIpData);
-    LOG(INFO) << "Put env: "<< putMyIp << " returns: " << err;
-    LOG(INFO) << "getenv(ROS_MASTER_URI): " << getenv("ROS_MASTER_URI");
-    LOG(INFO) << "getenv(ROS_IP): " << getenv("ROS_IP");
-
     MyViz *p_viz = (MyViz *)pViz;
     if(!ros::isInitialized() ) {
         ros::init(p_viz->paramNum_, p_viz->params_, "myviz", ros::init_options::AnonymousName);
@@ -334,18 +325,11 @@ void MyViz::set_ip() {
     int err = putenv(rosMaterUriData);
     LOG(INFO) << "Put env: "<< rosMaterUriData << " returns: " << err;
 
-
-    unsetenv("ROS_IP");
-    LOG(INFO) << "Unset ROS_IP.";
-    std::string putMyIp("ROS_IP=172.21.14.226");
-
-    char *putMyIpData = string_as_array(&putMyIp);
-    err = putenv(putMyIpData);
-    LOG(INFO) << "Put env: "<< putMyIp << " returns: " << err;
-
-    LOG(INFO) << "getenv(ROS_MASTER_URI): " << getenv("ROS_MASTER_URI");
-    LOG(INFO) << "getenv(ROS_IP): " << getenv("ROS_IP");
-
+    if(0 != setenv("ROS_IP", "172.21.14.226", 1) ) {
+        LOG(ERROR) << "Failed to set ROS_IP: " << getenv("ROS_IP");
+        exit(1);
+    }
+    LOG(ERROR) << "Set ROS_IP: " << getenv("ROS_IP");
 
     const std::string masterName(pMasterNameEdit_->text().toStdString() );
     const std::string clientPassword(pClientPasswdEdit_->text().toStdString() );
@@ -440,6 +424,6 @@ QSize MyViz::sizeHint() const {
 
 // https://stackoverflow.com/questions/7352099/stdstring-to-char
 // string to char *
-char * MyViz::string_as_array(string *str) {
+static char *string_as_array(string *str) {
     return str->empty()? NULL: &*str->begin();
 }

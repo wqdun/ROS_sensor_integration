@@ -219,7 +219,7 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
 FIND_PACKAGE(OpenCV REQUIRED)
 INCLUDE_DIRECTORIES(${OpenCV_INCLUDE_DIRS})
 
-add_executable(SmartCollector src/myviz.h src/myviz.cpp src/smartc_show.cpp src/Dialog.h src/Dialog.cpp ${MOC_FILES})
+add_executable(SmartCollector src/myviz.h src/myviz.cpp src/smartc_show.cpp src/Dialog.h src/Dialog.cpp src/client.cpp ${MOC_FILES})
 
 target_link_libraries(SmartCollector ${CMAKE_DL_LIBS})
 TARGET_LINK_LIBRARIES(SmartCollector ${OpenCV_LIBS})

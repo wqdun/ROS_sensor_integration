@@ -3,7 +3,6 @@
 
 #include <ros/ros.h>
 #include <std_msgs/Int64.h>
-#include <std_msgs/Int8.h>
 #include <std_msgs/String.h>
 #include <QSlider>
 #include <QLabel>
@@ -23,6 +22,7 @@
 #include <boost/algorithm/string/split.hpp>
 #include <boost/algorithm/string/classification.hpp>
 #include "SmartCollector/clientCmd.h"
+#include "sc_server_daemon/serverMsg.h"
 
 
 using namespace std;
@@ -41,7 +41,7 @@ public:
     MyViz(int paramNum, char **params, QWidget* parent = 0);
     virtual ~MyViz();
 
-    void show_g_data_center_status(const sc_center::centerMsg &center_msg);
+    void showCenterMsg(const sc_server_daemon::serverMsg &server_msg, const sc_center::centerMsg &center_msg);
 
 public Q_SLOTS:
     void launch_project();
@@ -59,6 +59,7 @@ public:
     QLineEdit *pMaterIpEdit_;
     QLineEdit *pMasterNameEdit_;
     QLineEdit *pClientPasswdEdit_;
+    QPushButton *pSetIpBtn_;
 
     QLabel *pConnStatusLabel_;
 
@@ -66,6 +67,7 @@ public:
     QComboBox *pDayNightBox_;
     QLineEdit *pDeviceIdEdit_;
     QLineEdit *pTaskIdEdit_;
+    QPushButton *pLaunchBtn_;
 
     QLabel *pLatLabel_;
     QLabel *pLonLabel_;

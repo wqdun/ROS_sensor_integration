@@ -23,7 +23,9 @@
 #include <boost/algorithm/string/classification.hpp>
 #include "SmartCollector/clientCmd.h"
 #include "sc_server_daemon/serverMsg.h"
-
+#include <net/if.h>
+#include <arpa/inet.h>
+#include <sys/ioctl.h>
 
 using namespace std;
 
@@ -34,6 +36,7 @@ namespace rviz {
 }
 
 static char * string_as_array(string *str);
+static int getLocalIPs(std::vector<std::string> &IPs);
 // Class "MyViz" implements the top level widget for this example.
 class MyViz: public QWidget
 {

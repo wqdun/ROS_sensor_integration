@@ -272,8 +272,6 @@ void MyViz::showCenterMsg(const sc_server_daemon::serverMsg &server_msg, const s
     // }
     lastStatus = server_msg.is_project_already_exist;
 
-
-
     pConnStatusLabel_->setText("Connected to " + pMaterIpEdit_->text() );
     pLatLabel_->setText("Lat: " + QString::number(center_msg.latitude, 'f', 6) );
     pLonLabel_->setText("Lon: " + QString::number(center_msg.longitude, 'f', 6) );
@@ -312,6 +310,46 @@ void *ros_thread(void *pViz) {
     clientor.run();
 }
 
+// http://www.cnblogs.com/mickole/articles/3204385.html
+static int getLocalIPs(std::vector<std::string> &IPs) {
+    struct ifconf ifConf;
+    ifConf.ifc_len = 512;
+    char buf[512];
+    ifConf.ifc_buf = buf;
+
+    int sockfd = socket(AF_INET, SOCK_DGRAM, 0);
+    if(sockfd < 0) {
+        LOG(ERROR) << "Socket error: " << sockfd;
+        return -1;
+    }
+    // get all interfaces
+    ioctl(sockfd, SIOCGIFCONF, &ifConf);
+    close(sockfd);
+
+    struct ifreq *ifReq = (struct ifreq*)buf;
+    // get IPs one by one
+    int ipCnt = ifConf.ifc_len / sizeof(*ifReq);
+    LOG(INFO) << "Got " << ipCnt << " IPs.";
+    if(ipCnt > 5) {
+        LOG(ERROR) << "Got too many IPs: " << ipCnt;
+        return -1;
+    }
+
+    char *ip;
+    for(int i = 0; i < ipCnt; ++i) {
+        ip = inet_ntoa(((struct sockaddr_in*)&(ifReq->ifr_addr))->sin_addr);
+        if(NULL == ip) {
+            LOG(ERROR) << "inet_ntoa error: " << ip;
+            return -1;
+        }
+        IPs.push_back(ip);
+        LOG(INFO) << "IPs[" << i << "]: " << IPs[i];
+        ifReq++;
+    }
+
+    return 0;
+}
+
 void MyViz::set_ip() {
     LOG(INFO) << __FUNCTION__ << " start.";
     pMaterIpEdit_->setEnabled(false);
@@ -319,14 +357,31 @@ void MyViz::set_ip() {
     pClientPasswdEdit_->setEnabled(false);
     pSetIpBtn_->setEnabled(false);
 
-
     const std::string masterIp(pMaterIpEdit_->text().toStdString() );
     std::string rosMaterUri("ROS_MASTER_URI=http://" + masterIp + ":11311");
     char *rosMaterUriData = string_as_array(&rosMaterUri);
     int err = putenv(rosMaterUriData);
     LOG(INFO) << "Put env: "<< rosMaterUriData << " returns: " << err;
 
-    if(0 != setenv("ROS_IP", "172.21.14.226", 1) ) {
+    std::vector<std::string> localIPs;
+    if(0 != (err = getLocalIPs(localIPs) ) ) {
+        LOG(ERROR) << "Failed to getLocalIPs: " << err;
+        exit(0);
+    }
+    // find right IP whose front 6 chars is same with masterIP
+    std::string rosIP("");
+    for(auto &_ip: localIPs) {
+        if(0 == _ip.find(masterIp.substr(0, 6) ) ) {
+            rosIP = _ip;
+            break;
+        }
+    }
+    if(rosIP.empty() ) {
+        LOG(ERROR) << "Failed to get correspond IP, masterIp: " << masterIp;
+        exit(0);
+    }
+
+    if(0 != setenv("ROS_IP", rosIP.c_str(), 1) ) {
         LOG(ERROR) << "Failed to set ROS_IP: " << getenv("ROS_IP");
         exit(1);
     }

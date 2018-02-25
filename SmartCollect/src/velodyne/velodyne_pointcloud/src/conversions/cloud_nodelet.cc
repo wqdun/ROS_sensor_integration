@@ -39,7 +39,7 @@ namespace velodyne_pointcloud
   /** @brief Nodelet initialization. */
   void CloudNodelet::onInit()
   {
-    google::InitGoogleLogging("CloudNodelet_onInit");
+    google::InitGoogleLogging("CloudNodelet");
     conv_.reset(new Convert(getNodeHandle(), getPrivateNodeHandle()));
   }
 

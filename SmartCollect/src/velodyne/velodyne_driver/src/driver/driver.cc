@@ -20,6 +20,9 @@
 #include <velodyne_msgs/VelodyneScan.h>
 
 #include "driver.h"
+// #define NDEBUG
+#undef NDEBUG
+#include <glog/logging.h>
 
 namespace velodyne_driver
 {
@@ -172,7 +175,7 @@ static bool parsePositionPkt(const char *pkt, velodyne_msgs::Velodyne2Center &pa
  */
 bool VelodyneDriver::poll(int64_t isSaveLidar)
 {
-  ROS_DEBUG_STREAM("isSaveLidar: " << isSaveLidar);
+  DLOG(INFO) << __FUNCTION__ << " start, isSaveLidar: " << isSaveLidar;
   // Allocate a new shared pointer for zero-copy sharing with other nodelets.
   velodyne_msgs::VelodyneScanPtr scan(new velodyne_msgs::VelodyneScan);
   scan->packets.resize(config_.npackets);

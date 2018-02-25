@@ -13,7 +13,6 @@ public:
 
 
 private:
-    void run();
     void centerCB(const std_msgs::Int64::ConstPtr& pCenterMsg);
     ros::Subscriber subCenter_;
 };

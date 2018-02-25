@@ -15,6 +15,9 @@
 #include <ros/ros.h>
 #include <pluginlib/class_list_macros.h>
 #include <nodelet/nodelet.h>
+#define NDEBUG
+// #undef NDEBUG
+#include <glog/logging.h>
 
 #include "convert.h"
 
@@ -36,6 +39,7 @@ namespace velodyne_pointcloud
   /** @brief Nodelet initialization. */
   void CloudNodelet::onInit()
   {
+    google::InitGoogleLogging("CloudNodelet_onInit");
     conv_.reset(new Convert(getNodeHandle(), getPrivateNodeHandle()));
   }
 

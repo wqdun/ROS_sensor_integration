@@ -12,11 +12,16 @@
 */
 
 #include <ros/ros.h>
+#define NDEBUG
+// #undef NDEBUG
+#include <glog/logging.h>
+
 #include "convert.h"
 
 /** Main node entry point. */
 int main(int argc, char **argv)
 {
+  google::InitGoogleLogging(argv[0]);
   ros::init(argc, argv, "cloud_node");
   ros::NodeHandle node;
   ros::NodeHandle priv_nh("~");

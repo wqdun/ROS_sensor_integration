@@ -29,6 +29,6 @@
     <param name="read_once" value="$(arg read_once)"/>
     <param name="repeat_delay" value="$(arg repeat_delay)"/>
     <param name="rpm" value="$(arg rpm)"/>
-  </node>    
+  </node>
 
 </launch>

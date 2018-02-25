@@ -27,6 +27,9 @@ namespace velodyne_driver
 VelodyneDriver::VelodyneDriver(ros::NodeHandle node,
                                ros::NodeHandle private_nh)
 {
+  lastMinute_ = -1;
+  lidarPkgName_ = "";
+  lastIsSaveLidar_ = false;
   // use private node handle to get parameters
   private_nh.param("frame_id", config_.frame_id, std::string("velodyne"));
   std::string tf_prefix = tf::getPrefixParam(private_nh);
@@ -40,8 +43,9 @@ VelodyneDriver::VelodyneDriver(ros::NodeHandle node,
   private_nh.param("record_path", mRecordFile, mRecordFile);
   std::string lidarFileName("");
   // e.g., lidarFileName: 10051077180110150921
-  (void)public_tools::PublicTools::generateFileName(mRecordFile, lidarFileName);
-  mRecordFile += (lidarFileName + "_lidar.dat");
+  (void)public_tools::PublicTools::generateFileName(mRecordFile, lidarFileName, false);
+  // now we get /home/navi/catkin_ws/record/1005-1-077-180110/rawdata/Lidar/10051077180110
+  mRecordFile += lidarFileName;
   ROS_INFO_STREAM("mRecordFile: " << mRecordFile);
 
   double packet_rate;                   // packet frequency (Hz)
@@ -210,23 +214,58 @@ bool VelodyneDriver::poll(int64_t isSaveLidar)
   diag_topic_->tick(scan->header.stamp);
   diagnostics_.update();
 
-  if(!isSaveLidar) {
-    return true;
+  bool isGonnaCreateNewLidarFile = false;
+
+  if(lastIsSaveLidar_ != isSaveLidar) {
+    lastIsSaveLidar_ = isSaveLidar;
+    if(!isSaveLidar) {
+      // last save, but now not save
+      return true;
+    }
+    else {
+      isGonnaCreateNewLidarFile = true;
+    }
   }
+  // last save and now save; or now not save and last not save
+  else {
+    if(!isSaveLidar) {
+      return true;
+    }
+    else {
+      // last save and now save
+    }
+  }
+
   // write LIDAR file
+  time_t now = time(NULL);
+  tm tmNow = { 0 };
+  localtime_r(&now, &tmNow);
+  const int nowMinute = tmNow.tm_hour * 100 + tmNow.tm_min;
+  if(nowMinute != lastMinute_) {
+    lastMinute_ = nowMinute;
+    isGonnaCreateNewLidarFile = true;
+  }
+
+  if(isGonnaCreateNewLidarFile) {
+    char nowSecond[50];
+    (void)sprintf(nowSecond, "%02d%02d%02d", tmNow.tm_hour, tmNow.tm_min, tmNow.tm_sec);
+    // 10051077180110
+    lidarPkgName_ = mRecordFile + nowSecond + "_lidar.dat";
+    ROS_INFO_STREAM("Create new file: " << lidarPkgName_);
+  }
+
   FILE *pOutFile;
-  if(!(pOutFile = fopen(mRecordFile.c_str(), "ab") ) ) {
-    ROS_ERROR_STREAM("Create file:" << mRecordFile << " failed, errno:" << errno);
+  if(!(pOutFile = fopen(lidarPkgName_.c_str(), "ab") ) ) {
+    ROS_ERROR_STREAM("Create file:" << lidarPkgName_ << " failed, errno:" << errno);
     exit(1);
   }
-  ROS_DEBUG_STREAM("Create file:" << mRecordFile << " successfully.");
+  ROS_DEBUG_STREAM("Create file:" << lidarPkgName_ << " successfully.");
 
   for(size_t i = 0; i < scan->packets.size(); ++i) {
     const double pktDaySecond = scan->packets[i].stamp.toSec();
     (void)fwrite(&pktDaySecond, sizeof(pktDaySecond), 1, pOutFile);
     (void)fwrite(&(scan->packets[i].data[0]), packet_size, 1, pOutFile);
   }
-
   fclose(pOutFile);
 
   return true;

@@ -31,7 +31,7 @@
 #include <velodyne_msgs/VelodyneScan.h>
 #include <velodyne_pointcloud/point_types.h>
 #include <velodyne_pointcloud/calibration.h>
-#include "../../../../public_tools/public_tools.h"
+#include "../../../sc_lib_public_tools/src/public_tools.h"
 
 
 namespace velodyne_rawdata

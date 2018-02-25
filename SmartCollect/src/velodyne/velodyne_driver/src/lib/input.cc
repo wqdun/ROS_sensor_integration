@@ -32,7 +32,7 @@
 #include <fcntl.h>
 #include <sys/file.h>
 #include <velodyne_driver/input.h>
-#include "../../../../public_tools/public_tools.h"
+#include "../../../sc_lib_public_tools/src/public_tools.h"
 
 namespace velodyne_driver
 {
@@ -246,8 +246,6 @@ namespace velodyne_driver
 
     const uint32_t pktTimeHourSInUs = (pkt->data[1203] << 24) + (pkt->data[1202] << 16) + (pkt->data[1201] << 8) + pkt->data[1200];
     const double dayTime = public_tools::PublicTools::getDaySecond(ros::Time::now().toSec(), pktTimeHourSInUs / 1000000.);
-    ROS_INFO_STREAM_ONCE("UTC time +18 s is GPS time.");
-    pkt->stamp = ros::Time(dayTime + 18.);
 
     return 0;
   }
@@ -336,8 +334,6 @@ namespace velodyne_driver
 
             const uint32_t pktTimeHourSInUs = (pkt->data[1203] << 24) + (pkt->data[1202] << 16) + (pkt->data[1201] << 8) + pkt->data[1200];
             const double dayTime = public_tools::PublicTools::getDaySecond(ros::Time::now().toSec(), pktTimeHourSInUs / 1000000.);
-            ROS_INFO_STREAM_ONCE("UTC time +18 s is GPS time.");
-            pkt->stamp = ros::Time(dayTime + 18.);
 
             empty_ = false;
             return 0;                   // success

@@ -24,12 +24,10 @@
 #include <velodyne_driver/input.h>
 #include <velodyne_driver/VelodyneNodeConfig.h>
 #include "velodyne_msgs/Velodyne2Center.h"
-#include "../../../../public_tools/public_tools.h"
+#include "../../../sc_lib_public_tools/src/public_tools.h"
 
 namespace velodyne_driver
 {
-
-static double getDaySecond(const double rosTime, const double pktTime);
 
 class VelodyneDriver
 {
@@ -71,6 +69,10 @@ private:
   double diag_max_freq_;
   boost::shared_ptr<diagnostic_updater::TopicDiagnostic> diag_topic_;
   std::string mRecordFile;
+  // to divide LIDAR file
+  int lastMinute_;
+  std::string lidarPkgName_;
+  bool lastIsSaveLidar_;
 };
 
 } // namespace velodyne_driver

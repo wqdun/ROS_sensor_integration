@@ -16,6 +16,9 @@
 #include "convert.h"
 
 #include <pcl_conversions/pcl_conversions.h>
+#define NDEBUG
+// #undef NDEBUG
+#include <glog/logging.h>
 
 namespace velodyne_pointcloud
 {
@@ -48,7 +51,7 @@ namespace velodyne_pointcloud
   void Convert::callback(velodyne_pointcloud::CloudNodeConfig &config,
                 uint32_t level)
   {
-  ROS_INFO("Reconfigure Request");
+  LOG(INFO) << "Reconfigure Request";
   data_->setParameters(config.min_range, config.max_range, config.view_direction,
                        config.view_width);
   }
@@ -75,7 +78,7 @@ namespace velodyne_pointcloud
         data_->unpack_vlp16(scanMsg->packets[i], *outMsg, *pPcImuCoord, pPcVecMsg_->pc_vec);
       }
 
-    ROS_INFO_STREAM("pPcVecMsg_->pc_vec.size(): " << pPcVecMsg_->pc_vec.size() );
+    LOG(INFO) << "pPcVecMsg_->pc_vec.size(): " << pPcVecMsg_->pc_vec.size();
     // ~~760/s
     if(pPcVecMsg_->pc_vec.size() >= 10000) {
       // process and clear
@@ -84,8 +87,8 @@ namespace velodyne_pointcloud
     }
 
     // publish the accumulated cloud message
-    ROS_DEBUG_STREAM("Publishing " << outMsg->height * outMsg->width
-                     << " Velodyne points, time: " << outMsg->header.stamp);
+    DLOG(INFO) << "Publishing " << outMsg->height * outMsg->width
+                     << " Velodyne points, time: " << outMsg->header.stamp;
     output_.publish(outMsg);
   }
 

@@ -40,7 +40,6 @@ using namespace FlyCapture2;
 bool close_flag   = false;
 int  save_control = 0;
 
-
 int main(int argc, char** argv)
 {
     // google::InitGoogleLogging(argv[0]);

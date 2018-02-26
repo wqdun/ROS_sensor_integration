@@ -17,6 +17,8 @@
 #include <QEventLoop>
 #include <QComboBox>
 #include <QTimer>
+#include <QCheckBox>
+
 #include <string>
 #include "sc_center/centerMsg.h"
 #include <boost/algorithm/string/split.hpp>
@@ -26,6 +28,7 @@
 #include <net/if.h>
 #include <arpa/inet.h>
 #include <sys/ioctl.h>
+
 
 using namespace std;
 
@@ -52,7 +55,7 @@ public Q_SLOTS:
     void set_ip();
     void power_off_cmd();
     void reboot_cmd();
-    void collect_ctrl_onclick();
+    void record_ctrl_onStateChanged(int);
     void monitor_ctrl_onclick();
 
 

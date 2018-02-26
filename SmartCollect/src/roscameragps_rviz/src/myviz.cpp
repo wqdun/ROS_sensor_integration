@@ -31,7 +31,8 @@ MyViz::MyViz(int paramNum, char **params, QWidget* parent): QWidget(parent) {
     paramNum_ = paramNum;
     params_ = params;
 
-    clientCmdMsg_.is_poweroff = clientCmdMsg_.is_reboot = 0;
+    clientCmdMsg_.is_poweroff = clientCmdMsg_.is_reboot \
+        = clientCmdMsg_.is_record = 0;
 
     setWindowFlags(Qt::CustomizeWindowHint | Qt::WindowMinimizeButtonHint | Qt::WindowStaysOnTopHint | Qt::WindowCloseButtonHint);
     this->sizeHint();
@@ -89,7 +90,9 @@ MyViz::MyViz(int paramNum, char **params, QWidget* parent): QWidget(parent) {
     pGprmcLabel_->setFrameStyle(QFrame::Panel | QFrame::Sunken);
 
     QLabel *pCollectCtrlLabel = new QLabel("Collector Control:");
-    QPushButton *pCollectCtrlBtn = new QPushButton("Start Collect");
+    QCheckBox *pRecordCtrl = new QCheckBox(this);
+    pRecordCtrl->setText("Recording");
+
     QPushButton *pMonitorBtn = new QPushButton("Display Monitor");
 
     QLabel *pSysCtrlLabel = new QLabel("System Control:");
@@ -131,7 +134,7 @@ MyViz::MyViz(int paramNum, char **params, QWidget* parent): QWidget(parent) {
 
 
     controls_layout->addWidget(pCollectCtrlLabel, ++row, 0);
-    controls_layout->addWidget(pCollectCtrlBtn, row, 1);
+    controls_layout->addWidget(pRecordCtrl, row, 1);
     controls_layout->addWidget(pMonitorBtn, row, 2);
 
     controls_layout->addWidget(pSysCtrlLabel, ++row, 0);
@@ -152,12 +155,23 @@ MyViz::MyViz(int paramNum, char **params, QWidget* parent): QWidget(parent) {
     connect(pSetIpBtn_, SIGNAL(clicked() ), this, SLOT(set_ip() ) );
     connect(pPoweroffBtn, SIGNAL(clicked() ), this, SLOT(power_off_cmd() ) );
     connect(pRebootBtn, SIGNAL(clicked() ), this, SLOT(reboot_cmd() ) );
-    connect(pCollectCtrlBtn, SIGNAL(clicked() ), this, SLOT(collect_ctrl_onclick() ) );
+    connect(pRecordCtrl, SIGNAL(stateChanged(int) ), this, SLOT(record_ctrl_onStateChanged(int) ) );
     connect(pMonitorBtn, SIGNAL(clicked() ), this, SLOT(monitor_ctrl_onclick() ) );
 }
 
 MyViz::~MyViz() {
 }
+
+void MyViz::record_ctrl_onStateChanged(int _is_record) {
+    DLOG(INFO) << __FUNCTION__ << " start.";
+    if(Qt::Checked == _is_record) {
+        clientCmdMsg_.is_record = 1;
+    }
+    else {
+        clientCmdMsg_.is_record = 0;
+    }
+}
+
 
 void MyViz::launch_project() {
     DLOG(INFO) << __FUNCTION__ << " start.";
@@ -436,10 +450,6 @@ void MyViz::reboot_cmd() {
     const std::string passwd(pPasswordEdit_->text().toStdString() );
     clientCmdMsg_.password = passwd;
     clientCmdMsg_.is_reboot = 1;
-}
-
-void MyViz::collect_ctrl_onclick() {
-    LOG(INFO) << __FUNCTION__ << " start.";
 }
 
 void MyViz::monitor_ctrl_onclick() {

@@ -8,9 +8,7 @@ Client::Client(ros::NodeHandle nh, MyViz *pViz) {
     subCenter_ = nh.subscribe("processed_infor_msg", 0, &Client::centerCB, this);
     subServer_ = nh.subscribe("sc_server2client", 0, &Client::serverCB, this);
 
-    pubIsRecord_ = nh.advertise<std_msgs::Int64>("msg_save_control", 1);
     pubClientCmd_ = nh.advertise<SmartCollector::clientCmd>("sc_client_cmd", 10);
-
 }
 
 Client::~Client() {

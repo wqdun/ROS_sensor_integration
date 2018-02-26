@@ -3,3 +3,5 @@ string password
 
 int8 is_poweroff
 int8 is_reboot
+
+int8 is_record

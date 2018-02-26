@@ -5,8 +5,8 @@
 #include <sstream>
 #include <fstream>
 #include <visualization_msgs/Marker.h>
-#include "../../public_tools/public_tools.h"
-#include "ntd_info_process/processed_infor_msg.h"
+#include "../../sc_lib_public_tools/src/public_tools.h"
+#include "sc_center/centerMsg.h"
 
 using std::string;
 using std::vector;
@@ -26,6 +26,7 @@ private:
     visualization_msgs::Marker mArrow;
 
     vector<geometry_msgs::Point> mEncryptedGausses;
+    double trackScaleRatio_;
 };
 
 #endif

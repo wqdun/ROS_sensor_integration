@@ -10,7 +10,7 @@ add_compile_options(-std=c++11)
 find_package(catkin REQUIRED COMPONENTS
   roscpp
   std_msgs
-  ntd_info_process
+  sc_center
 )
 
 ## System dependencies are found with CMake's conventions
@@ -133,7 +133,7 @@ include_directories(
 ## Declare a C++ executable
 ## With catkin_make all packages are built within a single CMake context
 ## The recommended prefix ensures that target names across packages don't collide
-add_executable(${PROJECT_NAME}_node src/display_had_node.cpp src/mif_read.cpp src/MortonCodecTransJava.cpp ../public_tools/public_tools.cpp ../public_tools/coordtrans.cpp src/display_track.cpp src/display_plan_layer.cpp)
+add_executable(${PROJECT_NAME}_node src/display_had_node.cpp src/mif_read.cpp src/MortonCodecTransJava.cpp src/display_track.cpp src/display_plan_layer.cpp)
 
 ## Rename C++ executable without prefix
 ## The above recommended prefix causes long target names, the following renames the
@@ -151,6 +151,7 @@ target_link_libraries(${PROJECT_NAME}_node
   glog
   sqlite3
   gdal
+  sc_lib_public_tools
 )
 
 #############

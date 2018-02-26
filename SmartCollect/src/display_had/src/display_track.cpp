@@ -4,6 +4,7 @@
 #include <glog/logging.h>
 
 TrackDisplayer::TrackDisplayer() {
+    trackScaleRatio_ = 0.01;
     mEncryptedGausses.clear();
     // advertise of gps_lonlathei
     mPubTrack = nh.advertise<visualization_msgs::Marker>("gps_lonlathei", 0);
@@ -30,11 +31,11 @@ TrackDisplayer::TrackDisplayer() {
 
     // POINTS markers use x and y scale for width/height respectively
     // LINE_STRIP/LINE_LIST markers use only the x component of scale, for line width
-    mLineStrip.scale.x = 1.0;
+    mLineStrip.scale.x = 1.0 * trackScaleRatio_;
     // scale.x is the shaft diameter, and scale.y is the head diameter. If scale.z is not zero, it specifies the head length
-    mArrow.scale.x = 1.0;
-    mArrow.scale.y = 1.6;
-    mArrow.scale.z = 3.2;
+    mArrow.scale.x = 1.0 * trackScaleRatio_;
+    mArrow.scale.y = 1.6 * trackScaleRatio_;
+    mArrow.scale.z = 3.2 * trackScaleRatio_;
 
     // Line strip is blue; set .a = 0 to hide display
     mLineStrip.color.r = 1.0f;
@@ -54,7 +55,7 @@ void TrackDisplayer::displayTrack(const geometry_msgs::Point &encryptedGauss) {
         mEncryptedGausses.erase(mEncryptedGausses.begin(), mEncryptedGausses.begin() + 500);
     }
 
-    public_tools::PublicTools::transform_coordinate(mEncryptedGausses, mEncryptedGausses.back(), mLineStrip.points);
+    public_tools::PublicTools::transform_coordinate(mEncryptedGausses, mEncryptedGausses.back(), mLineStrip.points, trackScaleRatio_);
     if(point_cnt >= 2) {
         mArrow.points.clear();
         mArrow.points.push_back(mLineStrip.points[point_cnt - 2]);

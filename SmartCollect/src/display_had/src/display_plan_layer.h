@@ -3,7 +3,7 @@
 
 #include <ros/ros.h>
 #include <visualization_msgs/MarkerArray.h>
-#include "../../public_tools/public_tools.h"
+#include "../../sc_lib_public_tools/src/public_tools.h"
 
 // GDAL library
 #include <gdal.h>
@@ -29,6 +29,7 @@ private:
 
     void getPlanLines(const std::string &planLayerFile);
     void initMarker(visualization_msgs::Marker &marker, const size_t id);
+    double planLayerScaleRatio_;
 };
 
 #endif

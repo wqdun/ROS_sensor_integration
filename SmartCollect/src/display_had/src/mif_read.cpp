@@ -4,6 +4,7 @@
 #include <glog/logging.h>
 
 MifReader::MifReader(ros::NodeHandle nh, ros::NodeHandle private_nh, const string& _imuRecordPath) {
+    mifScaleRatio_ = 0.01;
     mMifPath = _imuRecordPath + "/../../../../data/";
     LOG(INFO) << "Mif data is: " << mMifPath;
     const string planLayerPath(_imuRecordPath + "/../Task/Planlayer/");
@@ -80,7 +81,7 @@ void MifReader::run() {
         for(size_t markerId = 0; markerId < gAbsLines.size(); ++markerId) {
             visualization_msgs::Marker offsetLine;
             initMarker(offsetLine, markerId);
-            public_tools::PublicTools::transform_coordinate(gAbsLines[markerId], mCurrentWGS, offsetLine.points);
+            public_tools::PublicTools::transform_coordinate(gAbsLines[markerId], mCurrentWGS, offsetLine.points, mifScaleRatio_);
             mLineArray.markers.push_back(offsetLine);
         }
         DLOG(INFO) << "I got " << mLineArray.markers.size() << " lines to show.";
@@ -97,7 +98,7 @@ void MifReader::initMarker(visualization_msgs::Marker &marker, const size_t id) 
     marker.id = id;
     marker.type = visualization_msgs::Marker::LINE_STRIP;
     // LINE_STRIP/LINE_LIST markers use only the x component of scale, for the line width; POINTS markers use x and y scale for width/height respectively
-    marker.scale.x = .5;
+    marker.scale.x = .5 * mifScaleRatio_;
     marker.color.r = 1.0f;
     marker.color.g = 1.0f;
     marker.color.b = 0.0f;
@@ -106,7 +107,7 @@ void MifReader::initMarker(visualization_msgs::Marker &marker, const size_t id) 
     marker.lifetime = ros::Duration(1.0);
 }
 
-void MifReader::gpsCallback(const ntd_info_process::processed_infor_msg::ConstPtr& pGpsMsg) {
+void MifReader::gpsCallback(const sc_center::centerMsg::ConstPtr& pGpsMsg) {
     // lat: 1 degree is about 100000 m
     const double lat = pGpsMsg->latlonhei.x;
     // lon: 1 degree is about 100000 m

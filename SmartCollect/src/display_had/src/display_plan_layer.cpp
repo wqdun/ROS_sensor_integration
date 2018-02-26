@@ -4,6 +4,7 @@
 #include <glog/logging.h>
 
 PlanLayerDisplayer::PlanLayerDisplayer(const std::string &_planLayerPath) {
+    planLayerScaleRatio_ = 0.01;
     pubPlanLayer_ = nh.advertise<visualization_msgs::MarkerArray>("show_plan_layer", 0);
 
     std::vector<std::string> planLayerFiles;
@@ -98,7 +99,7 @@ void PlanLayerDisplayer::initMarker(visualization_msgs::Marker &marker, const si
     marker.id = id;
     marker.type = visualization_msgs::Marker::LINE_STRIP;
     // LINE_STRIP/LINE_LIST markers use only the x component of scale, for the line width; POINTS markers use x and y scale for width/height respectively
-    marker.scale.x = 1.5;
+    marker.scale.x = 1.5 * planLayerScaleRatio_;
     marker.color.r = 1.0f;
     marker.color.g = 0.0f;
     marker.color.b = 0.0f;
@@ -115,7 +116,7 @@ void PlanLayerDisplayer::displayPlanLayer(const public_tools::geoPoint_t &encryp
     visualization_msgs::Marker offsetLine;
     for(size_t markerId = 0; markerId < planLayerLines_.size(); ++markerId) {
         (void)initMarker(offsetLine, markerId);
-        (void)public_tools::PublicTools::transform_coordinate(planLayerLines_[markerId], encryptedGauss, offsetLine.points);
+        (void)public_tools::PublicTools::transform_coordinate(planLayerLines_[markerId], encryptedGauss, offsetLine.points, planLayerScaleRatio_);
         planLayerLines2Show_.markers.push_back(offsetLine);
     }
 

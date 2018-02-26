@@ -17,9 +17,9 @@ using std::vector;
 #include <boost/algorithm/string/classification.hpp>
 #include <boost/algorithm/string/split.hpp>
 
-#include "../../public_tools/public_tools.h"
-#include "../../public_tools/coordtrans.h"
-#include "ntd_info_process/processed_infor_msg.h"
+#include "../../sc_lib_public_tools/src/public_tools.h"
+#include "../../sc_lib_public_tools/src/coordtrans.h"
+#include "sc_center/centerMsg.h"
 #include "MortonCodecTransJava.h"
 #include "display_track.h"
 #include "display_plan_layer.h"
@@ -36,7 +36,7 @@ public:
 
 private:
     void readFile(const string &file);
-    void gpsCallback(const ntd_info_process::processed_infor_msg::ConstPtr& pGpsMsg);
+    void gpsCallback(const sc_center::centerMsg::ConstPtr& pGpsMsg);
     void initMarker(visualization_msgs::Marker &marker, const size_t id);
 
     ros::Subscriber mSubGps;
@@ -49,6 +49,7 @@ private:
     std::ofstream mTrackMarsFile;
     TrackDisplayer *mpTrackDisplayer;
     PlanLayerDisplayer *pPlanLayerDisplayer_;
+    double mifScaleRatio_;
 };
 
 #endif

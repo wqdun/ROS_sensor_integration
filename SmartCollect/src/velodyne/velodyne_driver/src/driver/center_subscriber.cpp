@@ -1,10 +1,14 @@
 #include "center_subscriber.h"
+// #define NDEBUG
+#undef NDEBUG
+#include <glog/logging.h>
 
 CenterSubscriber::CenterSubscriber(ros::NodeHandle node, ros::NodeHandle private_nh) {
     isSaveLidar_ = false;
-    subCenter_ = node.subscribe("center_msg_save_control", 0, &CenterSubscriber::centerCB, this);
+    subClient_ = node.subscribe("sc_client_cmd", 10, &CenterSubscriber::clientCB, this);
 }
 
-void CenterSubscriber::centerCB(const std_msgs::Int64::ConstPtr& pCenterMsg) {
-    isSaveLidar_ = pCenterMsg->data;
+void CenterSubscriber::clientCB(const SmartCollector::clientCmd::ConstPtr& pClientMsg) {
+    DLOG(INFO) << __FUNCTION__ << " start, is_record LIDAR: " << pClientMsg->is_record;
+    isSaveLidar_ = pClientMsg->is_record;
 }

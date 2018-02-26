@@ -2,7 +2,7 @@
 #define _CENTER_SUBSCRIBER_H_
 
 #include <ros/ros.h>
-#include <std_msgs/Int64.h>
+#include "SmartCollector/clientCmd.h"
 
 class CenterSubscriber {
 public:
@@ -13,8 +13,8 @@ public:
 
 
 private:
-    void centerCB(const std_msgs::Int64::ConstPtr& pCenterMsg);
-    ros::Subscriber subCenter_;
+    void clientCB(const SmartCollector::clientCmd::ConstPtr& pClientMsg);
+    ros::Subscriber subClient_;
 };
 
 #endif

@@ -21,78 +21,83 @@
 #include <net/if.h>
 #include <arpa/inet.h>
 #include <sys/ioctl.h>
+#include <stdio.h>
+#include <errno.h>
 
 using namespace std;
 
-//获取地址
-//返回IP地址字符串
-//返回：0=成功，-1=失败
-int getLocalIp(std::vector<std::string> &IPs) {
-    struct ifconf ifConf;
-    ifConf.ifc_len = 512;
-    char buf[512];
-    ifConf.ifc_buf = buf;
+//Copyright (c) 2013 Uli Köhler
+//License: Apache2.0
 
-    int sockfd = socket(AF_INET, SOCK_DGRAM, 0);
-    if(sockfd < 0) {
-        cout << "Socket error: " << sockfd;
-        return -1;
-    }
-    // get all interfaces
-    ioctl(sockfd, SIOCGIFCONF, &ifConf);
-    close(sockfd);
+/**
+ * A buffer-overflow-safe readlink() wrapper for C++.
+ * @return A string containing the readlink()ed filename, or
+ *         an empty string with errno being set to the appropriate error.
+ *         See the readlink() man(2) for errno details.
+ */
 
-    struct ifreq *ifReq = (struct ifreq*)buf;
-    // get IPs one by one
-    int ipCnt = ifConf.ifc_len / sizeof(*ifReq);
-    cout << "Got " << ipCnt << " IPs.";
-    if(ipCnt > 5) {
-        cout << "Got too many IPs: " << ipCnt;
-        return -1;
-    }
+static std::string safeReadlink(const std::string& filename) {
+    size_t bufferSize = 255;
 
-    char *ip;
-    for(int i = 0; i < ipCnt; ++i) {
-        ip = inet_ntoa(((struct sockaddr_in*)&(ifReq->ifr_addr))->sin_addr);
-        if(NULL == ip) {
-            cout << "inet_ntoa error: " << ip;
-            return -1;
+    //Increase buffer size until the buffer is large enough
+    while (1) {
+        char* buffer = new char[bufferSize];
+        size_t rc = readlink (filename.c_str(), buffer, bufferSize);
+        if (rc == -1) {
+            delete[] buffer;
+            if(errno == EINVAL) {
+                //We know that bufsize is positive, so
+                // the file is not a symlink.
+                errno = 0;
+                return filename;
+            } else if(errno == ENAMETOOLONG) {
+                bufferSize += 255;
+            } else {
+                //errno still contains the error code
+                return "";
+            }
+        } else {
+            //Success! rc == number of valid chars in buffer
+            errno = 0;
+            string res(buffer, rc);
+            cout << res << endl;
+            return string(buffer, rc);
         }
-        IPs.push_back(ip);
-        ifReq++;
     }
-
-    return 0;
 }
-
-
-int main(void)
+int
+main ()
 {
-    char mac[17];
+    char exec_name [BUFSIZ];
 
-    string masterIp("172.21.11.111");
-    std::vector<std::string> IPs;
-        if (getLocalIp( IPs ) == 0 )
-    {
+    readlink ("/proc/self/exe", exec_name, BUFSIZ);
+    // sleep(10);
 
-        cout << IPs[0] << endl;
+    puts (exec_name);
+
+    cout << "RES:: " << safeReadlink("/proc/self/exe") << endl;
+
+    std::string path(safeReadlink("/proc/self/exe") );
+    cout << path.find("/devel/") << endl;
+    cout << path.substr(0, path.find("devel/") ) << endl;
+    char *p;
+    if((p = getenv("USER")))
+        printf("USER =%s\n",p);
+    putenv("USER=AAAAAAAAA");
+    printf("USER+%s\n",getenv("USER"));
+
+    FILE *fpin;
+    string cmd("cmd");
+    if(NULL == (fpin = popen("./test.sh", "r") ) ) {
+        cout << "Failed to " << cmd;
+        exit(1);
     }
-    else
-    {
-        printf("无法获取本机IP地址");
+    int err = 0;
+    if(0 != (err = pclose(fpin) ) ) {
+        cout << "Failed to " << cmd << ", returns: " << err;
+        exit(1);
     }
-
-    cout << masterIp.substr(0, 6);
-
-    for(auto &IP: IPs) {
-        if(0 == IP.find(masterIp.substr(0, 6) ) ) {
-            cout << "Got local IP: " << IP;
-            break;
-        }
-    }
-    std::string rosIP("");
-    cout << "\n" << rosIP.empty() << "\n";
-
 
     return 0;
 }
+

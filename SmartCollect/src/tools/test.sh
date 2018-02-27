@@ -1,5 +1,7 @@
 #!/bin/dash
 
+echo $USER >>res
+
 str=''
 gdalinfo_location=$(whereis test | awk -F: '{print $2}')
 if [ -n "$str" ]; then

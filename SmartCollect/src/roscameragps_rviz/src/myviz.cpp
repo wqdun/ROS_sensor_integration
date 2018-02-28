@@ -31,8 +31,9 @@ MyViz::MyViz(int paramNum, char **params, QWidget* parent): QWidget(parent) {
     paramNum_ = paramNum;
     params_ = params;
 
-    clientCmdMsg_.is_poweroff = clientCmdMsg_.is_reboot \
-        = clientCmdMsg_.is_record = 0;
+    LOG(INFO) << "getenv(DDDDDDDDDD): " << getenv("DDDDDDDDDD");
+
+    clientCmdMsg_.system_cmd = clientCmdMsg_.is_record = 0;
 
     setWindowFlags(Qt::CustomizeWindowHint | Qt::WindowMinimizeButtonHint | Qt::WindowStaysOnTopHint | Qt::WindowCloseButtonHint);
     this->sizeHint();
@@ -78,8 +79,6 @@ MyViz::MyViz(int paramNum, char **params, QWidget* parent): QWidget(parent) {
     pPpsLabel_ = new QLabel("PPS:");
     pGprmcLabel_ = new QLabel("GPRMC:");
 
-
-
     pLatLabel_->setFrameStyle(QFrame::Panel | QFrame::Sunken);
     pLonLabel_->setFrameStyle(QFrame::Panel | QFrame::Sunken);
     pGnssNumLabel_->setFrameStyle(QFrame::Panel | QFrame::Sunken);
@@ -96,8 +95,10 @@ MyViz::MyViz(int paramNum, char **params, QWidget* parent): QWidget(parent) {
     QPushButton *pMonitorBtn = new QPushButton("Display Monitor");
 
     QLabel *pSysCtrlLabel = new QLabel("System Control:");
-    QLabel *pPasswdLabel = new QLabel("Password:");
+    QPushButton *pCleanServerBtn = new QPushButton("Cleanup Server");
+    QPushButton *pCleanClientBtn = new QPushButton("Cleanup Client");
     pPasswordEdit_ = new QLineEdit(this);
+    pPasswordEdit_->setPlaceholderText("Server Password");
     QPushButton *pPoweroffBtn = new QPushButton("Power Off");
     QPushButton *pRebootBtn = new QPushButton("Reboot");
 
@@ -138,9 +139,11 @@ MyViz::MyViz(int paramNum, char **params, QWidget* parent): QWidget(parent) {
     controls_layout->addWidget(pMonitorBtn, row, 2);
 
     controls_layout->addWidget(pSysCtrlLabel, ++row, 0);
-    controls_layout->addWidget(pPasswdLabel, row, 1);
-    controls_layout->addWidget(pPasswordEdit_, row, 2);
-    controls_layout->addWidget(pRebootBtn, ++row, 1);
+    controls_layout->addWidget(pCleanServerBtn, row, 1);
+    controls_layout->addWidget(pCleanClientBtn, row, 2);
+
+    controls_layout->addWidget(pPasswordEdit_, ++row, 0);
+    controls_layout->addWidget(pRebootBtn, row, 1);
     controls_layout->addWidget(pPoweroffBtn, row, 2);
 
     // controls_layout->setMargin(15);
@@ -157,9 +160,30 @@ MyViz::MyViz(int paramNum, char **params, QWidget* parent): QWidget(parent) {
     connect(pRebootBtn, SIGNAL(clicked() ), this, SLOT(reboot_cmd() ) );
     connect(pRecordCtrl, SIGNAL(stateChanged(int) ), this, SLOT(record_ctrl_onStateChanged(int) ) );
     connect(pMonitorBtn, SIGNAL(clicked() ), this, SLOT(monitor_ctrl_onclick() ) );
+    connect(pCleanServerBtn, SIGNAL(clicked() ), this, SLOT(cleanServer_onClicked() ) );
+    connect(pCleanClientBtn, SIGNAL(clicked() ), this, SLOT(cleanClient_onClicked() ) );
 }
 
 MyViz::~MyViz() {
+}
+
+void MyViz::closeEvent(QCloseEvent *event) {
+    LOG(INFO) << __FUNCTION__ << " start.";
+    std::string clearClientCmd("pkill sc_center_; pkill display_had_; killall rviz");
+    LOG(INFO) <<"Run " << clearClientCmd;
+
+    FILE *fpin;
+    if(NULL == (fpin = popen(clearClientCmd.c_str(), "r") ) ) {
+        LOG(ERROR) << "Failed to " << clearClientCmd;
+        exit(1);
+    }
+    int err = 0;
+    if(0 != (err = pclose(fpin) ) ) {
+        LOG(INFO) << "Process might not exist, " << clearClientCmd << " returns: " << err;
+    }
+    LOG(INFO) << "Run: " << clearClientCmd << " end.";
+
+    event->accept();
 }
 
 void MyViz::record_ctrl_onStateChanged(int _is_record) {
@@ -171,7 +195,6 @@ void MyViz::record_ctrl_onStateChanged(int _is_record) {
         clientCmdMsg_.is_record = 0;
     }
 }
-
 
 void MyViz::launch_project() {
     DLOG(INFO) << __FUNCTION__ << " start.";
@@ -203,6 +226,8 @@ void MyViz::launch_project() {
 
     clientCmdMsg_.project_name = prjName + "-" + prj_date;
 
+    clientCmdMsg_.system_cmd = 0;
+
     (void)run_center_node();
     return;
 }
@@ -217,33 +242,23 @@ void MyViz::run_center_node() {
     int err = putenv(rosMaterUriData);
     LOG(INFO) << "Put env: "<< rosMaterUriData << " returns: " << err;
 
-    char currentDir[1000];
-    if(NULL == (getcwd(currentDir, sizeof(currentDir) ) ) ) {
-        LOG(ERROR) << "Failed to get currentDir: " << currentDir;
-        exit(1);
-    }
-    LOG(INFO) << "Get currentDir: " << currentDir;
-    const std::string _currentDir(currentDir);
+    const std::string exePath(public_tools::PublicTools::safeReadlink("/proc/self/exe") );
+    LOG(INFO) << "Get SmartCollector execute path: " << exePath;
+    const std::string smartcPath(exePath.substr(0, exePath.find("/devel/") ) );
+    LOG(INFO) << "Get SmartCollector path: " << smartcPath;
 
-    std::string centerNodeExe(_currentDir + "/devel/lib/sc_center/sc_center_node");
-    if(0 != access(centerNodeExe.c_str(), 0) ) {
-        LOG(ERROR) << "centerNodeExe: " << centerNodeExe << " does not exist.";
-        exit(1);
-    }
-
-    centerNodeExe += " &";
-    LOG(INFO) <<"Run " << centerNodeExe;
-
+    const std::string cmd("bash " + smartcPath + "/src/tools/launch_project.sh client " + clientCmdMsg_.project_name);
+    LOG(INFO) << "Run: " << cmd << " begin.";
     FILE *fpin;
-    if(NULL == (fpin = popen(centerNodeExe.c_str(), "r") ) ) {
-        LOG(ERROR) << "Failed to " << centerNodeExe;
+    if(NULL == (fpin = popen(cmd.c_str(), "r") ) ) {
+        LOG(ERROR) << "Failed to " << cmd;
         exit(1);
     }
     if(0 != (err = pclose(fpin) ) ) {
-        LOG(ERROR) << "Failed to " << centerNodeExe << ", returns: " << err;
+        LOG(ERROR) << "Failed to " << cmd << ", returns: " << err;
         exit(1);
     }
-    LOG(INFO) << "Run: " << centerNodeExe << " end.";
+    LOG(INFO) << "Run: " << cmd << " end.";
     return;
 }
 
@@ -303,8 +318,6 @@ void MyViz::showCenterMsg(const sc_server_daemon::serverMsg &server_msg, const s
         setLabelColor(pGprmcLabel_, Qt::red);
     }
 }
-
-
 
 static char * string_as_array2(string *str) {
     return str->empty()? NULL: &*str->begin();
@@ -399,7 +412,7 @@ void MyViz::set_ip() {
         LOG(ERROR) << "Failed to set ROS_IP: " << getenv("ROS_IP");
         exit(1);
     }
-    LOG(ERROR) << "Set ROS_IP: " << getenv("ROS_IP");
+    LOG(INFO) << "Set ROS_IP: " << getenv("ROS_IP");
 
     const std::string masterName(pMasterNameEdit_->text().toStdString() );
     const std::string clientPassword(pClientPasswdEdit_->text().toStdString() );
@@ -442,14 +455,14 @@ void MyViz::power_off_cmd() {
     LOG(INFO) << __FUNCTION__ << " start.";
     const std::string passwd(pPasswordEdit_->text().toStdString() );
     clientCmdMsg_.password = passwd;
-    clientCmdMsg_.is_poweroff = 1;
+    clientCmdMsg_.system_cmd = 1;
 }
 
 void MyViz::reboot_cmd() {
     LOG(INFO) << __FUNCTION__ << " start.";
     const std::string passwd(pPasswordEdit_->text().toStdString() );
     clientCmdMsg_.password = passwd;
-    clientCmdMsg_.is_reboot = 1;
+    clientCmdMsg_.system_cmd = 2;
 }
 
 void MyViz::monitor_ctrl_onclick() {
@@ -462,7 +475,7 @@ void MyViz::monitor_ctrl_onclick() {
     int err = putenv(rosMaterUriData);
     LOG(INFO) << "Put env: "<< rosMaterUriData << " returns: " << err;
 
-    const std::string rvizExe("rviz &");
+    const std::string rvizExe("export LD_LIBRARY_PATH=/opt/ros/indigo/lib:$LD_LIBRARY_PATH; /opt/ros/indigo/bin/rviz >>/opt/smartc/log/monitor_ctrl_onclick.log 2>&1 &");
     LOG(INFO) <<"Run " << rvizExe;
 
     FILE *fpin;
@@ -478,6 +491,28 @@ void MyViz::monitor_ctrl_onclick() {
     return;
 }
 
+void MyViz::cleanServer_onClicked() {
+    LOG(INFO) << __FUNCTION__ << " start.";
+    clientCmdMsg_.system_cmd = 3;
+}
+
+void MyViz::cleanClient_onClicked() {
+    LOG(INFO) << __FUNCTION__ << " start.";
+    std::string clearClientCmd("pkill display_had_; killall rviz");
+    LOG(INFO) <<"Run " << clearClientCmd;
+
+    FILE *fpin;
+    if(NULL == (fpin = popen(clearClientCmd.c_str(), "r") ) ) {
+        LOG(ERROR) << "Failed to " << clearClientCmd;
+        exit(1);
+    }
+    int err = 0;
+    if(0 != (err = pclose(fpin) ) ) {
+        LOG(INFO) << "Process might not exist, " << clearClientCmd << " returns: " << err;
+    }
+
+    LOG(INFO) << "Run: " << clearClientCmd << " end.";
+}
 
 int flag_start = 0;
 int flag_end = 0;
@@ -486,7 +521,6 @@ int flag_exit = 0;
 QSize MyViz::sizeHint() const {
     return QSize(600, 300);
 }
-
 
 // https://stackoverflow.com/questions/7352099/stdstring-to-char
 // string to char *

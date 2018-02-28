@@ -18,6 +18,7 @@
 #include <QComboBox>
 #include <QTimer>
 #include <QCheckBox>
+#include <QCloseEvent>
 
 #include <string>
 #include "sc_center/centerMsg.h"
@@ -28,6 +29,7 @@
 #include <net/if.h>
 #include <arpa/inet.h>
 #include <sys/ioctl.h>
+#include "../../sc_lib_public_tools/src/public_tools.h"
 
 
 using namespace std;
@@ -57,6 +59,8 @@ public Q_SLOTS:
     void reboot_cmd();
     void record_ctrl_onStateChanged(int);
     void monitor_ctrl_onclick();
+    void cleanServer_onClicked();
+    void cleanClient_onClicked();
 
 
 public:
@@ -93,6 +97,10 @@ public:
     QSize sizeHint() const;
 
     SmartCollector::clientCmd clientCmdMsg_;
+
+
+protected:
+    void closeEvent(QCloseEvent *event);
 
 
 private:

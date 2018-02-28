@@ -42,7 +42,8 @@ int  save_control = 0;
 
 int main(int argc, char** argv)
 {
-    // google::InitGoogleLogging(argv[0]);
+    FLAGS_log_dir = "/opt/smartc/log";
+    google::InitGoogleLogging(argv[0]);
     QApplication app(argc, argv);
 
     MyViz* myviz = new MyViz(argc, argv);

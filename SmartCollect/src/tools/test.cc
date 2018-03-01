@@ -27,13 +27,49 @@
 
 using namespace std;
 
-int
-main() {
-struct passwd *pwd = getpwuid(getuid());
-printf("当前登陆的用户名为：%s\n", pwd->pw_name);
-return 0;
-}
+#define LOG(INFO) cout
+// #define LOG(ERROR) cerr
 
-// #include <stdio.h>
-// #include <pwd.h>
-// #include <unistd.h>
+
+int main()
+{
+    LOG(INFO) << __FUNCTION__ << " start.";
+
+    LOG(INFO) << "getenv(DDDDDDDDDD): " << getenv("DDDDDDDDDD");
+
+    int err(0);
+    const std::string rvizExe("rviz &");
+    FILE *fpin;
+    if(NULL == (fpin = popen("rviz &", "r") ) ) {
+        LOG(ERROR) << "Failed to " << rvizExe;
+        exit(1);
+    }
+    if(0 != (err = pclose(fpin) ) ) {
+        LOG(ERROR) << "Failed to " << rvizExe << ", returns: " << err;
+        exit(1);
+    }
+    LOG(INFO) << "Run: " << rvizExe << " end.";
+
+
+    // // put ENV again, or ROS_MASTER_URI is NULL
+    // const std::string masterIp(pMaterIpEdit_->text().toStdString() );
+    // std::string rosMaterUri("ROS_MASTER_URI=http://" + masterIp + ":11311");
+    // char *rosMaterUriData = string_as_array(&rosMaterUri);
+    // int err = putenv(rosMaterUriData);
+    // LOG(INFO) << "Put env: "<< rosMaterUriData << " returns: " << err;
+
+    // const std::string rvizExe("/opt/ros/indigo/bin/rviz &");
+    // LOG(INFO) <<"Run " << rvizExe;
+
+    // FILE *fpin;
+    // if(NULL == (fpin = popen(rvizExe.c_str(), "r") ) ) {
+    //     LOG(ERROR) << "Failed to " << rvizExe;
+    //     exit(1);
+    // }
+    // if(0 != (err = pclose(fpin) ) ) {
+    //     LOG(ERROR) << "Failed to " << rvizExe << ", returns: " << err;
+    //     exit(1);
+    // }
+    // LOG(INFO) << "Run: " << rvizExe << " end.";
+    return 1;
+}

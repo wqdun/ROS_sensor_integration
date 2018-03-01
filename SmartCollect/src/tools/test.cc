@@ -33,43 +33,20 @@ using namespace std;
 
 int main()
 {
-    LOG(INFO) << __FUNCTION__ << " start.";
+    string tmp("temp string");
+    string tmp2("hi", 7);
+    cout << tmp2 << endl;
 
-    LOG(INFO) << "getenv(DDDDDDDDDD): " << getenv("DDDDDDDDDD");
+    vector<string> strs;
+    strs.push_back(tmp);
+    strs.push_back("tmp");
+    strs.emplace_back("hello");
+    strs.emplace_back(string("hello"));
 
-    int err(0);
-    const std::string rvizExe("rviz &");
-    FILE *fpin;
-    if(NULL == (fpin = popen("rviz &", "r") ) ) {
-        LOG(ERROR) << "Failed to " << rvizExe;
-        exit(1);
+    for(auto &i: strs) {
+        cout << i << endl;
     }
-    if(0 != (err = pclose(fpin) ) ) {
-        LOG(ERROR) << "Failed to " << rvizExe << ", returns: " << err;
-        exit(1);
-    }
-    LOG(INFO) << "Run: " << rvizExe << " end.";
 
 
-    // // put ENV again, or ROS_MASTER_URI is NULL
-    // const std::string masterIp(pMaterIpEdit_->text().toStdString() );
-    // std::string rosMaterUri("ROS_MASTER_URI=http://" + masterIp + ":11311");
-    // char *rosMaterUriData = string_as_array(&rosMaterUri);
-    // int err = putenv(rosMaterUriData);
-    // LOG(INFO) << "Put env: "<< rosMaterUriData << " returns: " << err;
-
-    // const std::string rvizExe("/opt/ros/indigo/bin/rviz &");
-    // LOG(INFO) <<"Run " << rvizExe;
-
-    // FILE *fpin;
-    // if(NULL == (fpin = popen(rvizExe.c_str(), "r") ) ) {
-    //     LOG(ERROR) << "Failed to " << rvizExe;
-    //     exit(1);
-    // }
-    // if(0 != (err = pclose(fpin) ) ) {
-    //     LOG(ERROR) << "Failed to " << rvizExe << ", returns: " << err;
-    //     exit(1);
-    // }
-    // LOG(INFO) << "Run: " << rvizExe << " end.";
     return 1;
 }

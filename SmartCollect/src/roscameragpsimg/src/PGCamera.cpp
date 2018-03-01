@@ -4,11 +4,11 @@
 #include<cv_bridge/cv_bridge.h>
 #include<FlyCapture2.h>
 #include "lock.h"
+
 CMutex mymutex;
 //time control
 extern vector<string> parsed_data;
 extern string global_gps ;
-//string global_gps ;
 
 //save control
 extern int is_save_cam;
@@ -18,6 +18,9 @@ extern int format_int;
 
 //get savepath
 extern string pathSave_str;
+
+//set gain
+extern float cam_gain;
 
 //string2double
 static double string2double(const string& str)
@@ -69,6 +72,7 @@ bool CPGCamera::InitCamera(int m_CameraID)
 
 	return true;
 }
+
 bool CPGCamera::IsCameraExist()
 {
 	error = m_busMgr.GetNumOfCameras(&m_nCamNum);
@@ -150,6 +154,34 @@ void CPGCamera::Grab()
 		}
 	}
 }
+bool CPGCamera::SetCameragain()
+{
+    error = ((GigECamera *)m_pCamera)->GetProperty(&pProp );
+    if (error != PGRERROR_OK)
+	{
+	    LOG(INFO)<<"SetCameragain: GetProperty"<<endl;
+		error.PrintErrorTrace();
+		//return false;
+	}
+	pProp.type       = GAIN;
+	pProp.absControl = true;
+	pProp.onePush    = false;
+	pProp.onOff      = true;
+	pProp.autoManualMode = false;
+	pProp.absValue      =  cam_gain;
+    error = ((GigECamera *)m_pCamera)->SetProperty(&pProp );
+    if (error != PGRERROR_OK)
+	{
+	    LOG(INFO)<<"pProp.absValue: "<<pProp.absValue<<endl;
+	    LOG(INFO)<<"SetCameragain: SetProperty"<<endl;
+		error.PrintErrorTrace();
+		//return false;
+	}
+	LOG(INFO)<<"SetCameragain: "<<endl;
+	return true;
+}
+
+
 
 bool CPGCamera::SetCameraParam()
 {
@@ -295,18 +327,20 @@ double preTime_record  = 0;
 double fix_rate        = 1.0;
 int record_count       = 1;
 int time_state         = 0;
+int show_state         = 1;
 
 void CPGCamera::XferCallBack(Image* pImages, const void *pCallBackData)
 {
-    // mymutex.Unlock();
-    ros::Time begin = ros::Time::now();
-    double    time  = begin.toSec();
-	CPGCamera *pThis = (CPGCamera*)pCallBackData;
 
-	FlyCapture2::Image convertedImage;
-	FlyCapture2::Error error;
+        DLOG(INFO)<<__FUNCTION__ << " start.";
+        ros::Time begin = ros::Time::now();
+        double    time  = begin.toSec();
+	    CPGCamera *pThis = (CPGCamera*)pCallBackData;
 
-	Image pImage = *(pImages);
+	    FlyCapture2::Image convertedImage;
+	    FlyCapture2::Error error;
+
+	    Image pImage = *(pImages);
 
         curTime_record = time;
 
@@ -318,7 +352,7 @@ void CPGCamera::XferCallBack(Image* pImages, const void *pCallBackData)
         else
         {
             double cam_time = curTime_record - preTime_record;
-            cam_time = abs(cam_time - 0.0000001)< 0 ? 1 : cam_time;
+            cam_time = abs(cam_time - 0.4)< 0 ? 1 : cam_time;
             cam_fps      = (double)1.0/(double)cam_time;
             preTime_record = curTime_record;
         }
@@ -327,15 +361,19 @@ void CPGCamera::XferCallBack(Image* pImages, const void *pCallBackData)
 	    string seconds_str = std::to_string(time);
 
         //time of gps
-
         string gps_str = "--";
-        int ret = mymutex.Trylock();
+        int ret = mymutex.Lock();
         
-        if(ret==0&&parsed_data.size() >= 17 && global_gps.size()>2 && global_gps.size()<20)
+        if(ret!=0)
+        {
+            return ;
+        }
+
+        DLOG(INFO)<<"trylock result: "<<ret;
+        if(ret==0 && parsed_data.size() >= 17 && global_gps.size()>2 && global_gps.size()<20)
         {
                 gps_str = global_gps;
-                time_state = 0;
-                mymutex.Unlock();
+                time_state = 0;  
         }
         else
         {
@@ -343,8 +381,13 @@ void CPGCamera::XferCallBack(Image* pImages, const void *pCallBackData)
             gps_str = seconds_str;
             time_state = 1;
         }
+        if(ret==0)
+        {
+            int retUnlock = mymutex.Unlock();
+            
+            LOG(INFO)<<"unlock result: "<<retUnlock;
+        }
         
-       
         double gps_str_db = 0.0 ;
         stringstream ss;
         ss<<gps_str;
@@ -361,6 +404,7 @@ void CPGCamera::XferCallBack(Image* pImages, const void *pCallBackData)
             case 0://jpg
                {
                    //save image in jpg format
+                   show_state++;
                    string gps_str_jpg =pathSave_str + gps_str + ".jpg";
                    const char* pathout_gps_jpg_c    = gps_str_jpg.c_str();
                    if(pathout_gps_jpg_c==NULL)
@@ -368,6 +412,7 @@ void CPGCamera::XferCallBack(Image* pImages, const void *pCallBackData)
                       DLOG(INFO)<<"xcallback: pathout_gps_jgp_c is NULL!";
                       break;
                    }
+                   
                    //convert image
                    error = pImage.Convert( PIXEL_FORMAT_BGR, &convertedImage);
 	               if(error != PGRERROR_OK)
@@ -375,32 +420,53 @@ void CPGCamera::XferCallBack(Image* pImages, const void *pCallBackData)
                        DLOG(INFO)<<"xcallback: pImage.Convert error!";
 	                   break ;
 	               }
-
+	               int bits  = pImage.GetBitsPerPixel();
+                   
+                   if(is_save_cam && bits == 8)
+                   {
+                       FlyCapture2::JPEGOption jpgoption;
+                      
+                       error = convertedImage.Save(pathout_gps_jpg_c,&jpgoption);
+                      
+                       if(error != PGRERROR_OK)
+                       {
+                           DLOG(INFO)<<"save image jpg error! "<<endl;
+                           break;
+                       }
+              
+                   }
+                   if(show_state%5==0)
+                   {
+                       show_state = 1;
+                   }
+                   else
+                   {
+                       break;
+                   }
                    bool matConbool =  pThis->ConvertImage(&img,&convertedImage);
+                   Mat matImageDown;
+                   cv::resize(img, matImageDown, cv::Size(1920/3,1200/3));
                    DLOG(INFO)<<"xcallback  matConvert state: "<<matConbool;
 	               if(matConbool)
 	               {
-	                   sensor_msgs::ImagePtr msg_img=cv_bridge::CvImage(std_msgs::Header(),"bgr8",img).toImageMsg();
+	                   sensor_msgs::ImagePtr msg_img=cv_bridge::CvImage(std_msgs::Header(),"bgr8",matImageDown).toImageMsg();
                        if(NULL == msg_img)
                        {
-                           cout << "[ERROR] msg_img is null.\n";
+                           DLOG(INFO) << "[ERROR] msg_img is null.\n";
+                           break;
                        }
                        pThis->pub.publish(msg_img);
 	               }
                    //save image
-                   if(is_save_cam)
+                   if(is_save_cam && bits == 24)
                    {
                        imwrite(pathout_gps_jpg_c,img);
-                       //FlyCapture2::JPG2Option jpgoption;
-                       //convertedImage.Save(pathout_gps_jpg_c,&jpgoption);
                    }
-
+                   //DLOG(INFO)<<__FUNCTION__ << " save.";
                    break;
                }
             case 1: //raw
                {
-                   //save image in raw format
-                   //string count_str    = std::to_string(count);
                    string gps_str_raw  = pathSave_str + gps_str + ".raw";
                    const char* pathout_raw    = gps_str_raw.c_str();
 
@@ -414,8 +480,6 @@ void CPGCamera::XferCallBack(Image* pImages, const void *pCallBackData)
                }
             case 2: //jpgcount
                {
-                   //save image in jpg format
-                   //string count_str     = std::to_string(count);
                    string count_str_jpg = pathSave_str + gps_str +".jpg";//count_str + ".jpg";
                    const char* pathout_count_jpg_c    = count_str_jpg.c_str();
                    //image convert
@@ -437,8 +501,6 @@ void CPGCamera::XferCallBack(Image* pImages, const void *pCallBackData)
                }
             case 3: //png
                {
-                   //save image in png format
-                   //string count_str     = std::to_string(count);
                    string count_str_jpg = pathSave_str +gps_str+ ".png";//count_str + ".png";
                    const char* pathout_count_jpg_c    = count_str_jpg.c_str();
                    //image convert
@@ -468,7 +530,7 @@ void CPGCamera::XferCallBack(Image* pImages, const void *pCallBackData)
         {
             pThis->msg_cam_speed.data = cam_fps;
             pThis->pub_cam_speed.publish(pThis->msg_cam_speed);
-            DLOG(INFO)<<"cam_fps: "<<cam_fps;
+            //DLOG(INFO)<<"cam_fps: "<<cam_fps;
         }
 
     return ;
@@ -499,18 +561,11 @@ bool CPGCamera::ConvertImage(cv::Mat* matImage, Image* image)
     int height = image->GetRows();
     int width  = image->GetCols();
 
-    FlyCapture2::PixelFormat pixelformat = image->GetPixelFormat();
-    DLOG(INFO)<<"pixelFormat: "<<pixelformat;
-
     int bits  = image->GetBitsPerPixel();
-    DLOG(INFO)<<"bits of per pixels: "<<bits;
-
     int stride = image->GetStride();
-    DLOG(INFO)<<"stride of the image: "<< stride;
 
-    uchar* src_data = image->GetData();
+    uchar* src_data = (uchar*)image->GetData();
 
-    DLOG(INFO)<<"ROWS,COLS,HEIGHT,WIDHT: "<<rows<<" "<<cols<<" "<<height<<" "<<width;
     if(height!=rows || width != cols)
     {
         return false;

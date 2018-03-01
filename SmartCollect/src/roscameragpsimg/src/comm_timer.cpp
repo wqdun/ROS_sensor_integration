@@ -2,6 +2,10 @@
 #include <fstream>
 #include "lock.h"
 
+#define NDEBUG
+//#undef NDEBUG
+#include <glog/logging.h>
+
 
 using namespace std;
 
@@ -123,22 +127,25 @@ int set_opt(int fd, int nSpeed, int nBits, char nEvent, int nStop)
 }
 
 int get_time(/*ros::NodeHandle* nh*/)
-   {
-    ros::NodeHandle nh_time;
-    //ros::NodeHandle*  nh_time = (ros::NodeHandle*) nh;
-    ros::Publisher    pub_5651  = nh_time.advertise<roscameragpsimg::imu5651>("imu_string", 1000);
-    roscameragpsimg::imu5651  msg;
-
+{
     char buf[1024];
 
-    // open serial port: ttyS0
     int fd1 = open("/dev/ttyS0", O_RDONLY);// | O_NONBLOCK); // 打开串口 // fd1 = open("/dev/ttyUSB0", O_RDWR);
     if(-1 == fd1)
     {
         printf("fd1 == -1\n");
         exit(1);
     }
-
+    else
+    {
+        DLOG(INFO)<<"comm open success!";
+    }
+    
+    ros::NodeHandle nh_time;
+    ros::Publisher    pub_5651  = nh_time.advertise<roscameragpsimg::imu5651>("imu_string", 1000);
+    
+    roscameragpsimg::imu5651  msg;
+    
     // setup port properties
     int nset1 = set_opt(fd1, 115200, 8, 'N', 1); // 设置串口属性
     if(-1 == nset1)
@@ -151,37 +158,35 @@ int get_time(/*ros::NodeHandle* nh*/)
     timespec t1, t2;
     long last_time_ns;
     long time_when_get_frame_s, time_when_get_frame_ns;
-    double time_s;
+    double time_s = 0;
 
     int last_minute = 0;
-    double currTime ;
+    double currTime = 0;
     string last_time_gps = " ";
     string pre_time_gps  = " ";
     double time_s_start, time_s_end;
     int    counts_t = 0;
-    string GPS_week_time_str_cur;
-	string temp_path = " ";
-	public_tools::PublicTools::generateFileName(imu_path, temp_path);
+    string GPS_week_time_str_cur=" ";
+    string temp_path = " ";
+    public_tools::PublicTools::generateFileName(imu_path, temp_path);
 
-    string imupath_str = imu_path +temp_path + "_integrate_imu.txt";
-
+    string imupath_str = imu_path +temp_path + "_rt_track.txt";
+    
     fstream file;
-
     while(1)
     {
-        //cout<< "I am in while 1 !"<<endl;
-        //mymutex.Unlock();
+
         memset(buf, 0, 1024);
         int nread = read(fd1, buf, 1024); // 读串口
-        //cout<<"nread: "<<nread<<endl;
+
         if(nread <= 0)
         {
             continue;
         }
-
+        bool is_frame_completed = false;
         for(size_t i = 0; i < nread; ++i)
         {
-            bool is_frame_completed = false;
+            is_frame_completed = false;
             string frame_complete = "";
             switch(buf[i])
             {
@@ -193,7 +198,6 @@ int get_time(/*ros::NodeHandle* nh*/)
                 time_s = (double)time_when_get_frame_s + (double)time_when_get_frame_ns / 1000000000.0;
 
                 frameBuf = buf[i];
-
                 break;
             case '\r':
                 break;
@@ -204,15 +208,13 @@ int get_time(/*ros::NodeHandle* nh*/)
                 frame_complete = frameBuf;
                 frameBuf.clear();
                 break;
+                
             default:
                 frameBuf += buf[i];
             }
 
             if(is_frame_completed)
             {
-                //imu_string = frameBuf;
-                // parse the GPS time
-
                 if(is_save_cam)
                 {
                     file.open(imupath_str,ios::out|ios::app);
@@ -224,26 +226,27 @@ int get_time(/*ros::NodeHandle* nh*/)
                     }
                 }
                 int ret = mymutex.Trylock();
+                DLOG(INFO)<<"get_time lock result: "<<ret;
+                if(0 != ret) 
+                {
+                    DLOG(ERROR) << "Failed to tryLock.return result : "<<ret;
+                    continue;
+                }
+                
                 if(ret==0)
-                {   
+                {
                     boost::split(parsed_data, frame_complete, boost::is_any_of( ",*" ), boost::token_compress_on);
-                    if(parsed_data.size() <= 16)
-                    {
-                        // 1st frame might be wrong, 'cause no '$'
-                        cout << "Error when parsing." << parsed_data.size() << endl;
-                        continue;
-                    }
 
                     // e.g. "279267.900"
                     GPS_week_time_str_cur = parsed_data[2];
-                    
+
                     double GPS_week_time = string2double(GPS_week_time_str_cur);
-                    
+
                     global_gps = GPS_week_time_str_cur;
-                    
-                    
+
+
                     if(parsed_data.size()>=17)
-                     {
+                    {
                         msg.GPSWeek = parsed_data[1];
                         msg.GPSTime = parsed_data[2];
                         msg.Heading = parsed_data[3];
@@ -263,6 +266,7 @@ int get_time(/*ros::NodeHandle* nh*/)
                     }
                     mymutex.Unlock();
                 }
+                if(ret==0){mymutex.Unlock();}
 
             }
 
@@ -283,8 +287,8 @@ int get_time(/*ros::NodeHandle* nh*/)
 
         if(pre_time_gps != GPS_week_time_str_cur)
         {
-            pre_time_gps = GPS_week_time_str_cur;
-            counts_t = 0;
+                pre_time_gps = GPS_week_time_str_cur;
+                counts_t = 0;
         }
         if(pre_time_gps == GPS_week_time_str_cur && counts_t == 0)
         {
@@ -304,20 +308,26 @@ int get_time(/*ros::NodeHandle* nh*/)
             time_s_end = (double)time_when_get_frame_se + (double)time_when_get_frame_nse / 1000000000.0;
             counts_t = counts_t + 1;
             time_difference = time_s_end - time_s_start;
-            
-            
+
             double GPS_week_times = string2double(GPS_week_time_str_cur);
             GPS_week_times        =  GPS_week_times + time_difference;
-            
+        
             int ret = mymutex.Trylock();
-            if(ret == 0)
+            if(ret != 0)
             {
-                if(parsed_data.size() >= 17&& parsed_data[2].size()>2)
-                {
-                    global_gps = std::to_string(GPS_week_times);
-                }
-                mymutex.Unlock();
+               DLOG(INFO)<<"Faild to trylock. return ret :"<<ret;
+               continue;
             }
+               
+            if(parsed_data.size() >= 17&& parsed_data[2].size()>2)
+            {
+                 global_gps = std::to_string(GPS_week_times);
+            }
+            if(ret==0)
+            {
+               mymutex.Unlock();
+            }
+    
         }
     }
 

@@ -9,8 +9,8 @@ class ILock
 public:
 	virtual ~ILock() {}
 
-	virtual void Lock() const = 0;
-	virtual void Unlock() const = 0;
+	virtual int Lock() const = 0;
+	virtual int Unlock() const = 0;
 };
 
 //互斥锁类
@@ -20,8 +20,8 @@ public:
 	CMutex();
 	~CMutex();
 
-	virtual void Lock() const;
-	virtual void Unlock() const;
+	virtual int Lock() const;
+	virtual int Unlock() const;
     int Trylock(void);
 
 private:

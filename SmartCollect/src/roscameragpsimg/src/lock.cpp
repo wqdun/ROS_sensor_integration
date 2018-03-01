@@ -5,6 +5,7 @@
 CMutex::CMutex()
 {
 	pthread_mutex_init(&m_mutex, NULL);
+	//pthread_mutexattr_settype(&m_mutex, PTHREAD_MUTEX_ERRORCHECK_NP);
 }
 
 //注销互斥锁
@@ -14,9 +15,9 @@ CMutex::~CMutex()
 }
 
 //确保拥有互斥锁的线程对被保护资源的独自访问
-void CMutex::Lock() const
+int CMutex::Lock() const
 {
-	pthread_mutex_lock(&m_mutex);
+	return pthread_mutex_lock(&m_mutex);
 }
 
 //try to lock 
@@ -27,9 +28,9 @@ int CMutex::Trylock(void)
 }
 
 //释放当前线程拥有的锁，以使其它线程可以拥有互斥锁，对被保护资源进行访问
-void CMutex::Unlock() const
+int CMutex::Unlock() const
 {
-	pthread_mutex_unlock(&m_mutex);
+	return pthread_mutex_unlock(&m_mutex);
 }
 
 //利用C++特性，进行自动加锁

@@ -25,6 +25,9 @@
 #include"./PGCamera.h"
 #include "SmartCollector/clientCmd.h"
 
+#undef NDEBUG
+#include <glog/logging.h>
+
 //namespace
 using namespace std;
 using namespace cv;
@@ -42,6 +45,9 @@ string imu_path;
 
 //save control
 int is_save_cam = 1;
+float cam_gain  = 1;
+float cam_gain_record = 0.0;
+int count_record = 0;
 
 //format control
 string format_str;
@@ -66,28 +72,34 @@ void *thread(void *ptr)
 //save controll callback
 void sub_save_cam_callback(const SmartCollector::clientCmd::ConstPtr& pClientMsg)
 {
-    DLOG(INFO) << __FUNCTION__ << " start, is_record Camera: " << pClientMsg->is_record;
+    DLOG(INFO) << __FUNCTION__ << " start, is_record Camera: " << (int)(pClientMsg->is_record);
     is_save_cam = pClientMsg->is_record;
 }
-//time delay
-void delay(int time);
+//sub_cam_gain_callback
+void sub_cam_gain_callback(const std_msgs::Float64::ConstPtr& msg)
+{
+    cam_gain   = msg->data;
+    if(count_record == 0)
+    {
+        cam_gain_record = cam_gain;
+        count_record = 1;
+    }
+}
 
+
+//-------------------------------------------------------main---------------------
 int main(int argc, char** argv)
 {
     google::InitGoogleLogging(argv[0]);
     ros::init(argc,argv,"image_publisher");
 
     ros::NodeHandle nh;
-#ifdef IMAGE_
-    image_transport::ImageTransport it(nh);
-    image_transport::Publisher  pub   = it.advertise("camera/image",1);
-#endif
-
     ros::Subscriber sub_save_cam = nh.subscribe("sc_client_cmd", 10, sub_save_cam_callback);
+    ros::Subscriber sub_gain_cam = nh.subscribe("msg_cam_gain",0, sub_cam_gain_callback);
+
 
     //get parameters
     DLOG(INFO)<<"argc"<< argc;
-
 
     if(argc==4)
     {
@@ -122,7 +134,6 @@ int main(int argc, char** argv)
         format_int = -1;
     }
 
-
     //[1]初始化相机对象expected primary-expression before ‘
     int ImageWidth = 1920;
     int ImageHeight= 1200;
@@ -144,66 +155,84 @@ int main(int argc, char** argv)
     DLOG(INFO) << "before open camera !";
     int m_CameraID = 0;
     bool caminit = false;
-    for(int i = 0;  ; i++)
+    for(int i = 0; 10000 ; i++)
     {
         caminit = camera_pg->InitCamera(m_CameraID);
         DLOG(INFO) << i << ", open state: " << caminit;
-        if(caminit==true)
+        if(caminit)
         {
             break;
         }
         else
         {
-            usleep(500000);
-            camera_pg->ReleaseCamera();
+            usleep(100000);
+            LOG(INFO)<<"camera try to open again!";
+            camera_pg = NULL;
+            camera_pg = new CPGCamera(ImageWidth, ImageHeight, nh);
+            camera_pg->m_nBufferWidth = ImageWidth;
+            camera_pg->m_nBufferHeight= ImageHeight;
         }
     }
+
+    bool tellgain = camera_pg->SetCameragain();
 
     camera_pg->m_CameraID = m_CameraID;
     camera_pg->StartCapture();
 
     if(caminit)
     {
-        DLOG(INFO)<<"camera open state is : ok ";
+        LOG(INFO)<<"camera open state is : ok ";
         cout<<"camera open state is : ok "<<endl;
     }
     else
     {
-        DLOG(INFO)<<"camera open state is : failed ";
+        LOG(INFO)<<"camera open state is : failed ";
         cout<<"camera open state is : failed "<<endl;
         return 0;
     }
-
-    //publish rate
-    static int rate = 1;
-    ros::Rate loop_rate(rate);
-    FlyCapture2::Error error;
-
-    //[0]GPS时间获取-多线程
+    sleep(2);
+    //[3]GPS时间获取-多线程
     DLOG(INFO) <<"start time get!";
 
     pthread_t id;
     int ret = pthread_create(&id, NULL, thread, &nh);
     if(ret)
     {
-        DLOG(INFO)<< "create thread  state  is:  error! ";
+        LOG(INFO)<< "create thread  state  is:  error! ";
         return 1;
     }
 
+    //publish rate
+    static int rate = 1;
+    ros::Rate loop_rate(rate);
+
     //cam speed
+
     while(nh.ok())
     {
        ros::spinOnce();
        loop_rate.sleep();
+       if(count_record == 1 && cam_gain != cam_gain_record)
+       {
+           camera_pg->StopCapture();
+           bool tellgain = camera_pg->SetCameragain();
+           LOG(INFO)<<"cam_gain_record changed!!";
+           if(tellgain)
+           {
+               LOG(INFO)<<"cam_gain_record changed ok!!";
+           }
+           else
+           {
+               LOG(INFO)<<"cam_gain_record changed faild!!";
+           }
+           camera_pg->StartCapture();
+           cam_gain_record = cam_gain;
 
+       }
+
+       continue;
     }
-    delete camera_pg;
-    return 0;
-}
 
-void delay(int time)
-{
-    clock_t time_old = clock();
-    while( clock() - time_old < time){};
+    return 0;
 }
 

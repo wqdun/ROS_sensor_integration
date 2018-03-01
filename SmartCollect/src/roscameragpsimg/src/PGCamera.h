@@ -11,7 +11,7 @@
 #include <sstream>
 #include<ros/ros.h>
 #include<image_transport/image_transport.h>
-// #define NDEBUG
+//#define NDEBUG
 #undef NDEBUG
 #include <glog/logging.h>
 
@@ -145,6 +145,8 @@ public:
 	bool CameraConnect();
 	//SetCameraParam
 	bool SetCameraParam();
+	//SetCameraGain
+	bool SetCameragain();
 	//StartCapture
 	bool StartCapture();
 	//StopCapture
@@ -208,6 +210,8 @@ public:
 
 	//²¶»ñ¿ØÖÆ
 	bool m_bStartedCapture;
+	//setgain
+	Property pProp;
 
   //Í¼ÏñImage;
   Image imgConvertOut;

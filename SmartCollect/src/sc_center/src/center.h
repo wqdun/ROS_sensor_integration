@@ -46,12 +46,10 @@ private:
     ros::Subscriber mSubVelodyne;
     ros::Subscriber mSub422;
     ros::Subscriber mSubCameraImg;
-    ros::Subscriber mSubMyViz;
     ros::Subscriber subServer_;
 
     ros::Publisher mPub;
     ros::Publisher pubTime2Local_;
-    ros::Publisher mPubIsSaveFile;
 
     sc_center::centerMsg mOutMsg;
     const string PPS_STATUS[4] {

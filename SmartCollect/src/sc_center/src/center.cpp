@@ -10,12 +10,9 @@ InforProcess::InforProcess() {
     mSubVelodyne = nh.subscribe("velodyne_pps_status", 0, &InforProcess::velodyneCB, this);
     mSub422 = nh.subscribe("imu422_hdop", 0, &InforProcess::rawImuCB, this);
     mSubCameraImg = nh.subscribe("cam_speed", 0, &InforProcess::cameraImgCB, this);
-    mSubMyViz = nh.subscribe("msg_save_control", 0, &InforProcess::myVizCB, this);
-    subServer_ = nh.subscribe("sc_server2center", 0, &InforProcess::serverCB, this);
 
     mPub = nh.advertise<sc_center::centerMsg>("processed_infor_msg", 0);
     pubTime2Local_ = nh.advertise<sc_center::imuPoints>("imu_time2local", 0);
-    mPubIsSaveFile = nh.advertise<std_msgs::Int64>("center_msg_save_control", 0);
 
     mGpsTime[0] = mGpsTime[1] = -1;
     mIsVelodyneUpdated = mIsRawImuUpdated = mIsGpsUpdated = false;
@@ -44,11 +41,14 @@ void InforProcess::run() {
         mOutMsg.latlonhei.x += 0.00002;
         mOutMsg.latlonhei.y -= 0.00002;
 #else
-        if(!mIsGpsUpdated) {
-            mOutMsg.GPStime = mOutMsg.latlonhei.x = mOutMsg.latlonhei.y = mOutMsg.latlonhei.z = mOutMsg.current_pitch = mOutMsg.current_roll = mOutMsg.current_heading = mOutMsg.current_speed = -2.;
-            mOutMsg.nsv1_num = mOutMsg.nsv2_num = -2;
+        // 1Hz, consider network delay
+        if(0 == (freqDivider % 8) ) {
+            if(!mIsGpsUpdated) {
+                mOutMsg.GPStime = mOutMsg.latlonhei.x = mOutMsg.latlonhei.y = mOutMsg.  latlonhei.z = mOutMsg.current_pitch = mOutMsg.current_roll = mOutMsg. current_heading = mOutMsg.current_speed = -2.;
+                mOutMsg.nsv1_num = mOutMsg.nsv2_num = -2;
+            }
+            mIsGpsUpdated = false;
         }
-        mIsGpsUpdated = false;
 #endif
         // 0.5Hz
         if(0 == (freqDivider % 16) ) {
@@ -60,28 +60,20 @@ void InforProcess::run() {
             mIsRawImuUpdated = false;
         }
 
-        // 8Hz
-        if(!mIsVelodyneUpdated) {
-            mOutMsg.pps_status = mOutMsg.is_gprmc_valid = "Signal Lost";
+        // 1Hz
+        if(0 == (freqDivider % 8) ) {
+            if(!mIsVelodyneUpdated) {
+                mOutMsg.pps_status = mOutMsg.is_gprmc_valid = "Signal Lost";
+            }
+            mIsVelodyneUpdated = false;
         }
-        mIsVelodyneUpdated = false;
 
         mPub.publish(mOutMsg);
     }
 }
 
-void InforProcess::serverCB(const sc_server_daemon::serverMsg::ConstPtr &pServerMsg) {
-    DLOG(INFO) << __FUNCTION__ << " start.";
-    mOutMsg.is_project_already_exist = pServerMsg->is_project_already_exist;
-}
-
 void InforProcess::cameraImgCB(const std_msgs::Float64::ConstPtr& pCameraImgMsg) {
     mOutMsg.camera_fps = pCameraImgMsg->data;
-}
-
-void InforProcess::myVizCB(const std_msgs::Int64::ConstPtr& pMyVizMsg) {
-    // only publish isSaveFile
-    mPubIsSaveFile.publish(pMyVizMsg);
 }
 
 void InforProcess::velodyneCB(const velodyne_msgs::Velodyne2Center::ConstPtr& pVelodyneMsg) {

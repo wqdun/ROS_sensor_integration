@@ -23,13 +23,14 @@ using std::vector;
 #include "MortonCodecTransJava.h"
 #include "display_track.h"
 #include "display_plan_layer.h"
+#include <pwd.h>
 
 static public_tools::geoLines_t gAbsLines;
 
 class MifReader {
 
 public:
-    MifReader(ros::NodeHandle nh, ros::NodeHandle private_nh, const string& _imuRecordPath);
+    MifReader(ros::NodeHandle nh, ros::NodeHandle private_nh);
     ~MifReader();
     void run();
 
@@ -46,7 +47,6 @@ private:
     vector<int> mTileList;
     visualization_msgs::MarkerArray mLineArray;
     bool mIsInSameMesh;
-    std::ofstream mTrackMarsFile;
     TrackDisplayer *mpTrackDisplayer;
     PlanLayerDisplayer *pPlanLayerDisplayer_;
     double mifScaleRatio_;

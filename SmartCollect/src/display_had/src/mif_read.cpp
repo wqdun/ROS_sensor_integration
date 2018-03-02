@@ -3,11 +3,20 @@
 // #undef NDEBUG
 #include <glog/logging.h>
 
-MifReader::MifReader(ros::NodeHandle nh, ros::NodeHandle private_nh, const string& _imuRecordPath) {
+MifReader::MifReader(ros::NodeHandle nh, ros::NodeHandle private_nh) {
     mifScaleRatio_ = 0.01;
-    mMifPath = _imuRecordPath + "/../../../../data/";
-    LOG(INFO) << "Mif data is: " << mMifPath;
-    const string planLayerPath(_imuRecordPath + "/../Task/Planlayer/");
+    const std::string exePath(public_tools::PublicTools::safeReadlink("/proc/self/exe") );
+    LOG(INFO) << "HAD node exePath: " << exePath;
+    const std::string smartcPath(exePath.substr(0, exePath.find("/devel/") ) );
+    LOG(INFO) << "Get SmartCollector path: " << smartcPath;
+
+    mMifPath = smartcPath + "/data/";
+    LOG(INFO) << "MIF SQlite data path: " << mMifPath;
+
+    struct passwd *pwd = getpwuid(getuid() );
+    const std::string userName(pwd->pw_name);
+    LOG(INFO) << "Current user name: " << userName;
+    const string planLayerPath("/home/" + userName + "/Desktop/Planlayer/");
 
     mLineArray.markers.reserve(2000);
     mSubGps = nh.subscribe("processed_infor_msg", 0, &MifReader::gpsCallback, this);
@@ -16,18 +25,6 @@ MifReader::MifReader(ros::NodeHandle nh, ros::NodeHandle private_nh, const strin
     mIsInSameMesh = false;
     mCurrentWGS.x = -0.5;
 
-    // e.g., _imuRecordPath: /home/navi/catkin_ws/record/1005-1-077-180110/rawdata/IMU/
-    string encrypTrackFileName("");
-    (void)public_tools::PublicTools::generateFileName(_imuRecordPath, encrypTrackFileName);
-    const string trackfileInImuPath(_imuRecordPath + encrypTrackFileName + "_encryp_track.txt");
-    mTrackMarsFile.open(trackfileInImuPath);
-    if(!mTrackMarsFile.is_open() ) {
-        LOG(ERROR) << "Failed to open " << trackfileInImuPath;
-        exit(1);
-    }
-    LOG(INFO) << "Logging MARS track in " << trackfileInImuPath;
-    mTrackMarsFile << std::fixed;
-
     // Below for display GPS track
     mpTrackDisplayer = new TrackDisplayer();
     // for display plan layer
@@ -35,7 +32,6 @@ MifReader::MifReader(ros::NodeHandle nh, ros::NodeHandle private_nh, const strin
 }
 
 MifReader::~MifReader() {
-    mTrackMarsFile.close();
     delete mpTrackDisplayer;
     delete pPlanLayerDisplayer_;
     LOG(INFO) << "Goodbye.";
@@ -126,9 +122,6 @@ void MifReader::gpsCallback(const sc_center::centerMsg::ConstPtr& pGpsMsg) {
     }
     DLOG(INFO) << "Origin coord (" << lng << ", " << lat << ");";
     DLOG(INFO) << "Mars coord (" << newlng << ", " << newlat << ").";
-
-    // TODO: Refactor using sqlite
-    mTrackMarsFile << newlng << ", " << newlat << "\n";
 
     double currentGaussX;
     double currentGaussY;

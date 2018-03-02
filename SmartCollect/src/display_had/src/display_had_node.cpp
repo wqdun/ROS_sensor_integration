@@ -6,17 +6,9 @@
 int main(int argc, char **argv) {
     google::InitGoogleLogging(argv[0]);
 
-    if(2 != argc) {
-        LOG(ERROR) << "I need a IMU record path, argc: " << argc;
-        exit(1);
-    }
-    string imuRecordPath("");
-    imuRecordPath = argv[1];
-    LOG(INFO) << "Record track file to: "<< imuRecordPath;
-
     ros::init(argc, argv, "displayer_node");
 
-    MifReader mif_reader(ros::NodeHandle(), ros::NodeHandle("~"), imuRecordPath);
+    MifReader mif_reader(ros::NodeHandle(), ros::NodeHandle("~"));
     mif_reader.run();
     LOG(INFO) << "HAD displayer.";
     return 0;

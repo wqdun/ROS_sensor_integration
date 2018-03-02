@@ -117,6 +117,7 @@ catkin_package(
 ## Your package locations should be listed before other locations
 include_directories(
 # include
+  ../../devel/include
   ${catkin_INCLUDE_DIRS}
 )
 

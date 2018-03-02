@@ -202,7 +202,7 @@ bool VelodyneDriver::poll(int64_t isSaveLidar)
     }
 
   // publish message using time of last packet read
-  ROS_DEBUG("Publishing a full Velodyne scan.");
+  DLOG(INFO) << "Publishing a full Velodyne scan.";
   scan->header.stamp = scan->packets[config_.npackets - 1].stamp;
   scan->header.frame_id = config_.frame_id;
   output_.publish(scan);
@@ -254,15 +254,15 @@ bool VelodyneDriver::poll(int64_t isSaveLidar)
     (void)sprintf(nowSecond, "%02d%02d%02d", tmNow.tm_hour, tmNow.tm_min, tmNow.tm_sec);
     // 10051077180110
     lidarPkgName_ = mRecordFile + nowSecond + "_lidar.dat";
-    ROS_INFO_STREAM("Create new file: " << lidarPkgName_);
+    LOG(INFO) << "Create new file: " << lidarPkgName_;
   }
 
   FILE *pOutFile;
   if(!(pOutFile = fopen(lidarPkgName_.c_str(), "ab") ) ) {
-    ROS_ERROR_STREAM("Create file:" << lidarPkgName_ << " failed, errno:" << errno);
+    LOG(ERROR) << "Create file:" << lidarPkgName_ << " failed, errno:" << errno;
     exit(1);
   }
-  ROS_DEBUG_STREAM("Create file:" << lidarPkgName_ << " successfully.");
+  DLOG(INFO) << "Create file:" << lidarPkgName_ << " successfully.";
 
   for(size_t i = 0; i < scan->packets.size(); ++i) {
     const double pktDaySecond = scan->packets[i].stamp.toSec();

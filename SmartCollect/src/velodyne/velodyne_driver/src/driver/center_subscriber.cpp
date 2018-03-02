@@ -9,6 +9,6 @@ CenterSubscriber::CenterSubscriber(ros::NodeHandle node, ros::NodeHandle private
 }
 
 void CenterSubscriber::clientCB(const SmartCollector::clientCmd::ConstPtr& pClientMsg) {
-    DLOG(INFO) << __FUNCTION__ << " start, is_record LIDAR: " << pClientMsg->is_record;
+    DLOG(INFO) << __FUNCTION__ << " start, is_record LIDAR: " << (int)(pClientMsg->is_record);
     isSaveLidar_ = pClientMsg->is_record;
 }

@@ -2,10 +2,11 @@
 clear
 dir_old=$(pwd)
 user=$(whoami)
+time_now=$(date "+%Y%m%d%H%M%S")
 absolute_script_path=$(cd $(dirname $0) && pwd)
 script_name=$(basename $0)
 result_log=/tmp/${script_name}".log"
-detail_log=$absolute_script_path"/"$script_name".detail.log"
+detail_log=$absolute_script_path"/"$script_name"."$time_now".detail.log"
 cp /dev/null $result_log
 cp /dev/null $detail_log
 passphrase="123"
@@ -262,6 +263,7 @@ remove_older_cv_bridge() {
         return
     fi
 
+    echo ${passphrase} | sudo -S su >/dev/null 2>&1
     sudo apt-get remove ros-indigo-cv-bridge
     let err+=$?
 
@@ -328,7 +330,7 @@ install_teamviewer() {
     clear
     echo "$FUNCNAME start."
     local err=0
-    dpkg -l | grep teamviewer >/dev/null 2>&1
+    which teamviewer >/dev/null 2>&1
     if [ $? -eq 0 ]; then
         echo "teamviewer already installed."
         write_result $FUNCNAME" returns "$err.
@@ -336,7 +338,7 @@ install_teamviewer() {
     fi
 
     (
-        for (( i=0; i<2; i++ ))
+        for (( i=0; i<4; i++ ))
         do
             echo ${passphrase} | sudo -S su >/dev/null 2>&1
             sudo dpkg -i ${absolute_script_path}/3rd/teamviewer_12.0.85001_i386.deb
@@ -395,7 +397,7 @@ install_gdal() {
     local err=0
 
     local gdalinfo_location=$(whereis gdalinfo | awk -F: '{print $2}')
-    if [ -n $gdalinfo_location ]; then
+    if [ -n "$gdalinfo_location" ]; then
         echo "gdal already installed."
         write_result $FUNCNAME" returns "$err.
         return
@@ -429,8 +431,13 @@ deploy_ui() {
     clear
     echo "$FUNCNAME start."
     local err=0
-    g++ $absolute_script_path"/src/tools/smart_collector_ui/execlt.cpp" -o SmartCollector && cp SmartCollector $HOME"/Desktop/"
+    sed "s/XXXXXXXX/${user}/" $absolute_script_path"/src/tools/smart_collector_ui/execlt.cpp" > execlt_new.cpp \
+        && g++ execlt_new.cpp -o SmartCollector \
+        && cp SmartCollector $HOME"/Desktop/"
     let err+=$?
+
+    local planlayer_dir=$HOME"/Desktop/Planlayer"
+    mkdir -p $planlayer_dir
 
     cp $absolute_script_path"/src/tools/task_config.json" $HOME"/Desktop/"
     let err+=$?

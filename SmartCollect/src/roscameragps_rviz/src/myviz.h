@@ -30,7 +30,10 @@
 #include <arpa/inet.h>
 #include <sys/ioctl.h>
 #include "../../sc_lib_public_tools/src/public_tools.h"
-
+#include "../../sc_lib_public_tools/include/rapidjson/document.h"
+#include "../../sc_lib_public_tools/include/rapidjson/prettywriter.h"
+#include "../../sc_lib_public_tools/include/rapidjson/ostreamwrapper.h"
+#include "../../sc_lib_public_tools/include/rapidjson/istreamwrapper.h"
 
 using namespace std;
 
@@ -61,7 +64,7 @@ public Q_SLOTS:
     void monitor_ctrl_onclick();
     void cleanServer_onClicked();
     void cleanClient_onClicked();
-
+    void setCelltest(int);
 
 public:
     int paramNum_;
@@ -89,6 +92,9 @@ public:
     QLabel *pPpsLabel_;
     QLabel *pGprmcLabel_;
 
+    QLabel *pGcamGainLabel_;
+    QSlider *cell_test_slider;
+
     QLineEdit *pPasswordEdit_;
 
     QEventLoop eventloop;
@@ -106,14 +112,15 @@ protected:
 private:
     void modifyHostsFile(const std::string &serverIp, const std::string &serverName, const std::string &clientPasswd);
     void run_center_node();
+    void loadConfig();
+    void dumpConfig();
+    void setLabelColor(QLabel *label, const QColor &color);
 
     std::vector<std::string> CITY_NAME2CODE = {
         "Beijing-1001",
         "Tianjin-1002",
         "Shanghai-1003",
     };
-
-    void setLabelColor(QLabel *label, const QColor &color);
 };
 
 #endif // MYVIZ_H

@@ -14,7 +14,6 @@
 #include <glog/logging.h>
 #include "client.h"
 
-
 //global control
 extern bool close_flag;
 extern int  save_control;
@@ -30,10 +29,8 @@ MyViz::MyViz(int paramNum, char **params, QWidget* parent): QWidget(parent) {
     // normal parameters
     paramNum_ = paramNum;
     params_ = params;
-
-    LOG(INFO) << "getenv(DDDDDDDDDD): " << getenv("DDDDDDDDDD");
-
     clientCmdMsg_.system_cmd = clientCmdMsg_.is_record = 0;
+    clientCmdMsg_.cam_gain = 20;
 
     setWindowFlags(Qt::CustomizeWindowHint | Qt::WindowMinimizeButtonHint | Qt::WindowStaysOnTopHint | Qt::WindowCloseButtonHint);
     this->sizeHint();
@@ -91,8 +88,12 @@ MyViz::MyViz(int paramNum, char **params, QWidget* parent): QWidget(parent) {
     QLabel *pCollectCtrlLabel = new QLabel("Collector Control:");
     QCheckBox *pRecordCtrl = new QCheckBox(this);
     pRecordCtrl->setText("Recording");
+    QPushButton *pMonitorBtn = new QPushButton("RViz");
 
-    QPushButton *pMonitorBtn = new QPushButton("Display Monitor");
+    cell_test_slider = new QSlider( Qt::Horizontal);
+    cell_test_slider->setMinimum(1);
+    cell_test_slider->setMaximum(50);
+    pGcamGainLabel_ = new QLabel("Gcam Gain(" + QString::number(cell_test_slider->value() ) + "):");
 
     QLabel *pSysCtrlLabel = new QLabel("System Control:");
     QPushButton *pCleanServerBtn = new QPushButton("Cleanup Server");
@@ -113,7 +114,7 @@ MyViz::MyViz(int paramNum, char **params, QWidget* parent): QWidget(parent) {
     controls_layout->addWidget(pSetIpBtn_, row, 2);
 
     controls_layout->addWidget(pConnStatusLabel, ++row, 0);
-    controls_layout->addWidget(pConnStatusLabel_, row, 1);
+    controls_layout->addWidget(pConnStatusLabel_, row, 1, 1, 2);
     controls_layout->addWidget(pPrjLabel, ++row, 0);
     controls_layout->addWidget(pCityCodeBox_, row, 1);
     controls_layout->addWidget(pDayNightBox_, row, 2);
@@ -133,10 +134,12 @@ MyViz::MyViz(int paramNum, char **params, QWidget* parent): QWidget(parent) {
     controls_layout->addWidget(pPpsLabel_, ++row, 1);
     controls_layout->addWidget(pGprmcLabel_, row, 2);
 
-
     controls_layout->addWidget(pCollectCtrlLabel, ++row, 0);
     controls_layout->addWidget(pRecordCtrl, row, 1);
     controls_layout->addWidget(pMonitorBtn, row, 2);
+
+    controls_layout->addWidget(pGcamGainLabel_, ++row, 0);
+    controls_layout->addWidget(cell_test_slider, row, 1, 1, 2);
 
     controls_layout->addWidget(pSysCtrlLabel, ++row, 0);
     controls_layout->addWidget(pCleanServerBtn, row, 1);
@@ -160,11 +163,49 @@ MyViz::MyViz(int paramNum, char **params, QWidget* parent): QWidget(parent) {
     connect(pRebootBtn, SIGNAL(clicked() ), this, SLOT(reboot_cmd() ) );
     connect(pRecordCtrl, SIGNAL(stateChanged(int) ), this, SLOT(record_ctrl_onStateChanged(int) ) );
     connect(pMonitorBtn, SIGNAL(clicked() ), this, SLOT(monitor_ctrl_onclick() ) );
+    connect(cell_test_slider, SIGNAL(valueChanged(int)), this, SLOT(setCelltest(int)));
     connect(pCleanServerBtn, SIGNAL(clicked() ), this, SLOT(cleanServer_onClicked() ) );
     connect(pCleanClientBtn, SIGNAL(clicked() ), this, SLOT(cleanClient_onClicked() ) );
+
+    loadConfig();
 }
 
 MyViz::~MyViz() {
+}
+
+void MyViz::loadConfig() {
+    LOG(INFO) << __FUNCTION__ << " start.";
+
+    using namespace rapidjson;
+
+    const std::string exePath(public_tools::PublicTools::safeReadlink("/proc/self/exe") );
+    LOG(INFO) << "Get SmartCollector execute path: " << exePath;
+    const std::string smartcPath(exePath.substr(0, exePath.find("/devel/") ) );
+    LOG(INFO) << "Get SmartCollector path: " << smartcPath;
+
+    const std::string configFile(smartcPath + "/.smartc.conf");
+    if(0 != access(configFile.c_str(), 0) ) {
+        LOG(INFO) << configFile << " does not exist.";
+        return;
+    }
+
+    ifstream ifs(configFile);
+    IStreamWrapper isw(ifs);
+    Document doc;
+    doc.ParseStream(isw);
+    if(doc.HasParseError() ) {
+        LOG(ERROR) << "Failed to parse " << configFile << ", GetParseError: " << doc.GetParseError();
+        return;
+    }
+
+    pMaterIpEdit_->setText(doc["MasterIP"].GetString() );
+    pMasterNameEdit_->setText(doc["MasterHostName"].GetString() );
+    pClientPasswdEdit_->setText(doc["ClientPasswd"].GetString() );
+
+    pCityCodeBox_->setCurrentIndex(pCityCodeBox_->findText(doc["City"].GetString() ) );
+    pDayNightBox_->setCurrentIndex(pDayNightBox_->findText(doc["DayOrNight"].GetString() ) );
+    pTaskIdEdit_->setText(doc["TaskID"].GetString() );
+    pDeviceIdEdit_->setText(doc["DeviceID"].GetString() );
 }
 
 void MyViz::closeEvent(QCloseEvent *event) {
@@ -196,9 +237,42 @@ void MyViz::record_ctrl_onStateChanged(int _is_record) {
     }
 }
 
-void MyViz::launch_project() {
-    DLOG(INFO) << __FUNCTION__ << " start.";
+void MyViz::dumpConfig() {
+    LOG(INFO) << __FUNCTION__ << " start.";
 
+    using namespace rapidjson;
+
+    Document doc;
+    doc.SetObject();
+    Document::AllocatorType &allocator = doc.GetAllocator();
+
+    doc.AddMember("MasterIP", Value(pMaterIpEdit_->text().toStdString().c_str(), allocator), allocator);
+    doc.AddMember("MasterHostName", Value(pMasterNameEdit_->text().toStdString().c_str(), allocator), allocator);
+    doc.AddMember("ClientPasswd", Value(pClientPasswdEdit_->text().toStdString().c_str(), allocator), allocator);
+
+    doc.AddMember("City", Value(pCityCodeBox_->currentText().toStdString().c_str(), allocator), allocator);
+    doc.AddMember("DayOrNight", Value(pDayNightBox_->currentText().toStdString().c_str(), allocator), allocator);
+    doc.AddMember("TaskID", Value(pTaskIdEdit_->text().toStdString().c_str(), allocator), allocator);
+    doc.AddMember("DeviceID", Value(pDeviceIdEdit_->text().toStdString().c_str(), allocator), allocator);
+
+    const std::string exePath(public_tools::PublicTools::safeReadlink("/proc/self/exe") );
+    LOG(INFO) << "Get SmartCollector execute path: " << exePath;
+    const std::string smartcPath(exePath.substr(0, exePath.find("/devel/") ) );
+    LOG(INFO) << "Get SmartCollector path: " << smartcPath;
+
+    ofstream fout(smartcPath + "/.smartc.conf");
+    OStreamWrapper osw(fout);
+    PrettyWriter<OStreamWrapper> prettyWriter(osw);
+    doc.Accept(prettyWriter);
+}
+
+
+void MyViz::launch_project() {
+    LOG(INFO) << __FUNCTION__ << " start.";
+
+    dumpConfig();
+
+    pLaunchBtn_->setEnabled(false);
     std::string cityName(pCityCodeBox_->currentText().toStdString() );
     std::vector<std::string> parsedCityName;
     (void)boost::split(parsedCityName, cityName, boost::is_any_of("-") );
@@ -269,6 +343,12 @@ void MyViz::setLabelColor(QLabel *label, const QColor &color) {
     label->setPalette(pe);
 }
 
+void MyViz::setCelltest( int cell_test_percent ) {
+    DLOG(INFO) << __FUNCTION__ << " start, cell_test_percent: " << cell_test_percent;
+    clientCmdMsg_.cam_gain = cell_test_percent;
+    pGcamGainLabel_->setText("Gcam Gain(" + QString::number(cell_test_slider->value() ) + "):");
+}
+
 void MyViz::showCenterMsg(const sc_server_daemon::serverMsg &server_msg, const sc_center::centerMsg &center_msg) {
     DLOG(INFO) << __FUNCTION__ << " start.";
 
@@ -319,9 +399,6 @@ void MyViz::showCenterMsg(const sc_server_daemon::serverMsg &server_msg, const s
     }
 }
 
-static char * string_as_array2(string *str) {
-    return str->empty()? NULL: &*str->begin();
-}
 
 void *ros_thread(void *pViz) {
     LOG(INFO) << __FUNCTION__ << " start.";
@@ -475,7 +552,12 @@ void MyViz::monitor_ctrl_onclick() {
     int err = putenv(rosMaterUriData);
     LOG(INFO) << "Put env: "<< rosMaterUriData << " returns: " << err;
 
-    const std::string rvizExe("export LD_LIBRARY_PATH=/opt/ros/indigo/lib:$LD_LIBRARY_PATH; /opt/ros/indigo/bin/rviz >>/opt/smartc/log/monitor_ctrl_onclick.log 2>&1 &");
+    const std::string exePath(public_tools::PublicTools::safeReadlink("/proc/self/exe") );
+    LOG(INFO) << "Get SmartCollector execute path: " << exePath;
+    const std::string smartcPath(exePath.substr(0, exePath.find("/devel/") ) );
+    LOG(INFO) << "Get SmartCollector path: " << smartcPath;
+
+    const std::string rvizExe("bash " + smartcPath + "/src/tools/launch_project.sh rviz " + clientCmdMsg_.project_name);
     LOG(INFO) <<"Run " << rvizExe;
 
     FILE *fpin;
@@ -493,6 +575,9 @@ void MyViz::monitor_ctrl_onclick() {
 
 void MyViz::cleanServer_onClicked() {
     LOG(INFO) << __FUNCTION__ << " start.";
+    pLaunchBtn_->setText("Rename Relaunch");
+    pLaunchBtn_->setEnabled(true);
+
     clientCmdMsg_.system_cmd = 3;
 }
 

@@ -74,18 +74,13 @@ void sub_save_cam_callback(const SmartCollector::clientCmd::ConstPtr& pClientMsg
 {
     DLOG(INFO) << __FUNCTION__ << " start, is_record Camera: " << (int)(pClientMsg->is_record);
     is_save_cam = pClientMsg->is_record;
-}
-//sub_cam_gain_callback
-void sub_cam_gain_callback(const std_msgs::Float64::ConstPtr& msg)
-{
-    cam_gain   = msg->data;
+    cam_gain = pClientMsg->cam_gain;
     if(count_record == 0)
     {
         cam_gain_record = cam_gain;
         count_record = 1;
     }
 }
-
 
 //-------------------------------------------------------main---------------------
 int main(int argc, char** argv)
@@ -95,8 +90,6 @@ int main(int argc, char** argv)
 
     ros::NodeHandle nh;
     ros::Subscriber sub_save_cam = nh.subscribe("sc_client_cmd", 10, sub_save_cam_callback);
-    ros::Subscriber sub_gain_cam = nh.subscribe("msg_cam_gain",0, sub_cam_gain_callback);
-
 
     //get parameters
     DLOG(INFO)<<"argc"<< argc;
@@ -174,7 +167,7 @@ int main(int argc, char** argv)
         }
     }
 
-    bool tellgain = camera_pg->SetCameragain();
+    // bool tellgain = camera_pg->SetCameragain();
 
     camera_pg->m_CameraID = m_CameraID;
     camera_pg->StartCapture();
@@ -216,7 +209,7 @@ int main(int argc, char** argv)
        {
            camera_pg->StopCapture();
            bool tellgain = camera_pg->SetCameragain();
-           LOG(INFO)<<"cam_gain_record changed!!";
+           LOG(INFO)<<"cam_gain_record: " << cam_gain_record  << " changed to cam_gain: " << cam_gain;
            if(tellgain)
            {
                LOG(INFO)<<"cam_gain_record changed ok!!";

@@ -130,7 +130,7 @@ void InforProcess::gpsCB(const roscameragpsimg::imu5651::ConstPtr& pGPSmsg) {
         double vEast = public_tools::PublicTools::string2num(pGPSmsg->Vel_east, 0.0);
         double vNorth = public_tools::PublicTools::string2num(pGPSmsg->Vel_north, 0.0);
         double vUp = public_tools::PublicTools::string2num(pGPSmsg->Vel_up, 0.0);
-        vAbs = sqrt(vEast * vEast + vNorth * vNorth + vUp * vUp);
+        vAbs = sqrt(vEast * vEast + vNorth * vNorth + vUp * vUp) * 3.6;
     }
 
     int nsv1_num = public_tools::PublicTools::string2num(pGPSmsg->NSV1_num, -1);

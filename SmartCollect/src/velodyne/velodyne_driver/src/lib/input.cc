@@ -246,6 +246,7 @@ namespace velodyne_driver
 
     const uint32_t pktTimeHourSInUs = (pkt->data[1203] << 24) + (pkt->data[1202] << 16) + (pkt->data[1201] << 8) + pkt->data[1200];
     const double dayTime = public_tools::PublicTools::getDaySecond(ros::Time::now().toSec(), pktTimeHourSInUs / 1000000.);
+    pkt->stamp = ros::Time(dayTime);
 
     return 0;
   }
@@ -334,6 +335,7 @@ namespace velodyne_driver
 
             const uint32_t pktTimeHourSInUs = (pkt->data[1203] << 24) + (pkt->data[1202] << 16) + (pkt->data[1201] << 8) + pkt->data[1200];
             const double dayTime = public_tools::PublicTools::getDaySecond(ros::Time::now().toSec(), pktTimeHourSInUs / 1000000.);
+            pkt->stamp = ros::Time(dayTime);
 
             empty_ = false;
             return 0;                   // success

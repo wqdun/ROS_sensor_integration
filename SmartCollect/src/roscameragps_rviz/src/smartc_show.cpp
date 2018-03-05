@@ -41,14 +41,14 @@ int  save_control = 0;
 int main(int argc, char** argv) {
     FLAGS_log_dir = "/opt/smartc/log";
     google::InitGoogleLogging(argv[0]);
-    LOG(INFO) << "argc: " << argc << "; argv[0]: " << argv[0];
+    LOG(INFO) << "getenv(ROS_MASTER_URI): " << getenv("ROS_MASTER_URI");
+    LOG(INFO) << "getenv(ROS_IP): " << getenv("ROS_IP");
 
-    ros::init(argc, argv, "myviz");
+    QApplication app(argc, argv);
 
     MyViz myviz(argc, argv);
     myviz.show();
 
-    QApplication app(argc, argv);
     app.exec();
     return 0;
 }

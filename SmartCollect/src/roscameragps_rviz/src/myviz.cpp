@@ -402,10 +402,20 @@ void MyViz::showCenterMsg(const sc_server_daemon::serverMsg &server_msg, const s
 
 void *ros_thread(void *pViz) {
     LOG(INFO) << __FUNCTION__ << " start.";
+
+    LOG(INFO) << "getenv(ROS_MASTER_URI): " << getenv("ROS_MASTER_URI");
+    LOG(INFO) << "getenv(ROS_IP): " << getenv("ROS_IP");
+    MyViz *p_viz = (MyViz *)pViz;
+    const std::string masterIp(p_viz->pMaterIpEdit_->text().toStdString() );
+    std::string rosMaterUri("http://" + masterIp + ":11311");
+    if(0 != setenv("ROS_MASTER_URI", rosMaterUri.c_str(), 1) ) {
+        LOG(ERROR) << "Failed to set ROS_MASTER_URI: " << getenv("ROS_MASTER_URI");
+        exit(1);
+    }
     LOG(INFO) << "getenv(ROS_MASTER_URI): " << getenv("ROS_MASTER_URI");
     LOG(INFO) << "getenv(ROS_IP): " << getenv("ROS_IP");
 
-    MyViz *p_viz = (MyViz *)pViz;
+    ros::init(p_viz->paramNum_, p_viz->params_, "myviz");
 
     ros::NodeHandle nh;
     Client clientor(nh, p_viz);

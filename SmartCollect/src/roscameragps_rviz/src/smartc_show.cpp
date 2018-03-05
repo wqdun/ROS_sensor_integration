@@ -19,12 +19,10 @@
 #include <QDialog>
 #include "Dialog.h"
 
-//--rviz-msg
-#include<std_msgs/Int64.h>
+#include <std_msgs/Int64.h>
 // #define NDEBUG
 #undef NDEBUG
 #include <glog/logging.h>
-
 
 namespace rviz {
 class Display;
@@ -40,19 +38,17 @@ using namespace FlyCapture2;
 bool close_flag   = false;
 int  save_control = 0;
 
-int main(int argc, char** argv)
-{
+int main(int argc, char** argv) {
     FLAGS_log_dir = "/opt/smartc/log";
     google::InitGoogleLogging(argv[0]);
+    LOG(INFO) << "argc: " << argc << "; argv[0]: " << argv[0];
+
+    ros::init(argc, argv, "myviz");
+
+    MyViz myviz(argc, argv);
+    myviz.show();
+
     QApplication app(argc, argv);
-
-    MyViz* myviz = new MyViz(argc, argv);
-    myviz->show();
-    // myviz->setDisabled(true);
-
-    // TODO: should set IP before ROS thread
-    // sleep(10);
-
     app.exec();
     return 0;
 }

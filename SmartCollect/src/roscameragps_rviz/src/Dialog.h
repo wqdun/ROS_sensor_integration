@@ -7,14 +7,14 @@
 #include <QGridLayout>
 #include <QVBoxLayout>
 #include <QString>
-#include<ros/ros.h>
+#include <ros/ros.h>
 
 class Dialog : public QDialog
 {
 public:
     QPushButton ModalBtn;
     QLabel*      lable_cnt;
-    QLineEdit*   line_edit; 
+    QLineEdit*   line_edit;
 
 protected Q_SLOTS:
 public:

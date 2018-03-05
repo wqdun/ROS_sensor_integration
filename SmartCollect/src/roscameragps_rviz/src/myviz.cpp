@@ -406,9 +406,7 @@ void *ros_thread(void *pViz) {
     LOG(INFO) << "getenv(ROS_IP): " << getenv("ROS_IP");
 
     MyViz *p_viz = (MyViz *)pViz;
-    if(!ros::isInitialized() ) {
-        ros::init(p_viz->paramNum_, p_viz->params_, "myviz", ros::init_options::AnonymousName);
-    }
+
     ros::NodeHandle nh;
     Client clientor(nh, p_viz);
     clientor.run();

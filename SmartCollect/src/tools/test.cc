@@ -16,7 +16,7 @@
 #include <boost/lexical_cast.hpp>
 #include <boost/bind.hpp>
 
-
+// g++ -std=c++11 test.cc -lboost_system -lboost_thread
 #define LOG(INFO) cout
 // #define LOG(ERROR) cerr
 
@@ -26,44 +26,53 @@
 using namespace std;
 using namespace boost;
 
-class HelloWorld
-{
-public:
- void hello()
- {
-    std::cout <<
-    "Hello world, I''m a thread!"
-    << std::endl;
- }
- void start()
- {
-  boost::function0< void> f =  boost::bind(&HelloWorld::hello,this);
-  boost::thread thrd( f );
-  thrd.join();
- }
 
+class HelloWorld
+     {
+     public:
+     HelloWorld()
+     {
+         std::cout <<
+         "Hello world"
+         << std::endl;
+     }
+
+     ~HelloWorld() {
+
+       std::cout <<
+         "Kill Hello" << endl;
+
+
+     }
+
+ };
+
+boost::mutex io_mutex;
+struct ccccc
+{
+        ccccc(int id) : id(id) { }
+
+        void operator()()
+        {
+                for (int i = 0; i < 10; ++i)
+                {
+                        boost::mutex::scoped_lock lock(io_mutex);
+                                            HelloWorld hel;
+
+                        usleep(10000);
+                        std::cout << id << ": "
+                        << i << std::endl;
+                }
+        }
+
+        int id;
 };
 int main(int argc, char* argv[])
 {
- HelloWorld hello;
- hello.start();
-
-
-try
-    {
-        int i = boost::lexical_cast<int>("");
-    }
-    catch (boost::bad_lexical_cast& e)
-    {
-        cout << e.what() << endl;
-    }
-    int a = lexical_cast<int>("123");
-    double b = lexical_cast<double>("");
-    std::cout<<a<<std::endl;
-    std::cout<<b<<std::endl;
-
-    return 0;
+        boost::thread thrd1(ccccc(1));
+        boost::thread thrd2(ccccc(2));
+        thrd1.join();
+        thrd2.join();
+        return 0;
 }
-
-
 

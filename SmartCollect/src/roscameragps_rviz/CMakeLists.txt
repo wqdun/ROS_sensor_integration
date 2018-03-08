@@ -119,10 +119,11 @@ generate_messages(
 ## CATKIN_DEPENDS: catkin_packages dependent projects also need
 ## DEPENDS: system dependencies of this project that dependent projects also need
 catkin_package(
-#  INCLUDE_DIRS include
-#  LIBRARIES rosopencv
-#  CATKIN_DEPENDS cv_bridge image_transport roscpp sensor_msgs std_msgs
-#  DEPENDS system_lib
+ INCLUDE_DIRS
+ # include
+ LIBRARIES rosopencv
+ CATKIN_DEPENDS cv_bridge image_transport roscpp sensor_msgs std_msgs
+ DEPENDS system_lib
 )
 
 ###########

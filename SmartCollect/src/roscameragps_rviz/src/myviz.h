@@ -115,6 +115,7 @@ private:
     void loadConfig();
     void dumpConfig();
     void setLabelColor(QLabel *label, const QColor &color);
+    void enableProjectSet(bool isEnable);
 
     std::vector<std::string> CITY_NAME2CODE = {
         "Beijing-1001",

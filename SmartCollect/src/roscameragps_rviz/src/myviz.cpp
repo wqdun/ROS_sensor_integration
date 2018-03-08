@@ -93,7 +93,8 @@ MyViz::MyViz(int paramNum, char **params, QWidget* parent): QWidget(parent) {
     cell_test_slider = new QSlider( Qt::Horizontal);
     cell_test_slider->setMinimum(1);
     cell_test_slider->setMaximum(50);
-    pGcamGainLabel_ = new QLabel("Gcam Gain(" + QString::number(cell_test_slider->value() ) + "):");
+    cell_test_slider->setValue(20);
+    pGcamGainLabel_ = new QLabel("Gcam Gain(20):");
 
     QLabel *pSysCtrlLabel = new QLabel("System Control:");
     QPushButton *pCleanServerBtn = new QPushButton("Cleanup Server");
@@ -266,13 +267,23 @@ void MyViz::dumpConfig() {
     doc.Accept(prettyWriter);
 }
 
+void MyViz::enableProjectSet(bool isEnable) {
+    LOG(INFO) << __FUNCTION__ << " start.";
+
+    pCityCodeBox_->setEnabled(isEnable);
+    pDayNightBox_->setEnabled(isEnable);
+    pDeviceIdEdit_->setEnabled(isEnable);
+    pTaskIdEdit_->setEnabled(isEnable);
+    pLaunchBtn_->setEnabled(isEnable);
+}
+
 
 void MyViz::launch_project() {
     LOG(INFO) << __FUNCTION__ << " start.";
 
+    enableProjectSet(false);
     dumpConfig();
 
-    pLaunchBtn_->setEnabled(false);
     std::string cityName(pCityCodeBox_->currentText().toStdString() );
     std::vector<std::string> parsedCityName;
     (void)boost::split(parsedCityName, cityName, boost::is_any_of("-") );
@@ -362,13 +373,13 @@ void MyViz::showCenterMsg(const sc_server_daemon::serverMsg &server_msg, const s
     static int8_t lastStatus = 0;
     if(1 == server_msg.is_project_already_exist) {
         pLaunchBtn_->setText("Project exist, rename it");
-        pLaunchBtn_->setEnabled(true);
+        enableProjectSet(true);
     }
     else
     if(0 == server_msg.is_project_already_exist) {
         if(0 != lastStatus) {
             pLaunchBtn_->setText("Launch success");
-            pLaunchBtn_->setEnabled(false);
+            enableProjectSet(false);
         }
         else {
             // do nothing
@@ -386,7 +397,7 @@ void MyViz::showCenterMsg(const sc_server_daemon::serverMsg &server_msg, const s
     pLonLabel_->setText("Lon: " + QString::number(center_msg.longitude, 'f', 6) );
     pGnssNumLabel_->setText("Gnss Num: " + QString::number(center_msg.noSV_422) );
     pGnssHdopLabel_->setText("Gnss Hdop: " + QString::number(center_msg.hdop) );
-    pSpeedLabel_->setText("Speed: " + QString::number(center_msg.current_speed) + " km/h");
+    pSpeedLabel_->setText("Speed: " + QString::number(center_msg.current_speed, 'f', 2) + " km/h");
     pCamFpsLabel_->setText("Cam Fps: " + QString::number(center_msg.camera_fps) );
     pPpsLabel_->setText("PPS: " + QString::fromStdString(center_msg.pps_status) );
     pGprmcLabel_->setText("GPRMC: " + QString::fromStdString(center_msg.is_gprmc_valid) );
@@ -584,7 +595,7 @@ void MyViz::monitor_ctrl_onclick() {
 void MyViz::cleanServer_onClicked() {
     LOG(INFO) << __FUNCTION__ << " start.";
     pLaunchBtn_->setText("Rename Relaunch");
-    pLaunchBtn_->setEnabled(true);
+    enableProjectSet(true);
 
     clientCmdMsg_.system_cmd = 3;
 }

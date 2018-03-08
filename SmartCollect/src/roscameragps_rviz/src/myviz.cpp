@@ -310,7 +310,6 @@ void MyViz::launch_project() {
     prj_date = prj_date.substr(2);
 
     clientCmdMsg_.project_name = prjName + "-" + prj_date;
-
     clientCmdMsg_.system_cmd = 0;
 
     (void)run_center_node();
@@ -396,9 +395,9 @@ void MyViz::showCenterMsg(const sc_server_daemon::serverMsg &server_msg, const s
     pLatLabel_->setText("Lat: " + QString::number(center_msg.latitude, 'f', 6) );
     pLonLabel_->setText("Lon: " + QString::number(center_msg.longitude, 'f', 6) );
     pGnssNumLabel_->setText("Gnss Num: " + QString::number(center_msg.noSV_422) );
-    pGnssHdopLabel_->setText("Gnss Hdop: " + QString::number(center_msg.hdop) );
+    pGnssHdopLabel_->setText("Gnss Hdop: " + QString::number(center_msg.hdop, 'f', 2) );
     pSpeedLabel_->setText("Speed: " + QString::number(center_msg.current_speed, 'f', 2) + " km/h");
-    pCamFpsLabel_->setText("Cam Fps: " + QString::number(center_msg.camera_fps) );
+    pCamFpsLabel_->setText("Cam Fps: " + QString::number(center_msg.camera_fps, 'f', 2) );
     pPpsLabel_->setText("PPS: " + QString::fromStdString(center_msg.pps_status) );
     pGprmcLabel_->setText("GPRMC: " + QString::fromStdString(center_msg.is_gprmc_valid) );
 
@@ -409,7 +408,6 @@ void MyViz::showCenterMsg(const sc_server_daemon::serverMsg &server_msg, const s
         setLabelColor(pGprmcLabel_, Qt::red);
     }
 }
-
 
 void *ros_thread(void *pViz) {
     LOG(INFO) << __FUNCTION__ << " start.";

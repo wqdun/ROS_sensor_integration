@@ -317,7 +317,7 @@ install_FlyCapture2() {
             echo ${passphrase} | sudo -S su >/dev/null 2>&1
             sudo apt-get install -f
         done
-        echo "[ERROR] Failed to catkin_make."
+        echo "[ERROR] Failed to install_flycapture.sh."
         return 1
     )
     let err+=$?

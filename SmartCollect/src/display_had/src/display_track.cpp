@@ -38,7 +38,9 @@ TrackDisplayer::TrackDisplayer() {
     mArrow.scale.z = 3.2 * trackScaleRatio_;
 
     // Line strip is blue; set .a = 0 to hide display
-    mLineStrip.color.r = 1.0f;
+    mLineStrip.color.r = 0.0f;
+    mLineStrip.color.g = 1.0f;
+    mLineStrip.color.b = 0.0f;
     mLineStrip.color.a = 1.0;
     // mArrow is red
     mArrow.color.g = 1.0f;

@@ -96,7 +96,7 @@ void MifReader::initMarker(visualization_msgs::Marker &marker, const size_t id) 
     // LINE_STRIP/LINE_LIST markers use only the x component of scale, for the line width; POINTS markers use x and y scale for width/height respectively
     marker.scale.x = .5 * mifScaleRatio_;
     marker.color.r = 1.0f;
-    marker.color.g = 1.0f;
+    marker.color.g = 0.0f;
     marker.color.b = 0.0f;
     // set .a = 0 to hide display
     marker.color.a = 1.0;

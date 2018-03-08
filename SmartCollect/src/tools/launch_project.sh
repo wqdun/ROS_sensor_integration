@@ -119,6 +119,7 @@ main() {
 
     if [ "AA$1" = "AArviz" ]; then
         source_ROS_Env
+        redirect_glog_path
         do_rviz
         return
     fi

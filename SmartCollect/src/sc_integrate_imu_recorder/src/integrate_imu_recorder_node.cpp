@@ -19,7 +19,7 @@ int main(int argc, char **argv) {
     LOG(INFO) << "Open " << ttyname(fd) << " successfully";
 
     // Setup port properties
-    if(0 != set_opt(fd, 115200, 8, 'N', 1) ) {
+    if(0 != set_opt(fd, 230400, 8, 'N', 1) ) {
         LOG(ERROR) << "Failed to set " << ttyname(fd);
         exit(1);
     }
@@ -207,6 +207,10 @@ int set_opt(int fd, int nSpeed, int nBits, char nEvent, int nStop) {
     case 115200:
         cfsetispeed(&newtio, B115200);
         cfsetospeed(&newtio, B115200);
+        break;
+    case 230400:
+        cfsetispeed(&newtio, B230400);
+        cfsetospeed(&newtio, B230400);
         break;
     case 460800:
         cfsetispeed(&newtio, B460800);

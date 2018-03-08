@@ -97,7 +97,7 @@ bool getGpgga(const unsigned char *inBuf, const size_t &bufSize, string &gpgga, 
             break;
         case '\n':
             if(!isGpggaStart) {
-                LOG(INFO) << "Met \\n before $: " << gpgga;
+                DLOG(INFO) << "Met \\n before $: " << gpgga;
                 break;
             }
             if(gpgga.size() < 6) {

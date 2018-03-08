@@ -11,8 +11,8 @@
 #include <sstream>
 #include<ros/ros.h>
 #include<image_transport/image_transport.h>
-//#define NDEBUG
-#undef NDEBUG
+#define NDEBUG
+// #undef NDEBUG
 #include <glog/logging.h>
 
 #include <std_msgs/Float64.h>

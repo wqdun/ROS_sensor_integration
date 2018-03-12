@@ -312,8 +312,19 @@ void MyViz::launch_project() {
     clientCmdMsg_.project_name = prjName + "-" + prj_date;
     clientCmdMsg_.system_cmd = 0;
 
+    (void)createMapThread();
+
     (void)run_center_node();
     return;
+}
+
+void MyViz::createMapThread() {
+    LOG(INFO) << __FUNCTION__ << " start, clientCmdMsg_.is_record: " << (int)clientCmdMsg_.is_record;
+
+    boost::shared_ptr<MifReader> pMifReader;
+    pMifReader.reset(new MifReader(ros::NodeHandle(), ros::NodeHandle("~") ) );
+
+    boost::shared_ptr<boost::thread> deviceThread_ = boost::shared_ptr<boost::thread>(new boost::thread(boost::bind(&MifReader::run, pMifReader, this) ) );
 }
 
 void MyViz::run_center_node() {

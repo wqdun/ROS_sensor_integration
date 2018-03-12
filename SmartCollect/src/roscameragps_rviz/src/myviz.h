@@ -34,6 +34,7 @@
 #include "../../sc_lib_public_tools/include/rapidjson/prettywriter.h"
 #include "../../sc_lib_public_tools/include/rapidjson/ostreamwrapper.h"
 #include "../../sc_lib_public_tools/include/rapidjson/istreamwrapper.h"
+#include "../../display_had/src/mif_read.h"
 
 using namespace std;
 
@@ -116,6 +117,7 @@ private:
     void dumpConfig();
     void setLabelColor(QLabel *label, const QColor &color);
     void enableProjectSet(bool isEnable);
+    void createMapThread();
 
     std::vector<std::string> CITY_NAME2CODE = {
         "Beijing-1001",

@@ -36,68 +36,48 @@ using namespace std;
 // using namespace boost;
 
 int main() {
-    typedef vector<string> geoPoints_t;
-    typedef vector<geoPoints_t> geoLines_t;
+    vector<vector<int> > ivv = {
+        {1},
+        {5, 6, 7, 8},
+        {8, 9},
+        {10}
+    };
+    // ivv.clear();
 
-    geoPoints_t v3({"1", "2", "3"});
-    geoLines_t mRecordedAbsLines(4, v3);
-
-    size_t recordedPointCnt = 0;
-    for(auto recordedLine: mRecordedAbsLines) {
-        recordedPointCnt += recordedLine.size();
+    for(auto &iv: ivv) {
+        if(1 == iv.size() ) {
+            continue;
+        }
+        for(auto i: iv) {
+            cout << i << " ";
+        }
+        cout << endl;
     }
-    cout << "Record way points: " << recordedPointCnt << endl;
+    cout << endl;
 
-    LOG(INFO) << "do rarefaction: " << recordedPointCnt;
-    for(auto &recordedLine: mRecordedAbsLines) {
-        // for(auto iter = recordedLine.begin(); iter != recordedLine.end();) {
-        //     iter = recordedLine.erase(iter);
-        //     ++iter;
-        // }
-        // for() {
 
-        // }
-    }
-    LOG(INFO) << "do rarefaction end: " << recordedPointCnt;
-
-     vector<int> i3({1, 2, 3, 4});
-     for(auto iter = i3.begin(); iter != i3.end();) {
-        ++iter;
-        if(i3.end() == iter) {
+    int cnt = 0;
+    for(auto iter = ivv.begin(); iter != ivv.end();) {
+        cnt += iter->size();
+        if(cnt <= 5) {
+            iter = ivv.erase(iter);
+            if(iter == ivv.end() ) {
+                break;
+            }
+        }
+        // cnt > 5
+        else {
+            iter->erase(iter->begin(), iter->begin() + (iter->size() + 5 - cnt) );
             break;
         }
-        iter = i3.erase(iter);
     }
 
-
-
-    // for(auto &recordedLine: mRecordedAbsLines) {
-    //     for(auto iter = recordedLine.begin(); iter != recordedLine.end(); ) {
-    //         cout << "1: " << *iter << endl;
-    //         ++iter;
-    //         // erase: Index Out of Bounds: Segmentation fault (core dumped)
-    //         iter = recordedLine.erase(iter);
-    //         // *iter: access index Out of Bounds: didn't core, but dangerous(do not do that)
-    //         cout << "2: " << *iter << endl;
-    //     }
-    // }
-
-    // recordedPointCnt = 0;
-    // for(auto &recordedLine: mRecordedAbsLines) {
-    //     recordedPointCnt += recordedLine.size();
-    // }
-    // cout << "Record way points: " << recordedPointCnt << endl;
-
-    // mRecordedAbsLines.push_back(vector<string>( {"Hi"} ) );
-
-    recordedPointCnt = 0;
-    for(auto &recordedLine: mRecordedAbsLines) {
-        recordedPointCnt += recordedLine.size();
+    for(auto &iv: ivv) {
+        for(auto i: iv) {
+            cout << i << " ";
+        }
+        cout << endl;
     }
-    cout << "Record way points: " << recordedPointCnt << endl;
 
-    mRecordedAbsLines.clear();
-    cout << mRecordedAbsLines.back().back() << endl;
-
-
+    cout << ivv.size() << endl;
 }

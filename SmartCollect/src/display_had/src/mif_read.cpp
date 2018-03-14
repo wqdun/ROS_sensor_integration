@@ -50,11 +50,7 @@ void MifReader::run(const MyViz * const pMyViz) {
     string roadDB(roadDBs[0]);
 
     ros::Rate rate(2);
-    while(ros::ok() ) {
-        if(pMyViz->isKillMapThread_) {
-            LOG(INFO) << "Kill Map Thread.";
-            return;
-        }
+    while(ros::ok() && !(pMyViz->isKillMapThread_) ) {
         ros::spinOnce();
         rate.sleep();
 
@@ -90,6 +86,8 @@ void MifReader::run(const MyViz * const pMyViz) {
         DLOG(INFO) << "I got " << mLineArray.markers.size() << " lines to show.";
         mPubArray.publish(mLineArray);
     }
+
+    LOG(INFO) << __FUNCTION__ << " end.";
 }
 
 void MifReader::initMarker(visualization_msgs::Marker &marker, const size_t id) {

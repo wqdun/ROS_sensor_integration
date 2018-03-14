@@ -53,10 +53,11 @@ TrackDisplayer::TrackDisplayer() {
     mArrow.color.a = 1.0f;
 
     mLineStrip.lifetime = mArrow.lifetime = ros::Duration(1.0);
-    isRecordLast_ = 0;
+    isRecordLast_ = false;
+    geoLinesWithIsRecord.clear();
 }
 
-void TrackDisplayer::initMarker(visualization_msgs::Marker &marker, const size_t id) {
+void TrackDisplayer::initMarker(visualization_msgs::Marker &marker, const size_t id, bool _isRecord) {
     marker.points.clear();
     marker.header.frame_id = "/velodyne";
     marker.ns = "recorded_track";
@@ -65,86 +66,131 @@ void TrackDisplayer::initMarker(visualization_msgs::Marker &marker, const size_t
     marker.id = id;
     marker.type = visualization_msgs::Marker::LINE_STRIP;
     // LINE_STRIP/LINE_LIST markers use only the x component of scale, for the line width; POINTS markers use x and y scale for width/height respectively
-    marker.scale.x = 1.0 * trackScaleRatio_;
-    marker.color.r = 0.0f;
-    marker.color.g = 0.0f;
-    marker.color.b = 0.0f;
+    if(_isRecord) {
+        marker.scale.x = 1.0 * trackScaleRatio_;
+        marker.color.r = 0.0f;
+        marker.color.g = 0.0f;
+        marker.color.b = 0.0f;
+    }
+    else {
+        marker.scale.x = 1.0 * trackScaleRatio_ * 0.6;
+        marker.color.r = 1.0f;
+        marker.color.g = 1.0f;
+        marker.color.b = 0.0f;
+    }
+
     // set .a = 0 to hide display
     marker.color.a = 1.0f;
     marker.lifetime = ros::Duration(1.0);
 }
 
 void TrackDisplayer::displayTrack(const geometry_msgs::Point &encryptedGauss, const MyViz * const pMyViz) {
-    const int _isRecordNow = (int)(pMyViz->clientCmdMsg_.is_record);
+    const bool _isRecordNow = (bool)(pMyViz->clientCmdMsg_.is_record);
     DLOG(INFO) << __FUNCTION__ << " start, is_record: " << _isRecordNow;
 
-    if(_isRecordNow) {
-        // record -> record: add a point to last line
-        if(isRecordLast_) {
-            mRecordedAbsLines.back().push_back(encryptedGauss);
+    if(_isRecordNow == isRecordLast_) {
+        // record -> record or no record -> no record
+        if(geoLinesWithIsRecord.empty() ) {
+            geoLinesWithIsRecord.emplace_back(_isRecordNow, vector<geometry_msgs::Point>({encryptedGauss}) );
         }
-        // not record -> record: add a line
         else {
-            mRecordedAbsLines.push_back(vector<geometry_msgs::Point>( {encryptedGauss} ) );
-        }
-
-        // when points > 5000, do rarefaction: delete recordedLine[1], [3]...
-        size_t recordedPointCnt = 0;
-        for(auto &recordedLine: mRecordedAbsLines) {
-            recordedPointCnt += recordedLine.size();
-        }
-        LOG_EVERY_N(INFO, 50) << "Record way points: " << recordedPointCnt;
-        DLOG(INFO) << "Record line counts: " << mRecordedAbsLines.size();
-
-        if(recordedPointCnt >= 10000) {
-            LOG(INFO) << "do rarefaction: " << recordedPointCnt;
-            for(auto &recordedLine: mRecordedAbsLines) {
-                for(auto iter = recordedLine.begin(); iter != recordedLine.end();) {
-                    ++iter;
-                    if(recordedLine.end() == iter) {
-                        break;
-                    }
-                    iter = recordedLine.erase(iter);
-                }
-            }
-            LOG(INFO) << "do rarefaction end: " << recordedPointCnt;
+            geoLinesWithIsRecord.back().geoLine.push_back(encryptedGauss);
         }
     }
-    // whatever -> not record: do nothing
-    // else {}
+    else {
+        // record -> no record or no record -> record
+        geoLinesWithIsRecord.emplace_back(_isRecordNow, vector<geometry_msgs::Point>({encryptedGauss}) );
+    }
     isRecordLast_ = _isRecordNow;
 
-    // display recorded tracks
+    size_t recordedPointCnt = 0;
+    size_t unrecordedPointCnt = 0;
+    // count points number in both recorded and unrecorded lines
+    for(auto &_line: geoLinesWithIsRecord) {
+        if(_line.isRecord) {
+            recordedPointCnt += _line.geoLine.size();
+        }
+        else {
+            unrecordedPointCnt += _line.geoLine.size();
+        }
+    }
+    LOG_EVERY_N(INFO, 50) << "Recorded points count: " << recordedPointCnt;
+    LOG_EVERY_N(INFO, 50) << "Unrecorded points count: " << unrecordedPointCnt;
+    LOG_EVERY_N(INFO, 50) << "Line counts: " << geoLinesWithIsRecord.size();
+
+    // when points > 10000, do rarefaction: delete recordedLine[1], [3]...
+    if(recordedPointCnt >= 10000) {
+        LOG(INFO) << "Recorded points rarefaction, recorded points count: " << recordedPointCnt;
+        for(auto &_line: geoLinesWithIsRecord) {
+            if(!(_line.isRecord) ) {
+                continue;
+            }
+            for(auto iter = _line.geoLine.begin(); iter != _line.geoLine.end();) {
+                ++iter;
+                if(_line.geoLine.end() == iter) {
+                    break;
+                }
+                iter = _line.geoLine.erase(iter);
+            }
+        }
+
+        recordedPointCnt = 0;
+        for(auto &_line: geoLinesWithIsRecord) {
+            if(_line.isRecord) {
+                recordedPointCnt += _line.geoLine.size();
+            }
+        }
+        LOG(INFO) << "Rarefaction end, recorded points count: " << recordedPointCnt;
+    }
+
+    const int UNRECORDED_POINT_MAX = 2000;
+    if(unrecordedPointCnt >= UNRECORDED_POINT_MAX) {
+        LOG(INFO) << "Unrecorded points rarefaction, unrecorded points count: " << unrecordedPointCnt;
+
+        unrecordedPointCnt = 0;
+        for(auto iter = geoLinesWithIsRecord.begin(); iter != geoLinesWithIsRecord.end();) {
+            if(iter->isRecord) {
+                ++iter;
+                continue;
+            }
+            unrecordedPointCnt += iter->geoLine.size();
+            if(unrecordedPointCnt <= (UNRECORDED_POINT_MAX / 2) ) {
+                iter = geoLinesWithIsRecord.erase(iter);
+                if(geoLinesWithIsRecord.end() == iter) {
+                    break;
+                }
+            }
+            else {
+                iter->geoLine.erase(iter->geoLine.begin(), iter->geoLine.begin() + (iter->geoLine.size() + (UNRECORDED_POINT_MAX / 2) - unrecordedPointCnt) );
+                break;
+            }
+        }
+
+        unrecordedPointCnt = 0;
+        for(auto &_line: geoLinesWithIsRecord) {
+            if(!(_line.isRecord) ) {
+                unrecordedPointCnt += _line.geoLine.size();
+            }
+        }
+        LOG(INFO) << "Rarefaction end, unrecorded points count: " << unrecordedPointCnt;
+    }
+
+    // display tracks
     mRecordedLines.markers.clear();
-    for(size_t markerId = 0; markerId < mRecordedAbsLines.size(); ++markerId) {
+    for(size_t markerId = 0; markerId < geoLinesWithIsRecord.size(); ++markerId) {
         visualization_msgs::Marker offsetLine;
-        initMarker(offsetLine, markerId);
-        public_tools::PublicTools::transform_coordinate(mRecordedAbsLines[markerId], encryptedGauss, offsetLine.points, trackScaleRatio_);
+        initMarker(offsetLine, markerId, geoLinesWithIsRecord[markerId].isRecord);
+        public_tools::PublicTools::transform_coordinate(geoLinesWithIsRecord[markerId].geoLine, encryptedGauss, offsetLine.points, trackScaleRatio_);
         mRecordedLines.markers.push_back(offsetLine);
     }
     mPubRecordLines.publish(mRecordedLines);
 
-    // display recorded and unrecorded tracks
-    mEncryptedGausses.push_back(encryptedGauss);
-
-    const size_t point_cnt = mEncryptedGausses.size();
-    LOG_EVERY_N(INFO, 50) << "Got way points: " << point_cnt;
-    if(point_cnt >= 1000) {
-        mEncryptedGausses.erase(mEncryptedGausses.begin(), mEncryptedGausses.begin() + 500);
-    }
-
-    public_tools::PublicTools::transform_coordinate(mEncryptedGausses, mEncryptedGausses.back(), mLineStrip.points, trackScaleRatio_);
-    if(point_cnt >= 2) {
+    const size_t lastLineSize = mRecordedLines.markers.back().points.size();
+    if(lastLineSize >= 2) {
         mArrow.points.clear();
-        mArrow.points.push_back(mLineStrip.points[point_cnt - 2]);
-        // below mLineStrip.points.x/y/z is 0
-        mArrow.points.push_back(mLineStrip.points[point_cnt - 1]);
+        mArrow.points.push_back(mRecordedLines.markers.back().points[lastLineSize - 2]);
+        mArrow.points.push_back(mRecordedLines.markers.back().points.back() );
         // pub mArrow
         mPubTrack.publish(mArrow);
     }
-
-    // remove latest points, for there is arrow already
-    mLineStrip.points.pop_back();
-    // pub mLineStrip
-    mPubTrack.publish(mLineStrip);
 }

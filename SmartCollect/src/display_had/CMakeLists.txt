@@ -13,6 +13,11 @@ find_package(catkin REQUIRED COMPONENTS
   sc_center
 )
 
+find_package(Qt4 COMPONENTS QtCore QtGui REQUIRED)
+include(${QT_USE_FILE})
+
+add_definitions(-DQT_NO_KEYWORDS)
+
 ## System dependencies are found with CMake's conventions
 # find_package(Boost REQUIRED COMPONENTS system)
 
@@ -103,10 +108,10 @@ find_package(catkin REQUIRED COMPONENTS
 ## CATKIN_DEPENDS: catkin_packages dependent projects also need
 ## DEPENDS: system dependencies of this project that dependent projects also need
 catkin_package(
-#  INCLUDE_DIRS include
-#  LIBRARIES display_had
-#  CATKIN_DEPENDS roscpp std_msgs
-#  DEPENDS system_lib
+ INCLUDE_DIRS include
+ LIBRARIES display_had
+ CATKIN_DEPENDS roscpp std_msgs
+ DEPENDS system_lib
 )
 
 ###########
@@ -122,9 +127,7 @@ include_directories(
 )
 
 ## Declare a C++ library
-# add_library(${PROJECT_NAME}
-#   src/${PROJECT_NAME}/display_had.cpp
-# )
+add_library(${PROJECT_NAME} src/mif_read.cpp src/MortonCodecTransJava.cpp src/display_track.cpp src/display_plan_layer.cpp)
 
 ## Add cmake target dependencies of the library
 ## as an example, code may need to be generated before libraries
@@ -134,7 +137,7 @@ include_directories(
 ## Declare a C++ executable
 ## With catkin_make all packages are built within a single CMake context
 ## The recommended prefix ensures that target names across packages don't collide
-add_executable(${PROJECT_NAME}_node src/display_had_node.cpp src/mif_read.cpp src/MortonCodecTransJava.cpp src/display_track.cpp src/display_plan_layer.cpp)
+# add_executable(${PROJECT_NAME}_node src/display_had_node.cpp src/mif_read.cpp src/MortonCodecTransJava.cpp src/display_track.cpp src/display_plan_layer.cpp)
 
 ## Rename C++ executable without prefix
 ## The above recommended prefix causes long target names, the following renames the
@@ -144,10 +147,19 @@ add_executable(${PROJECT_NAME}_node src/display_had_node.cpp src/mif_read.cpp sr
 
 ## Add cmake target dependencies of the executable
 ## same as for the library above
-add_dependencies(${PROJECT_NAME}_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+# add_dependencies(${PROJECT_NAME}_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
 ## Specify libraries to link a library or executable target against
-target_link_libraries(${PROJECT_NAME}_node
+# target_link_libraries(
+#   ${PROJECT_NAME}_node
+#   ${catkin_LIBRARIES}
+#   glog
+#   sqlite3
+#   gdal
+#   sc_lib_public_tools
+# )
+target_link_libraries(
+  ${PROJECT_NAME}
   ${catkin_LIBRARIES}
   glog
   sqlite3

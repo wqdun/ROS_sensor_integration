@@ -92,7 +92,7 @@ do_rviz() {
     log_with_time "ROS_PACKAGE_PATH: ${ROS_PACKAGE_PATH}"
 
     pkill display_had_
-    rosrun display_had display_had_node &
+    # rosrun display_had display_had_node &
     sleep 0.2
 
     killall rviz

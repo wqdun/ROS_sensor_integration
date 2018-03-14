@@ -31,6 +31,7 @@ MyViz::MyViz(int paramNum, char **params, QWidget* parent): QWidget(parent) {
     params_ = params;
     clientCmdMsg_.system_cmd = clientCmdMsg_.is_record = 0;
     clientCmdMsg_.cam_gain = 20;
+    isKillMapThread_ = false;
 
     setWindowFlags(Qt::CustomizeWindowHint | Qt::WindowMinimizeButtonHint | Qt::WindowStaysOnTopHint | Qt::WindowCloseButtonHint);
     this->sizeHint();
@@ -158,7 +159,7 @@ MyViz::MyViz(int paramNum, char **params, QWidget* parent): QWidget(parent) {
     setLayout(main_layout);
 
     // Callback Functions
-    connect(pLaunchBtn_, SIGNAL(clicked() ), this, SLOT(launch_project() ) );
+    connect(pLaunchBtn_, SIGNAL(clicked() ), this, SLOT(launchProject_onClicked() ) );
     connect(pSetIpBtn_, SIGNAL(clicked() ), this, SLOT(set_ip() ) );
     connect(pPoweroffBtn, SIGNAL(clicked() ), this, SLOT(power_off_cmd() ) );
     connect(pRebootBtn, SIGNAL(clicked() ), this, SLOT(reboot_cmd() ) );
@@ -278,7 +279,7 @@ void MyViz::enableProjectSet(bool isEnable) {
 }
 
 
-void MyViz::launch_project() {
+void MyViz::launchProject_onClicked() {
     LOG(INFO) << __FUNCTION__ << " start.";
 
     enableProjectSet(false);
@@ -318,24 +319,37 @@ void MyViz::launch_project() {
     return;
 }
 
+
+static void *mapThread(void *pViz) {
+    LOG(INFO) << __FUNCTION__ << " start.";
+
+    MifReader mifReader(ros::NodeHandle(), ros::NodeHandle("~") );
+    mifReader.run( (MyViz *)pViz);
+}
 void MyViz::createMapThread() {
     LOG(INFO) << __FUNCTION__ << " start, clientCmdMsg_.is_record: " << (int)clientCmdMsg_.is_record;
+    isKillMapThread_ = false;
 
-    boost::shared_ptr<MifReader> pMifReader;
-    pMifReader.reset(new MifReader(ros::NodeHandle(), ros::NodeHandle("~") ) );
-
-    boost::shared_ptr<boost::thread> deviceThread_ = boost::shared_ptr<boost::thread>(new boost::thread(boost::bind(&MifReader::run, pMifReader, this) ) );
+    pthread_t mapThreadId;
+    int errMapThread = pthread_create(&mapThreadId, NULL, mapThread, (void *)this);
+    if(0 != errMapThread) {
+        LOG(ERROR) << "Failed to create map displayer thread.";
+        exit(1);
+    }
 }
 
 void MyViz::run_center_node() {
     LOG(INFO) << __FUNCTION__ << " start.";
+    int err = 0;
 
     // put ENV again, or ROS_MASTER_URI is NULL
     const std::string masterIp(pMaterIpEdit_->text().toStdString() );
-    std::string rosMaterUri("ROS_MASTER_URI=http://" + masterIp + ":11311");
-    char *rosMaterUriData = string_as_array(&rosMaterUri);
-    int err = putenv(rosMaterUriData);
-    LOG(INFO) << "Put env: "<< rosMaterUriData << " returns: " << err;
+    std::string rosMaterUri("http://" + masterIp + ":11311");
+    if(0 != setenv("ROS_MASTER_URI", rosMaterUri.c_str(), 1) ) {
+        LOG(ERROR) << "Failed to set ROS_MASTER_URI: " << getenv("ROS_MASTER_URI");
+        exit(1);
+    }
+    LOG(INFO) << "getenv(ROS_MASTER_URI): " << getenv("ROS_MASTER_URI");
 
     const std::string exePath(public_tools::PublicTools::safeReadlink("/proc/self/exe") );
     LOG(INFO) << "Get SmartCollector execute path: " << exePath;
@@ -484,16 +498,19 @@ static int getLocalIPs(std::vector<std::string> &IPs) {
 
 void MyViz::set_ip() {
     LOG(INFO) << __FUNCTION__ << " start.";
+    int err = 0;
     pMaterIpEdit_->setEnabled(false);
     pMasterNameEdit_->setEnabled(false);
     pClientPasswdEdit_->setEnabled(false);
     pSetIpBtn_->setEnabled(false);
 
     const std::string masterIp(pMaterIpEdit_->text().toStdString() );
-    std::string rosMaterUri("ROS_MASTER_URI=http://" + masterIp + ":11311");
-    char *rosMaterUriData = string_as_array(&rosMaterUri);
-    int err = putenv(rosMaterUriData);
-    LOG(INFO) << "Put env: "<< rosMaterUriData << " returns: " << err;
+    std::string rosMaterUri("http://" + masterIp + ":11311");
+    if(0 != setenv("ROS_MASTER_URI", rosMaterUri.c_str(), 1) ) {
+        LOG(ERROR) << "Failed to set ROS_MASTER_URI: " << getenv("ROS_MASTER_URI");
+        exit(1);
+    }
+    LOG(INFO) << "getenv(ROS_MASTER_URI): " << getenv("ROS_MASTER_URI");
 
     std::vector<std::string> localIPs;
     if(0 != (err = getLocalIPs(localIPs) ) ) {
@@ -572,13 +589,15 @@ void MyViz::reboot_cmd() {
 
 void MyViz::monitor_ctrl_onclick() {
     LOG(INFO) << __FUNCTION__ << " start.";
-
+    int err = 0;
     // put ENV again, or ROS_MASTER_URI is NULL
     const std::string masterIp(pMaterIpEdit_->text().toStdString() );
-    std::string rosMaterUri("ROS_MASTER_URI=http://" + masterIp + ":11311");
-    char *rosMaterUriData = string_as_array(&rosMaterUri);
-    int err = putenv(rosMaterUriData);
-    LOG(INFO) << "Put env: "<< rosMaterUriData << " returns: " << err;
+    std::string rosMaterUri("http://" + masterIp + ":11311");
+    if(0 != setenv("ROS_MASTER_URI", rosMaterUri.c_str(), 1) ) {
+        LOG(ERROR) << "Failed to set ROS_MASTER_URI: " << getenv("ROS_MASTER_URI");
+        exit(1);
+    }
+    LOG(INFO) << "getenv(ROS_MASTER_URI): " << getenv("ROS_MASTER_URI");
 
     const std::string exePath(public_tools::PublicTools::safeReadlink("/proc/self/exe") );
     LOG(INFO) << "Get SmartCollector execute path: " << exePath;
@@ -603,9 +622,10 @@ void MyViz::monitor_ctrl_onclick() {
 
 void MyViz::cleanServer_onClicked() {
     LOG(INFO) << __FUNCTION__ << " start.";
-    pLaunchBtn_->setText("Rename Relaunch");
+    pLaunchBtn_->setText("New Project");
     enableProjectSet(true);
 
+    isKillMapThread_ = true;
     clientCmdMsg_.system_cmd = 3;
 }
 

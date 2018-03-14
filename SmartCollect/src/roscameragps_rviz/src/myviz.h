@@ -57,7 +57,7 @@ public:
     void showCenterMsg(const sc_server_daemon::serverMsg &server_msg, const sc_center::centerMsg &center_msg);
 
 public Q_SLOTS:
-    void launch_project();
+    void launchProject_onClicked();
     void set_ip();
     void power_off_cmd();
     void reboot_cmd();
@@ -104,7 +104,7 @@ public:
     QSize sizeHint() const;
 
     SmartCollector::clientCmd clientCmdMsg_;
-
+    bool isKillMapThread_;
 
 protected:
     void closeEvent(QCloseEvent *event);

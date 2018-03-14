@@ -1,9 +1,11 @@
 #include "mif_read.h"
-#define NDEBUG
-// #undef NDEBUG
+#include "../../roscameragps_rviz/src/myviz.h"
+// #define NDEBUG
+#undef NDEBUG
 #include <glog/logging.h>
 
 MifReader::MifReader(ros::NodeHandle nh, ros::NodeHandle private_nh) {
+    LOG(INFO) << __FUNCTION__ << " start.";
     mifScaleRatio_ = 0.01;
     const std::string exePath(public_tools::PublicTools::safeReadlink("/proc/self/exe") );
     LOG(INFO) << "HAD node exePath: " << exePath;
@@ -32,12 +34,13 @@ MifReader::MifReader(ros::NodeHandle nh, ros::NodeHandle private_nh) {
 }
 
 MifReader::~MifReader() {
+    LOG(INFO) << __FUNCTION__ << " start.";
     delete mpTrackDisplayer;
     delete pPlanLayerDisplayer_;
     LOG(INFO) << "Goodbye.";
 }
 
-void MifReader::run() {
+void MifReader::run(const MyViz * const pMyViz) {
     vector<string> roadDBs;
     (void)public_tools::PublicTools::getFilesInDir(mMifPath, "road_15.db", roadDBs);
     if(1 != roadDBs.size() ) {
@@ -48,6 +51,10 @@ void MifReader::run() {
 
     ros::Rate rate(2);
     while(ros::ok() ) {
+        if(pMyViz->isKillMapThread_) {
+            LOG(INFO) << "Kill Map Thread.";
+            return;
+        }
         ros::spinOnce();
         rate.sleep();
 
@@ -55,7 +62,7 @@ void MifReader::run() {
             LOG(INFO) << "GPS not fixed, mCurrentWGS.x: " << mCurrentWGS.x;
             continue;
         }
-        mpTrackDisplayer->displayTrack(mCurrentWGS);
+        mpTrackDisplayer->displayTrack(mCurrentWGS, pMyViz);
         pPlanLayerDisplayer_->displayPlanLayer(mCurrentWGS);
 
         if(mTileList.empty()) {

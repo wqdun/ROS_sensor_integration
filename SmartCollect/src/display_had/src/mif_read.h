@@ -27,12 +27,14 @@ using std::vector;
 
 static public_tools::geoLines_t gAbsLines;
 
+
+class MyViz;
 class MifReader {
 
 public:
     MifReader(ros::NodeHandle nh, ros::NodeHandle private_nh);
     ~MifReader();
-    void run();
+    void run(const MyViz * const pMyViz);
 
 
 private:

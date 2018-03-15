@@ -19,6 +19,7 @@
 #include <QTimer>
 #include <QCheckBox>
 #include <QCloseEvent>
+#include <QFileDialog>
 
 #include <string>
 #include "sc_center/centerMsg.h"
@@ -63,6 +64,7 @@ public Q_SLOTS:
     void reboot_cmd();
     void record_ctrl_onStateChanged(int);
     void monitor_ctrl_onclick();
+    void loadMap_onClicked();
     void cleanServer_onClicked();
     void cleanClient_onClicked();
     void setCelltest(int);

@@ -91,6 +91,8 @@ MyViz::MyViz(int paramNum, char **params, QWidget* parent): QWidget(parent) {
     pRecordCtrl->setText("Recording");
     QPushButton *pMonitorBtn = new QPushButton("RViz");
 
+    QPushButton *pLoadMapBtn = new QPushButton("Load Map");
+
     cell_test_slider = new QSlider( Qt::Horizontal);
     cell_test_slider->setMinimum(1);
     cell_test_slider->setMaximum(50);
@@ -140,6 +142,8 @@ MyViz::MyViz(int paramNum, char **params, QWidget* parent): QWidget(parent) {
     controls_layout->addWidget(pRecordCtrl, row, 1);
     controls_layout->addWidget(pMonitorBtn, row, 2);
 
+    controls_layout->addWidget(pLoadMapBtn, ++row, 2);
+
     controls_layout->addWidget(pGcamGainLabel_, ++row, 0);
     controls_layout->addWidget(cell_test_slider, row, 1, 1, 2);
 
@@ -165,7 +169,8 @@ MyViz::MyViz(int paramNum, char **params, QWidget* parent): QWidget(parent) {
     connect(pRebootBtn, SIGNAL(clicked() ), this, SLOT(reboot_cmd() ) );
     connect(pRecordCtrl, SIGNAL(stateChanged(int) ), this, SLOT(record_ctrl_onStateChanged(int) ) );
     connect(pMonitorBtn, SIGNAL(clicked() ), this, SLOT(monitor_ctrl_onclick() ) );
-    connect(cell_test_slider, SIGNAL(valueChanged(int)), this, SLOT(setCelltest(int)));
+    connect(pLoadMapBtn, SIGNAL(clicked() ), this, SLOT(loadMap_onClicked() ) );
+    connect(cell_test_slider, SIGNAL(valueChanged(int)), this, SLOT(setCelltest(int)) );
     connect(pCleanServerBtn, SIGNAL(clicked() ), this, SLOT(cleanServer_onClicked() ) );
     connect(pCleanClientBtn, SIGNAL(clicked() ), this, SLOT(cleanClient_onClicked() ) );
 
@@ -174,6 +179,23 @@ MyViz::MyViz(int paramNum, char **params, QWidget* parent): QWidget(parent) {
 
 MyViz::~MyViz() {
 }
+
+
+void MyViz::loadMap_onClicked() {
+    LOG(INFO) << __FUNCTION__ << " start.";
+    QFileDialog *fileDialog = new QFileDialog(this);
+    fileDialog->setWindowTitle(tr("Open Image"));
+    fileDialog->setDirectory(".");
+    fileDialog->setFilter(tr("Image Files(*.jpg *.png)"));
+    if(fileDialog->exec() == QDialog::Accepted) {
+            QString path = fileDialog->selectedFiles()[0];
+            QMessageBox::information(NULL, tr("Path"), tr("You selected ") + path);
+    } else {
+            QMessageBox::information(NULL, tr("Path"), tr("You didn't select any files."));
+    }
+}
+
+
 
 void MyViz::loadConfig() {
     LOG(INFO) << __FUNCTION__ << " start.";

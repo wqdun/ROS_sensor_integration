@@ -31,18 +31,92 @@ run_sc_server_daemon_node() {
     log_with_time "$FUNCNAME return $?."
 }
 
+run_tomcat() {
+    log_with_time "$FUNCNAME start."
+    log_with_time "JRE_HOME: $JRE_HOME"
+
+    export JAVA_HOME=/opt/jvm/java
+    export JRE_HOME=${JAVA_HOME}/jre
+    export CLASSPATH=.:${JAVA_HOME}/lib:${JRE_HOME}/lib
+    export PATH=${JAVA_HOME}/bin:$PATH
+
+    /opt/apache-tomcat-*/bin/startup.sh >>$result_log 2>&1
+    log_with_time "$FUNCNAME return $?."
+}
+
+run_rosbridge() {
+    log_with_time "$FUNCNAME start."
+
+    if [ ! -f "/opt/smartc/devel/setup.bash" ]; then
+        log_with_time "[ERROR] Failed to find /opt/smartc/devel/setup.bash."
+        return
+    fi
+    if [ ! -f "/opt/ros/indigo/share/rosbridge_server/launch/rosbridge_websocket.launch" ]; then
+        log_with_time "[ERROR] Failed to find rosbridge_websocket.launch."
+        return
+    fi
+    if [ ! -f "/opt/ros/indigo/lib/web_video_server/web_video_server" ]; then
+        log_with_time "[ERROR] Failed to find web_video_server"
+        return
+    fi
+
+    . /opt/smartc/devel/setup.bash
+    log_with_time "roslaunch start."
+    roslaunch /opt/ros/indigo/share/rosbridge_server/launch/rosbridge_websocket.launch >>$result_log 2>&1 &
+    sleep 1
+    log_with_time "roslaunch end."
+
+    . /opt/ros/indigo/setup.bash
+    /opt/ros/indigo/lib/web_video_server/web_video_server >>$result_log 2>&1 &
+    sleep 1
+    log_with_time "$FUNCNAME return $?."
+}
+
+kill_rosbridge() {
+    log_with_time "$FUNCNAME start."
+
+    pkill web_video_se
+    killall roslaunch >>$result_log 2>&1
+    log_with_time "$FUNCNAME return $?."
+}
+
+kill_tomcat() {
+    log_with_time "$FUNCNAME start."
+    log_with_time "JRE_HOME: $JRE_HOME"
+
+    export JAVA_HOME=/opt/jvm/java
+    export JRE_HOME=${JAVA_HOME}/jre
+    export CLASSPATH=.:${JAVA_HOME}/lib:${JRE_HOME}/lib
+    export PATH=${JAVA_HOME}/bin:$PATH
+
+    /opt/apache-tomcat-*/bin/shutdown.sh >>$result_log 2>&1
+    log_with_time "$FUNCNAME return $?."
+}
+
 do_start() {
-    source /opt/ros/indigo/setup.bash >>$result_log 2>&1
+    log_with_time "$FUNCNAME start."
+
+    . /opt/ros/indigo/setup.bash
     /opt/ros/indigo/bin/roscore >>$result_log 2>&1 &
-    sleep 0.5
+    sleep 1
     run_sc_server_daemon_node
+    sleep 1
+    run_tomcat
+    sleep 1
+    run_rosbridge
+
+    log_with_time "$FUNCNAME return $?."
 }
 
 do_stop() {
     log_with_time "$FUNCNAME start."
-    kill $(pgrep roscore) >>$result_log 2>&1
+
+    kill_rosbridge
+    kill_tomcat
+
     # kill sc_server_daemon_node by key word
-    pkill sc_server_d >>$result_log 2>&1
+    pkill sc_server_d
+    kill $(pgrep roscore) >>$result_log 2>&1
 
     log_with_time "$FUNCNAME return $?."
 }

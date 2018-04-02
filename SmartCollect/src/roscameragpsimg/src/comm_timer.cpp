@@ -140,12 +140,12 @@ int get_time(/*ros::NodeHandle* nh*/)
     {
         DLOG(INFO)<<"comm open success!";
     }
-    
+
     ros::NodeHandle nh_time;
     ros::Publisher    pub_5651  = nh_time.advertise<roscameragpsimg::imu5651>("imu_string", 1000);
-    
+
     roscameragpsimg::imu5651  msg;
-    
+
     // setup port properties
     int nset1 = set_opt(fd1, 115200, 8, 'N', 1); // 设置串口属性
     if(-1 == nset1)
@@ -171,7 +171,7 @@ int get_time(/*ros::NodeHandle* nh*/)
     public_tools::PublicTools::generateFileName(imu_path, temp_path);
 
     string imupath_str = imu_path +temp_path + "_rt_track.txt";
-    
+
     fstream file;
     while(1)
     {
@@ -208,7 +208,7 @@ int get_time(/*ros::NodeHandle* nh*/)
                 frame_complete = frameBuf;
                 frameBuf.clear();
                 break;
-                
+
             default:
                 frameBuf += buf[i];
             }
@@ -227,12 +227,12 @@ int get_time(/*ros::NodeHandle* nh*/)
                 }
                 int ret = mymutex.Trylock();
                 DLOG(INFO)<<"get_time lock result: "<<ret;
-                if(0 != ret) 
+                if(0 != ret)
                 {
                     DLOG(ERROR) << "Failed to tryLock.return result : "<<ret;
                     continue;
                 }
-                
+
                 if(ret==0)
                 {
                     boost::split(parsed_data, frame_complete, boost::is_any_of( ",*" ), boost::token_compress_on);
@@ -263,6 +263,12 @@ int get_time(/*ros::NodeHandle* nh*/)
                         msg.NSV2_num = parsed_data[14];
                         msg.Status   = parsed_data[15];
                         pub_5651.publish(msg);
+                        // coordtrans and record
+                        if(is_save_cam)
+                        {
+                            (void)coordtrans2wgsAndRecord(msg.Longitude, msg.Latitude);
+                        }
+
                     }
                     mymutex.Unlock();
                 }
@@ -311,14 +317,14 @@ int get_time(/*ros::NodeHandle* nh*/)
 
             double GPS_week_times = string2double(GPS_week_time_str_cur);
             GPS_week_times        =  GPS_week_times + time_difference;
-        
+
             int ret = mymutex.Trylock();
             if(ret != 0)
             {
                DLOG(INFO)<<"Faild to trylock. return ret :"<<ret;
                continue;
             }
-               
+
             if(parsed_data.size() >= 17&& parsed_data[2].size()>2)
             {
                  global_gps = std::to_string(GPS_week_times);
@@ -327,12 +333,29 @@ int get_time(/*ros::NodeHandle* nh*/)
             {
                mymutex.Unlock();
             }
-    
+
         }
     }
 
     close(fd1);
     return 0;
 }
+
+void coordtrans2wgsAndRecord(const std::string &_lon, const std::string &_lat) {
+    DLOG(INFO) << __FUNCTION__ << " start, longitude: " << _lon << ", latitude: " << _lat;
+
+    double newlng = 0;
+    double newlat = 0;
+    if(0 != coordtrans("wgs84", "gcj02", string2double(_lon), string2double(_lat), newlng, newlat) ) {
+        LOG(ERROR) << "Failed translate coordination (" << _lon << ", " << _lon << ") to Mars.";
+        exit(1);
+    }
+    std::string recordedImuName("");
+    public_tools::PublicTools::generateFileName(imu_path, recordedImuName);
+    const std::string recordedImuFile(imu_path + recordedImuName + "_track_mars.txt");
+    DLOG(INFO) << "Save MAR tracks in " << recordedImuFile;
+}
+
+
 
 

@@ -23,8 +23,9 @@
 #include <std_msgs/Int64.h>
 #include <std_msgs/String.h>
 #include"./PGCamera.h"
-#include "SmartCollector/clientCmd.h"
+#include <sc_server_daemon/nodeParams.h>
 
+// #define NDEBUG
 #undef NDEBUG
 #include <glog/logging.h>
 
@@ -70,7 +71,7 @@ void *thread(void *ptr)
 }
 
 //save controll callback
-void sub_save_cam_callback(const SmartCollector::clientCmd::ConstPtr& pClientMsg)
+void sub_save_cam_callback(const sc_server_daemon::nodeParams::ConstPtr& pClientMsg)
 {
     DLOG(INFO) << __FUNCTION__ << " start, is_record Camera: " << (int)(pClientMsg->is_record);
     is_save_cam = pClientMsg->is_record;
@@ -89,7 +90,7 @@ int main(int argc, char** argv)
     ros::init(argc,argv,"image_publisher");
 
     ros::NodeHandle nh;
-    ros::Subscriber sub_save_cam = nh.subscribe("sc_client_cmd", 10, sub_save_cam_callback);
+    ros::Subscriber sub_save_cam = nh.subscribe("sc_node_params", 10, sub_save_cam_callback);
 
     //get parameters
     DLOG(INFO)<<"argc"<< argc;

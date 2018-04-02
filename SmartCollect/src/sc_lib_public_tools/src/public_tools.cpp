@@ -203,5 +203,28 @@ std::string PublicTools::safeReadlink(const std::string& filename) {
     }
 }
 
+bool PublicTools::isFileExist(const std::string& fileName) {
+    std::fstream _file;
+    _file.open(fileName.c_str(), std::ios::in);
+    return (bool)(_file);
+}
+
+void PublicTools::runShellCmd(const std::string &cmd) {
+    LOG(INFO) << __FUNCTION__ << " start, run " << cmd;
+
+    FILE *fpin;
+    if(NULL == (fpin = popen(cmd.c_str(), "r") ) ) {
+        LOG(ERROR) << "Failed to " << cmd;
+        exit(1);
+    }
+    int err = 0;
+    if(0 != (err = pclose(fpin) ) ) {
+        LOG(ERROR) << "Failed to run " << cmd << ", returns: " << err;
+        exit(1);
+    }
+    LOG(INFO) << "Run: " << cmd << " end.";
+    return;
+}
+
 }
 // namespace public_tools

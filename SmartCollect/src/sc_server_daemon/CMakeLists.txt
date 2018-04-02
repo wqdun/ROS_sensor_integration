@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 2.8.3)
 project(sc_server_daemon)
 
 ## Compile as C++11, supported in ROS Kinetic and newer
-# add_compile_options(-std=c++11)
+add_compile_options(-std=c++11)
 
 ## Find catkin macros and libraries
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
@@ -53,8 +53,10 @@ add_message_files(
   FILES
   clientCmd.msg
   serverMsg.msg
-  # Message1.msg
-  # Message2.msg
+  point3D.msg
+  monitorMsg.msg
+  nodeParams.msg
+  projectInfoMsg.msg
 )
 
 ## Generate services in the 'srv' folder
@@ -122,7 +124,6 @@ catkin_package(
 include_directories(
 # include
   ${catkin_INCLUDE_DIRS}
-  ../../devel/include
 )
 
 ## Declare a C++ library
@@ -154,6 +155,7 @@ add_executable(${PROJECT_NAME}_node src/server_daemon_node.cpp src/server_daemon
 target_link_libraries(${PROJECT_NAME}_node
   ${catkin_LIBRARIES}
   glog
+  sc_lib_public_tools
 )
 
 #############

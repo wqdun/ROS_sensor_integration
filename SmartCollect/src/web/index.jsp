@@ -240,10 +240,10 @@
     var ros_ = new ROSLIB.Ros();
     ros_.connect('ws://<%=ip%>:9090');
     var pubCmd_ = new ROSLIB.Topic({
-            ros: ros_,
-            name: '/sc_client_cmd',
-            messageType: 'sc_server_daemon/clientCmd',
-        });
+        ros: ros_,
+        name: '/sc_client_cmd',
+        messageType: 'sc_server_daemon/clientCmd',
+    });
 
     var projectInfoListener = new ROSLIB.Topic({
         ros: ros_,

@@ -146,9 +146,9 @@
     // Create a connection to the rosbridge WebSocket server.
     ros_.connect('ws://<%=ip%>:9090');
     pubCmd_ = new ROSLIB.Topic({
-            ros: ros_,
-            name: '/sc_client_cmd',
-            messageType: 'sc_server_daemon/clientCmd',
+        ros: ros_,
+        name: '/sc_client_cmd',
+        messageType: 'sc_server_daemon/clientCmd',
     });
 
     var centerListener = new ROSLIB.Topic({

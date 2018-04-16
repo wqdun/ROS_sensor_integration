@@ -11,11 +11,46 @@
 ### END INIT INFO
 
 script_name=$(basename $0)
+mkdir -p /opt/smartc/log/
 result_log=/opt/smartc/log/${script_name}".log"
 
 log_with_time() {
     local now_time=$(date +%Y/%m/%d-%H:%M:%S)
     echo "$now_time: $*" >>$result_log
+}
+
+mount_data_disk() {
+    log_with_time "$FUNCNAME start."
+
+    local disk_num=$(grep -v [0-9]$ /proc/partitions | grep -v ^$ | grep -cv name)
+    if [ $disk_num -ne 2 ]; then
+        log_with_time "I have $disk_num disk, not 2."
+        return
+    fi
+
+    log_with_time "I have 2 disks."
+    local disk1=$(grep -v [0-9]$ /proc/partitions | grep -v ^$ | grep -v name | head -n1 | awk '{print $4}')
+    local disk2=$(grep -v [0-9]$ /proc/partitions | grep -v ^$ | grep -v name | tail -n1 | awk '{print $4}')
+    local root_mounter=$(df | grep "/$" | awk '{print $1}' | awk -F/ '{print $3}')
+    local is_root_mount_disk1=$(echo "$root_mounter" | grep "$disk1")
+
+    local data_disk="${disk2}"
+    if [ "AA${is_root_mount_disk1}" = "AA" ]; then
+        data_disk="${disk1}"
+        log_with_time "$disk1 is data disk, $disk2 is / mounter."
+    fi
+
+    local data_disk_partition_num=$(ls /dev/* | grep "$data_disk" | grep -vc "$data_disk$")
+    if [ $data_disk_partition_num -ne 1 ]; then
+        log_with_time "I have ${data_disk_partition_num} disk partitions in ${data_disk}, not 1."
+        return
+    fi
+    local data_disk_partition=$(ls /dev/* | grep "$data_disk" | grep -v "$data_disk$")
+    log_with_time "I have ${data_disk_partition_num} disk partition: ${data_disk_partition} in ${data_disk}."
+
+    mount "$data_disk_partition" /opt/smartc/record/
+    log_with_time "$FUNCNAME success."
+    return
 }
 
 run_sc_server_daemon_node() {
@@ -93,6 +128,21 @@ kill_tomcat() {
     log_with_time "$FUNCNAME return $?."
 }
 
+set_camera_mtu() {
+    log_with_time "$FUNCNAME start."
+
+    local mtu=$(netstat -i | grep eth0 | awk '{print $2}')
+    log_with_time "I have $mtu mtu at eth0."
+
+    chmod +r /dev/ttyS0 >>$result_log 2>&1
+    ifconfig eth0 mtu 9000 >>$result_log 2>&1
+
+    local mtu=$(netstat -i | grep eth0 | awk '{print $2}')
+    log_with_time "Now I have $mtu mtu at eth0."
+
+    log_with_time "$FUNCNAME return $?."
+}
+
 do_start() {
     log_with_time "$FUNCNAME start."
 
@@ -104,6 +154,10 @@ do_start() {
     run_tomcat
     sleep 1
     run_rosbridge
+    sleep 1
+    mount_data_disk
+    sleep 1
+    set_camera_mtu
 
     log_with_time "$FUNCNAME return $?."
 }
@@ -114,9 +168,12 @@ do_stop() {
     kill_rosbridge
     kill_tomcat
 
-    # kill sc_server_daemon_node by key word
+    log_with_time "kill sc_server_daemon_node by key word."
     pkill sc_server_d
     kill $(pgrep roscore) >>$result_log 2>&1
+
+    log_with_time "umount /opt/smartc/record/ start."
+    umount /opt/smartc/record/ >>$result_log 2>&1
 
     log_with_time "$FUNCNAME return $?."
 }

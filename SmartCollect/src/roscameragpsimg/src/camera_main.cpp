@@ -1,18 +1,18 @@
-#include<ros/ros.h>
-#include<image_transport/image_transport.h>
-#include<opencv2/core/core.hpp>
-#include<opencv2/highgui/highgui.hpp>
-#include<opencv2/imgproc/imgproc.hpp>
-#include<cv_bridge/cv_bridge.h>
-#include<FlyCapture2.h>
+#include <ros/ros.h>
+#include <image_transport/image_transport.h>
+#include <opencv2/core/core.hpp>
+#include <opencv2/highgui/highgui.hpp>
+#include <opencv2/imgproc/imgproc.hpp>
+#include <cv_bridge/cv_bridge.h>
+#include <FlyCapture2.h>
 
 
-#include"./comm_timer.h"
+#include "comm_timer.h"
 #include "dlfcn.h"
 #include <execinfo.h>
 
-#include<stdio.h>
-#include<iostream>
+#include <stdio.h>
+#include <iostream>
 #include <pthread.h>
 #include <unistd.h>
 #include <vector>
@@ -22,7 +22,7 @@
 
 #include <std_msgs/Int64.h>
 #include <std_msgs/String.h>
-#include"./PGCamera.h"
+#include "PGCamera.h"
 #include <sc_server_daemon/nodeParams.h>
 
 // #define NDEBUG
@@ -66,8 +66,8 @@ extern double cam_fps;
 //thread 1 get time
 void *thread(void *ptr)
 {
-   cout<<"thread create state is :  OK !"<<endl;
-   get_time();
+    LOG(INFO) << __FUNCTION__ << " start; thread create state is :  OK !";
+    get_time();
 }
 
 //save controll callback
@@ -83,29 +83,26 @@ void sub_save_cam_callback(const sc_server_daemon::nodeParams::ConstPtr& pClient
     }
 }
 
-//-------------------------------------------------------main---------------------
 int main(int argc, char** argv)
 {
     google::InitGoogleLogging(argv[0]);
-    ros::init(argc,argv,"image_publisher");
+    ros::init(argc, argv, "image_publisher");
 
     ros::NodeHandle nh;
     ros::Subscriber sub_save_cam = nh.subscribe("sc_node_params", 10, sub_save_cam_callback);
 
-    //get parameters
-    DLOG(INFO)<<"argc"<< argc;
+    LOG(INFO) << "argc: " << argc;
 
-    if(argc==4)
+    if(argc != 4)
     {
-        format_str    = argv[1];
-        pathSave_str  = argv[2];
-        imu_path    = argv[3];
+        LOG(INFO) << "usage: exec image_format path_save_image path_save_imu, param num: " << argc;
+        return -1;
     }
-    else
-    {
-        DLOG(INFO)<<"usage: exec image_format path_save_image path_save_imu:";
-        return 0;
-    }
+
+    format_str = argv[1];
+    pathSave_str = argv[2];
+    imu_path = argv[3];
+    LOG(INFO) << "format_str: " << format_str << "; pathSave_str: " << pathSave_str << "; imu_path: " << imu_path;
 
     if(format_str == "jpg")
     {
@@ -128,14 +125,19 @@ int main(int argc, char** argv)
         format_int = -1;
     }
 
-    //[1]初始化相机对象expected primary-expression before ‘
+    //[1]初始化相机对象expected primary-expression before
     int ImageWidth = 1920;
     int ImageHeight= 1200;
     CPGCamera *camera_pg = NULL;
-    DLOG(INFO) << "before init camera !";
+    LOG(INFO) << "before init camera !";
     camera_pg = new CPGCamera(ImageWidth, ImageHeight, nh);
+    if(NULL == camera_pg)
+    {
+        LOG(ERROR) << "Failed to create CPGCamera.";
+        exit(-1);
+    }
     camera_pg->m_nBufferWidth = ImageWidth;
-    camera_pg->m_nBufferHeight= ImageHeight;
+    camera_pg->m_nBufferHeight = ImageHeight;
 
     //[2]初始化相机
     /*---------------------------------------
@@ -146,58 +148,32 @@ int main(int argc, char** argv)
 	@ GetTriggerMode
 	@ SetTriggerMode
     ---------------------------------------*/
-    DLOG(INFO) << "before open camera !";
-    int m_CameraID = 0;
-    bool caminit = false;
-    for(int i = 0; 10000 ; i++)
+    const int m_CameraID = 0;
+    bool caminit = camera_pg->InitCamera(m_CameraID);
+    LOG(INFO) << "Open state: " << caminit;
+    if(!caminit)
     {
-        caminit = camera_pg->InitCamera(m_CameraID);
-        DLOG(INFO) << i << ", open state: " << caminit;
-        if(caminit)
-        {
-            break;
-        }
-        else
-        {
-            usleep(100000);
-            LOG(INFO)<<"camera try to open again!";
-            camera_pg = NULL;
-            camera_pg = new CPGCamera(ImageWidth, ImageHeight, nh);
-            camera_pg->m_nBufferWidth = ImageWidth;
-            camera_pg->m_nBufferHeight= ImageHeight;
-        }
+        LOG(ERROR) << "Failed to InitCamera.";
+        exit(-1);
     }
-
-    // bool tellgain = camera_pg->SetCameragain();
 
     camera_pg->m_CameraID = m_CameraID;
     camera_pg->StartCapture();
 
-    if(caminit)
-    {
-        LOG(INFO)<<"camera open state is : ok ";
-        cout<<"camera open state is : ok "<<endl;
-    }
-    else
-    {
-        LOG(INFO)<<"camera open state is : failed ";
-        cout<<"camera open state is : failed "<<endl;
-        return 0;
-    }
     sleep(2);
     //[3]GPS时间获取-多线程
-    DLOG(INFO) <<"start time get!";
+    LOG(INFO) << "Start time get!";
 
     pthread_t id;
     int ret = pthread_create(&id, NULL, thread, &nh);
     if(ret)
     {
-        LOG(INFO)<< "create thread  state  is:  error! ";
+        LOG(INFO)<< "create thread state is: error! ";
         return 1;
     }
 
     //publish rate
-    static int rate = 1;
+    const int rate = 1;
     ros::Rate loop_rate(rate);
 
     //cam speed
@@ -206,25 +182,23 @@ int main(int argc, char** argv)
     {
        ros::spinOnce();
        loop_rate.sleep();
+       LOG(INFO) << "camera_pg->StartCapture()";
        if(count_record == 1 && cam_gain != cam_gain_record)
        {
            camera_pg->StopCapture();
            bool tellgain = camera_pg->SetCameragain();
-           LOG(INFO)<<"cam_gain_record: " << cam_gain_record  << " changed to cam_gain: " << cam_gain;
+           LOG(INFO) << "cam_gain_record: " << cam_gain_record << " changed to cam_gain: " << cam_gain;
            if(tellgain)
            {
-               LOG(INFO)<<"cam_gain_record changed ok!!";
+               LOG(INFO) << "cam_gain_record changed OK!";
            }
            else
            {
-               LOG(INFO)<<"cam_gain_record changed faild!!";
+               LOG(INFO) << "cam_gain_record changed failed!";
            }
            camera_pg->StartCapture();
            cam_gain_record = cam_gain;
-
        }
-
-       continue;
     }
 
     return 0;

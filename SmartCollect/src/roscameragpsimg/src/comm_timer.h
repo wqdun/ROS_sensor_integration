@@ -35,7 +35,6 @@ static double string2double(const string& str);
 int set_opt(int fd, int nSpeed, int nBits, char nEvent, int nStop);
 
 int get_time(void) ;//ros::NodeHandle* nh);
-void coordtrans2wgsAndRecord(const std::string &_lon, const std::string &_lat);
 
 
 //msg to show

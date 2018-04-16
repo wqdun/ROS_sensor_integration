@@ -11,17 +11,12 @@
 #include <sstream>
 #include<ros/ros.h>
 #include<image_transport/image_transport.h>
-#define NDEBUG
-// #undef NDEBUG
-#include <glog/logging.h>
 
 #include <std_msgs/Float64.h>
 #include "roscameragpsimg/imu5651.h"
 
 using namespace std;
 using namespace cv;
-
-
 
 enum e_Grab_OpsType
 {
@@ -101,10 +96,8 @@ struct  tag_CamInfo
 		/*----------------------------------------*/
 	}
 };
+
 using namespace FlyCapture2;
-
-//////////////////////////////////////////////////////////////////////////////
-
 
 enum eCameraFormatType
 {
@@ -113,7 +106,6 @@ enum eCameraFormatType
 	eRaw8,		// PIXEL_FORMAT_RAW8
 };
 
-//
 enum eCameraPortType
 {
 	eGigE,
@@ -200,7 +192,7 @@ public:
 	//GigE接口设置
 	GigEImageSettings	m_GigimageSettings;
 	GigEImageSettingsInfo m_GigimageSettingInfo;
-	FC2Config			m_fc2Config;
+	FC2Config m_fc2Config;
 	tag_CamInfo CamInfo;
 	//相机参数
 	eCameraFormatType m_eFormatType;
@@ -213,19 +205,19 @@ public:
 	//setgain
 	Property pProp;
 
-  //图像Image;
-  Image imgConvertOut;
-  //Mat imgs;
-  //nh
-  ros::NodeHandle mnh;
-  //image publisher
-  image_transport::Publisher  pub;
-  //imu publisher
-  roscameragpsimg::imu5651 msg_imu_string;
-  ros::Publisher pub_imu_string;
-  //cam speed
-  std_msgs::Float64 msg_cam_speed;
-  ros::Publisher    pub_cam_speed;
+    //图像Image;
+    Image imgConvertOut;
+    //Mat imgs;
+    //nh
+    ros::NodeHandle mnh;
+    //image publisher
+    image_transport::Publisher  pub;
+    //imu publisher
+    roscameragpsimg::imu5651 msg_imu_string;
+    ros::Publisher pub_imu_string;
+    //cam speed
+    std_msgs::Float64 msg_cam_speed;
+    ros::Publisher    pub_cam_speed;
 
 };
 

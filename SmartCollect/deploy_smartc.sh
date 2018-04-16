@@ -427,24 +427,13 @@ install_gdal() {
     return
 }
 
-deploy_ui() {
+deploy_planlayer_dir() {
     clear
     echo "$FUNCNAME start."
     local err=0
-    sed "s/XXXXXXXX/${user}/" $absolute_script_path"/src/tools/smart_collector_ui/execlt.cpp" > execlt_new.cpp \
-        && g++ execlt_new.cpp -o SmartCollector \
-        && cp SmartCollector $HOME"/Desktop/"
-    let err+=$?
 
     local planlayer_dir=$HOME"/Desktop/Planlayer"
     mkdir -p $planlayer_dir
-
-    cp $absolute_script_path"/src/tools/task_config.json" $HOME"/Desktop/"
-    let err+=$?
-
-    mkdir -p $HOME"/.rviz/"
-    cp $absolute_script_path"/src/tools/smart_collector_ui/default.rviz" $HOME"/.rviz/"
-    let err+=$?
 
     write_result $FUNCNAME" returns "$err.
     return
@@ -475,6 +464,55 @@ roscore_startup() {
     return
 }
 
+install_tomcat() {
+    clear
+    echo "$FUNCNAME start."
+    local err=0
+
+    install_jdk
+
+    sudo tar zxvf apache-tomcat-9.0.6.tar.gz -C /opt/
+
+    # sudo sh -c echo "TOMCAT_HOME=/opt/apache-tomcat-9.0.6"  >>/opt/apache-tomcat-9.0.6/bin/startup.sh
+    # test BELOW
+    sudo /opt/apache-tomcat-9.0.6/bin/startup.sh
+    sudo /opt/apache-tomcat-9.0.6/bin/shutdown.sh
+
+    # in front of *.sh, add JAVA_HOME
+
+    sudo cp -r ${absolute_script_path}/src/web/conf
+
+}
+
+install_jdk() {
+    clear
+    echo "$FUNCNAME start."
+    local err=0
+
+    sudo mkdir -p /opt/java/
+    sudo tar zxvf jdk-8u144-linux-x64.tar.gz -C /opt/java/
+
+    echo 'export JAVA_HOME=/opt/java/jdk1.8.0_144' >>${HOME}/.bashrc
+    echo 'export JRE_HOME=${JAVA_HOME}/jre' >>${HOME}/.bashrc
+    echo 'export CLASSPATH=.:${JAVA_HOME}/lib:${JRE_HOME}/lib' >>${HOME}/.bashrc
+    echo 'export PATH=${JAVA_HOME}/bin:$PATH' >>${HOME}/.bashrc
+
+    . ${HOME}/.bashrc
+
+    java -version
+}
+
+install_rosbridge() {
+    clear && echo "$FUNCNAME start."
+    local err=0
+
+    sudo apt-get install ros-indigo-rosbridge-server
+}
+
+install_web_video_server() {
+    clear && echo "$FUNCNAME start."
+    sudo apt-get install ros-indigo-web-video-server
+}
 
 write_result() {
     echo $@ >>${result_log}
@@ -503,11 +541,15 @@ main() {
     install_sqlite3
     install_gdal
 
+    install_rosbridge
+    install_web_video_server
+    install_tomcat
+
     roscore_startup
 
     create_catkin_ws
     compile_ws
-    deploy_ui
+    deploy_planlayer_dir
 
     print_results
     return

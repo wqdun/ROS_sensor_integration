@@ -70,7 +70,7 @@ run_tomcat() {
     log_with_time "$FUNCNAME start."
     log_with_time "JRE_HOME: $JRE_HOME"
 
-    export JAVA_HOME=/opt/jvm/java
+    export JAVA_HOME=/opt/java/jdk1.8.0_144
     export JRE_HOME=${JAVA_HOME}/jre
     export CLASSPATH=.:${JAVA_HOME}/lib:${JRE_HOME}/lib
     export PATH=${JAVA_HOME}/bin:$PATH

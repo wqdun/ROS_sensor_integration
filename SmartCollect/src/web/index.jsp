@@ -95,7 +95,7 @@
         </div>
         <div class="modal-footer">
           <button type="button" class="btn btn-default" data-dismiss="modal">
-            关闭
+            取消
           </button>
           <button type="button" class="btn btn-primary" onclick="createProject();" data-dismiss="modal">
             提交
@@ -122,7 +122,7 @@
         </div>
         <div class="modal-footer">
           <button type="button" class="btn btn-default" data-dismiss="modal">
-            关闭
+            取消
           </button>
           <button type="button" class="btn btn-primary" data-dismiss="modal" id="cmtBtn">
             提交
@@ -212,7 +212,9 @@
                     </div>
                     <br/>
                     <div class="form-actions">
-
+                      <button class="btn btn-inverse" id="fixData" data-toggle="modal"
+                          data-target="#optModal">整理数据
+                      </button>
                       <button class="btn btn-inverse" id="reboot" data-toggle="modal"
                           data-target="#optModal">重启
                       </button>

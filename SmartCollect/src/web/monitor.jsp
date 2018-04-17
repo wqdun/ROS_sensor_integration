@@ -96,7 +96,7 @@
               <h3>相机</h3>
             </div>
             <div class="widget-content">
-              <img src="http://<%=ip%>:8080/stream?topic=/camera/image" alt="http://<%=ip%>:8080/stream?topic=/camera/image">
+              <img src="http://<%=ip%>:8080/stream?topic=/camera/image" height="100%" width="100%" alt="http://<%=ip%>:8080/stream?topic=/camera/image">
               <table class="table table-bordered table-striped">
                 <thead>
                 <tr >

@@ -369,6 +369,7 @@ bool CPGCamera::StartCapture()
     error = m_pCamera->StartCapture(XferCallBack, this);
     if (error != PGRERROR_OK)
     {
+        LOG(ERROR) << error.GetFilename() << ":" << error.GetLine() << ":" << error.GetDescription();
         error.PrintErrorTrace();
         return false;
     }
@@ -415,9 +416,11 @@ int show_state         = 1;
 void CPGCamera::XferCallBack(Image* pImages, const void *pCallBackData)
 {
     DLOG(INFO) << __FUNCTION__ << " start.";
+    ++show_state;
+    show_state %= 8;
 
     ros::Time begin = ros::Time::now();
-    double    time  = begin.toSec();
+    double time  = begin.toSec();
     CPGCamera *pThis = (CPGCamera*)pCallBackData;
 
     FlyCapture2::Image convertedImage;
@@ -436,7 +439,7 @@ void CPGCamera::XferCallBack(Image* pImages, const void *pCallBackData)
     {
         double cam_time = curTime_record - preTime_record;
         cam_time = abs(cam_time - 0.4)< 0 ? 1 : cam_time;
-        cam_fps      = (double)1.0/(double)cam_time;
+        cam_fps = (double)1.0/(double)cam_time;
         preTime_record = curTime_record;
     }
 
@@ -447,39 +450,34 @@ void CPGCamera::XferCallBack(Image* pImages, const void *pCallBackData)
     string gps_str = "--";
     int ret = mymutex.Lock();
 
-    DLOG(INFO)<<"trylock result: "<<ret;
-    if(ret!=0)
+    DLOG(INFO) << "trylock result: " << ret;
+    if(ret != 0)
     {
+        DLOG(WARNING) << "Failed to trylock, result: " << ret;
         return ;
     }
 
-
-    if(ret==0 && parsed_data.size() >= 17 && global_gps.size()>2 && global_gps.size()<20)
+    if(parsed_data.size() >= 17 && global_gps.size() > 2 && global_gps.size() < 20)
     {
         gps_str = global_gps;
         time_state = 0;
     }
     else
     {
-        DLOG(INFO)<<"time_global_gps_str: "<<global_gps;
+        LOG(WARNING) << "GPSweek time error: " << global_gps << "; using system time: " << seconds_str;
         gps_str = seconds_str;
         time_state = 1;
     }
-    if(ret==0)
-    {
-        int retUnlock = mymutex.Unlock();
 
-        DLOG(INFO)<<"unlock result: "<<retUnlock;
-    }
+    int retUnlock = mymutex.Unlock();
+    DLOG(INFO) << "unlock result: " << retUnlock;
 
     double gps_str_db = 0.0 ;
     stringstream ss;
-    ss<<gps_str;
-    ss>>gps_str_db;
-    gps_str_db = fmod(gps_str_db,3600*24);
-
+    ss << gps_str;
+    ss >> gps_str_db;
+    gps_str_db = fmod(gps_str_db, 3600 * 24);
     gps_str = std::to_string(gps_str_db);
-
     gps_str = time_state ? "sys" + gps_str : gps_str;
     DLOG(INFO)<<"time_str: "<<gps_str;
 
@@ -487,13 +485,11 @@ void CPGCamera::XferCallBack(Image* pImages, const void *pCallBackData)
     {
         case 0://jpg
         {
-            //save image in jpg format
-            show_state++;
-            string gps_str_jpg =pathSave_str + gps_str + ".jpg";
-            const char* pathout_gps_jpg_c    = gps_str_jpg.c_str();
-            if(pathout_gps_jpg_c==NULL)
+            string gps_str_jpg = pathSave_str + gps_str + ".jpg";
+            const char* pathout_gps_jpg_c = gps_str_jpg.c_str();
+            if(pathout_gps_jpg_c == NULL)
             {
-               DLOG(INFO)<<"xcallback: pathout_gps_jgp_c is NULL!";
+               DLOG(INFO) << "xcallback: pathout_gps_jgp_c is NULL!";
                break;
             }
 
@@ -501,42 +497,36 @@ void CPGCamera::XferCallBack(Image* pImages, const void *pCallBackData)
             error = pImage.Convert( PIXEL_FORMAT_BGR, &convertedImage);
             if(error != PGRERROR_OK)
             {
-                DLOG(INFO)<<"xcallback: pImage.Convert error!";
+                DLOG(INFO) << "xcallback: pImage.Convert error!";
                 break ;
             }
-            int bits  = pImage.GetBitsPerPixel();
+            int bits = pImage.GetBitsPerPixel();
 
             if(is_save_cam && bits == 8)
             {
                 FlyCapture2::JPEGOption jpgoption;
 
-                error = convertedImage.Save(pathout_gps_jpg_c,&jpgoption);
-
+                error = convertedImage.Save(pathout_gps_jpg_c, &jpgoption);
                 if(error != PGRERROR_OK)
                 {
-                    DLOG(INFO)<<"save image jpg error! "<<endl;
+                    LOG(WARNING) << "Save image jpg error!";
                     break;
                 }
-
             }
-            if(show_state%5==0)
-            {
-                show_state = 1;
-            }
-            else
+            if(0 != show_state)
             {
                 break;
             }
-            bool matConbool =  pThis->ConvertImage(&img,&convertedImage);
+            bool matConbool = pThis->ConvertImage(&img, &convertedImage);
             Mat matImageDown;
-            cv::resize(img, matImageDown, cv::Size(1920/3,1200/3));
-            DLOG(INFO)<<"xcallback  matConvert state: "<<matConbool;
+            cv::resize(img, matImageDown, cv::Size(1920 / 5, 1200 / 5));
+            LOG(INFO) << "Publish a image, matConvert state: " << matConbool;
             if(matConbool)
             {
-                sensor_msgs::ImagePtr msg_img=cv_bridge::CvImage(std_msgs::Header(),"bgr8",matImageDown).toImageMsg();
+                sensor_msgs::ImagePtr msg_img = cv_bridge::CvImage(std_msgs::Header(), "bgr8", matImageDown).toImageMsg();
                 if(NULL == msg_img)
                 {
-                    DLOG(INFO) << "[ERROR] msg_img is null.\n";
+                    LOG(WARNING) << "Failed to transfer to sensor_msgs::Image, msg_img is null.";
                     break;
                 }
                 pThis->pub.publish(msg_img);
@@ -544,9 +534,8 @@ void CPGCamera::XferCallBack(Image* pImages, const void *pCallBackData)
             //save image
             if(is_save_cam && bits == 24)
             {
-                imwrite(pathout_gps_jpg_c,img);
+                imwrite(pathout_gps_jpg_c, img);
             }
-            //DLOG(INFO)<<__FUNCTION__ << " save.";
             break;
         }
         case 1: //raw
@@ -605,7 +594,6 @@ void CPGCamera::XferCallBack(Image* pImages, const void *pCallBackData)
         }
         default:
         {
-
             DLOG(INFO)<<"the format is not surported!";
             break ;
         }
@@ -632,6 +620,7 @@ cv::Mat CPGCamera::GetmatImage(void)
 {
 
 }
+
 bool CPGCamera::ConvertImage(cv::Mat* matImage, Image* image)
 {
     int rows = matImage->rows;

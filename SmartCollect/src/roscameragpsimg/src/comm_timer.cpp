@@ -215,7 +215,7 @@ int get_time(/*ros::NodeHandle* nh*/)
 
             if(is_frame_completed)
             {
-                file.open(imupath_str,ios::out|ios::app);
+                file.open(imupath_str, ios::out|ios::app);
                 if(!file)
                 {
                     LOG(ERROR) << "Failed to open " << imupath_str;
@@ -229,7 +229,7 @@ int get_time(/*ros::NodeHandle* nh*/)
                 DLOG(INFO) << "get_time lock result: " << ret;
                 if(0 != ret)
                 {
-                    LOG(ERROR) << "Failed to tryLock, return result: " << ret;
+                    LOG(WARNING) << "Trylock, return ret:" << ret;
                     continue;
                 }
 
@@ -275,7 +275,6 @@ int get_time(/*ros::NodeHandle* nh*/)
         timespec time_sys_end, time_sys_start;
         double time_difference;
 
-
         if(pre_time_gps != GPS_week_time_str_cur)
         {
                 pre_time_gps = GPS_week_time_str_cur;
@@ -300,12 +299,12 @@ int get_time(/*ros::NodeHandle* nh*/)
             time_difference = time_s_end - time_s_start;
 
             double GPS_week_times = string2double(GPS_week_time_str_cur);
-            GPS_week_times        =  GPS_week_times + time_difference;
+            GPS_week_times = GPS_week_times + time_difference;
 
             int ret = mymutex.Trylock();
             if(ret != 0)
             {
-               LOG(ERROR) << "Faild to trylock, return ret:" << ret;
+               LOG(WARNING) << "Trylock, return ret:" << ret;
                continue;
             }
 

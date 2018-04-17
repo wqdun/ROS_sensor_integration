@@ -52,7 +52,7 @@ int count_record = 0;
 
 //format control
 string format_str;
-int    format_int;
+int format_int;
 
 //path control
 string pathSave_str = "";
@@ -129,7 +129,7 @@ int main(int argc, char** argv)
     int ImageWidth = 1920;
     int ImageHeight= 1200;
     CPGCamera *camera_pg = NULL;
-    LOG(INFO) << "before init camera !";
+    LOG(INFO) << "Before init camera!";
     camera_pg = new CPGCamera(ImageWidth, ImageHeight, nh);
     if(NULL == camera_pg)
     {
@@ -150,7 +150,7 @@ int main(int argc, char** argv)
     ---------------------------------------*/
     const int m_CameraID = 0;
     bool caminit = camera_pg->InitCamera(m_CameraID);
-    LOG(INFO) << "Open state: " << caminit;
+    LOG(INFO) << "Open state: " << std::boolalpha << caminit;
     if(!caminit)
     {
         LOG(ERROR) << "Failed to InitCamera.";

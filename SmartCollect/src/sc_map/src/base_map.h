@@ -1,57 +1,32 @@
-#ifndef MIF_READ_H
-#define MIF_READ_H
+#ifndef __BASE_MAP_H__
+#define __BASE_MAP_H__
 
 #include <ros/ros.h>
-#include <visualization_msgs/MarkerArray.h>
-#include <fstream>
-#include <sstream>
-#include <iomanip>
-#include <sqlite3.h>
-#include <string>
-using std::string;
-using std::stoi;
-#include <vector>
-using std::vector;
-#include <dirent.h>
-#include <bitset>
-#include <boost/algorithm/string/classification.hpp>
-#include <boost/algorithm/string/split.hpp>
-
+#include <sc_msgs/Lines2D.h>
+// GDAL library
+#include <gdal.h>
+#include <gdal_alg.h>
+#include <cpl_conv.h>
+#include <cpl_port.h>
+#include <cpl_multiproc.h>
+#include <ogr_srs_api.h>
+#include <ogrsf_frmts.h>
+// GDAL library END
 #include "../../sc_lib_public_tools/src/public_tools.h"
-#include "../../sc_lib_public_tools/src/coordtrans.h"
-#include "sc_server_daemon/monitorMsg.h"
-#include "MortonCodecTransJava.h"
-#include "display_track.h"
-#include "display_plan_layer.h"
-#include <pwd.h>
 
-static public_tools::geoLines_t gAbsLines;
-
-
-class MyViz;
-class MifReader {
-
+class BaseMap {
 public:
-    MifReader(ros::NodeHandle nh, ros::NodeHandle private_nh);
-    ~MifReader();
-    void run(const MyViz * const pMyViz);
+    BaseMap(ros::NodeHandle nh, ros::NodeHandle private_nh);
+    ~BaseMap();
+    void run();
 
 
 private:
-    void readFile(const string &file);
-    void gpsCallback(const sc_server_daemon::monitorMsg::ConstPtr& pGpsMsg);
-    void initMarker(visualization_msgs::Marker &marker, const size_t id);
+    void getLines(const std::string &_shpFile);
 
-    ros::Subscriber mSubGps;
-    ros::Publisher mPubArray;
-    geometry_msgs::Point mCurrentWGS;
-    string mMifPath;
-    vector<int> mTileList;
-    visualization_msgs::MarkerArray mLineArray;
-    bool mIsInSameMesh;
-    TrackDisplayer *mpTrackDisplayer;
-    PlanLayerDisplayer *pPlanLayerDisplayer_;
-    double mifScaleRatio_;
+    sc_msgs::Lines2D baseMapLines_;
+    ros::Publisher pubBaseMap_;
 };
 
 #endif
+

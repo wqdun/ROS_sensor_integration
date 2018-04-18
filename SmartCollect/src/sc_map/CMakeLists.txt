@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 2.8.3)
-project(display_had)
+project(sc_map)
 
 ## Compile as C++11, supported in ROS Kinetic and newer
 add_compile_options(-std=c++11)
@@ -10,13 +10,8 @@ add_compile_options(-std=c++11)
 find_package(catkin REQUIRED COMPONENTS
   roscpp
   std_msgs
-  sc_center
+  sc_msgs
 )
-
-find_package(Qt4 COMPONENTS QtCore QtGui REQUIRED)
-include(${QT_USE_FILE})
-
-add_definitions(-DQT_NO_KEYWORDS)
 
 ## System dependencies are found with CMake's conventions
 # find_package(Boost REQUIRED COMPONENTS system)
@@ -108,10 +103,10 @@ add_definitions(-DQT_NO_KEYWORDS)
 ## CATKIN_DEPENDS: catkin_packages dependent projects also need
 ## DEPENDS: system dependencies of this project that dependent projects also need
 catkin_package(
- INCLUDE_DIRS include
- LIBRARIES display_had
- CATKIN_DEPENDS roscpp std_msgs
- DEPENDS system_lib
+#  INCLUDE_DIRS include
+#  LIBRARIES sc_map
+#  CATKIN_DEPENDS roscpp std_msgs
+#  DEPENDS system_lib
 )
 
 ###########
@@ -122,12 +117,13 @@ catkin_package(
 ## Your package locations should be listed before other locations
 include_directories(
 # include
-  ../../devel/include
   ${catkin_INCLUDE_DIRS}
 )
 
 ## Declare a C++ library
-add_library(${PROJECT_NAME} src/mif_read.cpp src/MortonCodecTransJava.cpp src/display_track.cpp src/display_plan_layer.cpp)
+# add_library(${PROJECT_NAME}
+#   src/${PROJECT_NAME}/sc_map.cpp
+# )
 
 ## Add cmake target dependencies of the library
 ## as an example, code may need to be generated before libraries
@@ -137,7 +133,7 @@ add_library(${PROJECT_NAME} src/mif_read.cpp src/MortonCodecTransJava.cpp src/di
 ## Declare a C++ executable
 ## With catkin_make all packages are built within a single CMake context
 ## The recommended prefix ensures that target names across packages don't collide
-# add_executable(${PROJECT_NAME}_node src/display_had_node.cpp src/mif_read.cpp src/MortonCodecTransJava.cpp src/display_track.cpp src/display_plan_layer.cpp)
+add_executable(${PROJECT_NAME}_node src/sc_map_node.cpp src/base_map.cpp)
 
 ## Rename C++ executable without prefix
 ## The above recommended prefix causes long target names, the following renames the
@@ -150,20 +146,10 @@ add_library(${PROJECT_NAME} src/mif_read.cpp src/MortonCodecTransJava.cpp src/di
 # add_dependencies(${PROJECT_NAME}_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
 ## Specify libraries to link a library or executable target against
-# target_link_libraries(
-#   ${PROJECT_NAME}_node
-#   ${catkin_LIBRARIES}
-#   glog
-#   sqlite3
-#   gdal
-#   sc_lib_public_tools
-# )
-target_link_libraries(
-  ${PROJECT_NAME}
+target_link_libraries(${PROJECT_NAME}_node
   ${catkin_LIBRARIES}
-  glog
-  sqlite3
   gdal
+  glog
   sc_lib_public_tools
 )
 
@@ -207,7 +193,7 @@ target_link_libraries(
 #############
 
 ## Add gtest based cpp test target and link libraries
-# catkin_add_gtest(${PROJECT_NAME}-test test/test_display_had.cpp)
+# catkin_add_gtest(${PROJECT_NAME}-test test/test_sc_map.cpp)
 # if(TARGET ${PROJECT_NAME}-test)
 #   target_link_libraries(${PROJECT_NAME}-test ${PROJECT_NAME})
 # endif()

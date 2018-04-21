@@ -63,6 +63,18 @@ run_sc_server_daemon_node() {
         log_with_time "[ERROR] Failed to find sc_server_daemon_node."
     fi
 
+    if [ -f "/opt/smartc/devel/lib/sc_file_monitor/sc_file_monitor_node" ]; then
+        /opt/smartc/devel/lib/sc_file_monitor/sc_file_monitor_node &
+    else
+        log_with_time "[ERROR] Failed to find sc_file_monitor_node."
+    fi
+
+    if [ -f "/opt/smartc/devel/lib/sc_map/sc_map_node" ]; then
+        /opt/smartc/devel/lib/sc_map/sc_map_node &
+    else
+        log_with_time "[ERROR] Failed to find sc_map_node."
+    fi
+
     log_with_time "$FUNCNAME return $?."
 }
 
@@ -104,6 +116,28 @@ run_rosbridge() {
     . /opt/ros/indigo/setup.bash
     /opt/ros/indigo/lib/web_video_server/web_video_server >>$result_log 2>&1 &
     sleep 1
+    log_with_time "$FUNCNAME return $?."
+}
+
+run_minemap_service() {
+    log_with_time "$FUNCNAME start."
+
+    service redis start >>$result_log 2>&1
+    service postgresql start >>$result_log 2>&1
+    service nginx start >>$result_log 2>&1
+    (
+        log_with_time "Run authorization script."
+        cd /data/minemap/program/minemap-business/authorization/ && ./start.sh
+        sleep 1
+
+        log_with_time "Run minemap-data script."
+        cd /data/minemap/program/minemap-data/ && ./start.sh
+        sleep 1
+
+        log_with_time "Run minemap-business script."
+        export PATH=/opt/ros/indigo/bin:/data/minemap/program/postgres/bin:/opt/java/jdk1.8.0_144/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games
+        cd /data/minemap/program/minemap-business/minemap/ && ./start.sh
+    )
     log_with_time "$FUNCNAME return $?."
 }
 
@@ -158,6 +192,8 @@ do_start() {
     mount_data_disk
     sleep 1
     set_camera_mtu
+    sleep 1
+    run_minemap_service
 
     log_with_time "$FUNCNAME return $?."
 }

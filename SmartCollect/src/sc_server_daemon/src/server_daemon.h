@@ -3,10 +3,10 @@
 
 #include <ros/ros.h>
 #include <std_msgs/Float64.h>
-#include "sc_server_daemon/clientCmd.h"
-#include "sc_server_daemon/serverMsg.h"
-#include "sc_server_daemon/monitorMsg.h"
-#include "sc_server_daemon/projectInfoMsg.h"
+#include "sc_msgs/ClientCmd.h"
+#include "sc_msgs/ServerMsg.h"
+#include "sc_msgs/MonitorMsg.h"
+#include "sc_msgs/ProjectInfoMsg.h"
 #include "roscameragpsimg/imu5651.h"
 #include "velodyne_msgs/Velodyne2Center.h"
 #include "sc_integrate_imu_recorder/scIntegrateImu.h"
@@ -32,9 +32,9 @@ private:
 
     ros::Publisher pub2broswer_;
 
-    sc_server_daemon::nodeParams nodeParams_;
-    sc_server_daemon::monitorMsg monitorMsg_;
-    sc_server_daemon::projectInfoMsg projectInfoMsg_;
+    sc_msgs::NodeParams nodeParams_;
+    sc_msgs::MonitorMsg monitorMsg_;
+    sc_msgs::ProjectInfoMsg projectInfoMsg_;
 
     double mGpsTime[2];
     const std::string PPS_STATUS[4] {
@@ -42,7 +42,7 @@ private:
     };
 
 
-    void clientCB(const sc_server_daemon::clientCmd::ConstPtr& pClientMsg);
+    void clientCB(const sc_msgs::ClientCmd::ConstPtr& pClientMsg);
 
     bool isGpsUpdated_, isVelodyneUpdated_, isRawImuUpdated_, isCameraUpdated_;
     void gpsCB(const roscameragpsimg::imu5651::ConstPtr& pGPSmsg);

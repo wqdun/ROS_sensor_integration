@@ -6,10 +6,10 @@
 ServerDaemon::ServerDaemon(ros::NodeHandle nh, ros::NodeHandle private_nh) {
     // below for SC control
     subClient_ = nh.subscribe("sc_client_cmd", 10, &ServerDaemon::clientCB, this);
-    pub2scNodes_ = nh.advertise<sc_server_daemon::nodeParams>("sc_node_params", 10);
+    pub2scNodes_ = nh.advertise<sc_msgs::NodeParams>("sc_node_params", 10);
     nodeParams_.is_record = 0;
     nodeParams_.cam_gain = 20;
-    pub2broswer_ = nh.advertise<sc_server_daemon::projectInfoMsg>("sc_project_info", 10);
+    pub2broswer_ = nh.advertise<sc_msgs::ProjectInfoMsg>("sc_project_info", 10);
 
     // below for composing monitor data
     isGpsUpdated_ = isVelodyneUpdated_ = isRawImuUpdated_ = isCameraUpdated_ = false;
@@ -17,7 +17,7 @@ ServerDaemon::ServerDaemon(ros::NodeHandle nh, ros::NodeHandle private_nh) {
     subVelodyne_ = nh.subscribe("velodyne_pps_status", 0, &ServerDaemon::velodyneCB, this);
     sub422_ = nh.subscribe("imu422_hdop", 0, &ServerDaemon::rawImuCB, this);
     subCameraImg_ = nh.subscribe("cam_speed", 0, &ServerDaemon::cameraImgCB, this);
-    pub2client_ = nh.advertise<sc_server_daemon::monitorMsg>("sc_monitor", 0);
+    pub2client_ = nh.advertise<sc_msgs::MonitorMsg>("sc_monitor", 0);
     mGpsTime[0] = mGpsTime[1] = -1;
 }
 
@@ -123,7 +123,7 @@ void ServerDaemon::gpsCB(const roscameragpsimg::imu5651::ConstPtr& pGPSmsg) {
     isGpsUpdated_ = true;
 
     monitorMsg_.GPStime = mGpsTime[1];
-    sc_server_daemon::point3D p;
+    sc_msgs::Point3D p;
     // lat: 1 degree is about 100000 m
     p.x = public_tools::PublicTools::string2num(pGPSmsg->Latitude, -1.0);
     // lon: 1 degree is about 100000 m
@@ -151,46 +151,77 @@ void ServerDaemon::gpsCB(const roscameragpsimg::imu5651::ConstPtr& pGPSmsg) {
     monitorMsg_.nsv2_num = public_tools::PublicTools::string2num(pGPSmsg->NSV2_num, -1);
 }
 
-void ServerDaemon::clientCB(const sc_server_daemon::clientCmd::ConstPtr& pClientMsg) {
-    DLOG(INFO) << __FUNCTION__ << " start, client command: " << pClientMsg->project_name;
+void ServerDaemon::clientCB(const sc_msgs::ClientCmd::ConstPtr& pClientMsg) {
+    DLOG(INFO) << __FUNCTION__ << " start, client command: " << (int)(pClientMsg->system_cmd);
 
-    // shutdown
-    if(1 == pClientMsg->system_cmd) {
-        (void)public_tools::PublicTools::runShellCmd("halt -p");
-        return;
-    }
-    // reboot
-    if(2 == pClientMsg->system_cmd) {
-        (void)public_tools::PublicTools::runShellCmd("reboot");
-        return;
-    }
-    // cleanup server processes
-    if(3 == pClientMsg->system_cmd) {
-        (void)updateprojectInfoMsg("");
-        // add a "true" to avoid exit
-        (void)public_tools::PublicTools::runShellCmd("pkill sc_integrate_; pkill roscameragps; killall nodelet; true");
-        return;
+    switch(pClientMsg->system_cmd) {
+        case 0: {
+            if(pClientMsg->project_name.empty() ) {
+                LOG(INFO) << "Empty project name, gonna update is_record and cam_gain.";
+                nodeParams_.is_record = pClientMsg->node_params.is_record;
+                nodeParams_.cam_gain = pClientMsg->node_params.cam_gain;
+            }
+            else {
+                LOG(INFO) << "New project name received, gonna create project: " << pClientMsg->project_name;
+                (void)updateprojectInfoMsg(pClientMsg->project_name);
+                const std::string launchScript("/opt/smartc/src/tools/launch_project.sh");
+                if(!(public_tools::PublicTools::isFileExist(launchScript) ) ) {
+                    LOG(ERROR) << launchScript << " does not exist.";
+                    exit(1);
+                }
+                LOG(INFO) << "launchScript: " << launchScript;
+                (void)public_tools::PublicTools::runShellCmd("bash " + launchScript + " server " + pClientMsg->project_name);
+            }
+
+            break;
+        }
+        case 1: {
+            LOG(INFO) << "I am gonna shutdown.";
+            (void)public_tools::PublicTools::runShellCmd("halt -p");
+            break;
+        }
+        case 2: {
+            LOG(INFO) << "I am gonna reboot.";
+            (void)public_tools::PublicTools::runShellCmd("reboot");
+            break;
+        }
+        case 3: {
+            LOG(INFO) << "I am gonna cleanup server processes.";
+            (void)updateprojectInfoMsg("");
+            // add a "true" to avoid exit
+            (void)public_tools::PublicTools::runShellCmd("pkill sc_integrate_; pkill roscameragps; killall nodelet; true");
+            break;
+        }
+        case 4: {
+            LOG(INFO) << "I am gonna fix projects data.";
+            const std::string launchScript("/opt/smartc/src/tools/launch_project.sh");
+            if(!(public_tools::PublicTools::isFileExist(launchScript) ) ) {
+                LOG(ERROR) << launchScript << " does not exist.";
+                exit(1);
+            }
+            LOG(INFO) << "launchScript: " << launchScript;
+            LOG(INFO) << ("bash " + launchScript + " xiaobo " + std::to_string(pClientMsg->project_arr.projects.size()) );
+            // (void)public_tools::PublicTools::runShellCmd("bash " + launchScript + " server " + pClientMsg->project_name);
+            break;
+        }
+        case 5: {
+            LOG(INFO) << "I am gonna remove projects data.";
+            (void)updateprojectInfoMsg(pClientMsg->project_name);
+            const std::string launchScript("/opt/smartc/src/tools/launch_project.sh");
+            if(!(public_tools::PublicTools::isFileExist(launchScript) ) ) {
+                LOG(ERROR) << launchScript << " does not exist.";
+                exit(1);
+            }
+            LOG(INFO) << "launchScript: " << launchScript;
+            LOG(INFO) << ("bash " + launchScript + " xiaobo " + std::to_string(pClientMsg->project_arr.projects.size()) );
+            // (void)public_tools::PublicTools::runShellCmd("bash " + launchScript + " server " + pClientMsg->project_name);
+            break;
+        }
+         default: {
+            LOG(ERROR) << "Client command: " << pClientMsg->system_cmd;
+         }
     }
 
-    // system_cmd is 0
-    if(pClientMsg->project_name.empty() ) {
-        LOG(INFO) << "Empty project name: update is_record and cam_gain.";
-        nodeParams_.is_record = pClientMsg->node_params.is_record;
-        nodeParams_.cam_gain = pClientMsg->node_params.cam_gain;
-        return;
-    }
-    // system_cmd is 0 && new project name received
-    LOG(INFO) << "Project name: " << pClientMsg->project_name;
-    (void)updateprojectInfoMsg(pClientMsg->project_name);
-
-    const std::string launchScript("/opt/smartc/src/tools/launch_project.sh");
-    if(!(public_tools::PublicTools::isFileExist(launchScript) ) ) {
-        LOG(ERROR) << launchScript << " does not exist.";
-        exit(1);
-    }
-    LOG(INFO) << "launchScript: " << launchScript;
-
-    (void)public_tools::PublicTools::runShellCmd("bash " + launchScript + " server " + pClientMsg->project_name);
     return;
 }
 

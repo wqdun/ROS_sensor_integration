@@ -102,8 +102,8 @@ void PublicTools::getFilesInDir(const std::string &baseDir, const std::string &k
 
     // if dir == NULL
     if( !(dir = opendir(baseDir.c_str())) ) {
-        LOG(ERROR) << "Failed to open " << baseDir;
-        exit(1);
+        LOG(WARNING) << "Failed to open " << baseDir;
+        return;
     }
 
     // while ptr != NULL

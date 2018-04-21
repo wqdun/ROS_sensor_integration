@@ -23,7 +23,7 @@
 #include <std_msgs/Int64.h>
 #include <std_msgs/String.h>
 #include "PGCamera.h"
-#include <sc_server_daemon/nodeParams.h>
+#include <sc_msgs/NodeParams.h>
 
 // #define NDEBUG
 #undef NDEBUG
@@ -71,7 +71,7 @@ void *thread(void *ptr)
 }
 
 //save controll callback
-void sub_save_cam_callback(const sc_server_daemon::nodeParams::ConstPtr& pClientMsg)
+void sub_save_cam_callback(const sc_msgs::NodeParams::ConstPtr& pClientMsg)
 {
     DLOG(INFO) << __FUNCTION__ << " start, is_record Camera: " << (int)(pClientMsg->is_record);
     is_save_cam = pClientMsg->is_record;

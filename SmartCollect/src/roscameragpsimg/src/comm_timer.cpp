@@ -229,7 +229,7 @@ int get_time(/*ros::NodeHandle* nh*/)
                 DLOG(INFO) << "get_time lock result: " << ret;
                 if(0 != ret)
                 {
-                    LOG(WARNING) << "Trylock, return ret:" << ret;
+                    LOG(WARNING) << "Failed to tryLock, return result: " << ret;
                     continue;
                 }
 
@@ -304,7 +304,7 @@ int get_time(/*ros::NodeHandle* nh*/)
             int ret = mymutex.Trylock();
             if(ret != 0)
             {
-               LOG(WARNING) << "Trylock, return ret:" << ret;
+               LOG(WARNING) << "Faild to trylock, return ret:" << ret;
                continue;
             }
 

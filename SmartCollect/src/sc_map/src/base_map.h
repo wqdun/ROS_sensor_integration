@@ -22,10 +22,12 @@ public:
 
 
 private:
-    void getLines(const std::string &_shpFile);
+    void getLines(const std::string &_shpFile, sc_msgs::Lines2D &_lines);
 
-    sc_msgs::Lines2D baseMapLines_;
     ros::Publisher pubBaseMap_;
+    ros::Publisher pubPlanMap_;
+    sc_msgs::Lines2D baseMapLines_;
+    sc_msgs::Lines2D planMapLines_;
 };
 
 #endif

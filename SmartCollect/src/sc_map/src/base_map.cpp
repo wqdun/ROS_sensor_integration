@@ -7,24 +7,35 @@ BaseMap::BaseMap(ros::NodeHandle nh, ros::NodeHandle private_nh) {
     LOG(INFO) << __FUNCTION__ << " start.";
 
     pubBaseMap_ = nh.advertise<sc_msgs::Lines2D>("sc_base_map", 0);
+    pubPlanMap_ = nh.advertise<sc_msgs::Lines2D>("sc_plan_map", 0);
 
     const std::string exePath(public_tools::PublicTools::safeReadlink("/proc/self/exe") );
     LOG(INFO) << "Node path: " << exePath;
     const std::string smartcPath(exePath.substr(0, exePath.find("/devel/") ) );
     LOG(INFO) << "Get SmartCollector path: " << smartcPath;
+
     const std::string baseMapPath(smartcPath + "/data/BaseMap/");
     std::vector<std::string> baseMapFiles;
     (void)public_tools::PublicTools::getFilesInDir(baseMapPath, ".kml", baseMapFiles);
     if(1 != baseMapFiles.size() ) {
-        LOG(ERROR) << "Got " << baseMapFiles.size() << " baseMapFiles in " << baseMapPath << ", should be 1.";
-        exit(1);
+        LOG(WARNING) << "Got " << baseMapFiles.size() << " baseMapFiles in " << baseMapPath << ", should be 1.";
     }
-    const std::string baseMapFile(baseMapFiles[0]);
+    else {
+        (void)getLines(baseMapFiles[0], baseMapLines_);
+    }
 
-    (void)getLines(baseMapFile);
+    const std::string planMapPath(smartcPath + "/data/PlanLayer/");
+    std::vector<std::string> planMapFiles;
+    (void)public_tools::PublicTools::getFilesInDir(planMapPath, ".kml", planMapFiles);
+    if(1 != planMapFiles.size() ) {
+        LOG(WARNING) << "Got " << planMapFiles.size() << " planMapFiles in " << planMapPath << ", should be 1.";
+    }
+    else {
+        (void)getLines(planMapFiles[0], planMapLines_);
+    }
 }
 
-void BaseMap::getLines(const std::string &_shpFile) {
+void BaseMap::getLines(const std::string &_shpFile, sc_msgs::Lines2D &_lines) {
     LOG(INFO) << __FUNCTION__ << " start, reading " << _shpFile;
 
     GDALAllRegister();
@@ -51,7 +62,7 @@ void BaseMap::getLines(const std::string &_shpFile) {
     GIntBig featureCnt = 0;
     OGRFeature *poFeature;
     poLayer->ResetReading();
-    baseMapLines_.lines2D.clear();
+    _lines.lines2D.clear();
     sc_msgs::Line2D baseMapLine;
     sc_msgs::Point2D lngLat;
     while(NULL != (poFeature = poLayer->GetNextFeature() ) ) {
@@ -78,13 +89,13 @@ void BaseMap::getLines(const std::string &_shpFile) {
             DLOG(INFO) << std::fixed << "longitude: " << lngLat.x << "; latitude: " << lngLat.y;
             baseMapLine.line2D.push_back(lngLat);
         }
-        baseMapLines_.lines2D.push_back(baseMapLine);
+        _lines.lines2D.push_back(baseMapLine);
         ++featureCnt;
         OGRFeature::DestroyFeature(poFeature);
     }
     GDALClose(poDS);
 
-    LOG(INFO) << "Got " << featureCnt << " lines; baseMapLines_.lines2D.size(): " << baseMapLines_.lines2D.size();
+    LOG(INFO) << "Got " << featureCnt << " lines; _lines.lines2D.size(): " << _lines.lines2D.size();
 }
 
 BaseMap::~BaseMap() {
@@ -101,6 +112,7 @@ void BaseMap::run() {
         rate.sleep();
 
         pubBaseMap_.publish(baseMapLines_);
+        pubPlanMap_.publish(planMapLines_);
     }
 
     LOG(INFO) << __FUNCTION__ << " end.";

@@ -120,6 +120,8 @@ include_directories(
   ${catkin_INCLUDE_DIRS}
 )
 
+
+
 ## Declare a C++ library
 # add_library(${PROJECT_NAME}
 #   src/${PROJECT_NAME}/sc_map.cpp
@@ -145,10 +147,18 @@ add_executable(${PROJECT_NAME}_node src/sc_map_node.cpp src/base_map.cpp)
 ## same as for the library above
 # add_dependencies(${PROJECT_NAME}_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
+# link_directories(
+#   /usr/local/lib/
+# )
+
+# link_libraries(
+#     "/usr/local/lib/libgdal.so"
+# )
+
 ## Specify libraries to link a library or executable target against
 target_link_libraries(${PROJECT_NAME}_node
   ${catkin_LIBRARIES}
-  gdal
+  /usr/local/lib/libgdal.so
   glog
   sc_lib_public_tools
 )

@@ -51,6 +51,14 @@ add_message_files(
   Point2D.msg
   Line2D.msg
   Lines2D.msg
+  ProjectArr.msg
+  FixDataCmd.msg
+  MonitorMsg.msg
+  NodeParams.msg
+  Point3D.msg
+  ProjectInfoMsg.msg
+  ServerMsg.msg
+  ClientCmd.msg
 )
 
 ## Generate services in the 'srv' folder

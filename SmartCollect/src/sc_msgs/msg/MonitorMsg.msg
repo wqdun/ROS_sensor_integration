@@ -1,8 +1,8 @@
 # below from RS232
 
 float64 GPStime
-point3D lat_lon_hei
-point3D pitch_roll_heading
+Point3D lat_lon_hei
+Point3D pitch_roll_heading
 float64 speed
 int32 nsv1_num
 int32 nsv2_num

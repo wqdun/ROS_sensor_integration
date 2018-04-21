@@ -83,8 +83,8 @@
               <h3>地图</h3>
             </div>
             <div class="widget-content">
-              <iframe src="include/map.html" frameborder="0" scrolling="no" id="maplayer"
-                onload="this.height=450;this.width=500"></iframe>
+              <iframe src="minemap.jsp" frameborder="0" scrolling="no" id="maplayer"
+                onload="this.height='450px'; this.width='100%'"></iframe>
             </div>
           </div>
         </div>
@@ -148,13 +148,13 @@
     pubCmd_ = new ROSLIB.Topic({
         ros: ros_,
         name: '/sc_client_cmd',
-        messageType: 'sc_server_daemon/clientCmd',
+        messageType: 'sc_msgs/ClientCmd',
     });
 
     var centerListener = new ROSLIB.Topic({
         ros: ros_,
         name: '/sc_monitor',
-        messageType: 'sc_server_daemon/monitorMsg'
+        messageType: 'sc_msgs/MonitorMsg'
     });
     centerListener.subscribe(function (message) {
         console.log(centerListener.name + '::heading: ' + message.pitch_roll_heading.z);
@@ -204,7 +204,7 @@
     var nodeCtrlParamListener = new ROSLIB.Topic({
         ros: ros_,
         name: '/sc_node_params',
-        messageType: 'sc_server_daemon/nodeParams'
+        messageType: 'sc_msgs/NodeParams'
     });
     nodeCtrlParamListener.subscribe(function(message) {
         console.log("is_record: " + message.is_record);

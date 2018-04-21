@@ -20,100 +20,13 @@
             padding: 0;
         }
     </style>
-    <script>
-    function removeLayer(layerId) {
-        /**
-         * 删除图层的方法，目前的geojson数据通常是以图层的方式进行添加
-         * 那么当删除刚刚添加的数据需要调用以下方法：
-         * map.removerLayer(layerId)  layerId是上面定义的图层id 即 lines。
-         */
-        map.removeLayer(layerId);
-    }
-
-    function addLayer(layerId) {
-        /**
-         * 添加图层的方法，目前的geojson数据的添加方式采用以下方式添加
-         * map.addLayer(layerObj)    layerObj是图层的描述。如下所示：
-         */
-        map.addLayer({
-            "id": "lines",
-            "type": "line",
-            "source": "lineSource",
-            "layout": {
-                "line-join": "round",
-                "line-cap": "round"
-            },
-            "paint": {
-                "line-color": "#ff0000",
-                "line-width": 6
-            }
-        });
-    }
-    </script>
 </head>
 <body>
 <div id="map">
-    <button onclick="removeLayer('lines')">删除线layer</button>
-    <button onclick="addLayer('lines')">添加线图层</button>
 </div>
 <script>
-
-    console.log("Connecting to ROS...");
-    // Connecting to ROS
-    var ros_ = new ROSLIB.Ros();
-    // Create a connection to the rosbridge WebSocket server.
-    ros_.connect('ws://<%=ip%>:9090');
-
-    var centerListener = new ROSLIB.Topic({
-        ros: ros_,
-        name: '/sc_monitor',
-        messageType: 'sc_server_daemon/monitorMsg'
-    });
-    centerListener.subscribe(function (message) {
-        console.log(centerListener.name + '::heading: ' + message.pitch_roll_heading.z);
-    });
-
-    var nodeCtrlParamListener = new ROSLIB.Topic({
-        ros: ros_,
-        name: '/sc_node_params',
-        messageType: 'sc_server_daemon/nodeParams'
-    });
-    var lon_ = 116.46;
-    var lat_ = 39.92;
-    nodeCtrlParamListener.subscribe(function(message) {
-        console.log("is_record: " + message.is_record);
-            // var int = self.setInterval("moveMap()", 500);
-            // function moveMap() {
-            lon_ += 0.00003;
-            lat_ += 0.00003;
-            // map.panBy([move_, move_]);
-
-            map.flyTo({
-                center: [lon_, lat_],
-                zoom: 15
-            });
-
-            map.addSource("lineSource2", {
-                "type": "geojson",
-                "data": {
-                "type": "Feature",
-                "properties": {},
-                "geometry": {
-                "type": "LineString",
-                "coordinates": [
-                    [116.46+ 0.26087*0.01, 39.92+ 0.42890*0.02],
-                    [116.46+ 0.03136*0.01, 39.92+ 0.48131*0.01],
-                    [116.46+ 0.99157*0.01, 39.92+ 0.99328*0.01],
-                    [116.46+ 0.94665*0.01, 39.92+ 0.19273*0.01],
-                    [116.46+ 0.97511*0.01, 39.92+ 0.06375*0.01],
-                    [116.46+ 0.70278*0.01, 39.92+ 0.03362*0.01]
-                ]
-                }
-        }
-    });
-
-    });
-
+    var soruceIndex = 0;
+    var movepoint = 0.001;
     minemap.domainUrl = '//10.42.0.1:8888';
     minemap.spriteUrl = '//10.42.0.1:8888/minemapapi/v1.3/sprite/sprite';
     minemap.serviceUrl = '//10.42.0.1:8888/service';
@@ -123,105 +36,226 @@
     var map = new minemap.Map({
         container: 'map',
         style: "//10.42.0.1:8888/service/solu/style/id/2365",
-        center: [116.46,39.92],
+        center: [116.46, 39.92],
         zoom: 15,
         pitch: 0
     });
 
-    // map.addSource("lineSource2", {
-    //     "type": "geojson",
-    //     "data": {
-    //         "type": "Feature",
-    //         "properties": {},
-    //         "geometry": {
-    //             "type": "LineString",
-    //             "coordinates": [
-    //                 [116.46+ 0.26087*0.01, 39.92+ 0.42890*0.02],
-    //                 [116.46+ 0.03136*0.01, 39.92+ 0.48131*0.01],
-    //                 [116.46+ 0.99157*0.01, 39.92+ 0.99328*0.01],
-    //                 [116.46+ 0.94665*0.01, 39.92+ 0.19273*0.01],
-    //                 [116.46+ 0.97511*0.01, 39.92+ 0.06375*0.01],
-    //                 [116.46+ 0.70278*0.01, 39.92+ 0.03362*0.01]
-    //             ]
-    //         }
-    //     }
-    // });
-    // map.flyTo({
-    //     center: [116.46,39.92],
-    //     zoom: 15
-    // });
 
-    // var move_ = 0.1;
-    // var lon_ = 116.46;
-    // var lat_ = 39.92;
 
-    // var int = self.setInterval("moveMap()", 500);
-    // function moveMap() {
-    //     lon_ += 0.00001;
-    //     lat_ += 0.00001;
-    //     // map.panBy([move_, move_]);
+    console.log("Connecting to ROS...");
+    var ros_ = new ROSLIB.Ros();
+    // Create a connection to the rosbridge WebSocket server.
+    ros_.connect('ws://<%=ip%>:9090');
 
-    //     map.flyTo({
-    //         center: [lon_, lat_],
-    //         zoom: 15
-    //     });
-    // }
+    var serverdListener_ = new ROSLIB.Topic({
+        ros: ros_,
+        name: '/sc_monitor',
+        messageType: 'sc_msgs/MonitorMsg'
+    });
+    serverdListener_.subscribe(
+        function(monitorMsg) {
+            soruceIndex++;
+            movepoint = movepoint+0.001;
+            console.log("monitorMsg.lat_lon_hei.y: " + monitorMsg.lat_lon_hei.y);
+            if(monitorMsg.lat_lon_hei.y <= 0) {
+                console.log("GPS lost.");
+            }
+            else {
+                map.flyTo({
+                    center: [monitorMsg.lat_lon_hei.y+movepoint, monitorMsg.lat_lon_hei.x],
+                    // zoom: 15
+                })
+            }
+            console.log("Only subscribe once.");
+            // serverdListener_.unsubscribe();
 
-    map.on("load", function () {
-        map.addSource("lineSource", {
-            "type": "geojson",
-            "data": {
-                "type": "Feature",
-                "properties": {},
-                "geometry": {
-                    "type": "LineString",
-                    "coordinates": [
-                        [116.46+ 0.26087*0.01, 39.92+ 0.42890*0.02],
-                        [116.46+ 0.03136*0.01, 39.92+ 0.48131*0.01],
-                        [116.46+ 0.99157*0.01, 39.92+ 0.99328*0.01],
-                        [116.46+ 0.94665*0.01, 39.92+ 0.19273*0.01],
-                        [116.46+ 0.97511*0.01, 39.92+ 0.06375*0.01],
-                        [116.46+ 0.70278*0.01, 39.92+ 0.03362*0.01]
-                    ]
+
+
+             map.removeLayer("points");
+             map.addSource("pointSource"+soruceIndex, {
+                "type": "geojson",
+                "data": {
+                    "type": "FeatureCollection",
+                    "features": [{
+                        "type": "Feature",
+                        "geometry": {
+                            "type": "Point",
+                            "coordinates": [monitorMsg.lat_lon_hei.y+movepoint, monitorMsg.lat_lon_hei.x],
+                        },
+                        "properties": {
+                            // "title": "当前位置",
+                            "icon": "marker-15-6",
+                            "color": "#ff0000"
+                        }
+                    }]
+                }
+            });
+            map.addLayer({
+            "id": "points",
+            "type": "symbol",
+            "source": "pointSource"+soruceIndex,
+            "layout": {
+                "icon-image": "{icon}",
+                "text-field": "{title}",
+                "text-offset": [0, 0.6],
+                "text-anchor": "top",
+                "icon-allow-overlap": true,  //图标允许压盖
+                "text-allow-overlap": true,   //图标覆盖文字允许压盖
+            },
+            "paint": {
+                "text-color":{
+                    'type': 'identity',
+                    'property': 'color'
+                },
+                "icon-color":{
+                    'type': 'identity',
+                    'property': 'color'
                 }
             }
         });
 
-        map.addLayer({
-            "id": "lines",
-            "type": "line",
-            "source": "lineSource",
-            "layout": {
-                "line-join": "round",
-                "line-cap": "round"
-            },
-            "paint": {
-                "line-color": "#00ff00",
-                "line-width": 6
+        }
+    );
+
+    var baseMapListener_ = new ROSLIB.Topic({
+        ros: ros_,
+        name: '/sc_base_map',
+        messageType: 'sc_msgs/Lines2D'
+    });
+    baseMapListener_.subscribe(
+        function(baseMapMsg) {
+            var lineLength = baseMapMsg.lines2D.length;
+            console.log("Found " + lineLength + " lines in " + baseMapListener_.name);
+            if(lineLength <= 0) {
+                console.log("Found 0 line in " + baseMapListener_.name);
+                baseMapListener_.unsubscribe();
+                return;
             }
-        });
 
-    })
+            var linefeatureArry = new Array();
+            var linefeatureArry1 = new Array();
+            for(var i = 0; i < lineLength; i++) {
+                var points = baseMapMsg.lines2D[i];
+                var posarry = new Array();
+                for(var j = 0; j < points.line2D.length; j++) {
+                    var onepoint = new Array();
+                    onepoint[0] = points.line2D[j].x;
+                    onepoint[1] = points.line2D[j].y;
+                    posarry[j] = onepoint;
+                }
+
+                var lineFeature = {
+                    "type": "Feature",
+                    "properties": {},
+                    "geometry": {
+                        "type": "LineString",
+                        "coordinates": posarry
+                    }
+                };
+                if(i>=50){
+                linefeatureArry.push(lineFeature);
+            }
+
+                if(i<50){
+                    linefeatureArry1.push(lineFeature);
+                }
+            }
 
 
-    //     for(var i = 0; i < 0; ++i) {
-    //         if(i == 800) {
-    //             alert("now 800");
-    //         }
-    //         map.addLayer({
-    //             "id": "lines",
-    //             "type": "line",
-    //             "source": "lineSource",
-    //             "layout": {
-    //                 "line-join": "round",
-    //                 "line-cap": "round"
-    //             },
-    //             "paint": {
-    //                 "line-color": "#ff0000",
-    //                 "line-width": i % 12
-    //             }
-    //         });
-    //     }
-    // })
+
+
+            // map.addSource("pointSource", {
+            //     "type": "geojson",
+            //     "data": {
+            //         "type": "FeatureCollection",
+            //         "features": [{
+            //             "type": "Feature",
+            //             "geometry": {
+            //                 "type": "Point",
+            //                 "coordinates": [116, 40],
+            //             },
+            //             "properties": {
+            //                 "title": "大学",
+            //                 "icon": "marker-15-6",
+            //                 "color": "#ff0000"
+            //             }
+            //         }]
+            //     }
+            // });
+
+            // map.addLayer({
+            //     "id": "points",
+            //     "type": "symbol",
+            //     "source": "pointSource",
+            //     "layout": {
+            //         "icon-image": "{icon}",
+            //         "text-field": "{title}",
+            //         "text-offset": [0, 0.6],
+            //         "text-anchor": "top",
+            //         "icon-allow-overlap": true,
+            //         "text-allow-overlap": true,
+            //     },
+            //     "paint": {
+            //         "text-color": {
+            //             'type': 'identity',
+            //             'property': 'color'
+            //         },
+            //         "icon-color": {
+            //             'type': 'identity',
+            //             'property': 'color'
+            //         }
+            //     }
+            // });
+
+
+            // map.addSource("lineSource", {
+            //     "type": "geojson",
+            //     "data": {
+            //         "type": "FeatureCollection",
+            //         "features": linefeatureArry
+            //     }
+            // });
+            // map.addSource("lineSource1", {
+            //     "type": "geojson",
+            //     "data": {
+            //         "type": "FeatureCollection",
+            //         "features": linefeatureArry1
+            //     }
+            // });
+            // map.addLayer({
+            //     "id": "lines",
+            //     "type": "line",
+            //     "source": "lineSource",
+            //     "layout": {
+            //         "line-join": "round",
+            //         "line-cap": "round"
+            //     },
+            //     "paint": {
+            //         "line-color": "#ff0000",
+            //         "line-width": 4
+            //     }
+            // });
+            // map.addLayer({
+            //     "id": "lines2",
+            //     "type": "line",
+            //     "source": "lineSource1",
+            //     "layout": {
+            //         "line-join": "round",
+            //         "line-cap": "round"
+            //     },
+            //     "paint": {
+            //         "line-color": "#00ff00",
+            //         "line-width": 1
+            //     }
+            // });
+
+            console.log("Only subscribe once.");
+            baseMapListener_.unsubscribe();
+        }
+    );
+
+
+
 </script>
 </body>

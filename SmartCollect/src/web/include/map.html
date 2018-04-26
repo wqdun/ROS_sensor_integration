@@ -2,8 +2,8 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <link rel="stylesheet" href="http://minedata.cn/minemapapi/v1.3/minemap.css">
-    <script src="http://minedata.cn/minemapapi/v1.3/minemap.js"></script>
+    <link rel="stylesheet" href="//10.42.0.1:8888/minemapapi/v1.3/minemap.css">
+    <script src="//10.42.0.1:8888/minemapapi/v1.3/minemap.js"></script>
     <style>
         html, body, #map {
             width: 100%;
@@ -31,15 +31,18 @@
 </div>
 <script>
 
-    minemap.domainUrl = 'http://minedata.cn';
-    minemap.dataDomainUrl = 'http://datahive.minedata.cn';
-    minemap.spriteUrl = 'http://minedata.cn/minemapapi/v1.3/sprite/sprite';
-    minemap.serviceUrl = 'http://minedata.cn/service';
-    minemap.accessToken = '19d42518fa4b480a9160e2e349617571';
+
+
+    minemap.domainUrl = '//10.42.0.1:8888';
+    minemap.spriteUrl = '//10.42.0.1:8888/minemapapi/v1.3/sprite/sprite';
+    minemap.serviceUrl = '//10.42.0.1:8888/service';
+    minemap.accessToken = '25cc55a69ea7422182d00d6b7c0ffa93';
+
+
     minemap.solution = 2365;
     var map = new minemap.Map({
         container: 'map',
-        style: "http://minedata.cn/service/solu/style/id/2365",
+        style: "//10.42.0.1:8888/service/solu/style/id/2365",
         center: [116.46,39.92],
         zoom: 11,
         pitch: 0,

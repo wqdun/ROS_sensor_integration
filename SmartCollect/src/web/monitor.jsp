@@ -199,6 +199,13 @@
             document.getElementById('pps').innerHTML = message.pps_status;
             document.getElementById('gprmc').innerHTML = message.is_gprmc_valid;
         }
+
+        if('A' == message.is_gprmc_valid) {
+          $('#isRecordCheckBox').prop('disabled', false);
+        }
+        else {
+          $('#isRecordCheckBox').prop('disabled', true);
+        }
     });
 
     var nodeCtrlParamListener = new ROSLIB.Topic({

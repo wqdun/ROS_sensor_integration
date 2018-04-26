@@ -162,9 +162,6 @@
                 }
             }
 
-
-
-
             // map.addSource("pointSource", {
             //     "type": "geojson",
             //     "data": {

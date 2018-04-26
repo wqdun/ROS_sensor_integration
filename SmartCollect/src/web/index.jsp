@@ -548,6 +548,13 @@
                       <div class="controls">
                         <select class="selectpicker" multiple id='dirname'>
                         </select>
+                        <div class="progress progress-striped active">
+                        <div class="progress-bar progress-bar-success" role="progressbar"
+                            aria-valuenow="60" aria-valuemin="0" aria-valuemax="100"
+                            style="width: 100%;" id="pathbar">
+                          <span class="sr-only" id="pathcontent">100%</span>
+                        </div>
+                      </div>
                       </div>
                     </div>
 
@@ -579,9 +586,45 @@
 
   <%@ include file="include/footer.jsp" %>
   <script>
-//      $('.selectpicker').selectpicker('mobile');
     console.log("Task ID should not empty or contains -.");
     $('#newProject').prop('disabled', true);
+
+  // below from http://www.cnblogs.com/yuzhongwusan/archive/2012/09/03/2669022.html
+  var browser = {
+    versions: function() {
+      var u = navigator.userAgent, app = navigator.appVersion;
+      return {
+        // IE内核
+        trident: u.indexOf('Trident') > -1,
+        // opera内核
+        presto: u.indexOf('Presto') > -1,
+        // 苹果、谷歌内核
+        webKit: u.indexOf('AppleWebKit') > -1,
+        // 火狐内核
+        gecko: u.indexOf('Gecko') > -1 && u.indexOf('KHTML') == -1,
+        // 是否为移动终端
+        mobile: !!u.match(/AppleWebKit.*Mobile.*/)||!!u.match(/AppleWebKit/),
+        // ios终端
+        ios: !!u.match(/\(i[^;]+;( U;)? CPU.+Mac OS X/),
+        // android终端或者uc浏览器
+        android: u.indexOf('Android') > -1 || u.indexOf('Linux') > -1,
+        // 是否为iPhone或者QQHD浏览器
+        iPhone: u.indexOf('iPhone') > -1 || u.indexOf('Mac') > -1,
+        // 是否iPad
+        iPad: u.indexOf('iPad') > -1,
+        // 是否web应该程序，没有头部与底部
+        webApp: u.indexOf('Safari') == -1
+      };
+    } (),
+    language: (navigator.browserLanguage || navigator.language).toLowerCase()
+  }
+  if(navigator.userAgent.toLowerCase().indexOf('mobile') > -1) {
+    console.log("I am a mobile browser.");
+    $('.selectpicker').selectpicker('mobile');
+  }
+  else {
+    console.log("I am a desktop browser.");
+  }
 
     var ros_ = new ROSLIB.Ros();
     ros_.connect('ws://<%=ip%>:9090');
@@ -590,52 +633,6 @@
         name: '/sc_client_cmd',
         messageType: 'sc_msgs/ClientCmd',
     });
-
-    var projectInfoListener = new ROSLIB.Topic({
-        ros: ros_,
-        name: '/sc_project_info',
-        messageType: 'sc_msgs/ProjectInfoMsg'
-    });
-    projectInfoListener.subscribe(function (message) {
-        console.log("city_code: " + message.city_code);
-        if (0 == message.city_code) {
-            console.log("No project is committed to server.");
-            // enable input
-            $('#city').prop('disabled', false);
-            $('#dayORnight').prop('disabled', false);
-            $('#pid').prop('disabled', false);
-            $('#deviceID').prop('disabled', false);
-            // $('#newProject').prop('disabled', false);
-        }
-        else {
-            // disable input
-            $('#city').prop('disabled', true);
-            $('#dayORnight').prop('disabled', true);
-            $('#pid').prop('disabled', true);
-            $('#deviceID').prop('disabled', true);
-            $('#newProject').prop('disabled', true);
-
-            for (var i = 0; i < city.options.length; ++i) {
-                if (city.options[i].text.indexOf(message.city_code) > 0) {
-                    city.options[i].selected = true;
-                    break;
-                }
-            }
-
-            console.log("daynight_code: " + typeof(message.daynight_code) + ", " + message.daynight_code);
-            dayORnight.options[message.daynight_code - 1].selected = true;
-
-            $("#pid").val(message.task_id);
-
-            console.log("device_id: " + message.device_id);
-            for (var i = 0; i < deviceID.options.length; ++i) {
-                if (deviceID.options[i].text.indexOf(message.device_id) > 0) {
-                    deviceID.options[i].selected = true;
-                    break;
-                }
-            }
-        }
-    })
 
     var projectArrListener_ = new ROSLIB.Topic({
         ros: ros_,
@@ -658,6 +655,76 @@
             projectArrListener_.unsubscribe();
         }
     )
+
+    var centerListener = new ROSLIB.Topic({
+      ros: ros_,
+      name: '/sc_monitor',
+      messageType: 'sc_msgs/MonitorMsg'
+    });
+    centerListener.subscribe(
+      function(message) {
+        console.log("I am listening: " + centerListener.name);
+        console.log("Process status: " + message.process_num + "/" + message.total_file_num);
+        var fixPercent = message.process_num / (message.total_file_num + 0.00000001) * 100;
+        fixPercent = fixPercent.toFixed(2);
+        console.log("fixPercent: " + fixPercent);
+        $("#pathbar").css("width", fixPercent + "%");
+        $("#pathcontent").html(fixPercent + "%  (" + message.process_num + "/" + message.total_file_num + ")");
+
+        console.log("city_code: " + message.project_info.city_code);
+        if(0 != message.project_info.city_code || message.total_file_num != message.process_num) {
+          console.log("You cannot fix data when project running or being fixed.");
+          $('#fixData').prop('disabled', true);
+        }
+        else {
+          $('#fixData').prop('disabled', false);
+        }
+
+        if(0 == message.project_info.city_code) {
+            console.log("No project running.");
+            // enable input
+            $('#city').prop('disabled', false);
+            $('#dayORnight').prop('disabled', false);
+            $('#pid').prop('disabled', false);
+            $('#deviceID').prop('disabled', false);
+            $('#newProject').prop('disabled', false);
+            $('#removeData').prop('disabled', false);
+            $('#reboot').prop('disabled', false);
+            $('#shutdown').prop('disabled', false);
+        }
+        else {
+            // disable input
+            $('#city').prop('disabled', true);
+            $('#dayORnight').prop('disabled', true);
+            $('#pid').prop('disabled', true);
+            $('#deviceID').prop('disabled', true);
+            $('#newProject').prop('disabled', true);
+            $('#removeData').prop('disabled', true);
+            $('#reboot').prop('disabled', true);
+            $('#shutdown').prop('disabled', true);
+
+            for (var i = 0; i < city.options.length; ++i) {
+                if (city.options[i].text.indexOf(message.project_info.city_code) > 0) {
+                    city.options[i].selected = true;
+                    break;
+                }
+            }
+
+            console.log("daynight_code: " + typeof(message.project_info.daynight_code) + ", " + message.project_info.daynight_code);
+            dayORnight.options[message.project_info.daynight_code - 1].selected = true;
+
+            $("#pid").val(message.project_info.task_id);
+
+            console.log("device_id: " + message.project_info.device_id);
+            for(var i = 0; i < deviceID.options.length; ++i) {
+                if(deviceID.options[i].text.indexOf(message.project_info.device_id) > 0) {
+                    deviceID.options[i].selected = true;
+                    break;
+                }
+            }
+        }
+      }
+    );
 
     $('#pid').bind('input propertychange', function() {
         if ($('#pid').val() == '' || $('#pid').val().indexOf("-") >= 0) {
@@ -685,29 +752,33 @@
     $('#fixData').click(function () {
         $("#optname").html('整理工程: ' + $("#dirname").selectpicker('val'));
         $("#optid").text("4");
-        $("#projects_id").text();
     })
     $('#removeData').click(function () {
         $("#optname").html('删除数据: ' + $("#dirname").selectpicker('val'));
         $("#optid").text("5");
+        // $('.selectpicker option:selected').remove();
+        // $('.selectpicker').selectpicker('refresh');
     })
 
-    $('#cmtBtn').click(function () {
+    $('#cmtBtn').click(function() {
         var projectSelected = $("#dirname").selectpicker('val');
-        if(!projectSelected) {
-            console.log("projectSelected is null.");
-            projectSelected = new Array();
+        console.log("projectSelected: " + projectSelected);
+        var projects = "";
+        if(projectSelected) {
+          for(x in projectSelected) {
+            console.log("projectSelected[" + x + "]: " + projectSelected[x]);
+            projects += projectSelected[x] + ",";
+          }
         }
+        console.log("projects: " + projects);
+        projects = projects.substr(0, projects.length - 1);
+        console.log("projects: " + projects);
 
-        var projectArrMsg = new ROSLIB.Message({
-            projects: projectSelected
-        });
         var clientMsg = new ROSLIB.Message({
-            system_cmd: Number($("#optid").text() ),
-            project_arr: projectArrMsg
+          system_cmd: Number($("#optid").text() ),
+          cmd_arguments: projects
         });
         pubCmd_.publish(clientMsg);
-        console.log("projectSelected size: " + projectSelected.length);
     })
 
   </script>

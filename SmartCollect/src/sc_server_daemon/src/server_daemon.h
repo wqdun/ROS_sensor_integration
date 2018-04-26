@@ -11,6 +11,9 @@
 #include "velodyne_msgs/Velodyne2Center.h"
 #include "sc_integrate_imu_recorder/scIntegrateImu.h"
 #include "../../sc_lib_public_tools/src/public_tools.h"
+#include "dataFixed.h"
+#include <boost/thread/thread.hpp>
+#include <boost/bind.hpp>
 
 class ServerDaemon {
 public:
@@ -30,8 +33,6 @@ private:
     ros::Subscriber subServer_;
     ros::Publisher pub2client_;
 
-    ros::Publisher pub2broswer_;
-
     sc_msgs::NodeParams nodeParams_;
     sc_msgs::MonitorMsg monitorMsg_;
     sc_msgs::ProjectInfoMsg projectInfoMsg_;
@@ -41,6 +42,8 @@ private:
         "No PPS", "Synchronizing PPS", "PPS locked", "PPS Error"
     };
 
+    boost::shared_ptr<dataFixed> pDataFixer_;
+
 
     void clientCB(const sc_msgs::ClientCmd::ConstPtr& pClientMsg);
 
@@ -49,7 +52,7 @@ private:
     void velodyneCB(const velodyne_msgs::Velodyne2Center::ConstPtr& pVelodyneMsg);
     void rawImuCB(const sc_integrate_imu_recorder::scIntegrateImu::ConstPtr& pRawImuMsg);
     void cameraImgCB(const std_msgs::Float64::ConstPtr& pCameraImgMsg);
-    void updateprojectInfoMsg(const std::string &projectInfo);
+    void updateProjectInfo(const std::string &projectInfo);
 };
 
 #endif // __SERVER_DAEMON_H

@@ -1,6 +1,6 @@
 #include "server_daemon.h"
-// #define NDEBUG
-#undef NDEBUG
+#define NDEBUG
+// #undef NDEBUG
 #include <glog/logging.h>
 
 ServerDaemon::ServerDaemon(ros::NodeHandle nh, ros::NodeHandle private_nh) {
@@ -9,7 +9,6 @@ ServerDaemon::ServerDaemon(ros::NodeHandle nh, ros::NodeHandle private_nh) {
     pub2scNodes_ = nh.advertise<sc_msgs::NodeParams>("sc_node_params", 10);
     nodeParams_.is_record = 0;
     nodeParams_.cam_gain = 20;
-    pub2broswer_ = nh.advertise<sc_msgs::ProjectInfoMsg>("sc_project_info", 10);
 
     // below for composing monitor data
     isGpsUpdated_ = isVelodyneUpdated_ = isRawImuUpdated_ = isCameraUpdated_ = false;
@@ -19,6 +18,9 @@ ServerDaemon::ServerDaemon(ros::NodeHandle nh, ros::NodeHandle private_nh) {
     subCameraImg_ = nh.subscribe("cam_speed", 0, &ServerDaemon::cameraImgCB, this);
     pub2client_ = nh.advertise<sc_msgs::MonitorMsg>("sc_monitor", 0);
     mGpsTime[0] = mGpsTime[1] = -1;
+
+    int imageCollectionHz = 10;
+    pDataFixer_.reset(new dataFixed(imageCollectionHz) );
 }
 
 ServerDaemon::~ServerDaemon() {}
@@ -35,7 +37,6 @@ void ServerDaemon::run() {
 
         DLOG(INFO) << "Publish a server command: is_record: " << (int)(nodeParams_.is_record) << ", cam_gain: " << nodeParams_.cam_gain;
         pub2scNodes_.publish(nodeParams_);
-        pub2broswer_.publish(projectInfoMsg_);
 
         // 1Hz
         if(0 == (freqDivider % 2) ) {
@@ -73,6 +74,9 @@ void ServerDaemon::run() {
             }
             isCameraUpdated_ = false;
         }
+
+        monitorMsg_.total_file_num = pDataFixer_->totalFileNum;
+        monitorMsg_.process_num = pDataFixer_->processNum;
 
         pub2client_.publish(monitorMsg_);
     }
@@ -163,7 +167,7 @@ void ServerDaemon::clientCB(const sc_msgs::ClientCmd::ConstPtr& pClientMsg) {
             }
             else {
                 LOG(INFO) << "New project name received, gonna create project: " << pClientMsg->project_name;
-                (void)updateprojectInfoMsg(pClientMsg->project_name);
+                (void)updateProjectInfo(pClientMsg->project_name);
                 const std::string launchScript("/opt/smartc/src/tools/launch_project.sh");
                 if(!(public_tools::PublicTools::isFileExist(launchScript) ) ) {
                     LOG(ERROR) << launchScript << " does not exist.";
@@ -187,34 +191,36 @@ void ServerDaemon::clientCB(const sc_msgs::ClientCmd::ConstPtr& pClientMsg) {
         }
         case 3: {
             LOG(INFO) << "I am gonna cleanup server processes.";
-            (void)updateprojectInfoMsg("");
-            // add a "true" to avoid exit
-            (void)public_tools::PublicTools::runShellCmd("pkill sc_integrate_; pkill roscameragps; killall nodelet; true");
+            (void)updateProjectInfo("");
+            const std::string launchScript("/opt/smartc/src/tools/launch_project.sh");
+            if(!(public_tools::PublicTools::isFileExist(launchScript) ) ) {
+                LOG(ERROR) << launchScript << " does not exist.";
+                exit(1);
+            }
+            LOG(INFO) << "launchScript: " << launchScript;
+            (void)public_tools::PublicTools::runShellCmd("bash " + launchScript + " cleanup");
             break;
         }
         case 4: {
-            LOG(INFO) << "I am gonna fix projects data.";
-            const std::string launchScript("/opt/smartc/src/tools/launch_project.sh");
-            if(!(public_tools::PublicTools::isFileExist(launchScript) ) ) {
-                LOG(ERROR) << launchScript << " does not exist.";
-                exit(1);
-            }
-            LOG(INFO) << "launchScript: " << launchScript;
-            LOG(INFO) << ("bash " + launchScript + " xiaobo " + std::to_string(pClientMsg->project_arr.projects.size()) );
-            // (void)public_tools::PublicTools::runShellCmd("bash " + launchScript + " server " + pClientMsg->project_name);
+            LOG(INFO) << "I am gonna fix projects data: " << pClientMsg->cmd_arguments;
+            boost::thread thrd(boost::bind(&dataFixed::fixProjectsData, pDataFixer_, pClientMsg->cmd_arguments) );
+            LOG(INFO) << "I am a fix_projects_data thread.";
             break;
         }
         case 5: {
-            LOG(INFO) << "I am gonna remove projects data.";
-            (void)updateprojectInfoMsg(pClientMsg->project_name);
-            const std::string launchScript("/opt/smartc/src/tools/launch_project.sh");
-            if(!(public_tools::PublicTools::isFileExist(launchScript) ) ) {
-                LOG(ERROR) << launchScript << " does not exist.";
-                exit(1);
+            LOG(INFO) << "I am gonna remove projects: " << pClientMsg->cmd_arguments;
+            LOG(INFO) << "Is cmd_arguments empty?: " << std::boolalpha << pClientMsg->cmd_arguments.empty();
+            std::vector<std::string> projectArr;
+            if(!pClientMsg->cmd_arguments.empty() ) {
+                (void)boost::split(projectArr, pClientMsg->cmd_arguments, boost::is_any_of(",") );
             }
-            LOG(INFO) << "launchScript: " << launchScript;
-            LOG(INFO) << ("bash " + launchScript + " xiaobo " + std::to_string(pClientMsg->project_arr.projects.size()) );
-            // (void)public_tools::PublicTools::runShellCmd("bash " + launchScript + " server " + pClientMsg->project_name);
+
+            LOG(INFO) << "I got " << projectArr.size() << " projects to process.";
+            for(auto &project: projectArr) {
+                const std::string cmd("mv /opt/smartc/record/" + project + " /tmp/; true");
+                LOG(INFO) << "I am gonna: " + cmd;
+                (void)public_tools::PublicTools::runShellCmd(cmd);
+            }
             break;
         }
          default: {
@@ -225,13 +231,13 @@ void ServerDaemon::clientCB(const sc_msgs::ClientCmd::ConstPtr& pClientMsg) {
     return;
 }
 
-void ServerDaemon::updateprojectInfoMsg(const std::string &projectInfo) {
+void ServerDaemon::updateProjectInfo(const std::string &projectInfo) {
     LOG(INFO) << __FUNCTION__ << " start, projectInfo: " << projectInfo;
     if(projectInfo.empty() ) {
         LOG(INFO) << "Clear projectInfo message.";
-        projectInfoMsg_.city_code = projectInfoMsg_.daynight_code = 0;
-        projectInfoMsg_.task_id.clear();
-        projectInfoMsg_.device_id.clear();
+        monitorMsg_.project_info.city_code = monitorMsg_.project_info.daynight_code = 0;
+        monitorMsg_.project_info.task_id.clear();
+        monitorMsg_.project_info.device_id.clear();
 
         nodeParams_.is_record = 0;
         nodeParams_.cam_gain = 20;
@@ -245,10 +251,10 @@ void ServerDaemon::updateprojectInfoMsg(const std::string &projectInfo) {
         exit(1);
     }
 
-    projectInfoMsg_.city_code = public_tools::PublicTools::string2num(parsedProjectInfo[0], 0);
-    projectInfoMsg_.daynight_code = public_tools::PublicTools::string2num(parsedProjectInfo[1], 0);
-    projectInfoMsg_.task_id = parsedProjectInfo[2].substr(0, parsedProjectInfo[2].size() - 4);
-    projectInfoMsg_.device_id = parsedProjectInfo[2].substr(parsedProjectInfo[2].size() - 4);
+    monitorMsg_.project_info.city_code = public_tools::PublicTools::string2num(parsedProjectInfo[0], 0);
+    monitorMsg_.project_info.daynight_code = public_tools::PublicTools::string2num(parsedProjectInfo[1], 0);
+    monitorMsg_.project_info.task_id = parsedProjectInfo[2].substr(0, parsedProjectInfo[2].size() - 4);
+    monitorMsg_.project_info.device_id = parsedProjectInfo[2].substr(parsedProjectInfo[2].size() - 4);
     return;
 }
 

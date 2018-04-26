@@ -39,7 +39,7 @@ void FileMonitor::getProjects(const std::string &_projectPath, sc_msgs::ProjectA
         }
         // directory
         if(4 == ptr->d_type) {
-            const std::string project(_projectPath + "/" + ptr->d_name);
+            const std::string project(ptr->d_name);
             LOG(INFO) << "I find a project: " << project;
             _pProjectArr->projects.push_back(project);
         }

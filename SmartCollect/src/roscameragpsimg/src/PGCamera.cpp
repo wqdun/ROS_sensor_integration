@@ -176,12 +176,14 @@ bool CPGCamera::CameraConnect()
 
     if (m_pCamera == NULL)
     {
+        LOG(WARNING) << "m_pCamera is NULL.";
         return false;
     }
     error = m_pCamera->Connect(&m_guidCam);
     if (error != PGRERROR_OK)
     {
         error.PrintErrorTrace();
+        LOG(WARNING) << error.GetFilename() << ":" << error.GetLine() << ":" << error.GetDescription();
         return false;
     }
 
@@ -189,6 +191,7 @@ bool CPGCamera::CameraConnect()
     if ( error != PGRERROR_OK )
     {
         error.PrintErrorTrace();
+        LOG(WARNING) << error.GetFilename() << ":" << error.GetLine() << ":" << error.GetDescription();
         return false;
     }
 

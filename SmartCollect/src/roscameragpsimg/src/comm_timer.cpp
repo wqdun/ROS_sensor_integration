@@ -215,15 +215,7 @@ int get_time(/*ros::NodeHandle* nh*/)
 
             if(is_frame_completed)
             {
-                file.open(imupath_str, ios::out|ios::app);
-                if(!file)
-                {
-                    LOG(ERROR) << "Failed to open " << imupath_str;
-                    continue;
-                }
 
-                file << frame_complete << endl;
-                file.close();
 
                 int ret = mymutex.Trylock();
                 DLOG(INFO) << "get_time lock result: " << ret;
@@ -259,6 +251,26 @@ int get_time(/*ros::NodeHandle* nh*/)
                     pub_5651.publish(msg);
                 }
                 mymutex.Unlock();
+
+                if(msg.Latitude.find("0.0000") < msg.Latitude.size() ) {
+                    LOG_EVERY_N(INFO, 1000) << "msg.Latitude is invalid: " << msg.Latitude;
+                    continue;
+                }
+                const double sysWeekSec = ros::Time::now().toSec() - 24 * 3600 * 3;
+                const int timeErr = (int)sysWeekSec % (24 * 7 * 3600) - GPS_week_time;
+                LOG_EVERY_N(INFO, 1000) << "Unix time and GPS week time diff: " << timeErr;
+                LOG_FIRST_N(INFO, 1) << "Invalid GPS frame when time diff > 20 min.";
+                if(timeErr < -1200 || timeErr > 1200) {
+                    continue;
+                }
+                file.open(imupath_str, ios::out|ios::app);
+                if(!file)
+                {
+                    LOG(ERROR) << "Failed to open " << imupath_str;
+                    continue;
+                }
+                file << frame_complete << endl;
+                file.close();
             }
 
         }

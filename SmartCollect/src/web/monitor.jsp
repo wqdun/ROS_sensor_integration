@@ -61,7 +61,7 @@
                 <th>经纬度：<a href="#" id="location" class="alert-link">"", ""</a></th>
                 <th>卫星数：<a href="#" id="num" class="alert-link">""</a></th>
                 <th>卫星水平定位精度：<a href="#" id="hdop" class="alert-link">""</a></th>
-                <th>保留位置：<a href="#" id="reserved" class="alert-link">""</a></th>
+                <th>磁盘空间：<a href="#" id="diskspace" class="alert-link">""</a></th>
               </tr>
               <tr>
                 <th>方向：<a href="#" id="heading" class="alert-link">""</a></th>
@@ -69,6 +69,14 @@
                 <th>相机存储频率：<a href="#" id="fps" class="alert-link">""</a></th>
                 <th>PPS：<a href="#" id="pps" class="alert-link">""</a></th>
                 <th>GPRMC：<a href="#" id="gprmc" class="alert-link">""</a></th>
+              </tr>
+
+              <tr>
+                <th>照片数量：<a href="#" id="piccounts" class="alert-link">""</a></th>
+                <th>激光包大小：<a href="#" id="lidarpkg" class="alert-link">""</a></th>
+                <th>&nbsp;</th>
+                <th>&nbsp;</th>
+                <th>&nbsp;</th>
               </tr>
               </thead>
                </table>
@@ -156,7 +164,7 @@
         name: '/sc_monitor',
         messageType: 'sc_msgs/MonitorMsg'
     });
-    centerListener.subscribe(function (message) {
+    centerListener.subscribe(function(message) {
         console.log(centerListener.name + '::heading: ' + message.pitch_roll_heading.z);
 
         // text is "sc_integrate_imu_recorder node not running"
@@ -206,6 +214,11 @@
         else {
           $('#isRecordCheckBox').prop('disabled', true);
         }
+
+        console.log("message: " + message.img_num + "; " + message.lidar_size + "M; " + message.disk_usage);
+        $("#diskspace")[0].innerHTML = message.disk_info.disk_usage;
+        $("#lidarpkg")[0].innerHTML = message.disk_info.lidar_size+"M";
+        $("#piccounts")[0].innerHTML = message.disk_info.img_num;
     });
 
     var nodeCtrlParamListener = new ROSLIB.Topic({

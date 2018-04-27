@@ -634,36 +634,15 @@
         messageType: 'sc_msgs/ClientCmd',
     });
 
-    var projectArrListener_ = new ROSLIB.Topic({
-        ros: ros_,
-        name: '/sc_project_array',
-        messageType: 'sc_msgs/ProjectArr'
-    });
-    projectArrListener_.subscribe(
-        function(_projectArrMsg) {
-            console.log("I found " + _projectArrMsg.projects.length + " projects in " + projectArrListener_.name);
-            for(x in _projectArrMsg.projects) {
-                console.log("Project[" + x + "]: " + _projectArrMsg.projects[x]);
-                if(0 == x % 2) {
-                    $("#dirname").append("<option data-content=\"<span class='label label-success'>" +  _projectArrMsg.projects[x] + "</span>\">" + _projectArrMsg.projects[x] + "</option>");
-                }
-                else {
-                  $("#dirname").append("<option data-content=\"<span class='label label-info'>" +  _projectArrMsg.projects[x] + "</span>\">" + _projectArrMsg.projects[x] + "</option>");
-                }
-            }
-            $("#dirname").selectpicker('refresh');
-            projectArrListener_.unsubscribe();
-        }
-    )
-
-    var centerListener = new ROSLIB.Topic({
+    var doItOnce = 0;
+    var serverListener_ = new ROSLIB.Topic({
       ros: ros_,
       name: '/sc_monitor',
       messageType: 'sc_msgs/MonitorMsg'
     });
-    centerListener.subscribe(
+    serverListener_.subscribe(
       function(message) {
-        console.log("I am listening: " + centerListener.name);
+        console.log("I am listening: " + serverListener_.name);
         console.log("Process status: " + message.process_num + "/" + message.total_file_num);
         var fixPercent = message.process_num / (message.total_file_num + 0.00000001) * 100;
         fixPercent = fixPercent.toFixed(2);
@@ -723,6 +702,22 @@
                 }
             }
         }
+
+        if(0 == doItOnce) {
+          doItOnce = 1;
+          console.log("I found " + message.projects.length + " projects in " + serverListener_.name);
+            for(x in message.projects) {
+                console.log("Project[" + x + "]: " + message.projects[x]);
+                if(0 == x % 2) {
+                    $("#dirname").append("<option data-content=\"<span class='label label-success'>" +  message.projects[x] + "</span>\">" + message.projects[x] + "</option>");
+                }
+                else {
+                  $("#dirname").append("<option data-content=\"<span class='label label-info'>" +  message.projects[x] + "</span>\">" + message.projects[x] + "</option>");
+                }
+            }
+            $("#dirname").selectpicker('refresh');
+        }
+
       }
     );
 

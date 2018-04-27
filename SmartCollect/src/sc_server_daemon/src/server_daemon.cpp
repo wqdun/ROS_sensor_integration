@@ -11,16 +11,18 @@ ServerDaemon::ServerDaemon(ros::NodeHandle nh, ros::NodeHandle private_nh) {
     nodeParams_.cam_gain = 20;
 
     // below for composing monitor data
-    isGpsUpdated_ = isVelodyneUpdated_ = isRawImuUpdated_ = isCameraUpdated_ = false;
+    isGpsUpdated_ = isVelodyneUpdated_ = isRawImuUpdated_ = isCameraUpdated_ = isDiskInfoUpdated_ = false;
     sub232_ = nh.subscribe("imu_string", 0, &ServerDaemon::gpsCB, this);
     subVelodyne_ = nh.subscribe("velodyne_pps_status", 0, &ServerDaemon::velodyneCB, this);
     sub422_ = nh.subscribe("imu422_hdop", 0, &ServerDaemon::rawImuCB, this);
     subCameraImg_ = nh.subscribe("cam_speed", 0, &ServerDaemon::cameraImgCB, this);
+    subProjectMonitor_ = nh.subscribe("sc_disk_info", 0, &ServerDaemon::projectMonitorCB, this);
     pub2client_ = nh.advertise<sc_msgs::MonitorMsg>("sc_monitor", 0);
     mGpsTime[0] = mGpsTime[1] = -1;
 
     int imageCollectionHz = 10;
     pDataFixer_.reset(new dataFixed(imageCollectionHz) );
+    pDiskMonitor_.reset(new DiskMonitor() );
 }
 
 ServerDaemon::~ServerDaemon() {}
@@ -77,6 +79,17 @@ void ServerDaemon::run() {
 
         monitorMsg_.total_file_num = pDataFixer_->totalFileNum;
         monitorMsg_.process_num = pDataFixer_->processNum;
+
+        // 0.25Hz
+        if(0 == (freqDivider % 8) ) {
+            if(!isDiskInfoUpdated_) {
+                DLOG(INFO) << "project monitor node not running.";
+                monitorMsg_.img_num = -2;
+            }
+            isDiskInfoUpdated_ = false;
+        }
+
+        (void)pDiskMonitor_->run("/opt/smartc/record/", monitorMsg_);
 
         pub2client_.publish(monitorMsg_);
     }
@@ -203,6 +216,10 @@ void ServerDaemon::clientCB(const sc_msgs::ClientCmd::ConstPtr& pClientMsg) {
         }
         case 4: {
             LOG(INFO) << "I am gonna fix projects data: " << pClientMsg->cmd_arguments;
+            LOG(INFO) << "Is cmd_arguments empty?: " << std::boolalpha << pClientMsg->cmd_arguments.empty();
+            if(pClientMsg->cmd_arguments.empty() ) {
+                break;
+            }
             boost::thread thrd(boost::bind(&dataFixed::fixProjectsData, pDataFixer_, pClientMsg->cmd_arguments) );
             LOG(INFO) << "I am a fix_projects_data thread.";
             break;
@@ -229,6 +246,13 @@ void ServerDaemon::clientCB(const sc_msgs::ClientCmd::ConstPtr& pClientMsg) {
     }
 
     return;
+}
+
+void ServerDaemon::projectMonitorCB(const sc_msgs::DiskInfo::ConstPtr& pDiskInfoMsg) {
+    LOG(INFO) << __FUNCTION__ << " start, disk image number: " << pDiskInfoMsg->img_num;
+    isDiskInfoUpdated_ = true;
+    monitorMsg_.img_num = pDiskInfoMsg->img_num;
+    monitorMsg_.lidar_size = pDiskInfoMsg->lidar_size;
 }
 
 void ServerDaemon::updateProjectInfo(const std::string &projectInfo) {

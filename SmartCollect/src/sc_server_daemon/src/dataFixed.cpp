@@ -47,7 +47,7 @@ void dataFixed::fixProjectsData(const std::string &_projects)
     std::string numString;
 
     for(size_t i = 0; i < projectArr.size(); ++i) {
-        LOG(INFO) << "start to count project:" << projectArr[i]<< "file Size";
+        LOG(INFO) << "start to count project:" << projectArr[i] << " file Size";
         std::string processPath = projectArr[i] + "/Process";
         int existProcessMark = access(processPath.c_str(), F_OK);
         if( 0 == existProcessMark )
@@ -76,7 +76,7 @@ void dataFixed::fixProjectsData(const std::string &_projects)
         }
         if(0 != pclose( fpin ) )
         {
-            LOG(ERROR) << "Failed to close " << projectArr[i] + "/Rawdata/IMU/*_rt_track.txt";
+            LOG(WARNING) << "Failed to close " << projectArr[i] + "/Rawdata/IMU/*_rt_track.txt";
             continue;
         }
         if(1 != rtImuFileNum)
@@ -168,7 +168,7 @@ void dataFixed::fixProjectsData(const std::string &_projects)
             continue;
         this->mkLidarTraceFile(projectArr[i], imuData);
 
-        LOG(INFO) << "fixing Project: " << projectArr[i] << "is finished";
+        LOG(INFO) << "fixing Project: " << projectArr[i] << " is finished";
     }
 }
 

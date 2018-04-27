@@ -2,8 +2,8 @@
 #include <fstream>
 #include "lock.h"
 
-// #define NDEBUG
-#undef NDEBUG
+#define NDEBUG
+// #undef NDEBUG
 #include <glog/logging.h>
 
 

@@ -25,8 +25,8 @@
 #include "PGCamera.h"
 #include <sc_msgs/NodeParams.h>
 
-// #define NDEBUG
-#undef NDEBUG
+#define NDEBUG
+// #undef NDEBUG
 #include <glog/logging.h>
 
 //namespace

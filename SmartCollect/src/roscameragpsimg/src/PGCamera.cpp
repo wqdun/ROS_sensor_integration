@@ -5,8 +5,8 @@
 #include <FlyCapture2.h>
 #include "lock.h"
 
-// #define NDEBUG
-#undef NDEBUG
+#define NDEBUG
+// #undef NDEBUG
 #include <glog/logging.h>
 
 CMutex mymutex;

@@ -139,6 +139,28 @@ void PublicTools::getFilesInDir(const std::string &baseDir, const std::string &k
     return;
 }
 
+int PublicTools::popenWithReturn(const std::string &cmd, std::vector<std::string> &cmdReturn) {
+    const size_t maxByte = 1000;
+    char result[maxByte];
+    FILE *fpin;
+
+    if(NULL == (fpin = popen(cmd.c_str(), "r") ) ) {
+        LOG(ERROR) << "Failed to open " << cmd;
+        return -1;
+    }
+
+    while(fgets(result, maxByte, fpin) ) {
+        cmdReturn.push_back(result);
+    }
+
+    if(0 != pclose(fpin) ) {
+        LOG(WARNING) << "Failed to close " << cmd;
+        return -2;
+    }
+
+    return 0;
+}
+
 // degree to radian
 double PublicTools::deg2rad(const double deg) {
   return deg * M_PI / 180;

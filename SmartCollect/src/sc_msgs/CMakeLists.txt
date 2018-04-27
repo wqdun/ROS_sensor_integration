@@ -59,6 +59,7 @@ add_message_files(
   ProjectInfoMsg.msg
   ServerMsg.msg
   ClientCmd.msg
+  DiskInfo.msg
 )
 
 ## Generate services in the 'srv' folder

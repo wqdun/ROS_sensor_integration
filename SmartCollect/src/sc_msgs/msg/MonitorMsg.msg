@@ -25,3 +25,15 @@ int32 process_num
 
 # below from web controller
 ProjectInfoMsg project_info
+
+# below from server daemon self
+# e.g., 80% (80M / 100M)
+string disk_usage
+string[] projects
+
+# below from project monitor
+int32 img_num
+# unit: MB
+int32 lidar_size
+
+

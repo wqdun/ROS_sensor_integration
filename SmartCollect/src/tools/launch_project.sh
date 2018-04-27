@@ -72,27 +72,9 @@ start_smart_collector_server() {
     killall nodelet
     roslaunch velodyne_pointcloud VLP16_points.launch &
     sleep 0.2
-}
 
-start_smart_collector_client() {
-    log_with_time "$FUNCNAME start."
-    log_with_time "ROS_PACKAGE_PATH: ${ROS_PACKAGE_PATH}"
-
-    pkill sc_center_
-    rosrun sc_center sc_center_node &
-    sleep 0.2
-}
-
-do_rviz() {
-    log_with_time "$FUNCNAME start."
-    log_with_time "ROS_PACKAGE_PATH: ${ROS_PACKAGE_PATH}"
-
-    pkill display_had_
-    # rosrun display_had display_had_node &
-    sleep 0.2
-
-    killall rviz
-    /opt/ros/indigo/bin/rviz >>$result_log 2>&1 &
+    pkill sc_project_mon
+    /opt/smartc/devel/lib/sc_project_monitor/sc_project_monitor_node "${_absolute_record_path}/" &
     sleep 0.2
 }
 
@@ -102,6 +84,7 @@ do_kill() {
     pkill sc_integrate_ &
     pkill roscameragps &
     killall nodelet &
+    pkill sc_project_mon &
 }
 
 main() {

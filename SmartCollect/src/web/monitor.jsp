@@ -215,10 +215,15 @@
           $('#isRecordCheckBox').prop('disabled', true);
         }
 
-        console.log("message: " + message.img_num + "; " + message.lidar_size + "M; " + message.disk_usage);
-        $("#diskspace")[0].innerHTML = message.disk_info.disk_usage;
-        $("#lidarpkg")[0].innerHTML = message.disk_info.lidar_size+"M";
-        $("#piccounts")[0].innerHTML = message.disk_info.img_num;
+        $("#diskspace")[0].innerHTML = message.disk_usage;
+        if(-2 == message.img_num) {
+          var errMsg = '没有活动工程！';
+          $("#piccounts")[0].innerHTML = $("#lidarpkg")[0].innerHTML = "<font color=red >" + errMsg + "</font>";
+        }
+        else {
+          $("#piccounts")[0].innerHTML = message.img_num;
+          $("#lidarpkg")[0].innerHTML = message.lidar_size+"M";
+        }
     });
 
     var nodeCtrlParamListener = new ROSLIB.Topic({

@@ -89,6 +89,8 @@ void ServerDaemon::run() {
             isDiskInfoUpdated_ = false;
         }
 
+        monitorMsg_.projects.clear();
+        monitorMsg_.disk_usage.clear();
         (void)pDiskMonitor_->run("/opt/smartc/record/", monitorMsg_);
 
         pub2client_.publish(monitorMsg_);

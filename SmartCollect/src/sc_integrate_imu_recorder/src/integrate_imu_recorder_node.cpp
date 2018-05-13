@@ -28,13 +28,22 @@ int main(int argc, char **argv) {
     ros::init(argc, argv, "hdop_publisher");
     ros::NodeHandle private_nh("~");
     ros::NodeHandle nh;
-    ros::Publisher pubHdop = nh.advertise<sc_integrate_imu_recorder::scIntegrateImu>("imu422_hdop", 0);
+    ros::Publisher pubHdop = nh.advertise<sc_msgs::scIntegrateImu>("imu422_hdop", 0);
     string rawInsFile("");
     // private_nh.param("raw_ins_path", rawInsFile, rawInsFile);
     rawInsFile = argv[1];
     string rtImuFileName("");
     (void)public_tools::PublicTools::generateFileName(rawInsFile, rtImuFileName);
     rawInsFile += (rtImuFileName + "_integrate_imu.dat");
+
+    const string timeErrFile(rawInsFile + rtImuFileName + "_time_diff.txt");
+    std::ofstream timeErrFileStream(timeErrFile.c_str());
+    if(!timeErrFileStream) {
+        LOG(ERROR) << "Failed to create: " << timeErrFile;
+        exit(1);
+    }
+    timeErrFileStream << "gps_time,sys_time,time_error\n";
+    timeErrFileStream.close();
 
     FILE *pOutFile;
     if(!(pOutFile = fopen(rawInsFile.c_str(), "wb") ) ) {
@@ -48,7 +57,7 @@ int main(int argc, char **argv) {
     int nread = 0;
     string completeGpgga("");
     bool isGpggaStart = false;
-    sc_integrate_imu_recorder::scIntegrateImu hdopMsg;
+    sc_msgs::scIntegrateImu hdopMsg;
 
     while(ros::ok() ) {
         bzero(buf, BUFFER_SIZE);
@@ -70,12 +79,13 @@ int main(int argc, char **argv) {
             DLOG(INFO) << "Gpgga not complete or not updated.";
             continue;
         }
-        if(!getGdopFromGpgga(completeGpgga, hdopMsg) ) {
+        if(!getGdopFromGpgga(completeGpgga, hdopMsg, timeErrFile) ) {
             LOG(ERROR) << "Failed to get hdop, completeGpgga: " << completeGpgga;
             continue;
         }
 
         LOG(INFO) << "Hdop: " << hdopMsg.Hdop;
+        // TODO: calc diff to a file (sys - gps)
         pubHdop.publish(hdopMsg);
     }
 
@@ -130,7 +140,7 @@ bool getGpgga(const unsigned char *inBuf, const size_t &bufSize, string &gpgga, 
     return isGpggaComplete;
 }
 
-bool getGdopFromGpgga(const string &inGpgga, sc_integrate_imu_recorder::scIntegrateImu &out422Msg) {
+bool getGdopFromGpgga(const string &inGpgga, sc_msgs::scIntegrateImu &out422Msg, const string &timeErrFile) {
     LOG(INFO) << __FUNCTION__ << " start.";
     vector<string> parsedGpgga;
     boost::split(parsedGpgga, inGpgga, boost::is_any_of(",") );
@@ -139,10 +149,37 @@ bool getGdopFromGpgga(const string &inGpgga, sc_integrate_imu_recorder::scIntegr
         LOG(ERROR) << "Error parsing: " << parsedGpgga.size();
         return false;
     }
+
+    out422Msg.GpsWeekTime = parsedGpgga[1];
     out422Msg.Latitude = parsedGpgga[2];
     out422Msg.Longitude = parsedGpgga[4];
     out422Msg.NoSV = parsedGpgga[7];
     out422Msg.Hdop = parsedGpgga[8];
+
+    const double gps422Time = public_tools::PublicTools::string2num(parsedGpgga[1], double(-1) );
+    if(gps422Time < 0) {
+        LOG(WARNING) << "422 GPS time is empty.";
+        return true;
+    }
+    const double sysTime = ros::Time::now().toSec();
+    double timeErr = gps422Time - sysTime;
+    timeErr = fmod(timeErr, 3600.);
+    if(timeErr > 1800) {
+        timeErr -= 3600;
+    }
+    else
+    if(timeErr < -1800) {
+        timeErr += 3600;
+    }
+    // else {nothing}
+
+    std::ofstream timeErrFileStream(timeErrFile.c_str());
+    if(!timeErrFileStream) {
+        LOG(ERROR) << "Failed to create: " << timeErrFile;
+        exit(1);
+    }
+    timeErrFileStream << gps422Time << "," << sysTime << "," << timeErr << "\n";
+    timeErrFileStream.close();
 
     return true;
 }

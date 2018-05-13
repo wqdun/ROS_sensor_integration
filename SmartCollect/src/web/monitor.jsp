@@ -224,25 +224,19 @@
           $("#piccounts")[0].innerHTML = message.img_num;
           $("#lidarpkg")[0].innerHTML = message.lidar_size+"M";
         }
-    });
 
-    var nodeCtrlParamListener = new ROSLIB.Topic({
-        ros: ros_,
-        name: '/sc_node_params',
-        messageType: 'sc_msgs/NodeParams'
-    });
-    nodeCtrlParamListener.subscribe(function(message) {
         console.log("is_record: " + message.is_record);
         console.log("cam_gain: " + typeof(message.cam_gain) + ", " + message.cam_gain);
         if(isRecordclicked_ != 0) {
             --isRecordclicked_;
             console.log("Waiting modify take effect: " + isRecordclicked_);
-            return;
         }
-        $("#isRecordCheckBox").prop("checked", message.is_record);
-        $("#ex1").slider("setValue", message.cam_gain);
-        console.log("cam_gain on server is: " + $("#ex1").slider("getValue"));
-    })
+        else {
+          $("#isRecordCheckBox").prop("checked", message.is_record);
+          $("#ex1").slider("setValue", message.cam_gain);
+          console.log("cam_gain on server is: " + $("#ex1").slider("getValue"));
+        }
+    });
 
     $('#ex1').slider({
         tooltip: 'always'

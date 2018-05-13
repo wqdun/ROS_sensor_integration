@@ -666,7 +666,7 @@
             $('#dayORnight').prop('disabled', false);
             $('#pid').prop('disabled', false);
             $('#deviceID').prop('disabled', false);
-            $('#newProject').prop('disabled', false);
+            // $('#newProject').prop('disabled', false);
             $('#removeData').prop('disabled', false);
             $('#reboot').prop('disabled', false);
             $('#shutdown').prop('disabled', false);

@@ -25,8 +25,6 @@
 <div id="map">
 </div>
 <script>
-    var soruceIndex = 0;
-    var movepoint = 0.001;
     minemap.domainUrl = '//10.42.0.1:8888';
     minemap.spriteUrl = '//10.42.0.1:8888/minemapapi/v1.3/sprite/sprite';
     minemap.serviceUrl = '//10.42.0.1:8888/service';
@@ -36,87 +34,109 @@
     var map = new minemap.Map({
         container: 'map',
         style: "//10.42.0.1:8888/service/solu/style/id/2365",
-        center: [116.46, 39.92],
+        center: [116.38, 39.90],
         zoom: 15,
-        pitch: 0
+        // pitch: 0,
+    });
+    map.addControl(new minemap.Navigation(), "bottom-right");
+    map.addControl(new minemap.Scale(), "top-right");
+
+    map.on("load", function () {
+        map.flyTo({
+            center: [116.2394822, 40.0719897],
+            pitch: 0,
+        });
+
+        map.addSource("unrecordedTrackSource", {
+            "type": "geojson",
+            "data": {
+                "type": "FeatureCollection",
+                "features": [],
+            },
+        });
+        map.addLayer({
+            "id": "unrecordedTrackLines",
+            "type": "line",
+            "source": "unrecordedTrackSource",
+            "layout": {
+                "line-join": "round",
+                "line-cap": "round"
+            },
+            "paint": {
+                "line-color": "#FF9912",
+                "line-width": 1
+            }
+        });
+
+        map.addSource("recordedTrackSource", {
+            "type": "geojson",
+            "data": {
+                "type": "FeatureCollection",
+                "features": [],
+            },
+        });
+        map.addLayer({
+            "id": "recordedTrackLines",
+            "type": "line",
+            "source": "recordedTrackSource",
+            "layout": {
+                "line-join": "round",
+                "line-cap": "round"
+            },
+            "paint": {
+                "line-color": "#ff0000",
+                "line-width": 2
+            }
+        });
+
+        map.loadImage('img/loc.png', function (error, image) {
+            if (error) {
+                console.log("Error loadImage.");
+                throw error;
+            }
+            map.addImage('SClocation', image);
+        });
+        map.addSource("arrowSource", {
+            "type": "geojson",
+            "data": {
+                "type": "Feature",
+                "properties": {},
+                "geometry": {
+                    "type": "Point",
+                    "coordinates": [116.2394822, 40.0719897],
+                }
+            }
+        });
+        map.addLayer({
+            "id": "arrow",
+            "type": "symbol",
+            "source": "arrowSource",
+            "layout": {
+                "icon-image": "SClocation",
+                "icon-size": 0.04,
+                "icon-rotate": 0,
+            }
+        });
+
     });
 
-
-
-    console.log("Connecting to ROS...");
+    console.log("Connecting to ROS: rosbridge WebSocket server...");
     var ros_ = new ROSLIB.Ros();
-    // Create a connection to the rosbridge WebSocket server.
     ros_.connect('ws://<%=ip%>:9090');
 
-    var serverdListener_ = new ROSLIB.Topic({
+
+    var currentLocation_ = [116.2394822, 40.0719897];
+    var currentHeading_ = 0;
+
+    var centerListener = new ROSLIB.Topic({
         ros: ros_,
         name: '/sc_monitor',
         messageType: 'sc_msgs/MonitorMsg'
     });
-    serverdListener_.subscribe(
-        function(monitorMsg) {
-            soruceIndex++;
-            movepoint = movepoint+0.001;
-            console.log("monitorMsg.lat_lon_hei.y: " + monitorMsg.lat_lon_hei.y);
-            if(monitorMsg.lat_lon_hei.y <= 0) {
-                console.log("GPS lost.");
-            }
-            else {
-                map.flyTo({
-                    center: [monitorMsg.lat_lon_hei.y+movepoint, monitorMsg.lat_lon_hei.x],
-                    // zoom: 15
-                })
-            }
-            console.log("Only subscribe once.");
-            // serverdListener_.unsubscribe();
-
-
-
-             map.removeLayer("points");
-             map.addSource("pointSource"+soruceIndex, {
-                "type": "geojson",
-                "data": {
-                    "type": "FeatureCollection",
-                    "features": [{
-                        "type": "Feature",
-                        "geometry": {
-                            "type": "Point",
-                            "coordinates": [monitorMsg.lat_lon_hei.y+movepoint, monitorMsg.lat_lon_hei.x],
-                        },
-                        "properties": {
-                            // "title": "当前位置",
-                            "icon": "marker-15-6",
-                            "color": "#ff0000"
-                        }
-                    }]
-                }
-            });
-            map.addLayer({
-            "id": "points",
-            "type": "symbol",
-            "source": "pointSource"+soruceIndex,
-            "layout": {
-                "icon-image": "{icon}",
-                "text-field": "{title}",
-                "text-offset": [0, 0.6],
-                "text-anchor": "top",
-                "icon-allow-overlap": true,  //图标允许压盖
-                "text-allow-overlap": true,   //图标覆盖文字允许压盖
-            },
-            "paint": {
-                "text-color":{
-                    'type': 'identity',
-                    'property': 'color'
-                },
-                "icon-color":{
-                    'type': 'identity',
-                    'property': 'color'
-                }
-            }
-        });
-
-        }
-    );
+    centerListener.subscribe(function (message) {
+        console.log(centerListener.name + '::heading: ' + message.pitch_roll_heading.z);
+        currentHeading_ = message.pitch_roll_heading.z;
+    });
 
     var baseMapListener_ = new ROSLIB.Topic({
         ros: ros_,
@@ -124,25 +144,25 @@
         messageType: 'sc_msgs/Lines2D'
     });
     baseMapListener_.subscribe(
-        function(baseMapMsg) {
+        function (baseMapMsg) {
             var lineLength = baseMapMsg.lines2D.length;
             console.log("Found " + lineLength + " lines in " + baseMapListener_.name);
-            if(lineLength <= 0) {
+            if (lineLength <= 0) {
                 console.log("Found 0 line in " + baseMapListener_.name);
                 baseMapListener_.unsubscribe();
                 return;
             }
 
-            var linefeatureArry = new Array();
-            var linefeatureArry1 = new Array();
-            for(var i = 0; i < lineLength; i++) {
+            console.log("1st point: " + baseMapMsg.lines2D[0].line2D[0].x + ", " + baseMapMsg.lines2D[0].line2D[0].y);
+            var baseMaplinesFeatureArry = new Array();
+            for (var i = 0; i < lineLength; ++i) {
                 var points = baseMapMsg.lines2D[i];
-                var posarry = new Array();
-                for(var j = 0; j < points.line2D.length; j++) {
+                var pointsArry = new Array();
+                for (var j = 0; j < points.line2D.length; ++j) {
                     var onepoint = new Array();
                     onepoint[0] = points.line2D[j].x;
                     onepoint[1] = points.line2D[j].y;
-                    posarry[j] = onepoint;
+                    pointsArry[j] = onepoint;
                 }
 
                 var lineFeature = {
@@ -150,109 +170,258 @@
                     "properties": {},
                     "geometry": {
                         "type": "LineString",
-                        "coordinates": posarry
-                    }
+                        "coordinates": pointsArry
+                    },
                 };
-                if(i>=50){
-                linefeatureArry.push(lineFeature);
+                baseMaplinesFeatureArry.push(lineFeature);
             }
 
-                if(i<50){
-                    linefeatureArry1.push(lineFeature);
+            map.addSource("baseLineSource", {
+                "type": "geojson",
+                "data": {
+                    "type": "FeatureCollection",
+                    "features": baseMaplinesFeatureArry
                 }
-            }
+            });
+            map.addLayer({
+                "id": "baseMapLines",
+                "type": "line",
+                "source": "baseLineSource",
+                "layout": {
+                    "line-join": "round",
+                    "line-cap": "round"
+                },
+                "paint": {
+                    "line-color": "#000000",
+                    "line-width": 1
+                }
+            });
 
-            // map.addSource("pointSource", {
-            //     "type": "geojson",
-            //     "data": {
-            //         "type": "FeatureCollection",
-            //         "features": [{
-            //             "type": "Feature",
-            //             "geometry": {
-            //                 "type": "Point",
-            //                 "coordinates": [116, 40],
-            //             },
-            //             "properties": {
-            //                 "title": "大学",
-            //                 "icon": "marker-15-6",
-            //                 "color": "#ff0000"
-            //             }
-            //         }]
-            //     }
-            // });
-
-            // map.addLayer({
-            //     "id": "points",
-            //     "type": "symbol",
-            //     "source": "pointSource",
-            //     "layout": {
-            //         "icon-image": "{icon}",
-            //         "text-field": "{title}",
-            //         "text-offset": [0, 0.6],
-            //         "text-anchor": "top",
-            //         "icon-allow-overlap": true,
-            //         "text-allow-overlap": true,
-            //     },
-            //     "paint": {
-            //         "text-color": {
-            //             'type': 'identity',
-            //             'property': 'color'
-            //         },
-            //         "icon-color": {
-            //             'type': 'identity',
-            //             'property': 'color'
-            //         }
-            //     }
-            // });
-
-
-            // map.addSource("lineSource", {
-            //     "type": "geojson",
-            //     "data": {
-            //         "type": "FeatureCollection",
-            //         "features": linefeatureArry
-            //     }
-            // });
-            // map.addSource("lineSource1", {
-            //     "type": "geojson",
-            //     "data": {
-            //         "type": "FeatureCollection",
-            //         "features": linefeatureArry1
-            //     }
-            // });
-            // map.addLayer({
-            //     "id": "lines",
-            //     "type": "line",
-            //     "source": "lineSource",
-            //     "layout": {
-            //         "line-join": "round",
-            //         "line-cap": "round"
-            //     },
-            //     "paint": {
-            //         "line-color": "#ff0000",
-            //         "line-width": 4
-            //     }
-            // });
-            // map.addLayer({
-            //     "id": "lines2",
-            //     "type": "line",
-            //     "source": "lineSource1",
-            //     "layout": {
-            //         "line-join": "round",
-            //         "line-cap": "round"
-            //     },
-            //     "paint": {
-            //         "line-color": "#00ff00",
-            //         "line-width": 1
-            //     }
-            // });
-
-            console.log("Only subscribe once.");
+            console.log("Only subscribe base map once.");
             baseMapListener_.unsubscribe();
         }
     );
 
+    var planMapListener_ = new ROSLIB.Topic({
+        ros: ros_,
+        name: '/sc_plan_map',
+        messageType: 'sc_msgs/Lines2D'
+    });
+    planMapListener_.subscribe(
+        function (planMapMsg) {
+            var lineLength = planMapMsg.lines2D.length;
+            console.log("Found " + lineLength + " lines in " + planMapListener_.name);
+            if (lineLength <= 0) {
+                console.log("Found 0 line in " + planMapListener_.name);
+                planMapListener_.unsubscribe();
+                return;
+            }
 
+            console.log("1st point: " + planMapMsg.lines2D[0].line2D[0].x + ", " + planMapMsg.lines2D[0].line2D[0].y);
+            var planMaplinesFeatureArry = new Array();
+            for (var i = 0; i < lineLength; ++i) {
+                var points = planMapMsg.lines2D[i];
+                var pointsArry = new Array();
+                for (var j = 0; j < points.line2D.length; ++j) {
+                    var onepoint = new Array();
+                    onepoint[0] = points.line2D[j].x;
+                    onepoint[1] = points.line2D[j].y;
+                    pointsArry[j] = onepoint;
+                }
+
+                var lineFeature = {
+                    "type": "Feature",
+                    "properties": {},
+                    "geometry": {
+                        "type": "LineString",
+                        "coordinates": pointsArry
+                    },
+                };
+                planMaplinesFeatureArry.push(lineFeature);
+            }
+
+            map.addSource("planLineSource", {
+                "type": "geojson",
+                "data": {
+                    "type": "FeatureCollection",
+                    "features": planMaplinesFeatureArry
+                }
+            });
+            map.addLayer({
+                "id": "planMapLines",
+                "type": "line",
+                "source": "planLineSource",
+                "layout": {
+                    "line-join": "round",
+                    "line-cap": "round"
+                },
+                "paint": {
+                    "line-color": "#000000",
+                    "line-width": 1
+                }
+            });
+
+            console.log("Only subscribe plan map once.");
+            planMapListener_.unsubscribe();
+        }
+    );
+
+    var angle = 0;
+    var unrecordedPointNumOfLastLineLast_ = -1;
+    var unrecordedTrackListener_ = new ROSLIB.Topic({
+        ros: ros_,
+        name: '/sc_unrecorded_track',
+        messageType: 'sc_msgs/Lines2D'
+    });
+    unrecordedTrackListener_.subscribe(
+        function (unrecordedTrackMsg) {
+            var lineLength = unrecordedTrackMsg.lines2D.length;
+            console.log("Found " + lineLength + " lines in " + unrecordedTrackListener_.name);
+            if (lineLength <= 0) {
+                console.log("Found 0 line in " + unrecordedTrackListener_.name);
+                return;
+            }
+
+            console.log("1st point: " + unrecordedTrackMsg.lines2D[0].line2D[0].x + ", " + unrecordedTrackMsg.lines2D[0].line2D[0].y);
+            var linesNum = unrecordedTrackMsg.lines2D.length;
+            var pointNumOfLastLine = unrecordedTrackMsg.lines2D[linesNum - 1].line2D.length;
+            if (unrecordedPointNumOfLastLineLast_ != pointNumOfLastLine) {
+                console.log("I am not recording.");
+                currentLocation_ = [unrecordedTrackMsg.lines2D[linesNum - 1].line2D[pointNumOfLastLine - 1].x, unrecordedTrackMsg.lines2D[linesNum - 1].line2D[pointNumOfLastLine - 1].y];
+                if (typeof map.getSource("arrowSource") == "undefined") {
+                    console.log("arrowSource undefined.");
+                }
+                else {
+                    map.setLayoutProperty("arrow", "icon-rotate", currentHeading_);
+                    map.getSource("arrowSource").setData({
+                        "type": "Feature",
+                        "properties": {},
+                        "geometry": {
+                            "type": "Point",
+                            "coordinates": currentLocation_,
+                        }
+                    });
+                }
+                map.flyTo({
+                    center: currentLocation_,
+                    // center: [103.846160, 1.290285],
+                });
+            }
+            // else {nothing}
+            unrecordedPointNumOfLastLineLast_ = pointNumOfLastLine;
+
+            angle += 10;
+
+
+            var unrecordedTrackFeatureArry = new Array();
+            for (var i = 0; i < lineLength; ++i) {
+                var points = unrecordedTrackMsg.lines2D[i];
+                var pointsArry = new Array();
+                for (var j = 0; j < points.line2D.length; ++j) {
+                    var onepoint = new Array();
+                    onepoint[0] = points.line2D[j].x;
+                    onepoint[1] = points.line2D[j].y;
+                    pointsArry[j] = onepoint;
+                }
+
+                var lineFeature = {
+                    "type": "Feature",
+                    "properties": {},
+                    "geometry": {
+                        "type": "LineString",
+                        "coordinates": pointsArry
+                    },
+                };
+                unrecordedTrackFeatureArry.push(lineFeature);
+            }
+
+            if (typeof map.getSource("unrecordedTrackSource") == "undefined") {
+                console.log("unrecordedTrackSource undefined.");
+                return;
+            }
+            console.log("unrecordedTrackSource defined.");
+            map.getSource("unrecordedTrackSource").setData({
+                "type": "FeatureCollection",
+                "features": unrecordedTrackFeatureArry
+            });
+        }
+    );
+
+    var recordedPointNumOfLastLineLast_ = -1;
+    var recordedTrackListener_ = new ROSLIB.Topic({
+        ros: ros_,
+        name: '/sc_recorded_track',
+        messageType: 'sc_msgs/Lines2D'
+    });
+    recordedTrackListener_.subscribe(
+        function (recordedTrackMsg) {
+            var lineLength = recordedTrackMsg.lines2D.length;
+            console.log("Found " + lineLength + " lines in " + recordedTrackListener_.name);
+            if (lineLength <= 0) {
+                console.log("Found 0 line in " + recordedTrackListener_.name);
+                return;
+            }
+
+            console.log("1st point: " + recordedTrackMsg.lines2D[0].line2D[0].x + ", " + recordedTrackMsg.lines2D[0].line2D[0].y);
+            var linesNum = recordedTrackMsg.lines2D.length;
+            var pointNumOfLastLine = recordedTrackMsg.lines2D[linesNum - 1].line2D.length;
+            if (recordedPointNumOfLastLineLast_ != pointNumOfLastLine) {
+                console.log("I am recording.");
+                currentLocation_ = [recordedTrackMsg.lines2D[linesNum - 1].line2D[pointNumOfLastLine - 1].x, recordedTrackMsg.lines2D[linesNum - 1].line2D[pointNumOfLastLine - 1].y];
+                if (typeof map.getSource("arrowSource") == "undefined") {
+                    console.log("arrowSource undefined.");
+                }
+                else {
+                    map.setLayoutProperty("arrow", "icon-rotate", currentHeading_);
+                    map.getSource("arrowSource").setData({
+                        "type": "Feature",
+                        "properties": {},
+                        "geometry": {
+                            "type": "Point",
+                            "coordinates": currentLocation_,
+                        }
+                    });
+                }
+                map.flyTo({
+                    center: currentLocation_,
+                });
+            }
+            // else {nothing}
+            recordedPointNumOfLastLineLast_ = pointNumOfLastLine;
+
+            var recordedTrackFeatureArry = new Array();
+            for (var i = 0; i < lineLength; ++i) {
+                var points = recordedTrackMsg.lines2D[i];
+                var pointsArry = new Array();
+                for (var j = 0; j < points.line2D.length; ++j) {
+                    var onepoint = new Array();
+                    onepoint[0] = points.line2D[j].x;
+                    onepoint[1] = points.line2D[j].y;
+                    pointsArry[j] = onepoint;
+                }
+
+                var lineFeature = {
+                    "type": "Feature",
+                    "properties": {},
+                    "geometry": {
+                        "type": "LineString",
+                        "coordinates": pointsArry
+                    },
+                };
+                recordedTrackFeatureArry.push(lineFeature);
+            }
+
+            if (typeof map.getSource("recordedTrackSource") == "undefined") {
+                console.log("recordedTrackSource undefined.");
+                return;
+            }
+            console.log("recordedTrackSource defined.");
+            map.getSource("recordedTrackSource").setData({
+                "type": "FeatureCollection",
+                "features": recordedTrackFeatureArry
+            });
+        }
+    );
 
 </script>
 </body>

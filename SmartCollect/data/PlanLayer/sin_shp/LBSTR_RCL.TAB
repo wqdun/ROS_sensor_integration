@@ -1,0 +1,21 @@
+!table
+!version 300
+!charset WindowsSimpChinese
+
+Definition Table
+  Type DBF Charset "WindowsLatin1"
+  Fields 9
+    Road_name Char (65) ;
+    Road_categ Char (10) ;
+    Road_class Decimal (19, 8) ;
+    Traffic_di Decimal (19, 8) ;
+    Data_ind Char (5) ;
+    Last_upd_d Date ;
+    Fea_id Decimal (19, 8) ;
+    Inc_crc Char (50) ;
+    Fmel_upd_d Date ;
+begin_metadata
+"\IsReadOnly" = "FALSE"
+"\MapInfo" = ""
+"\MapInfo\TableID" = "aed02c28-a193-4cd1-87d7-3f08fbbe02fd"
+end_metadata

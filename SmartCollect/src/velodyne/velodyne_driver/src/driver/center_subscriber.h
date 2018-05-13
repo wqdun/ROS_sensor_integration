@@ -2,7 +2,7 @@
 #define _CENTER_SUBSCRIBER_H_
 
 #include <ros/ros.h>
-#include <sc_msgs/NodeParams.h>
+#include <sc_msgs/MonitorMsg.h>
 
 class CenterSubscriber {
 public:
@@ -13,7 +13,7 @@ public:
 
 
 private:
-    void clientCB(const sc_msgs::NodeParams::ConstPtr& pClientMsg);
+    void clientCB(const sc_msgs::MonitorMsg::ConstPtr& pClientMsg);
     ros::Subscriber subClient_;
 };
 

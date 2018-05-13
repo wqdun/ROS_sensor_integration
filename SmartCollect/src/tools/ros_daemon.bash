@@ -63,12 +63,6 @@ run_sc_server_daemon_node() {
         log_with_time "[ERROR] Failed to find sc_server_daemon_node."
     fi
 
-    if [ -f "/opt/smartc/devel/lib/sc_map/sc_map_node" ]; then
-        /opt/smartc/devel/lib/sc_map/sc_map_node &
-    else
-        log_with_time "[ERROR] Failed to find sc_map_node."
-    fi
-
     log_with_time "$FUNCNAME return $?."
 }
 
@@ -178,6 +172,9 @@ set_camera_mtu() {
 do_start() {
     log_with_time "$FUNCNAME start."
 
+    mount_data_disk
+    sleep 1
+
     . /opt/ros/indigo/setup.bash
     /opt/ros/indigo/bin/roscore >>$result_log 2>&1 &
     sleep 1
@@ -187,8 +184,7 @@ do_start() {
     sleep 1
     run_rosbridge
     sleep 1
-    mount_data_disk
-    sleep 1
+
     set_camera_mtu
     sleep 1
     run_minemap_service

@@ -76,6 +76,10 @@ start_smart_collector_server() {
     pkill sc_project_mon
     /opt/smartc/devel/lib/sc_project_monitor/sc_project_monitor_node "${_absolute_record_path}/" &
     sleep 0.2
+
+    pkill sc_map_node
+    /opt/smartc/devel/lib/sc_map/sc_map_node &
+    sleep 0.2
 }
 
 do_kill() {
@@ -85,6 +89,7 @@ do_kill() {
     pkill roscameragps &
     killall nodelet &
     pkill sc_project_mon &
+    pkill sc_map_node &
 }
 
 main() {

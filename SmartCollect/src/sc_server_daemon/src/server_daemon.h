@@ -10,7 +10,7 @@
 #include "sc_msgs/DiskInfo.h"
 #include "roscameragpsimg/imu5651.h"
 #include "velodyne_msgs/Velodyne2Center.h"
-#include "sc_integrate_imu_recorder/scIntegrateImu.h"
+#include "sc_msgs/scIntegrateImu.h"
 #include "../../sc_lib_public_tools/src/public_tools.h"
 #include "dataFixed.h"
 #include <boost/thread/thread.hpp>
@@ -26,7 +26,6 @@ public:
 
 private:
     ros::Subscriber subClient_;
-    ros::Publisher pub2scNodes_;
 
     ros::Subscriber sub232_;
     ros::Subscriber subVelodyne_;
@@ -36,7 +35,6 @@ private:
     ros::Subscriber subServer_;
     ros::Publisher pub2client_;
 
-    sc_msgs::NodeParams nodeParams_;
     sc_msgs::MonitorMsg monitorMsg_;
     sc_msgs::ProjectInfoMsg projectInfoMsg_;
 
@@ -54,7 +52,7 @@ private:
     bool isGpsUpdated_, isVelodyneUpdated_, isRawImuUpdated_, isCameraUpdated_, isDiskInfoUpdated_;
     void gpsCB(const roscameragpsimg::imu5651::ConstPtr& pGPSmsg);
     void velodyneCB(const velodyne_msgs::Velodyne2Center::ConstPtr& pVelodyneMsg);
-    void rawImuCB(const sc_integrate_imu_recorder::scIntegrateImu::ConstPtr& pRawImuMsg);
+    void rawImuCB(const sc_msgs::scIntegrateImu::ConstPtr& pRawImuMsg);
     void cameraImgCB(const std_msgs::Float64::ConstPtr& pCameraImgMsg);
     void projectMonitorCB(const sc_msgs::DiskInfo::ConstPtr& pDiskInfoMsg);
     void updateProjectInfo(const std::string &projectInfo);

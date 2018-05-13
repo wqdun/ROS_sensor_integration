@@ -6,9 +6,8 @@
 ServerDaemon::ServerDaemon(ros::NodeHandle nh, ros::NodeHandle private_nh) {
     // below for SC control
     subClient_ = nh.subscribe("sc_client_cmd", 10, &ServerDaemon::clientCB, this);
-    pub2scNodes_ = nh.advertise<sc_msgs::NodeParams>("sc_node_params", 10);
-    nodeParams_.is_record = 0;
-    nodeParams_.cam_gain = 20;
+    monitorMsg_.is_record = 0;
+    monitorMsg_.cam_gain = 20;
 
     // below for composing monitor data
     isGpsUpdated_ = isVelodyneUpdated_ = isRawImuUpdated_ = isCameraUpdated_ = isDiskInfoUpdated_ = false;
@@ -36,9 +35,6 @@ void ServerDaemon::run() {
         freqDivider %= 256;
         ros::spinOnce();
         rate.sleep();
-
-        DLOG(INFO) << "Publish a server command: is_record: " << (int)(nodeParams_.is_record) << ", cam_gain: " << nodeParams_.cam_gain;
-        pub2scNodes_.publish(nodeParams_);
 
         // 1Hz
         if(0 == (freqDivider % 2) ) {
@@ -93,11 +89,13 @@ void ServerDaemon::run() {
         monitorMsg_.disk_usage.clear();
         (void)pDiskMonitor_->run("/opt/smartc/record/", monitorMsg_);
 
+        DLOG(INFO) << "Publish a server command: is_record: " << (int)(monitorMsg_.is_record) << ", cam_gain: " << monitorMsg_.cam_gain;
+
         pub2client_.publish(monitorMsg_);
     }
 }
 
-void ServerDaemon::rawImuCB(const sc_integrate_imu_recorder::scIntegrateImu::ConstPtr& pRawImuMsg) {
+void ServerDaemon::rawImuCB(const sc_msgs::scIntegrateImu::ConstPtr& pRawImuMsg) {
     DLOG(INFO) << __FUNCTION__ << " start in 1Hz.";
     isRawImuUpdated_ = true;
 
@@ -177,8 +175,8 @@ void ServerDaemon::clientCB(const sc_msgs::ClientCmd::ConstPtr& pClientMsg) {
         case 0: {
             if(pClientMsg->project_name.empty() ) {
                 LOG(INFO) << "Empty project name, gonna update is_record and cam_gain.";
-                nodeParams_.is_record = pClientMsg->node_params.is_record;
-                nodeParams_.cam_gain = pClientMsg->node_params.cam_gain;
+                monitorMsg_.is_record = pClientMsg->node_params.is_record;
+                monitorMsg_.cam_gain = pClientMsg->node_params.cam_gain;
             }
             else {
                 LOG(INFO) << "New project name received, gonna create project: " << pClientMsg->project_name;
@@ -265,8 +263,8 @@ void ServerDaemon::updateProjectInfo(const std::string &projectInfo) {
         monitorMsg_.project_info.task_id.clear();
         monitorMsg_.project_info.device_id.clear();
 
-        nodeParams_.is_record = 0;
-        nodeParams_.cam_gain = 20;
+        monitorMsg_.is_record = 0;
+        monitorMsg_.cam_gain = 20;
         return;
     }
 

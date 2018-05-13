@@ -35,7 +35,7 @@ static double string2double(const string& str)
     return num;
 }
 
-CPGCamera::CPGCamera(int nBufWidth, int nBufHeight, ros::NodeHandle& nh)
+CPGCamera::CPGCamera(int nBufWidth, int nBufHeight, ros::NodeHandle& nh, const string &_savePath)
 {
     m_nBufferWidth = nBufWidth;
     m_nBufferHeight = nBufHeight;
@@ -51,6 +51,7 @@ CPGCamera::CPGCamera(int nBufWidth, int nBufHeight, ros::NodeHandle& nh)
 
     m_CameraID = 0;
     m_bStartedCapture = false;
+    m_savePath = _savePath;
 }
 
 CPGCamera::~CPGCamera(void)
@@ -418,7 +419,8 @@ int show_state         = 1;
 
 void CPGCamera::XferCallBack(Image* pImages, const void *pCallBackData)
 {
-    DLOG(INFO) << __FUNCTION__ << " start.";
+
+    LOG(INFO) << __FUNCTION__ << " start.";
     ++show_state;
     show_state %= 8;
 
@@ -488,7 +490,8 @@ void CPGCamera::XferCallBack(Image* pImages, const void *pCallBackData)
     {
         case 0://jpg
         {
-            string gps_str_jpg = pathSave_str + gps_str + ".jpg";
+            string gps_str_jpg = pThis->m_savePath + gps_str + ".jpg";
+            LOG(INFO) << "I am gonna save in " << gps_str_jpg;
             const char* pathout_gps_jpg_c = gps_str_jpg.c_str();
             if(pathout_gps_jpg_c == NULL)
             {
@@ -543,7 +546,7 @@ void CPGCamera::XferCallBack(Image* pImages, const void *pCallBackData)
         }
         case 1: //raw
         {
-            string gps_str_raw  = pathSave_str + gps_str + ".raw";
+            string gps_str_raw  = pThis->m_savePath + gps_str + ".raw";
             const char* pathout_raw    = gps_str_raw.c_str();
 
             error = pImage.Save(pathout_raw,FlyCapture2::RAW);
@@ -556,7 +559,7 @@ void CPGCamera::XferCallBack(Image* pImages, const void *pCallBackData)
         }
         case 2: //jpgcount
         {
-            string count_str_jpg = pathSave_str + gps_str +".jpg";//count_str + ".jpg";
+            string count_str_jpg = pThis->m_savePath + gps_str +".jpg";//count_str + ".jpg";
             const char* pathout_count_jpg_c    = count_str_jpg.c_str();
             //image convert
             error = pImage.Convert( PIXEL_FORMAT_BGR, &convertedImage);
@@ -577,7 +580,7 @@ void CPGCamera::XferCallBack(Image* pImages, const void *pCallBackData)
         }
         case 3: //png
         {
-            string count_str_jpg = pathSave_str +gps_str+ ".png";//count_str + ".png";
+            string count_str_jpg = pThis->m_savePath +gps_str+ ".png";//count_str + ".png";
             const char* pathout_count_jpg_c    = count_str_jpg.c_str();
             //image convert
             error = pImage.Convert( PIXEL_FORMAT_BGR, &convertedImage);

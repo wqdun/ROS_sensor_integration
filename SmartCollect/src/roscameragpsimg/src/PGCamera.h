@@ -118,7 +118,7 @@ typedef void(*ImageGrabbedCallBack)(void* , void*, void*);
 class CPGCamera
 {
 public:
-	CPGCamera(int nBufWidth, int nBufHeight, ros::NodeHandle& mnh);
+	CPGCamera(int nBufWidth, int nBufHeight, ros::NodeHandle& mnh, const string &_savePath);
 	~CPGCamera(void);
 	//init camera
 	bool InitCamera(int m_CameraID);
@@ -169,6 +169,7 @@ public:
     bool ConvertImage(cv::Mat* matImage,Image* image);
 private:
 	static void XferCallBack(Image* pImage, const void *pCallBackData);
+	string m_savePath;
 
 public:
     double TimeStamptoDouble(FlyCapture2::TimeStamp *timeStamp);

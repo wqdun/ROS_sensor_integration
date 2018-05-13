@@ -215,8 +215,6 @@ int get_time(/*ros::NodeHandle* nh*/)
 
             if(is_frame_completed)
             {
-
-
                 int ret = mymutex.Trylock();
                 DLOG(INFO) << "get_time lock result: " << ret;
                 if(0 != ret)

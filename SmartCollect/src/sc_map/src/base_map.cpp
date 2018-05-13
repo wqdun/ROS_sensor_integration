@@ -6,8 +6,15 @@
 BaseMap::BaseMap(ros::NodeHandle nh, ros::NodeHandle private_nh) {
     LOG(INFO) << __FUNCTION__ << " start.";
 
+    pTracker_.reset(new Track() );
+    isRecord_ = false;
+    subMonitor_ = nh.subscribe("sc_monitor", 0, &BaseMap::monitorCB, this);
+
     pubBaseMap_ = nh.advertise<sc_msgs::Lines2D>("sc_base_map", 0);
     pubPlanMap_ = nh.advertise<sc_msgs::Lines2D>("sc_plan_map", 0);
+
+    pubUnrecordedTrack_ = nh.advertise<sc_msgs::Lines2D>("sc_unrecorded_track", 0);
+    pubRecordedTrack_ = nh.advertise<sc_msgs::Lines2D>("sc_recorded_track", 0);
 
     const std::string exePath(public_tools::PublicTools::safeReadlink("/proc/self/exe") );
     LOG(INFO) << "Node path: " << exePath;
@@ -16,7 +23,7 @@ BaseMap::BaseMap(ros::NodeHandle nh, ros::NodeHandle private_nh) {
 
     const std::string baseMapPath(smartcPath + "/data/BaseMap/");
     std::vector<std::string> baseMapFiles;
-    (void)public_tools::PublicTools::getFilesInDir(baseMapPath, ".kml", baseMapFiles);
+    (void)public_tools::PublicTools::getFilesInDir(baseMapPath, ".shp", baseMapFiles);
     if(1 != baseMapFiles.size() ) {
         LOG(WARNING) << "Got " << baseMapFiles.size() << " baseMapFiles in " << baseMapPath << ", should be 1.";
     }
@@ -26,7 +33,7 @@ BaseMap::BaseMap(ros::NodeHandle nh, ros::NodeHandle private_nh) {
 
     const std::string planMapPath(smartcPath + "/data/PlanLayer/");
     std::vector<std::string> planMapFiles;
-    (void)public_tools::PublicTools::getFilesInDir(planMapPath, ".kml", planMapFiles);
+    (void)public_tools::PublicTools::getFilesInDir(planMapPath, ".shp", planMapFiles);
     if(1 != planMapFiles.size() ) {
         LOG(WARNING) << "Got " << planMapFiles.size() << " planMapFiles in " << planMapPath << ", should be 1.";
     }
@@ -103,6 +110,24 @@ BaseMap::~BaseMap() {
     LOG(INFO) << "Goodbye.";
 }
 
+void BaseMap::monitorCB(const sc_msgs::MonitorMsg::ConstPtr& pMonitorMsg) {
+    DLOG(INFO) << __FUNCTION__ << " start, is_record: " << (int)(pMonitorMsg->is_record) << "; lat: " << pMonitorMsg->lat_lon_hei.x;
+
+    isRecord_ = pMonitorMsg->is_record;
+
+    if(!public_tools::PublicTools::isInChina(pMonitorMsg->lat_lon_hei.x, pMonitorMsg->lat_lon_hei.y) ) {
+        LOG_EVERY_N(INFO, 100) << "I am not china.";
+        gpsLonLat_.x = pMonitorMsg->lat_lon_hei.y;
+        gpsLonLat_.y = pMonitorMsg->lat_lon_hei.x;
+        return;
+    }
+    LOG_EVERY_N(INFO, 100) << "I am china, gonna translate coordination (" << pMonitorMsg->lat_lon_hei.y << ", " << pMonitorMsg->lat_lon_hei.x << ") to Mars.";
+    if(0 != coordtrans("wgs84", "gcj02", pMonitorMsg->lat_lon_hei.y, pMonitorMsg->lat_lon_hei.x, gpsLonLat_.x, gpsLonLat_.y) ) {
+        LOG(ERROR) << "Failed translate coordination (" << pMonitorMsg->lat_lon_hei.y << ", " << pMonitorMsg->lat_lon_hei.x << ") to Mars.";
+        exit(1);
+    }
+}
+
 void BaseMap::run() {
     LOG(INFO) << __FUNCTION__ << " start.";
 
@@ -113,6 +138,10 @@ void BaseMap::run() {
 
         pubBaseMap_.publish(baseMapLines_);
         pubPlanMap_.publish(planMapLines_);
+
+        pTracker_->run(isRecord_, gpsLonLat_);
+        pubUnrecordedTrack_.publish(pTracker_->unrecordedLines_);
+        pubRecordedTrack_.publish(pTracker_->recordedLines_);
     }
 
     LOG(INFO) << __FUNCTION__ << " end.";

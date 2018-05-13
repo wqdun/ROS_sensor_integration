@@ -2,7 +2,8 @@
 #define __BASE_MAP_H__
 
 #include <ros/ros.h>
-#include <sc_msgs/Lines2D.h>
+#include "sc_msgs/Lines2D.h"
+#include "sc_msgs/MonitorMsg.h"
 // GDAL library
 #include <gdal.h>
 #include <gdal_alg.h>
@@ -13,6 +14,8 @@
 #include <ogrsf_frmts.h>
 // GDAL library END
 #include "../../sc_lib_public_tools/src/public_tools.h"
+#include "../../sc_lib_public_tools/src/coordtrans.h"
+#include "track.h"
 
 class BaseMap {
 public:
@@ -23,11 +26,20 @@ public:
 
 private:
     void getLines(const std::string &_shpFile, sc_msgs::Lines2D &_lines);
+    void monitorCB(const sc_msgs::MonitorMsg::ConstPtr& pMonitorMsg);
 
+    ros::Subscriber subMonitor_;
     ros::Publisher pubBaseMap_;
     ros::Publisher pubPlanMap_;
+    ros::Publisher pubUnrecordedTrack_;
+    ros::Publisher pubRecordedTrack_;
+
     sc_msgs::Lines2D baseMapLines_;
     sc_msgs::Lines2D planMapLines_;
+
+    boost::shared_ptr<Track> pTracker_;
+    bool isRecord_;
+    sc_msgs::Point2D gpsLonLat_;
 };
 
 #endif

@@ -4,7 +4,7 @@
 #include <glog/logging.h>
 
 int main(int argc, char **argv) {
-    // google::InitGoogleLogging(argv[0]);
+    google::InitGoogleLogging(argv[0]);
     ros::init(argc, argv, "sc_map_node");
 
     BaseMap baseMapper(ros::NodeHandle(), ros::NodeHandle("~") );

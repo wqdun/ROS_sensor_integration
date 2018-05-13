@@ -46,6 +46,7 @@ public:
     static bool isFileExist(const std::string& fileName);
     static void runShellCmd(const std::string &cmd);
     static int popenWithReturn(const std::string &cmd, std::vector<std::string> &cmdReturn);
+    static bool isInChina(double lat, double lon);
 
 
 private:

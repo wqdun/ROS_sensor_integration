@@ -248,5 +248,14 @@ void PublicTools::runShellCmd(const std::string &cmd) {
     return;
 }
 
+bool PublicTools::isInChina(double lat, double lon) {
+   LOG(INFO) << __FUNCTION__ << " start.";
+   if (lat >= 20) {
+    return true;
+   }
+   return false;
+}
+
+
 }
 // namespace public_tools

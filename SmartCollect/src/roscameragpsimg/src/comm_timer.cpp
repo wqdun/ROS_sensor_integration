@@ -12,6 +12,7 @@ int gps_imu_state = 0;
 extern CMutex mymutex;
 
 CommTimer::CommTimer(const std::string &_rawdataPath) {
+    LOG(INFO) << __FUNCTION__ << " start, rawdataPath_: " << _rawdataPath;
     rawdataPath_ = _rawdataPath;
 }
 
@@ -36,7 +37,7 @@ int CommTimer::getTime()
         exit(1);
     }
 
-    std::string frameBuf;
+    std::string frameBuf("");
     long freq = 0;
     timespec t1, t2;
     long last_time_ns;
@@ -59,9 +60,8 @@ int CommTimer::getTime()
     std::fstream file;
     while(1)
     {
-
         memset(buf, 0, 1024);
-        int nread = read(fd1, buf, 1024); // 读串口
+        int nread = read(fd1, buf, 1024);
 
         if(nread <= 0)
         {
@@ -71,12 +71,12 @@ int CommTimer::getTime()
         for(size_t i = 0; i < nread; ++i)
         {
             is_frame_completed = false;
-            string frame_complete = "";
+            string frame_complete("");
             switch(buf[i])
             {
             case '$':
                 clock_gettime(CLOCK_REALTIME, &t2);
-                // cout << "time_end  :" << t2.tv_nsec << endl;
+                DLOG(INFO) << "time_end  :" << t2.tv_nsec;
                 time_when_get_frame_s = t2.tv_sec;
                 time_when_get_frame_ns = t2.tv_nsec;
                 time_s = (double)time_when_get_frame_s + (double)time_when_get_frame_ns / 1000000000.0;
@@ -139,9 +139,11 @@ int CommTimer::getTime()
                 }
                 const double sysWeekSec = ros::Time::now().toSec() - 24 * 3600 * 3;
                 const int timeErr = (int)sysWeekSec % (24 * 7 * 3600) - GPS_week_time;
-                LOG_EVERY_N(INFO, 1000) << "Unix time and GPS week time diff: " << timeErr;
                 LOG_FIRST_N(INFO, 1) << "Invalid GPS frame when time diff > 20 min.";
+                LOG_EVERY_N(INFO, 1000) << "Unix time and GPS week time diff: " << timeErr << "s.";
+
                 if(timeErr < -1200 || timeErr > 1200) {
+                    LOG_EVERY_N(WARNING, 100) << "Invalid GPS frame; time diff: " << timeErr;
                     continue;
                 }
                 file.open(imupath_str, std::ios::out | std::ios::app);
@@ -220,7 +222,7 @@ int CommTimer::setOpt(int fd, int nSpeed, int nBits, char nEvent, int nStop)
     struct termios newtio, oldtio;
     if(tcgetattr(fd, &oldtio) != 0)
     {
-        perror("Setup Serial 1.");
+        LOG(INFO) << ("Setup Serial 1.");
         return -1;
     }
     bzero(&newtio, sizeof(newtio));
@@ -293,7 +295,7 @@ int CommTimer::setOpt(int fd, int nSpeed, int nBits, char nEvent, int nStop)
     }
     else
     {
-        perror("Setup nStop unavailable.");
+        LOG(ERROR) << "Setup nStop unavailable.";
         return -1;
     }
 
@@ -304,10 +306,10 @@ int CommTimer::setOpt(int fd, int nSpeed, int nBits, char nEvent, int nStop)
 
     if(0 != tcsetattr(fd, TCSANOW, &newtio))
     {
-        perror("Com setup error.");
+        LOG(ERROR) << "Com setup error.";
         return -1;
     }
 
-    LOG(INFO) << "Set done!";
+    LOG(INFO) << "Set done.";
     return 0;
 }

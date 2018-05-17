@@ -14,44 +14,29 @@ CMutex mymutex;
 extern vector<string> parsed_data;
 extern string global_gps ;
 
-//save control
-extern int is_save_cam;
-
-//get format
-extern int format_int;
-
-//get savepath
-extern string pathSave_str;
-
 //set gain
 extern float cam_gain;
 
-//string2double
-static double string2double(const string& str)
- {
-    std::stringstream iss(str);
-    double num;
-    iss >> num;
-    return num;
-}
 
-CPGCamera::CPGCamera(int nBufWidth, int nBufHeight, ros::NodeHandle& nh, const string &_savePath)
+CPGCamera::CPGCamera(ros::NodeHandle& nh, int _index):
+    img_(1200 , 1920 , CV_8UC3 , Scalar::all(0) )
 {
-    m_nBufferWidth = nBufWidth;
-    m_nBufferHeight = nBufHeight;
+    lastBeginTime_ = camFps_ = -1.;
+    updateFreq_ = -1;
 
     mnh = nh;
     image_transport::ImageTransport it(mnh);
-    pub   = it.advertise("camera/image",1);
+    pub = it.advertise("camera/image", 1);
 
-    pub_imu_string = mnh.advertise<roscameragpsimg::imu5651>("imu_string", 1);
+    pub_imu_string = mnh.advertise<sc_msgs::imu5651>("imu_string", 1);
     pub_cam_speed  = mnh.advertise<std_msgs::Float64>("cam_speed", 1);
 
     m_pCamera = NULL;
 
     m_CameraID = 0;
     m_bStartedCapture = false;
-    m_savePath = _savePath;
+
+    (void)InitCamera(_index);
 }
 
 CPGCamera::~CPGCamera(void)
@@ -60,29 +45,89 @@ CPGCamera::~CPGCamera(void)
     delete m_pCamera;
 }
 
-bool CPGCamera::InitCamera(int m_CameraID)
+bool CPGCamera::InitCamera(int _CameraIndex)
 {
     LOG(INFO) << __FUNCTION__ << " start.";
 
-    if (!IsCameraExist())
+    error = m_busMgr.GetCameraFromIndex(_CameraIndex, &m_guidCam);
+    if (error != PGRERROR_OK)
     {
-        LOG(WARNING) << "Failed to IsCameraExist.";
-        return false;
+        logErrorTrace(error);
+        exit(1);
     }
 
-    if (!NewCamera(m_CameraID))
+    m_pCamera = new GigECamera();
+    if (!m_pCamera)
     {
-        LOG(WARNING) << "Failed to NewCamera.";
-        return false;
+        LOG(WARNING) << "Failed to new GigECamera.";
+        exit(1);
     }
-    if (!CameraConnect())
+
+    error = m_pCamera->Connect(&m_guidCam);
+    if (error != PGRERROR_OK)
     {
-        LOG(WARNING) << "Failed to CameraConnect.";
-        return false;
+        logErrorTrace(error);
+        delete m_pCamera;
+        exit(1);
     }
+
+    (void)setImgSaveDir(m_pCamera);
+
+    // error = m_pCamera->RestoreFromMemoryChannel(1);
+    // if ( error != PGRERROR_OK )
+    // {
+    //     logErrorTrace(error);
+    //     exit(1);
+    // }
 
     return true;
 }
+
+
+
+void CPGCamera::setImgSaveDir(GigECamera *pGigECamera) {
+    LOG(INFO) << __FUNCTION__ << " start.";
+
+    CameraInfo camInfo;
+    error = pGigECamera->GetCameraInfo(&camInfo);
+    ostringstream ipAddress;
+    ipAddress << (unsigned int)camInfo.ipAddress.octets[0] << "." << (unsigned int)camInfo.ipAddress.octets[1] << "." << (unsigned int)camInfo.ipAddress.octets[2] << "." << (unsigned int)camInfo.ipAddress.octets[3];
+    LOG(INFO) << "IP address - " << ipAddress.str();
+
+    int cameraId = GetIdCamera(ipAddress.str() );
+
+    imgSavePath_ = sRawdataPath_ + "/camera"+ to_string(cameraId) + "/";
+    (void)mkdir(imgSavePath_.c_str(), S_IRWXU);
+}
+
+int CPGCamera::GetIdCamera(const std::string &ipaddress)
+{
+    using namespace rapidjson;
+    const std::string configFile("/opt/smartc/config/camera_config.json");
+    if(0 != access(configFile.c_str(), 0) ) {
+        LOG(ERROR) << configFile << " does not exist.";
+        return -1;
+    }
+
+    ifstream ifs(configFile);
+    IStreamWrapper isw(ifs);
+    Document doc;
+    doc.ParseStream(isw);
+    if(doc.HasParseError() ) {
+        LOG(ERROR) << "Failed to parse " << configFile << ", GetParseError: " << doc.GetParseError();
+        return -1;
+    }
+    if(!doc.HasMember(ipaddress.c_str()))
+    {
+        LOG(ERROR) << "I can't find " << ipaddress << " in " << configFile;
+        exit(1);
+    }
+    const int cameraId = doc[ipaddress.c_str()].GetInt();
+    LOG(INFO) << ipaddress << "'s ID: " << cameraId;
+
+    return cameraId;
+}
+
 
 bool CPGCamera::IsCameraExist()
 {
@@ -120,54 +165,34 @@ bool CPGCamera::IsCameraExist()
         exit(-1);
     }
 
-    for(size_t i = 0; i < 10; ++i)
-    {
-        error = m_busMgr.GetNumOfCameras(&m_nCamNum);
-        LOG(INFO) << "I GetNumOfCameras: " << m_nCamNum << " cameras.";
-        if(error != PGRERROR_OK)
-        {
-            LOG(ERROR) << error.GetFilename() << ":" << error.GetLine() << ":" << error.GetDescription();
-            continue;
-        }
+    // for(size_t i = 0; i < 10; ++i)
+    // {
+    //     error = m_busMgr.GetNumOfCameras(&m_nCamNum);
+    //     LOG(INFO) << "I GetNumOfCameras: " << m_nCamNum << " cameras.";
+    //     if(error != PGRERROR_OK)
+    //     {
+    //         LOG(ERROR) << error.GetFilename() << ":" << error.GetLine() << ":" << error.GetDescription();
+    //         continue;
+    //     }
 
-        if(m_nCamNum >= 1)
-        {
-            LOG(INFO) << "I GetNumOfCameras successfully.";
-            break;
-        }
+    //     if(m_nCamNum >= 1)
+    //     {
+    //         LOG(INFO) << "I GetNumOfCameras successfully.";
+    //         break;
+    //     }
 
-        error = m_busMgr.RescanBus();
-        if(error != PGRERROR_OK)
-        {
-            LOG(ERROR) << error.GetFilename() << ":" << error.GetLine() << ":" << error.GetDescription();
-        }
-    }
-    if(m_nCamNum < 1)
-    {
-        LOG(ERROR) << "Failed to GetNumOfCameras, num: " << m_nCamNum;
-        exit(-1);
-    }
+    //     error = m_busMgr.RescanBus();
+    //     if(error != PGRERROR_OK)
+    //     {
+    //         LOG(ERROR) << error.GetFilename() << ":" << error.GetLine() << ":" << error.GetDescription();
+    //     }
+    // }
+    // if(m_nCamNum < 1)
+    // {
+    //     LOG(ERROR) << "Failed to GetNumOfCameras, num: " << m_nCamNum;
+    //     exit(-1);
+    // }
 
-    return true;
-}
-
-bool CPGCamera::NewCamera(int m_CameraID)
-{
-    LOG(INFO) << __FUNCTION__ << " start.";
-
-    error = m_busMgr.GetCameraFromIndex(m_CameraID, &m_guidCam);
-    if (error != PGRERROR_OK)
-    {
-        LOG(WARNING) << "Failed to GetCameraFromIndex, m_CameraID: " << m_CameraID;
-        LOG(WARNING) << error.GetFilename() << ":" << error.GetLine() << ":" << error.GetDescription();
-        return false;
-    }
-    m_pCamera = new GigECamera;
-    if (!m_pCamera)
-    {
-        LOG(WARNING) << "Failed to new GigECamera.";
-        return false;
-    }
     return true;
 }
 
@@ -183,77 +208,53 @@ bool CPGCamera::CameraConnect()
     error = m_pCamera->Connect(&m_guidCam);
     if (error != PGRERROR_OK)
     {
-        error.PrintErrorTrace();
-        LOG(WARNING) << error.GetFilename() << ":" << error.GetLine() << ":" << error.GetDescription();
+        logErrorTrace(error);
         return false;
     }
 
     error = m_pCamera->RestoreFromMemoryChannel(1);
     if ( error != PGRERROR_OK )
     {
-        error.PrintErrorTrace();
-        LOG(WARNING) << error.GetFilename() << ":" << error.GetLine() << ":" << error.GetDescription();
+        logErrorTrace(error);
         return false;
     }
 
     return true;
 }
 
-// WriteRegister and RetrieveBuffer is necessary after StartCapture,
-// to save image to image(1st param of XferCallBack)
-void CPGCamera::Grab()
+void CPGCamera::SetIsSaveImg(int8_t _isRecord)
 {
-    LOG(INFO) << __FUNCTION__ << " start.";
-
-    GigECamera * m_Cam = (m_pCamera);
-    m_triggerModeCam.source = 7;
-    if (0 == m_triggerModeCam.source)
-    {
-        error = m_Cam->StartCapture(XferCallBack , this);
-        if ( error != PGRERROR_OK )
-        {
-            LOG(ERROR) << "startCapture ERROR.";
-            cout<< "startCapture ERROR"<<endl;
-            return;
-        }
-    }
-    else if (7 == m_triggerModeCam.source)
-    {
-        if (!m_bStartedCapture)
-        {
-            error = m_Cam->StartCapture(XferCallBack , this);
-            if (error != PGRERROR_OK)
-            {
-                error = m_Cam->StopCapture();
-                return;
-            }
-            m_bStartedCapture = true;
-        }
-    }
+    LOG(INFO) << __FUNCTION__ << " start, _isRecord: " << (int32_t)_isRecord;
+    CPGCamera::sIsSaveImg_ = _isRecord;
 }
 
-bool CPGCamera::SetCameragain()
+void CPGCamera::SetRawdataPath(const std::string &_rawdataPath) {
+    LOG(INFO) << __FUNCTION__ << " start, _rawdataPath: " << _rawdataPath;
+    CPGCamera::sRawdataPath_ = _rawdataPath;
+}
+
+
+bool CPGCamera::SetCameragain(int8_t _camGain)
 {
     LOG(INFO) << __FUNCTION__ << " start.";
-    error = ((GigECamera *)m_pCamera)->GetProperty(&pProp );
-    if (error != PGRERROR_OK)
+    error = ((GigECamera *)m_pCamera)->GetProperty(&pProp);
+    if(error != PGRERROR_OK)
     {
         LOG(INFO) << "SetCameragain: GetProperty.";
-        error.PrintErrorTrace();
-        //return false;
+        logErrorTrace(error);
     }
-    pProp.type       = GAIN;
+    pProp.type = GAIN;
     pProp.absControl = true;
-    pProp.onePush    = false;
-    pProp.onOff      = true;
+    pProp.onePush = false;
+    pProp.onOff = true;
     pProp.autoManualMode = false;
-    pProp.absValue      =  cam_gain;
+    pProp.absValue = (float)_camGain;
     error = ((GigECamera *)m_pCamera)->SetProperty(&pProp );
     if (error != PGRERROR_OK)
     {
         LOG(INFO) << "pProp.absValue: " << pProp.absValue;
         LOG(INFO) << "SetCameragain: SetProperty.";
-        error.PrintErrorTrace();
+        logErrorTrace(error);
     }
     LOG(INFO) << __FUNCTION__ << " end.";
     return true;
@@ -272,7 +273,7 @@ bool CPGCamera::SetCameraParam()
     error = ((GigECamera *)m_pCamera)->GetGigEImageSettings(&m_GigimageSettings);
     if (error != PGRERROR_OK)
     {
-        error.PrintErrorTrace();
+        logErrorTrace(error);
         return false;
     }
     m_GigimageSettings.pixelFormat = PIXEL_FORMAT_MONO8;
@@ -284,7 +285,7 @@ bool CPGCamera::SetCameraParam()
     error = m_pCamera->SetGigEImageSettings(&m_GigimageSettings);
     if (error != PGRERROR_OK)
     {
-        error.PrintErrorTrace();
+        logErrorTrace(error);
         return false;
     }
 
@@ -292,7 +293,7 @@ bool CPGCamera::SetCameraParam()
     error = m_pCamera->GetTriggerMode(&m_triggerModeCam);
     if (error != PGRERROR_OK)
     {
-        error.PrintErrorTrace();
+        logErrorTrace(error);
         return false;
     }
     m_triggerModeCam.onOff = true;
@@ -302,7 +303,7 @@ bool CPGCamera::SetCameraParam()
     error = m_pCamera->SetTriggerMode(&m_triggerModeCam);
     if (error != PGRERROR_OK)
     {
-        error.PrintErrorTrace();
+        logErrorTrace(error);
         return false;
     }
     return true;
@@ -319,7 +320,7 @@ bool CPGCamera::DisConnectCamera()
     error = m_pCamera->Disconnect();
     if (error != PGRERROR_OK)
     {
-        error.PrintErrorTrace();
+        logErrorTrace(error);
         return false;
     }
     return true;
@@ -349,6 +350,10 @@ bool CPGCamera::ReleaseCamera()
     return true;
 }
 
+void CPGCamera::logErrorTrace(FlyCapture2::Error error) {
+    LOG(ERROR) << error.GetFilename() << ":" << error.GetLine() << ":" << error.GetDescription();
+}
+
 bool CPGCamera::IsCameraConnected()
 {
     LOG(INFO) << __FUNCTION__ << " start.";
@@ -373,8 +378,7 @@ bool CPGCamera::StartCapture()
     error = m_pCamera->StartCapture(XferCallBack, this);
     if (error != PGRERROR_OK)
     {
-        LOG(ERROR) << error.GetFilename() << ":" << error.GetLine() << ":" << error.GetDescription();
-        error.PrintErrorTrace();
+        logErrorTrace(error);
         return false;
     }
 
@@ -393,68 +397,49 @@ bool CPGCamera::StopCapture()
     error = m_pCamera->StopCapture();
     if (error != PGRERROR_OK)
     {
-        error.PrintErrorTrace();
+        logErrorTrace(error);
         return false;
     }
     return true;
 }
 
-//register callback
-void CPGCamera::RegisterDeliverImageCallback(ImageGrabbedCallBack _callback, void *_Owner,void *_Control)
-{
+double CPGCamera::CalcFps(double nowTime) {
     LOG(INFO) << __FUNCTION__ << " start.";
-    m_GrabImgCallBack = _callback;
+
+    if(lastBeginTime_ < 0) {
+        LOG(INFO) << "1st time grab image, no calculate fps, pPGCamera->lastBeginTime_： " << lastBeginTime_;
+        lastBeginTime_ = nowTime;
+        return -1;
+    }
+
+    double camFps = 1.0 / (nowTime - lastBeginTime_);
+    lastBeginTime_ = nowTime;
+    return camFps;
 }
 
-//callback
-Mat img(1200 , 1920 , CV_8UC3 , Scalar::all(0));
-double cam_fps = 0.0;
-
-double curTime_record  = 0;
-double preTime_record  = 0;
-double fix_rate        = 1.0;
-int record_count       = 1;
-int time_state         = 0;
-int show_state         = 1;
-
-void CPGCamera::XferCallBack(Image* pImages, const void *pCallBackData)
+void CPGCamera::XferCallBack(Image *pImage, const void *_pPGCamera)
 {
+    LOG(INFO) << __FUNCTION__ << " start with address: " << _pPGCamera;
+    CPGCamera *pPGCamera = (CPGCamera*)_pPGCamera;
 
-    LOG(INFO) << __FUNCTION__ << " start.";
-    ++show_state;
-    show_state %= 8;
+    FlyCapture2::Error _error;
 
-    ros::Time begin = ros::Time::now();
-    double time  = begin.toSec();
-    CPGCamera *pThis = (CPGCamera*)pCallBackData;
+    int bits = pImage->GetBitsPerPixel();
+    LOG_FIRST_N(INFO, 20) << "BitsPerPixel: " << bits;
 
-    FlyCapture2::Image convertedImage;
-    FlyCapture2::Error error;
+    double beginTime = ros::Time::now().toSec();
+    pPGCamera->camFps_ = pPGCamera->CalcFps(beginTime);
+    LOG(INFO) << "camFps_: " << pPGCamera->camFps_;
 
-    Image pImage = *(pImages);
+    ++(pPGCamera->updateFreq_);
+    (pPGCamera->updateFreq_) %= 2;
 
-    curTime_record = time;
-
-    if(record_count == 1)
-    {
-        preTime_record = curTime_record;
-        record_count = 2;
-    }
-    else
-    {
-        double cam_time = curTime_record - preTime_record;
-        cam_time = abs(cam_time - 0.4)< 0 ? 1 : cam_time;
-        cam_fps = (double)1.0/(double)cam_time;
-        preTime_record = curTime_record;
-    }
-
-    //time of system
-    string seconds_str = std::to_string(time);
+    string seconds_str = std::to_string(beginTime);
 
     //time of gps
     string gps_str = "--";
-    int ret = mymutex.Lock();
 
+    int ret = mymutex.Lock();
     DLOG(INFO) << "trylock result: " << ret;
     if(ret != 0)
     {
@@ -462,154 +447,88 @@ void CPGCamera::XferCallBack(Image* pImages, const void *pCallBackData)
         return ;
     }
 
+    bool isGpsTime = false;
     if(parsed_data.size() >= 17 && global_gps.size() > 2 && global_gps.size() < 20)
     {
         gps_str = global_gps;
-        time_state = 0;
+        isGpsTime = true;
     }
     else
     {
         LOG(WARNING) << "GPSweek time error: " << global_gps << "; using system time: " << seconds_str;
         gps_str = seconds_str;
-        time_state = 1;
+        isGpsTime = false;
     }
-
     int retUnlock = mymutex.Unlock();
     DLOG(INFO) << "unlock result: " << retUnlock;
 
-    double gps_str_db = 0.0 ;
+    double gps_str_db = 0.0;
     stringstream ss;
     ss << gps_str;
     ss >> gps_str_db;
     gps_str_db = fmod(gps_str_db, 3600 * 24);
     gps_str = std::to_string(gps_str_db);
-    gps_str = time_state ? "sys" + gps_str : gps_str;
-    DLOG(INFO)<<"time_str: "<<gps_str;
-
+    gps_str = isGpsTime? gps_str: "sys" + gps_str;
+    DLOG(INFO) << "time_str: " << gps_str;
+    int format_int = 0;
     switch(format_int)
     {
-        case 0://jpg
+        // jpg
+        case 0:
         {
-            string gps_str_jpg = pThis->m_savePath + gps_str + ".jpg";
+            string gps_str_jpg(pPGCamera->imgSavePath_ + gps_str + ".jpg");
             LOG(INFO) << "I am gonna save in " << gps_str_jpg;
             const char* pathout_gps_jpg_c = gps_str_jpg.c_str();
-            if(pathout_gps_jpg_c == NULL)
+
+            _error = pImage->Convert(PIXEL_FORMAT_BGR, &(pPGCamera->convertedImage_) );
+            if(_error != PGRERROR_OK)
             {
-               DLOG(INFO) << "xcallback: pathout_gps_jgp_c is NULL!";
-               break;
+                LOG(WARNING) << "pImage->Convert error.";
+                break;
             }
 
-            //convert image
-            error = pImage.Convert( PIXEL_FORMAT_BGR, &convertedImage);
-            if(error != PGRERROR_OK)
-            {
-                DLOG(INFO) << "xcallback: pImage.Convert error!";
-                break ;
-            }
-            int bits = pImage.GetBitsPerPixel();
-
-            if(is_save_cam && bits == 8)
+            if(sIsSaveImg_)
             {
                 FlyCapture2::JPEGOption jpgoption;
-
-                error = convertedImage.Save(pathout_gps_jpg_c, &jpgoption);
-                if(error != PGRERROR_OK)
+                _error = pPGCamera->convertedImage_.Save(pathout_gps_jpg_c, &jpgoption);
+                if(_error != PGRERROR_OK)
                 {
-                    LOG(WARNING) << "Save image jpg error!";
+                    LOG(WARNING) << "Save image jpg error.";
                     break;
                 }
             }
-            if(0 != show_state)
+            if(0 != pPGCamera->updateFreq_)
             {
                 break;
             }
-            bool matConbool = pThis->ConvertImage(&img, &convertedImage);
-            Mat matImageDown;
-            cv::resize(img, matImageDown, cv::Size(1920 / 5, 1200 / 5));
-            LOG(INFO) << "Publish a image, matConvert state: " << matConbool;
-            if(matConbool)
+
+            bool isConverted = pPGCamera->ConvertImage(&(pPGCamera->img_), &(pPGCamera->convertedImage_) );
+            cv::resize(pPGCamera->img_, pPGCamera->matImageDown_, cv::Size(1920 / 5, 1200 / 5));
+            LOG(INFO) << "Publish a image, matConvert state: " << isConverted;
+            if(isConverted)
             {
-                sensor_msgs::ImagePtr msg_img = cv_bridge::CvImage(std_msgs::Header(), "bgr8", matImageDown).toImageMsg();
+                sensor_msgs::ImagePtr msg_img = cv_bridge::CvImage(std_msgs::Header(), "bgr8", pPGCamera->matImageDown_).toImageMsg();
                 if(NULL == msg_img)
                 {
                     LOG(WARNING) << "Failed to transfer to sensor_msgs::Image, msg_img is null.";
                     break;
                 }
-                pThis->pub.publish(msg_img);
-            }
-            //save image
-            if(is_save_cam && bits == 24)
-            {
-                imwrite(pathout_gps_jpg_c, img);
-            }
-            break;
-        }
-        case 1: //raw
-        {
-            string gps_str_raw  = pThis->m_savePath + gps_str + ".raw";
-            const char* pathout_raw    = gps_str_raw.c_str();
-
-            error = pImage.Save(pathout_raw,FlyCapture2::RAW);
-            if(error != PGRERROR_OK)
-            {
-                break;
-            }
-
-            break;
-        }
-        case 2: //jpgcount
-        {
-            string count_str_jpg = pThis->m_savePath + gps_str +".jpg";//count_str + ".jpg";
-            const char* pathout_count_jpg_c    = count_str_jpg.c_str();
-            //image convert
-            error = pImage.Convert( PIXEL_FORMAT_BGR, &convertedImage);
-            if(error != PGRERROR_OK)
-            {
-                break;
-            }
-            //image save jpg
-            FlyCapture2::JPEGOption jpgoption;
-            error = convertedImage.Save(pathout_count_jpg_c,&jpgoption);
-
-            if(error != PGRERROR_OK)
-            {
-                break;
-            }
-
-            break;
-        }
-        case 3: //png
-        {
-            string count_str_jpg = pThis->m_savePath +gps_str+ ".png";//count_str + ".png";
-            const char* pathout_count_jpg_c    = count_str_jpg.c_str();
-            //image convert
-            error = pImage.Convert( PIXEL_FORMAT_BGR, &convertedImage);
-            if(error != PGRERROR_OK)
-            {
-                break;
-            }
-            //image save png
-            FlyCapture2::PNGOption pngoption;
-            error = convertedImage.Save(pathout_count_jpg_c,&pngoption);
-
-            if(error != PGRERROR_OK)
-            {
-                break;
+                pPGCamera->pub.publish(msg_img);
             }
             break;
         }
         default:
         {
-            DLOG(INFO)<<"the format is not surported!";
-            break ;
+            LOG(WARNING)<<"the format is not surported!";
+            break;
         }
     }
 
-    pThis->msg_cam_speed.data = cam_fps;
-    pThis->pub_cam_speed.publish(pThis->msg_cam_speed);
-    LOG(INFO)<<"cam_fps: "<<cam_fps;
+    pPGCamera->msg_cam_speed.data = pPGCamera->camFps_;
+    pPGCamera->pub_cam_speed.publish(pPGCamera->msg_cam_speed);
 
-    return ;
+    LOG(INFO) << __FUNCTION__ << " end with " << " address: " << _pPGCamera;
+    return;
 }
 
 double CPGCamera::TimeStamptoDouble(FlyCapture2::TimeStamp *timeStamp)

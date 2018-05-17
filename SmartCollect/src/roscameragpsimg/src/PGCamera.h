@@ -9,108 +9,115 @@
 #include <fstream>
 #include <time.h>
 #include <sstream>
-#include<ros/ros.h>
-#include<image_transport/image_transport.h>
+#include <ros/ros.h>
+#include <image_transport/image_transport.h>
+
+#include "../../sc_lib_public_tools/src/public_tools.h"
+#include "../../sc_lib_public_tools/include/rapidjson/document.h"
+#include "../../sc_lib_public_tools/include/rapidjson/prettywriter.h"
+#include "../../sc_lib_public_tools/include/rapidjson/ostreamwrapper.h"
+#include "../../sc_lib_public_tools/include/rapidjson/istreamwrapper.h"
 
 #include <std_msgs/Float64.h>
-#include "roscameragpsimg/imu5651.h"
+#include "sc_msgs/imu5651.h"
+#include <sys/stat.h>
 
 using namespace std;
 using namespace cv;
 
 enum e_Grab_OpsType
 {
-	e_Grab_SetExposure,
-	e_Grab_Grab,
-	e_Grab_Freeze,
-	e_Grab_Init
+    e_Grab_SetExposure,
+    e_Grab_Grab,
+    e_Grab_Freeze,
+    e_Grab_Init
 };
 
-//相机操作信息
+// camera operate information
 struct  tag_GrabInfo
 {
-	int  nCamID;
-	int  nImgID;
-	double dbExposure;
-	bool bFlipY;
-	int nFPN;
-	/*-----------------------------------------------------------*/
-	bool m_bGrabFinish;
-	/*-----------------------------------------------------------*/
-	e_Grab_OpsType eOpsType;
-	void Set(tag_GrabInfo Src);
-	void Get(tag_GrabInfo &Dst);
+    int  nCamID;
+    int  nImgID;
+    double dbExposure;
+    bool bFlipY;
+    int nFPN;
+    /*-----------------------------------------------------------*/
+    bool m_bGrabFinish;
+    /*-----------------------------------------------------------*/
+    e_Grab_OpsType eOpsType;
+    void Set(tag_GrabInfo Src);
+    void Get(tag_GrabInfo &Dst);
 
-	tag_GrabInfo()
-	{
-		nCamID	= 0;
-		nImgID	= 0;
-		dbExposure= 28;
-		nFPN	= 0;
-		bFlipY	= false;
-		eOpsType = e_Grab_SetExposure;
-		/*-----------------------------------------------------------*/
-		m_bGrabFinish = false;
-		/*-----------------------------------------------------------*/
-	}
+    tag_GrabInfo()
+    {
+        nCamID  = 0;
+        nImgID  = 0;
+        dbExposure= 28;
+        nFPN    = 0;
+        bFlipY  = false;
+        eOpsType = e_Grab_SetExposure;
+        /*-----------------------------------------------------------*/
+        m_bGrabFinish = false;
+        /*-----------------------------------------------------------*/
+    }
 };
 
 struct  tag_CamInfo
 {
-	double dbGain;
-	int nLineRate;
-	bool bNeedFilp;
-	int	 nSerialIndex;
-	/*-------------------------------------------------------------*/
-	bool bonOff;
-	int nMode;
-	int nParameter;
-	int nSource;
-	int nPolarity;
-	int nROIX;
-	int nROIY;
-	int nROIWidth;
-	int nROIHeigth;
-	int nCamLink;
-	int nFlip;
-	int nRestore;
-	/*-------------------------------------------------------------*/
-	tag_CamInfo()
-	{
-		bNeedFilp	= false;
-		nLineRate	= 6000;
-		dbGain		= 1.0;
-		nSerialIndex = 5;
-		/*----------------------------------------*/
-		bonOff		= false;
-		nMode		= 0;
-		nParameter	= 0;
-		nSource		= 0;
-		nPolarity	= 1;
-		nROIX		= 0;
-		nROIY		= 0;
-		nROIWidth	= 2448;
-		nROIHeigth	= 2048;
-		nCamLink	= 2;
-		nFlip		= 0;
-		/*----------------------------------------*/
-	}
+    double dbGain;
+    int nLineRate;
+    bool bNeedFilp;
+    int  nSerialIndex;
+    /*-------------------------------------------------------------*/
+    bool bonOff;
+    int nMode;
+    int nParameter;
+    int nSource;
+    int nPolarity;
+    int nROIX;
+    int nROIY;
+    int nROIWidth;
+    int nROIHeigth;
+    int nCamLink;
+    int nFlip;
+    int nRestore;
+    /*-------------------------------------------------------------*/
+    tag_CamInfo()
+    {
+        bNeedFilp   = false;
+        nLineRate   = 6000;
+        dbGain      = 1.0;
+        nSerialIndex = 5;
+        /*----------------------------------------*/
+        bonOff      = false;
+        nMode       = 0;
+        nParameter  = 0;
+        nSource     = 0;
+        nPolarity   = 1;
+        nROIX       = 0;
+        nROIY       = 0;
+        nROIWidth   = 2448;
+        nROIHeigth  = 2048;
+        nCamLink    = 2;
+        nFlip       = 0;
+        /*----------------------------------------*/
+    }
 };
 
 using namespace FlyCapture2;
 
 enum eCameraFormatType
 {
-	eMono,		// PIXEL_FORMAT_MONO8
-	eRGB8,		// PIXEL_FORMAT_RGB8
-	eRaw8,		// PIXEL_FORMAT_RAW8
+    eMono,      // PIXEL_FORMAT_MONO8
+    eRGB8,      // PIXEL_FORMAT_RGB8
+    eRaw8,      // PIXEL_FORMAT_RAW8
 };
 
 enum eCameraPortType
 {
-	eGigE,
-	e1394,
-	eUSB3
+    eGigE,
+    e1394,
+    eUSB3
 };
 
 typedef void(*ImageGrabbedCallBack)(void* , void*, void*);
@@ -118,39 +125,23 @@ typedef void(*ImageGrabbedCallBack)(void* , void*, void*);
 class CPGCamera
 {
 public:
-	CPGCamera(int nBufWidth, int nBufHeight, ros::NodeHandle& mnh, const string &_savePath);
-	~CPGCamera(void);
-	//init camera
-	bool InitCamera(int m_CameraID);
-	//new camera
-	bool NewCamera(int m_CameraID);
-	//releasecamera
-	bool ReleaseCamera();
-	//diconnectcamera
-	bool DisConnectCamera();
-	//iscameraConnected
-	bool IsCameraConnected();
+    CPGCamera(ros::NodeHandle& nh, int _index);
+    ~CPGCamera(void);
+    bool InitCamera(int _CameraID);
+    bool NewCamera(int _CameraID);
+    bool ReleaseCamera();
+    bool DisConnectCamera();
+    bool IsCameraConnected();
 
-	//IsCameraExist
-	bool IsCameraExist();
-	//CameraConnect
-	bool CameraConnect();
-	//SetCameraParam
-	bool SetCameraParam();
-	//SetCameraGain
-	bool SetCameragain();
-	//StartCapture
-	bool StartCapture();
-	//StopCapture
-	bool StopCapture();
-	//Grab
-	void Grab();
-    //FireSoftwareTrigger
-	bool FireSoftwareTrigger();
-	//RegisterDeliverImageCallback
-	void RegisterDeliverImageCallback(ImageGrabbedCallBack _callback, void *_Owner, void *_Control);
-	void DestoryDeliverImageCallback();
-    //ImageRecieve
+    bool IsCameraExist();
+    bool CameraConnect();
+    bool SetCameraParam();
+    bool SetCameragain(int8_t _camGain);
+    bool StartCapture();
+    bool StopCapture();
+    void Grab();
+    bool FireSoftwareTrigger();
+    void DestoryDeliverImageCallback();
     void ImageRecieve(cv::Mat matImage);
     cv::Mat GetmatImage(void);
     /*-------------------------------------------
@@ -168,57 +159,75 @@ public:
     -------------------------------------------*/
     bool ConvertImage(cv::Mat* matImage,Image* image);
 private:
-	static void XferCallBack(Image* pImage, const void *pCallBackData);
-	string m_savePath;
+    std::string imgSavePath_;
+    FlyCapture2::BusManager m_busMgr;
+
+    // calculate fps
+    double lastBeginTime_;
+    double camFps_;
+
+    // update image ROS message
+    int updateFreq_;
+
+
+
+    static void XferCallBack(Image *pImage, const void *pCallBackData);
+    static bool sIsSaveImg_;
+    static std::string sRawdataPath_;
+
+    Mat matImageDown_;
+    Mat img_;
+    FlyCapture2::Image convertedImage_;
+
+    void setImgSaveDir(GigECamera *pGigECamera);
+    int GetIdCamera(const std::string &ipaddress);
+    int getID4IP(const std::string &_ip);
+    void logErrorTrace(FlyCapture2::Error error);
+    double CalcFps(double nowTime);
+
 
 public:
+    static void SetIsSaveImg(int8_t _isRecord);
+    static void SetRawdataPath(const std::string &_rawdataPath);
+
     double TimeStamptoDouble(FlyCapture2::TimeStamp *timeStamp);
-	GigECamera *m_pCamera;
-	unsigned int m_CameraID;		//相机ID号
-	bool m_bLongEdge;				//TRUE:长边  FALSE:短边
+    GigECamera *m_pCamera;
+    unsigned int m_CameraID;
+    bool m_bLongEdge;
+    FlyCapture2::Error error;
+    unsigned int m_nCamNum;
+    FlyCapture2::PGRGuid m_guidCam;
+    FlyCapture2::TriggerMode m_triggerModeCam;
+    Property m_propertyCam;
 
-	FlyCapture2::Error error;					//错误信息
-	FlyCapture2::BusManager m_busMgr;			//总线信息管理
-	unsigned int m_nCamNum;			//相机个数
-	FlyCapture2::PGRGuid m_guidCam;				//相机GUID标识
-	FlyCapture2::TriggerMode m_triggerModeCam;	//相机触发模式类
-	Property m_propertyCam;			//相机参数设置类
-	FlyCapture2::Image m_imgRawBuffer;			//原始采集图像Buffer
+    FlyCapture2::Image m_imgRawBuffer;
+    int m_nBufferWidth;
+    int m_nBufferHeight;
 
+    GigEImageSettings m_GigimageSettings;
+    GigEImageSettingsInfo m_GigimageSettingInfo;
+    FC2Config m_fc2Config;
+    tag_CamInfo CamInfo;
 
-	//图像Buffer大小
-	int m_nBufferWidth;
-	int m_nBufferHeight;
+    // camera parameter
+    eCameraFormatType m_eFormatType;
+    eCameraPortType m_ePortType;
 
-	//GigE接口设置
-	GigEImageSettings	m_GigimageSettings;
-	GigEImageSettingsInfo m_GigimageSettingInfo;
-	FC2Config m_fc2Config;
-	tag_CamInfo CamInfo;
-	//相机参数
-	eCameraFormatType m_eFormatType;
-	eCameraPortType m_ePortType;
+    // capture control
+    bool m_bStartedCapture;
+    // set gain
+    Property pProp;
 
-	ImageGrabbedCallBack m_GrabImgCallBack;
-
-	//捕获控制
-	bool m_bStartedCapture;
-	//setgain
-	Property pProp;
-
-    //图像Image;
     Image imgConvertOut;
-    //Mat imgs;
-    //nh
     ros::NodeHandle mnh;
-    //image publisher
+    // image publisher
     image_transport::Publisher  pub;
-    //imu publisher
-    roscameragpsimg::imu5651 msg_imu_string;
+    // imu publisher
+    sc_msgs::imu5651 msg_imu_string;
     ros::Publisher pub_imu_string;
-    //cam speed
+    // cam speed
     std_msgs::Float64 msg_cam_speed;
-    ros::Publisher    pub_cam_speed;
-
+    ros::Publisher pub_cam_speed;
 };
+
 

@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 2.8.3)
-project(roscameragpsimg)
+project(sc_camera)
 
 ## Compile as C++11, supported in ROS Kinetic and newer
 add_compile_options(-std=c++11)
@@ -18,6 +18,7 @@ find_package(catkin REQUIRED COMPONENTS
   sensor_msgs
   std_msgs
   message_generation
+  sc_msgs
 )
 
 ## System dependencies are found with CMake's conventions
@@ -54,10 +55,10 @@ find_package(catkin REQUIRED COMPONENTS
 ##   * add every package in MSG_DEP_SET to generate_messages(DEPENDENCIES ...)
 
 ## Generate messages in the 'msg' folder
- add_message_files(
-   FILES
-   imu5651.msg
- )
+# add_message_files(
+#   FILES
+#   imu5651.msg
+# )
 
 ## Generate services in the 'srv' folder
 # add_service_files(
@@ -74,11 +75,10 @@ find_package(catkin REQUIRED COMPONENTS
 # )
 
 ## Generate added messages and services with any dependencies listed here
- generate_messages(
-   DEPENDENCIES
-#   sensor_msgs
-   std_msgs
- )
+# generate_messages(
+#   DEPENDENCIES
+#   std_msgs
+# )
 
 ################################################
 ## Declare ROS dynamic reconfigure parameters ##
@@ -211,17 +211,17 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
 FIND_PACKAGE(OpenCV REQUIRED)
 INCLUDE_DIRECTORIES(${OpenCV_INCLUDE_DIRS})
 
-add_executable(roscameragpsimg src/lock.cpp  src/lock.h  src/lock.cpp src/comm_timer.h src/comm_timer.cpp src/camera_main.cpp src/PGCamera.h src/PGCamera.cpp)
+add_executable(sc_camera src/camera_node.cpp src/lock.cpp src/lock.h src/lock.cpp src/comm_timer.h src/comm_timer.cpp src/camera.cpp src/PGCamera.h src/PGCamera.cpp)
 
-target_link_libraries(roscameragpsimg sc_lib_public_tools ${CMAKE_DL_LIBS})
+target_link_libraries(sc_camera sc_lib_public_tools ${CMAKE_DL_LIBS})
 
-TARGET_LINK_LIBRARIES(roscameragpsimg ${OpenCV_LIBS})
+TARGET_LINK_LIBRARIES(sc_camera ${OpenCV_LIBS})
 
 INCLUDE_DIRECTORIES(/usr/include)
 INCLUDE_DIRECTORIES(/usr/include/flycapture)
 link_directories(/usr/lib)
-TARGET_LINK_LIBRARIES(roscameragpsimg libflycapture-c.so libflycapturegui-c.so libflycapture.so libflycapturegui.so)
-TARGET_LINK_LIBRARIES(roscameragpsimg glog)
-target_link_libraries(roscameragpsimg ${catkin_LIBRARIES})
-target_link_libraries(roscameragpsimg ${CMAKE_DL_LIBS})
+TARGET_LINK_LIBRARIES(sc_camera libflycapture-c.so libflycapturegui-c.so libflycapture.so libflycapturegui.so)
+TARGET_LINK_LIBRARIES(sc_camera glog)
+target_link_libraries(sc_camera ${catkin_LIBRARIES})
+target_link_libraries(sc_camera ${CMAKE_DL_LIBS})
 

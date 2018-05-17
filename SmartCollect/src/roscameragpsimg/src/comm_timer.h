@@ -1,8 +1,9 @@
-#include <iostream>
+#ifndef __COMM_TIME_H
+#define __COMM_TIME_H
+
 #include <sstream>
 #include <stdio.h>
 #include <stdlib.h>
-#include <string.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
@@ -16,31 +17,29 @@
 #include <boost/algorithm/string/classification.hpp>
 #include <boost/algorithm/string/split.hpp>
 #include <string>
-#include <sstream>
-#include "roscameragpsimg/imu5651.h"
+#include "sc_msgs/imu5651.h"
 #include <ros/ros.h>
 #include <std_msgs/String.h>
 #include "../../sc_lib_public_tools/src/public_tools.h"
 #include "../../sc_lib_public_tools/src/coordtrans.h"
+#include <fstream>
+#include "lock.h"
 
-using std::cout;
-using std::endl;
-using std::vector;
-using std::string;
+class CommTimer
+{
+public:
+    CommTimer(const std::string &_rawdataPath);
+    ~CommTimer();
 
-//GPS时间
+    int getTime();
 
-static double string2double(const string& str);
-
-int set_opt(int fd, int nSpeed, int nBits, char nEvent, int nStop);
-
-int get_time(void) ;//ros::NodeHandle* nh);
-
-
-//msg to show
-//imu publisher
-//roscameragpsimg::imu5651 msg_imu_string;
-//ros::Publisher pub_imu_string;
+    sc_msgs::imu5651 imu232Msg_;
 
 
+private:
+    int setOpt(int fd, int nSpeed, int nBits, char nEvent, int nStop);
 
+    std::string rawdataPath_;
+};
+
+#endif

@@ -66,7 +66,7 @@ start_smart_collector_server() {
     sleep 0.2
 
     pkill roscameragps
-    rosrun roscameragpsimg roscameragpsimg jpg "${_absolute_record_path}/Image/" "${_absolute_record_path}/IMU/" &
+    rosrun roscameragpsimg roscameragpsimg jpg "${_absolute_record_path}/" &
     sleep 0.2
 
     killall nodelet

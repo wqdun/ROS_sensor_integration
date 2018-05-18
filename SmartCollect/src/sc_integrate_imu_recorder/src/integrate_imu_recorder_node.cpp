@@ -173,13 +173,13 @@ bool getGdopFromGpgga(const string &inGpgga, sc_msgs::scIntegrateImu &out422Msg,
     }
     // else {nothing}
 
-    std::ofstream timeErrFileStream(timeErrFile.c_str());
-    if(!timeErrFileStream) {
-        LOG(ERROR) << "Failed to create: " << timeErrFile;
-        exit(1);
-    }
-    timeErrFileStream << gps422Time << "," << sysTime << "," << timeErr << "\n";
-    timeErrFileStream.close();
+    // std::ofstream timeErrFileStream(timeErrFile.c_str());
+    // if(!timeErrFileStream) {
+    //     LOG(ERROR) << "Failed to create: " << timeErrFile;
+    //     exit(1);
+    // }
+    // timeErrFileStream << gps422Time << "," << sysTime << "," << timeErr << "\n";
+    // timeErrFileStream.close();
 
     return true;
 }

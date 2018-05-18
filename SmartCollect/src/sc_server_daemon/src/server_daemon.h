@@ -8,7 +8,7 @@
 #include "sc_msgs/MonitorMsg.h"
 #include "sc_msgs/ProjectInfoMsg.h"
 #include "sc_msgs/DiskInfo.h"
-#include "roscameragpsimg/imu5651.h"
+#include "sc_msgs/imu5651.h"
 #include "velodyne_msgs/Velodyne2Center.h"
 #include "sc_msgs/scIntegrateImu.h"
 #include "../../sc_lib_public_tools/src/public_tools.h"
@@ -50,7 +50,7 @@ private:
     void clientCB(const sc_msgs::ClientCmd::ConstPtr& pClientMsg);
 
     bool isGpsUpdated_, isVelodyneUpdated_, isRawImuUpdated_, isCameraUpdated_, isDiskInfoUpdated_;
-    void gpsCB(const roscameragpsimg::imu5651::ConstPtr& pGPSmsg);
+    void gpsCB(const sc_msgs::imu5651::ConstPtr& pGPSmsg);
     void velodyneCB(const velodyne_msgs::Velodyne2Center::ConstPtr& pVelodyneMsg);
     void rawImuCB(const sc_msgs::scIntegrateImu::ConstPtr& pRawImuMsg);
     void cameraImgCB(const std_msgs::Float64::ConstPtr& pCameraImgMsg);

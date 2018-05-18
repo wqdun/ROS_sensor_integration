@@ -128,7 +128,7 @@ void ServerDaemon::velodyneCB(const velodyne_msgs::Velodyne2Center::ConstPtr& pV
     monitorMsg_.is_gprmc_valid = pVelodyneMsg->is_gprmc_valid;
 }
 
-void ServerDaemon::gpsCB(const roscameragpsimg::imu5651::ConstPtr& pGPSmsg) {
+void ServerDaemon::gpsCB(const sc_msgs::imu5651::ConstPtr& pGPSmsg) {
     // 100Hz
     mGpsTime[0] = mGpsTime[1];
     mGpsTime[1] = public_tools::PublicTools::string2num(pGPSmsg->GPSTime, -1.0);

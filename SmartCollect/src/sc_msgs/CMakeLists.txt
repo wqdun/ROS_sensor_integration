@@ -61,6 +61,7 @@ add_message_files(
   ClientCmd.msg
   DiskInfo.msg
   scIntegrateImu.msg
+  imu5651.msg
 )
 
 ## Generate services in the 'srv' folder

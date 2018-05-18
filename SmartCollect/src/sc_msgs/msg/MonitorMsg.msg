@@ -38,5 +38,5 @@ int32 lidar_size
 
 # below node control parameters, received from web
 int8 is_record
-float64 cam_gain
+int8 cam_gain
 

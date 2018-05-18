@@ -25,13 +25,15 @@
 #include <fstream>
 #include "lock.h"
 
+class Cameras;
+
 class CommTimer
 {
 public:
     CommTimer(const std::string &_rawdataPath);
     ~CommTimer();
 
-    int getTime();
+    int getTime(Cameras *pCameras);
 
     sc_msgs::imu5651 imu232Msg_;
 

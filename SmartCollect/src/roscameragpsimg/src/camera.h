@@ -46,6 +46,7 @@ private:
     void pubTopic(int _i);
     bool flyImage2msg(const FlyCapture2::Image &inFlyImage);
     bool convertImage(cv::Mat* matImage, const Image* image);
+    void grabBuffers();
 
     std::string imgFormat_;
 
@@ -57,6 +58,7 @@ private:
 
     std::vector<CPGCamera *> pCpgCameras_;
     boost::shared_ptr<CommTimer> pCommTimer_;
+    boost::shared_ptr<boost::thread> timeThread_;
     int8_t camGainLast_;
     cv::Mat cvMatImg_;
     sensor_msgs::ImagePtr msgImg_;

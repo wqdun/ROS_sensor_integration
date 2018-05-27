@@ -32,7 +32,7 @@ Cameras::Cameras(ros::NodeHandle nh, ros::NodeHandle private_nh, const std::stri
     LOG(INFO) << "Number of cameras detected: " << cameraNum;
     if(cameraNum < 1) {
         LOG(INFO) << "Insufficient number of cameras: " << cameraNum;
-        exit(1);
+        exit(2);
     }
     pCpgCameras_.clear();
     (void)getCameras(cameraNum, _rawdataDir);
@@ -42,6 +42,13 @@ Cameras::Cameras(ros::NodeHandle nh, ros::NodeHandle private_nh, const std::stri
 
 Cameras::~Cameras() {
     LOG(INFO) << __FUNCTION__ << " start.";
+    for(auto &pCpgCamera: pCpgCameras_) {
+        pCpgCamera->StopCapture();
+        pCpgCamera->m_pCamera->Disconnect();
+        delete pCpgCamera;
+    }
+
+    timeThread_->join();
 }
 
 void Cameras::getCameras(unsigned int _cameraNum, const std::string &__rawdataDir) {
@@ -51,7 +58,7 @@ void Cameras::getCameras(unsigned int _cameraNum, const std::string &__rawdataDi
         CPGCamera *pCPGCamera = new CPGCamera(i, __rawdataDir);
         if(NULL == pCPGCamera) {
             LOG(ERROR) << "Failed to create CPGCamera.";
-            exit(1);
+            exit(3);
         }
         pCPGCamera->pCamerasDaddy_ = this;
 
@@ -140,6 +147,41 @@ bool Cameras::flyImage2msg(const FlyCapture2::Image &inFlyImage) {
 }
 
 
+
+void Cameras::grabBuffers() {
+    LOG(INFO) << __FUNCTION__ << " start.";
+
+    int numCameras = pCpgCameras_.size();
+    FlyCapture2::Error errorGrab;
+    FlyCapture2::JPEGOption pngoption;
+
+    while(ros::ok() ) {
+        // for(auto &pCpgCamera: pCpgCameras_) {
+        while(1) {
+            auto &pCpgCamera = pCpgCameras_[0];
+            std::string jpgFile(pCpgCamera->imgSavePath_ + std::to_string(gpsWeekTimeCorrected_) + "-" + std::to_string(pCpgCamera->cameraId_) + ".png");
+            FlyCapture2::Image bufferImg;
+            errorGrab = pCpgCamera->m_pCamera->RetrieveBuffer(&bufferImg);
+            if (errorGrab != PGRERROR_OK)
+            {
+                logErrorTrace( errorGrab );
+                // continue;
+                // exit(4);
+                jpgFile += "-BAD";
+            }
+
+            LOG(INFO) << "I am gonna save " << jpgFile;
+            errorGrab = bufferImg.Save(jpgFile.c_str(), &pngoption);
+            if(errorGrab != PGRERROR_OK)
+            {
+                logErrorTrace( errorGrab );
+                // exit(1);
+                continue;
+            }
+        }
+    }
+}
+
 // @function:
 //           convert the format of the image
 // @author:
@@ -184,15 +226,17 @@ bool Cameras::convertImage(cv::Mat* matImage, const Image* image) {
 void Cameras::run() {
     LOG(INFO) << __FUNCTION__ << " start.";
 
-    boost::thread thrd(boost::bind(&CommTimer::getTime, pCommTimer_, this) );
+    timeThread_ = boost::shared_ptr<boost::thread>(new boost::thread(boost::bind(&CommTimer::getTime, pCommTimer_, this) ) );
     LOG(INFO) << "Start CommTimer thread.";
 
     (void)startAllCapture();
+    // timeThread_ = boost::shared_ptr<boost::thread>(new boost::thread(boost::bind(&Cameras::grabBuffers, this) ) );
+    LOG(INFO) << "Start grabBuffers thread.";
 
     const int camNum = pCpgCameras_.size();
     int i = -1;
 
-    ros::Rate rate(1);
+    ros::Rate rate(5);
     while(ros::ok() ) {
         ++i;
         i %= camNum;

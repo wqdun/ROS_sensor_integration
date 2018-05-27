@@ -7,38 +7,38 @@
 class ILock
 {
 public:
-	virtual ~ILock() {}
+    virtual ~ILock() {}
 
-	virtual int Lock() const = 0;
-	virtual int Unlock() const = 0;
+    virtual int Lock() const = 0;
+    virtual int Unlock() const = 0;
 };
 
 //互斥锁类
 class CMutex : public ILock
 {
 public:
-	CMutex();
-	~CMutex();
+    CMutex();
+    ~CMutex();
 
-	virtual int Lock() const;
-	virtual int Unlock() const;
+    virtual int Lock() const;
+    virtual int Unlock() const;
     int Trylock(void);
 
 private:
-	mutable pthread_mutex_t m_mutex;
+    mutable pthread_mutex_t m_mutex;
 public:
-	int ret;
+    int ret;
 };
 
 //锁
 class CMyLock
 {
 public:
-	CMyLock(const ILock&);
-	~CMyLock();
+    CMyLock(const ILock&);
+    ~CMyLock();
 
 private:
-	const ILock& m_lock;
+    const ILock& m_lock;
 };
 
 

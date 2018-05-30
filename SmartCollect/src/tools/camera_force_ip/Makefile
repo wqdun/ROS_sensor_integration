@@ -1,15 +1,15 @@
-INC = -I/usr/include/flycapture
+INCS = -I/usr/include/flycapture
 LIBS = -lflycapture -lglog
-OBJ = camera_force_ip_main.o camera_force_ip.o
+objects := $(patsubst %.cpp, %.o, $(wildcard *.cpp) )
 
-main: $(OBJ)
-	g++ -o cameraIpForcer $(OBJ) ${LIBS}
+main: $(objects)
+	g++ -o cameraIpForcer $(objects) ${LIBS}
 
-camera_force_ip_main.o: camera_force_ip_main.cpp
-	g++ ${INC} -c camera_force_ip_main.cpp
+camera_force_ip_main.o: camera_force_ip_main.cpp camera_force_ip.h
+	g++ ${INCS} -c $< -o $@
 
-camera_force_ip.o: camera_force_ip.cpp
-	g++ ${INC} -c camera_force_ip.cpp
+camera_force_ip.o: camera_force_ip.cpp camera_force_ip.h
+	g++ ${INCS} -c $< -o $@
 
 .PHONY: clean
 clean:
@@ -17,6 +17,6 @@ clean:
 	-rm cameraIpForcer
 
 print: *.cpp
-	lpr -p $?
+	lpr -p $(objects)
 	touch print
 

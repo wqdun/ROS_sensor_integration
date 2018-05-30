@@ -4,7 +4,6 @@
 #include "FlyCapture2.h"
 #include "Error.h"
 
-
 class CameraForceIp {
 public:
     CameraForceIp();
@@ -24,3 +23,4 @@ private:
 };
 
 #endif
+

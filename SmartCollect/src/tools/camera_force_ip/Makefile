@@ -1,22 +1,34 @@
+CC = g++ -g
 INCS = -I/usr/include/flycapture
 LIBS = -lflycapture -lglog
-objects := $(patsubst %.cpp, %.o, $(wildcard *.cpp) )
+objects = $(patsubst %.cpp, %.o, $(wildcard *.cpp) )
 
-main: $(objects)
-	g++ -o cameraIpForcer $(objects) ${LIBS}
+.PHONY: all
+all: main
+
+main: ${objects}
+	@echo "make $@"
+	${CC} -o cameraIpForcer ${objects} ${LIBS}
 
 camera_force_ip_main.o: camera_force_ip_main.cpp camera_force_ip.h
-	g++ ${INCS} -c $< -o $@
+	@echo "make $@"
+	${CC} ${INCS} -c $< -o $@
 
 camera_force_ip.o: camera_force_ip.cpp camera_force_ip.h
-	g++ ${INCS} -c $< -o $@
+	@echo "make $@"
+	${CC} ${INCS} -c $< -o $@
 
 .PHONY: clean
 clean:
-	-rm *.o
-	-rm cameraIpForcer
+	@echo "make $@"
+	-${RM} *.o
+	-${RM} cameraIpForcer
+
+.PHONY: install
+install:
+	@echo "make $@"
+	cp cameraIpForcer /usr/bin/
 
 print: *.cpp
-	lpr -p $(objects)
-	touch print
-
+	@echo "make $@"
+	@echo $?

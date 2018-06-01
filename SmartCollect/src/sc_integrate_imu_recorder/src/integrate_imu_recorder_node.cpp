@@ -29,14 +29,14 @@ int main(int argc, char **argv) {
     ros::NodeHandle private_nh("~");
     ros::NodeHandle nh;
     ros::Publisher pubHdop = nh.advertise<sc_msgs::scIntegrateImu>("imu422_hdop", 0);
-    string rawInsFile("");
-    // private_nh.param("raw_ins_path", rawInsFile, rawInsFile);
-    rawInsFile = argv[1];
-    string rtImuFileName("");
-    (void)public_tools::PublicTools::generateFileName(rawInsFile, rtImuFileName);
-    rawInsFile += (rtImuFileName + "_integrate_imu.dat");
 
-    const string timeErrFile(rawInsFile + rtImuFileName + "_time_diff.txt");
+    const std::string imuPath(argv[1]);
+
+    std::string rtImuFileName("");
+    (void)public_tools::PublicTools::generateFileName(imuPath, rtImuFileName);
+    const std::string rawInsFile(imuPath + rtImuFileName + "_integrate_imu.dat");
+
+    const string timeErrFile(imuPath + rtImuFileName + "_time_diff.txt");
     std::ofstream timeErrFileStream(timeErrFile.c_str());
     if(!timeErrFileStream) {
         LOG(ERROR) << "Failed to create: " << timeErrFile;
@@ -173,13 +173,13 @@ bool getGdopFromGpgga(const string &inGpgga, sc_msgs::scIntegrateImu &out422Msg,
     }
     // else {nothing}
 
-    // std::ofstream timeErrFileStream(timeErrFile.c_str());
-    // if(!timeErrFileStream) {
-    //     LOG(ERROR) << "Failed to create: " << timeErrFile;
-    //     exit(1);
-    // }
-    // timeErrFileStream << gps422Time << "," << sysTime << "," << timeErr << "\n";
-    // timeErrFileStream.close();
+    std::ofstream timeErrFileStream(timeErrFile.c_str(), std::ios::app);
+    if(!timeErrFileStream) {
+        LOG(ERROR) << "Failed to create: " << timeErrFile;
+        exit(1);
+    }
+    timeErrFileStream << std::fixed << gps422Time << "," << sysTime << "," << timeErr << "\n";
+    timeErrFileStream.close();
 
     return true;
 }

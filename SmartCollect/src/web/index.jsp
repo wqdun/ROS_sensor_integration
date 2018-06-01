@@ -113,6 +113,12 @@
               <span>运行监控</span>
             </a>
           </li>
+          <li >
+            <a href="camera.jsp">
+              <i class="icon-facetime-video"></i>
+              <span>全景相机</span>
+            </a>
+          </li>
         </ul>
       </div>
     </div>

@@ -23,7 +23,7 @@
 </style>
 
 <%
-    // String ip = "172.21.9.106";
+//    String ip = "10.42.0.1";
     String ip = request.getLocalAddr();
     System.out.println("row bridge server ip "+ip);
 %>

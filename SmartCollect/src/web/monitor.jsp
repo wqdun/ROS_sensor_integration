@@ -2,131 +2,201 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <%@ include file="include/header.jsp" %>
-  <script>
+    <%@ include file="include/header.jsp" %>
+    <script>
 
-    function pubCtrlParams() {
-        isRecordclicked_ = 5;
-        var isRecord = document.getElementById("isRecordCheckBox").checked;
-        console.log("typeof(isRecord): " + typeof(isRecord) + ", isRecord: " + isRecord);
-        var camGain = $("#ex1").val();
-        console.log("typeof(camGain): " + typeof(camGain) + ", camGain: " + camGain);
+        function pubCtrlParams() {
+            isRecordclicked_ = 5;
+            var isRecord = document.getElementById("isRecordCheckBox").checked;
+            console.log("typeof(isRecord): " + typeof(isRecord) + ", isRecord: " + isRecord);
+            var camGain = $("#ex1").val();
+            console.log("typeof(camGain): " + typeof(camGain) + ", camGain: " + camGain);
 
-        var nodeParamsMsg = new ROSLIB.Message({
-            is_record: Number(isRecord),
-            cam_gain: Number(camGain),
-        });
+            var nodeParamsMsg = new ROSLIB.Message({
+                is_record: Number(isRecord),
+                cam_gain: Number(camGain),
+            });
 
-        var clientMsg = new ROSLIB.Message({
-            node_params: nodeParamsMsg,
-        });
+            var clientMsg = new ROSLIB.Message({
+                node_params: nodeParamsMsg,
+            });
 
-        pubCmd_.publish(clientMsg);
-    }
+            pubCmd_.publish(clientMsg);
+        }
 
-  </script>
+    </script>
 </head>
 
 <body>
-  <div class="subnavbar">
+
+<div class="modal fade" id="myModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+    <input type="hidden" id="position" />
+    <input type="hidden" id="pinfo" />
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal" aria-hidden="true">
+                    &times;
+                </button>
+                <h4 class="modal-title" id="myModalLabel">
+                    记录车道变化信息
+                </h4>
+            </div>
+            <div class="modal-body">
+                <select class="form-control"  style = "width:60px;" id='startLane'>
+                    <option>1</option>
+                    <option selected>2</option>
+                    <option>3</option>
+                    <option>4</option>
+                    <option>5</option>
+                    <option>6</option>
+                    <option>7</option>
+                </select>
+                变
+                <select class="form-control"  style = "width:60px;" id='endLane'>
+                    <option>1</option>
+                    <option>2</option>
+                    <option selected>3</option>
+                    <option>4</option>
+                    <option>5</option>
+                    <option>6</option>
+                    <option>7</option>
+                </select>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-default" data-dismiss="modal">
+                    取消
+                </button>
+                <button type="button" class="btn btn-primary" data-dismiss="modal" id="laneupdate">
+                    提交
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="subnavbar">
     <div class="subnavbar-inner">
-      <div class="container">
-        <ul class="mainnav">
-          <li >
-            <a href="index.jsp">
-              <i class="icon-th-large"></i>
-              <span>系统设置</span>
-            </a>
-          </li>
-          <li class="active">
-            <a href="monitor.jsp">
-              <i class="icon-facetime-video"></i>
-              <span>运行监控</span>
-            </a>
-          </li>
-        </ul>
-      </div>
+        <div class="container">
+            <ul class="mainnav">
+                <li>
+                    <a href="index.jsp">
+                        <i class="icon-th-large"></i>
+                        <span>系统设置</span>
+                    </a>
+                </li>
+                <li class="active">
+                    <a href="monitor.jsp">
+                        <i class="icon-facetime-video"></i>
+                        <span>运行监控</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="camera.jsp">
+                        <i class="icon-facetime-video"></i>
+                        <span>全景相机</span>
+                    </a>
+                </li>
+            </ul>
+        </div>
     </div>
-  </div>
+</div>
 
-  <div class="main-inner">
+<div class="main-inner">
     <div class="container">
-      <div class="row">
-        <div class="span12">
-          <div class="widget big-stats-container">
-            <table class="table table-bordered table-striped">
-              <thead>
-              <tr>
-                <th>连接状态:<a href="#" id="connect" class="alert-link"></a></th>
-                <th>经纬度：<a href="#" id="location" class="alert-link">"", ""</a></th>
-                <th>卫星数：<a href="#" id="num" class="alert-link">""</a></th>
-                <th>卫星水平定位精度：<a href="#" id="hdop" class="alert-link">""</a></th>
-                <th>磁盘空间：<a href="#" id="diskspace" class="alert-link">""</a></th>
-              </tr>
-              <tr>
-                <th>方向：<a href="#" id="heading" class="alert-link">""</a></th>
-                <th>速度：<a href="#" id="speed" class="alert-link">""公里/小时</a></th>
-                <th>相机存储频率：<a href="#" id="fps" class="alert-link">""</a></th>
-                <th>PPS：<a href="#" id="pps" class="alert-link">""</a></th>
-                <th>GPRMC：<a href="#" id="gprmc" class="alert-link">""</a></th>
-              </tr>
+        <div class="row">
+            <div class="span12">
+                <div class="widget big-stats-container">
+                    <table class="table table-bordered table-striped">
+                        <thead>
+                        <tr>
+                            <th>连接状态:<a href="#" id="connect" class="alert-link"></a></th>
+                            <th>经纬度：<a href="#" id="location" class="alert-link">"bbb", "cc"</a></th>
+                            <th>卫星数：<a href="#" id="num" class="alert-link">""</a></th>
+                            <th>卫星水平定位精度：<a href="#" id="hdop" class="alert-link">""</a></th>
+                            <th>磁盘空间：<a href="#" id="diskspace" class="alert-link">""</a></th>
+                        </tr>
+                        <tr>
+                            <th>方向：<a href="#" id="heading" class="alert-link">""</a></th>
+                            <th>速度：<a href="#" id="speed" class="alert-link">""公里/小时</a></th>
+                            <th>相机存储频率：<a href="#" id="fps" class="alert-link">""</a></th>
+                            <th>PPS：<a href="#" id="pps" class="alert-link">""</a></th>
+                            <th>GPRMC：<a href="#" id="gprmc" class="alert-link">""</a></th>
+                        </tr>
 
-              <tr>
-                <th>照片数量：<a href="#" id="piccounts" class="alert-link">""</a></th>
-                <th>激光包大小：<a href="#" id="lidarpkg" class="alert-link">""</a></th>
-                <th>&nbsp;</th>
-                <th>&nbsp;</th>
-                <th>&nbsp;</th>
-              </tr>
-              </thead>
-               </table>
-          </div>
-        </div>
-      </div>
-      <div class="row">
-        <div class="span6">
-          <div class="widget">
-            <div class="widget-header">
-              <i class="icon-star"></i>
-              <h3>地图</h3>
+                        <tr>
+                            <th>照片数量：<a href="#" id="piccounts" class="alert-link">""</a></th>
+                            <th>激光包大小：<a href="#" id="lidarpkg" class="alert-link">""</a></th>
+                            <th>&nbsp;</th>
+                            <th></th>
+                            <th>
+                                <button type="button" class="btn btn-inverse" id="mark" data-toggle="modal"
+                                        data-target="#myModal" onclick="marklane();">mark
+                                </button>
+                            </th>
+                        </tr>
+                        </thead>
+                    </table>
+                </div>
             </div>
-            <div class="widget-content">
-              <iframe src="minemap.jsp" frameborder="0" scrolling="no" id="maplayer"
-                onload="this.height='450px'; this.width='100%'"></iframe>
-            </div>
-          </div>
         </div>
+        <div class="row">
+            <div class="span6">
+                <div class="widget">
+                    <div class="widget-header">
+                        <i class="icon-star"></i>
+                        <h3>地图</h3>
+                    </div>
+                    <div class="widget-content">
+                        <iframe src="minemap.jsp" frameborder="0" scrolling="no" id="maplayer"
+                                onload="this.height='450px'; this.width='100%'"></iframe>
+                    </div>
+                </div>
+            </div>
 
-        <div class="span6">
-          <div class="widget">
-            <div class="widget-header">
-              <i class="icon-list-alt"></i>
-              <h3>相机</h3>
+            <div class="span6">
+                <div class="widget">
+                    <div class="widget-header">
+                        <i class="icon-list-alt"></i>
+                        <h3>相机</h3>
+                    </div>
+                    <div class="widget-content">
+                        <img src="http://<%=ip%>:8080/stream?topic=/camera/image" height="100%" width="100%"
+                             alt="http://<%=ip%>:8080/stream?topic=/camera/image">
+                        <table class="table table-bordered table-striped">
+                            <thead>
+                            <tr>
+                                <th style="text-align:center;"><label class="checkbox">
+                                    <input id="isRecordCheckBox" type="checkbox"
+                                           onchange="pubCtrlParams();">采集</label></th>
+                                <th style="text-align:center;">1<input id="ex1" type="text"
+                                                                       data-slider-min="1"
+                                                                       data-slider-max="50" data-slider-step="1"
+                                                                       data-slider-value='20'/>50
+                                </th>
+                            </tr>
+                            </thead>
+                        </table>
+                    </div>
+                </div>
             </div>
-            <div class="widget-content">
-              <img src="http://<%=ip%>:8080/stream?topic=/camera/image" height="100%" width="100%" alt="http://<%=ip%>:8080/stream?topic=/camera/image">
-              <table class="table table-bordered table-striped">
-                <thead>
-                <tr >
-                  <th style="text-align:center;"><label class="checkbox">
-                    <input id="isRecordCheckBox" type="checkbox"
-                      onchange="pubCtrlParams();">采集</label></th>
-                  <th style="text-align:center;">1<input id="ex1" type="text"
-                    data-slider-min="1"
-                    data-slider-max="50" data-slider-step="1"
-                    data-slider-value='20' />50</th>
-                </tr>
-                </thead>
-              </table>
-            </div>
-          </div>
         </div>
-      </div>
     </div>
-  </div>
+</div>
 
 <%@ include file="include/footer.jsp" %>
-  <script>
+<script>
+
+    
+    var pinfo = "";
+    var markposition = "";
+    function marklane() {
+        $('#position').val(markposition);
+        $('#pinfo').val(pinfo);
+    }
+    $('#laneupdate').click(function () {
+        $.post("http://10.42.0.1/log.jsp", {"pinfo":$('#pinfo').val(),"position":$('#position').val(),"type":"updateLane","startLane":$('#startLane').val(),"endLane":$('#endLane').val()});
+    })
 
     var url_ = window.location.host;
     console.log("window.location.host: " + url_);
@@ -164,11 +234,14 @@
         name: '/sc_monitor',
         messageType: 'sc_msgs/MonitorMsg'
     });
-    centerListener.subscribe(function(message) {
+    centerListener.subscribe(function (message) {
+
+        markposition = message.lat_lon_hei.y+","+message.lat_lon_hei.x+","+message.lat_lon_hei.z;
+        pinfo = message.project_info.city_code + "-" + message.project_info.daynight_code + "-" + message.project_info.task_id + "" + message.project_info.device_id;
         console.log(centerListener.name + '::heading: ' + message.pitch_roll_heading.z);
 
         // text is "sc_integrate_imu_recorder node not running"
-        if(message.hdop.indexOf("not") > 0) {
+        if (message.hdop.indexOf("not") > 0) {
             var errMsg = 'IMU组合解算数据采集节点未运行！';
             document.getElementById('location').innerHTML = "<font color=red >" + errMsg + "</font>";
             document.getElementById('num').innerHTML = "<font color=red >" + errMsg + "</font>";
@@ -198,7 +271,7 @@
             document.getElementById('fps').innerHTML = message.camera_fps.toFixed(2);
         }
 
-        if(message.pps_status.indexOf("not") > 0) {
+        if (message.pps_status.indexOf("not") > 0) {
             var errMsg = '激光雷达数据采集节点未运行！';
             document.getElementById('pps').innerHTML = "<font color=red >" + errMsg + "</font>";
             document.getElementById('gprmc').innerHTML = "<font color=red >" + errMsg + "</font>";
@@ -208,33 +281,33 @@
             document.getElementById('gprmc').innerHTML = message.is_gprmc_valid;
         }
 
-        if('A' == message.is_gprmc_valid) {
-          $('#isRecordCheckBox').prop('disabled', false);
+        if ('A' == message.is_gprmc_valid) {
+            $('#isRecordCheckBox').prop('disabled', false);
         }
         else {
-          $('#isRecordCheckBox').prop('disabled', true);
+            $('#isRecordCheckBox').prop('disabled', true);
         }
 
         $("#diskspace")[0].innerHTML = message.disk_usage;
-        if(-2 == message.img_num) {
-          var errMsg = '没有活动工程！';
-          $("#piccounts")[0].innerHTML = $("#lidarpkg")[0].innerHTML = "<font color=red >" + errMsg + "</font>";
+        if (-2 == message.img_num) {
+            var errMsg = '没有活动工程！';
+            $("#piccounts")[0].innerHTML = $("#lidarpkg")[0].innerHTML = "<font color=red >" + errMsg + "</font>";
         }
         else {
-          $("#piccounts")[0].innerHTML = message.img_num;
-          $("#lidarpkg")[0].innerHTML = message.lidar_size+"M";
+            $("#piccounts")[0].innerHTML = message.img_num;
+            $("#lidarpkg")[0].innerHTML = message.lidar_size + "M";
         }
 
         console.log("is_record: " + message.is_record);
         console.log("cam_gain: " + typeof(message.cam_gain) + ", " + message.cam_gain);
-        if(isRecordclicked_ != 0) {
+        if (isRecordclicked_ != 0) {
             --isRecordclicked_;
             console.log("Waiting modify take effect: " + isRecordclicked_);
         }
         else {
-          $("#isRecordCheckBox").prop("checked", message.is_record);
-          $("#ex1").slider("setValue", message.cam_gain);
-          console.log("cam_gain on server is: " + $("#ex1").slider("getValue"));
+            $("#isRecordCheckBox").prop("checked", message.is_record);
+            $("#ex1").slider("setValue", message.cam_gain);
+            console.log("cam_gain on server is: " + $("#ex1").slider("getValue"));
         }
     });
 
@@ -245,7 +318,7 @@
         pubCtrlParams();
     });
 
-  </script>
+</script>
 </body>
 
 </html>

@@ -1,6 +1,6 @@
 #include "track.h"
-// #define NDEBUG
-#undef NDEBUG
+#define NDEBUG
+// #undef NDEBUG
 #include <glog/logging.h>
 
 Track::Track() {
@@ -25,7 +25,7 @@ void Track::run(bool _isRecord, const sc_msgs::Point2D &_gpsPoint) {
 
     (void)addPoint(_isRecord, _gpsPoint);
 
-    const size_t _POINT_MAX = 200; // 10000
+    const size_t _POINT_MAX = 5000; // 10000
     if(recordedPointNum >= _POINT_MAX) {
         recordedLines_ = sparse(recordedLines_);
     }

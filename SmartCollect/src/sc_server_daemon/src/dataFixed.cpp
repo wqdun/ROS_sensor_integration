@@ -152,6 +152,7 @@ void dataFixed::fixProjectsData(const std::string &_projects)
             continue;
         }
         LOG(INFO) << "start to fix Project: " << projectArr[i];
+        this->markPointGeo2Gauss(projectArr[i]);
         returnValue = this->readOntimeTraceData(projectArr[i], imuData);
         if( 0 != returnValue )
         {
@@ -459,6 +460,84 @@ void dataFixed::saveImageTraceData(std::string &savePath,std::string &projectNam
         imageTraceDataFile.unsetf(std::ios::fixed);
     }
     imageTraceDataFile.close();
+}
+
+bool dataFixed::markPointGeo2Gauss(std::string &projectPath)
+{
+    std::vector<std::string> filesPath;
+    std::string markFilepath = projectPath + "/Rawdata/Event";
+    std::string cmd="ls " + markFilepath + "/event.txt";
+    const size_t maxLine = 1000;
+    char result[maxLine];
+    FILE *fpin;
+    if(NULL == (fpin = popen(cmd.c_str(), "r") ) )
+    {
+        LOG(ERROR) << markFilepath << ":Creat Markpoint Data Pipe Failed ";
+        return false;
+    }
+    while(1)
+    {
+        if(NULL == fgets(result, maxLine, fpin) )
+        {
+            break;
+        }
+        std::string tmpPath = result;
+        if(tmpPath[tmpPath.size()-1] == 10)
+            filesPath.push_back(tmpPath.substr(0, tmpPath.size()-1 ) );
+        else
+            filesPath.push_back(tmpPath);
+    }
+    if(0 != pclose( fpin ) )
+    {
+        LOG(ERROR) << markFilepath <<":close Markpoint Pipe Failed";
+        return false;
+    }
+    if(filesPath.size() != 1)
+    {
+        LOG(ERROR) << markFilepath <<":Load Number of IMU real time Data is not 1";
+        return false;
+    }
+
+    markFilepath = filesPath[0];
+    std::ifstream filePointer(markFilepath.c_str() );
+    std::string outPutPath = markFilepath.substr(0, markFilepath.size() - 4) + "2Gauss.txt";
+    std::ofstream outStream(outPutPath.c_str());
+    if(!filePointer)
+    {
+        LOG(ERROR) << "Open the file" << markFilepath << "failed";
+        return -1;
+    }
+
+    char buffer[256];
+    std::string lineString;
+    std::vector<std::string> lineVector;
+    double latitude, longitude , northCoordinate, eastCoordinate;
+    while(!filePointer.eof())
+    {
+        filePointer.getline(buffer,256);
+        lineString = buffer;
+        boost::split(lineVector, lineString, boost::is_any_of(","));
+        if(6 != lineVector.size())
+        {
+            LOG(WARNING) << "each line of event file should have 6 elements";
+            continue;
+        }
+        std::stringstream ss;
+        ss << lineVector[0];
+        ss >> longitude;
+        ss.clear();
+        ss << lineVector[1];
+        ss >> latitude;
+        ss.clear();
+        GeoToGauss(longitude, latitude, 3, &northCoordinate,&eastCoordinate);
+        outStream << lineVector[0] << "," << lineVector[1] << "," << lineVector[2] << "," <<std::fixed <<
+        eastCoordinate << "," << northCoordinate << "," << lineVector[3] << "," << lineVector[4] << "," <<
+        lineVector[5] << std::endl;
+
+    }
+    outStream.close();
+    filePointer.close();
+    return true;
 }
 
 int dataFixed::readOntimeTraceData(std::string &projectPath, std::vector<ontimeDataFormat> &traceFileData){
@@ -953,7 +1032,6 @@ int dataFixed::mkLidarTraceFile(std::string &projectPath,std::vector <ontimeData
             }
             else
             {
-
                 if( fabs(timeRecord-imuData[subMarkRecord].GPSWeekTime) > timeOfStop )
                 {
                     poFeatureG->SetGeometry(pLineString);
@@ -962,11 +1040,11 @@ int dataFixed::mkLidarTraceFile(std::string &projectPath,std::vector <ontimeData
                        LOG(ERROR) << totalLidarFilePath[i] <<":Falied to create feature in shapefile";
                        return -1;
                     }
-                   pLineString=new OGRLineString();
-                 }
-                 pLineString->addPoint(imuData[subMarkRecord].Longitude, imuData[subMarkRecord].Latitude);
-                 timeRecord=imuData[subMarkRecord].GPSWeekTime;
-              }
+                    pLineString=new OGRLineString();
+                }
+                pLineString->addPoint(imuData[subMarkRecord].Longitude, imuData[subMarkRecord].Latitude);
+                timeRecord=imuData[subMarkRecord].GPSWeekTime;
+            }
 
             //make lidar realTime data effective trace
             lidarPointSeq++;

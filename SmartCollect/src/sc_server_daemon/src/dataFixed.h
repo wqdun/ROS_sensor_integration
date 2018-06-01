@@ -72,7 +72,6 @@ public:
 
 private:
     int imageCollectionHz;
-
     double beganGPSTime;
     double endGPSTime;
     double minGPSTime;
@@ -81,6 +80,7 @@ private:
     std::string belongtoLidarProjectName;
 
     void initMemberVar();
+    bool markPointGeo2Gauss(std::string &projectPath);
 };
 
 #pragma pack()

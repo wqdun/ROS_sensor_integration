@@ -121,17 +121,17 @@ run_minemap_service() {
     service nginx start >>$result_log 2>&1
     (
         log_with_time "Run authorization script."
-        cd /data/minemap/program/minemap-business/authorization/ && ./start.sh
+        cd /opt/minemap/program/minemap-business/authorization/ && ./start.sh
         sleep 1
 
         log_with_time "Run minemap-data script."
-        cd /data/minemap/program/minemap-data/ && ./start.sh
+        cd /opt/minemap/program/minemap-data/ && ./start.sh
         sleep 1
 
         log_with_time "PATH: ${PATH}."
         log_with_time "Run minemap-business script."
         export PATH=/opt/ros/indigo/bin:/data/minemap/program/postgres/bin:/opt/java/jdk1.8.0_144/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games
-        cd /data/minemap/program/minemap-business/minemap/ && ./start.sh
+        cd /opt/minemap/program/minemap-business/minemap/ && ./start.sh
         log_with_time "Now PATH is ${PATH}."
     )
     log_with_time "$FUNCNAME return $?."
@@ -162,11 +162,31 @@ set_camera_mtu() {
 
     chmod +r /dev/ttyS0 >>$result_log 2>&1
     ifconfig eth0 mtu 9000 >>$result_log 2>&1
+    ifconfig eth1 mtu 9000 >>$result_log 2>&1
+    ifconfig eth2 mtu 9000 >>$result_log 2>&1
+    ifconfig eth3 mtu 9000 >>$result_log 2>&1
+    ifconfig eth4 mtu 9000 >>$result_log 2>&1
+    ifconfig eth5 mtu 9000 >>$result_log 2>&1
+    ifconfig eth6 mtu 9000 >>$result_log 2>&1
 
     local mtu=$(netstat -i | grep eth0 | awk '{print $2}')
     log_with_time "Now I have $mtu mtu at eth0."
 
     log_with_time "$FUNCNAME return $?."
+}
+
+set_camera_route() {
+    log_with_time "$FUNCNAME start."
+
+    ip route add 169.254.70.51 via 169.254.94.7
+    ip route add 169.254.63.174 via 169.254.64.7
+    ip route add 169.254.65.120 via 169.254.76.7
+    ip route add 169.254.66.123 via 169.254.88.7
+    ip route add 169.254.64.2 via 169.254.70.7
+    ip route add 169.254.97.234 via 169.254.82.7
+    ip route add 192.102.0.201 via 192.102.0.7
+
+    service network-manager start
 }
 
 do_start() {
@@ -186,6 +206,7 @@ do_start() {
     sleep 1
 
     set_camera_mtu
+    set_camera_route
     sleep 1
     run_minemap_service
 

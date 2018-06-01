@@ -65,8 +65,8 @@ start_smart_collector_server() {
     rosrun sc_integrate_imu_recorder sc_integrate_imu_recorder_node "${_absolute_record_path}/IMU/" &
     sleep 0.2
 
-    pkill roscameragps
-    rosrun roscameragpsimg roscameragpsimg jpg "${_absolute_record_path}/" &
+    pkill sc_camera
+    /opt/smartc/devel/lib/sc_camera/sc_camera jpg "${_absolute_record_path}/" &
     sleep 0.2
 
     killall nodelet
@@ -85,11 +85,12 @@ start_smart_collector_server() {
 do_kill() {
     log_with_time "$FUNCNAME start."
 
-    pkill sc_integrate_ &
-    pkill roscameragps &
-    killall nodelet &
-    pkill sc_project_mon &
-    pkill sc_map_node &
+    pkill sc_integrate_
+    pkill sc_camera
+    killall nodelet
+    pkill sc_project_mon
+    pkill sc_map_node
+    return 0
 }
 
 main() {

@@ -5,13 +5,11 @@
 
 ToMars::ToMars() {
     LOG(INFO) << __FUNCTION__ << " start.";
-
 }
 
 ToMars::~ToMars() {
     LOG(INFO) << __FUNCTION__ << " start.";
 }
-
 
 void ToMars::getLines(const std::string &_shpFile) {
     LOG(INFO) << __FUNCTION__ << " start, reading " << _shpFile;
@@ -79,9 +77,6 @@ void ToMars::getLines(const std::string &_shpFile) {
 
 void ToMars::writeShp() {
     LOG(INFO) << __FUNCTION__ << " start, reading " << _shpFile;
-
-
-
 
 
 

@@ -5,7 +5,7 @@
 #include <glog/logging.h>
 
 int main(int argc, char **argv) {
-    // google::InitGoogleLogging(argv[0]);
+    google::InitGoogleLogging(argv[0]);
     LOG(INFO) << "Got " << argc << " parameters.";
     if(3 != argc) {
         LOG(INFO) << "usage: exec image_format path_rawdata.";
@@ -23,3 +23,4 @@ int main(int argc, char **argv) {
 
     return 0;
 }
+

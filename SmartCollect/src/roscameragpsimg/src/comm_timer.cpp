@@ -8,6 +8,8 @@
 
 CommTimer::CommTimer(const std::string &_rawdataPath) {
     LOG(INFO) << __FUNCTION__ << " start, rawdataPath_: " << _rawdataPath;
+    ros::NodeHandle nh;
+    pubImu5651_ = nh.advertise<sc_msgs::imu5651>("imu_string", 0);
     rawdataPath_ = _rawdataPath;
 }
 
@@ -21,7 +23,7 @@ int CommTimer::getTime(Cameras *pCameras)
     if(-1 == fd1)
     {
         LOG(ERROR) << "Failed to open /dev/ttyS0.";
-        exit(1);
+        exit(6);
     }
     LOG(INFO) << "Open /dev/ttyS0 successfully.";
 
@@ -51,7 +53,7 @@ int CommTimer::getTime(Cameras *pCameras)
     std::vector<std::string> parsed_data;
     bool isGpsTimeValidBeforeGpsWeekTimeCorrected = false;
 
-    while(1)
+    while(ros::ok() )
     {
         memset(buf, 0, 1024);
         int nread = read(fd1, buf, 1024);
@@ -88,15 +90,15 @@ int CommTimer::getTime(Cameras *pCameras)
             }
 
             boost::split(parsed_data, frame_complete, boost::is_any_of( ",*" ) );
-            // e.g. "279267.900"
-            GPS_week_time = public_tools::PublicTools::string2num(parsed_data[2], (double)(0) );
-            isGpsWeekTimeUpdated = true;
-
             if(17 != parsed_data.size() )
             {
                 LOG(ERROR) << "Error parsing " << frame_complete;
                 continue;
             }
+
+            // e.g. "279267.900"
+            GPS_week_time = public_tools::PublicTools::string2num(parsed_data[2], (double)(0) );
+            isGpsWeekTimeUpdated = true;
 
             imu232Msg_.GPSWeek = parsed_data[1];
             imu232Msg_.GPSTime = parsed_data[2];
@@ -113,6 +115,8 @@ int CommTimer::getTime(Cameras *pCameras)
             imu232Msg_.NSV1_num = parsed_data[13];
             imu232Msg_.NSV2_num = parsed_data[14];
             imu232Msg_.Status = parsed_data[15];
+
+            pubImu5651_.publish(imu232Msg_);
 
             if(imu232Msg_.Latitude.find("0.0000") < imu232Msg_.Latitude.size() ) {
                 LOG_EVERY_N(INFO, 1000) << "imu232Msg_.Latitude is invalid: " << imu232Msg_.Latitude;

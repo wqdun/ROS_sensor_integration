@@ -42,6 +42,7 @@ private:
     int setOpt(int fd, int nSpeed, int nBits, char nEvent, int nStop);
 
     std::string rawdataPath_;
+    ros::Publisher pubImu5651_;
 };
 
 #endif

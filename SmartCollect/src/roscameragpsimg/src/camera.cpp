@@ -15,12 +15,8 @@ Cameras::Cameras(ros::NodeHandle nh, ros::NodeHandle private_nh, const std::stri
     gpsWeekTimeCorrected_ = -1.;
     isGpsTimeValid_ = false;
 
-    subServer_ = nh.subscribe("sc_monitor", 10, &Cameras::serverCB, this);
-    pubImu5651_ = nh.advertise<sc_msgs::imu5651>("imu_string", 0);
+    subServer_ = nh.subscribe("sc_monitor", 0, &Cameras::serverCB, this);
     pubCamSpeed_ = nh.advertise<std_msgs::Float64>("cam_speed", 0);
-
-    image_transport::ImageTransport it(nh);
-    pubImage_ = it.advertise("camera/image", 0);
 
     BusManager busMgr;
     unsigned int cameraNum = 0;
@@ -36,6 +32,10 @@ Cameras::Cameras(ros::NodeHandle nh, ros::NodeHandle private_nh, const std::stri
     }
     pCpgCameras_.clear();
     (void)getCameras(cameraNum, _rawdataDir);
+    if( (masterIndex_ = getMasterIndex() ) < 0) {
+        LOG(ERROR) << "Failed to getMasterIndex: " << masterIndex_;
+        exit(3);
+    }
 
     pCommTimer_.reset(new CommTimer(_rawdataDir) );
 }
@@ -87,45 +87,59 @@ void Cameras::serverCB(const sc_msgs::MonitorMsg::ConstPtr& pClientMsg) {
     }
 
     int8_t camGain = pClientMsg->cam_gain;
-    if(camGain != camGainLast_)
-    {
-        pCpgCameras_[0]->StopCapture();
-        bool isGainSet = pCpgCameras_[0]->SetCameragain(camGain);
-        LOG(INFO) << "camGainLast_: " << camGainLast_ << " --> camGain: " << camGain;
-        if(isGainSet)
-        {
+    if(camGain != camGainLast_) {
+        LOG(INFO) << "Only set master camera's gain.";
+
+        CPGCamera *pMasterPgCamera = pCpgCameras_[masterIndex_];
+        if(!pMasterPgCamera->StopCapture() ) {
+            LOG(WARNING) << "Failed to StopCapture.";
+            return;
+        }
+        bool isGainSet = pMasterPgCamera->SetCameragain(camGain);
+        LOG(INFO) << "camGainLast_: " << (int)camGainLast_ << " --> camGain: " << (int)camGain;
+        if(isGainSet) {
             LOG(INFO) << "camGain changed successfully.";
         }
-        else
-        {
+        else {
             LOG(WARNING) << "Failed to set camGain.";
         }
-        pCpgCameras_[0]->StartCapture();
+        pMasterPgCamera->StartCapture();
     }
 
     camGainLast_ = camGain;
 }
 
 void Cameras::pubTopic(int _i) {
-    LOG(INFO) << __FUNCTION__ << " start， GPSTime： " << pCommTimer_->imu232Msg_.GPSTime << "; i: " << _i;
-
-    pubImu5651_.publish(pCommTimer_->imu232Msg_);
+    LOG(INFO) << __FUNCTION__ << " start.";
 
     std_msgs::Float64 msgCamSpeed;
     msgCamSpeed.data = pCpgCameras_[_i]->camFps_;
     pubCamSpeed_.publish(msgCamSpeed);
+}
 
-    if(!flyImage2msg(pCpgCameras_[_i]->convertedImage_) ) {
-        LOG(WARNING) << "Failed to flyImage2msg.";
-        return;
+int Cameras::getMasterIndex() {
+    LOG(INFO) << __FUNCTION__ << " start.";
+
+    for(int i = 0; i < pCpgCameras_.size(); ++i) {
+        if(0 == pCpgCameras_[i]->cameraId_) {
+            return i;
+        }
     }
-    pubImage_.publish(msgImg_);
+
+    return -1;
 }
 
 bool Cameras::flyImage2msg(const FlyCapture2::Image &inFlyImage) {
     LOG(INFO) << __FUNCTION__ << " start.";
 
-    cv::Mat cvMatImg(1200 , 1920 , CV_8UC3 , Scalar::all(0) );
+    int flyRows = inFlyImage.GetRows();
+    int flyCols = inFlyImage.GetCols();
+    if(0 == flyRows) {
+        LOG(WARNING) << "inFlyImage->GetRows(): 0";
+        return false;
+    }
+
+    cv::Mat cvMatImg(flyRows, flyCols , CV_8UC3 , Scalar::all(0) );
     bool isConverted = convertImage(&cvMatImg, &inFlyImage);
     LOG(INFO) << "Publish a image, matConvert state: " << isConverted;
     if(!isConverted)
@@ -134,7 +148,7 @@ bool Cameras::flyImage2msg(const FlyCapture2::Image &inFlyImage) {
         return false;
     }
 
-    cv::Mat cvMatImgResize;//(1200 , 1920 , CV_8UC3 , Scalar::all(0) );
+    cv::Mat cvMatImgResize;
     cv::resize(cvMatImg, cvMatImgResize, cv::Size(1920 / 5, 1200 / 5));
     msgImg_ = cv_bridge::CvImage(std_msgs::Header(), "bgr8", cvMatImgResize).toImageMsg();
     if(NULL == msgImg_)
@@ -144,42 +158,6 @@ bool Cameras::flyImage2msg(const FlyCapture2::Image &inFlyImage) {
     }
 
     return true;
-}
-
-
-
-void Cameras::grabBuffers() {
-    LOG(INFO) << __FUNCTION__ << " start.";
-
-    int numCameras = pCpgCameras_.size();
-    FlyCapture2::Error errorGrab;
-    FlyCapture2::JPEGOption pngoption;
-
-    while(ros::ok() ) {
-        // for(auto &pCpgCamera: pCpgCameras_) {
-        while(1) {
-            auto &pCpgCamera = pCpgCameras_[0];
-            std::string jpgFile(pCpgCamera->imgSavePath_ + std::to_string(gpsWeekTimeCorrected_) + "-" + std::to_string(pCpgCamera->cameraId_) + ".png");
-            FlyCapture2::Image bufferImg;
-            errorGrab = pCpgCamera->m_pCamera->RetrieveBuffer(&bufferImg);
-            if (errorGrab != PGRERROR_OK)
-            {
-                logErrorTrace( errorGrab );
-                // continue;
-                // exit(4);
-                jpgFile += "-BAD";
-            }
-
-            LOG(INFO) << "I am gonna save " << jpgFile;
-            errorGrab = bufferImg.Save(jpgFile.c_str(), &pngoption);
-            if(errorGrab != PGRERROR_OK)
-            {
-                logErrorTrace( errorGrab );
-                // exit(1);
-                continue;
-            }
-        }
-    }
 }
 
 // @function:
@@ -206,6 +184,7 @@ bool Cameras::convertImage(cv::Mat* matImage, const Image* image) {
 
     if(height != rows || width != cols)
     {
+        LOG(WARNING) << "height(" << height << ") != rows(" << rows << "); " << "width(" << width << ") != cols(" << cols << ").";
         return false;
     }
     int cols_3 = 3 * cols;
@@ -230,8 +209,6 @@ void Cameras::run() {
     LOG(INFO) << "Start CommTimer thread.";
 
     (void)startAllCapture();
-    // timeThread_ = boost::shared_ptr<boost::thread>(new boost::thread(boost::bind(&Cameras::grabBuffers, this) ) );
-    LOG(INFO) << "Start grabBuffers thread.";
 
     const int camNum = pCpgCameras_.size();
     int i = -1;
@@ -243,7 +220,7 @@ void Cameras::run() {
         ros::spinOnce();
         rate.sleep();
 
-        pubTopic(i);
+        (void)pubTopic(i);
         LOG(INFO) << "gpsWeekTimeCorrected_: " << std::fixed << gpsWeekTimeCorrected_;
     }
 }

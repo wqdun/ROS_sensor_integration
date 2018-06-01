@@ -10,7 +10,7 @@ CPGCamera::CPGCamera(int _index, const std::string &_rawdataDir):
 {
     lastBeginTime_ = camFps_ = -1.;
     updateFreq_ = -1;
-    isSaveImg_ = true;
+    isSaveImg_ = false;
 
     error_ = m_busMgr.GetCameraFromIndex(_index, &m_guidCam);
     if(error_ != PGRERROR_OK)
@@ -36,6 +36,7 @@ CPGCamera::CPGCamera(int _index, const std::string &_rawdataDir):
 
     imgSavePath_ = _rawdataDir;
     (void)setImgSaveDir(m_pCamera);
+    (void)setImageBuffer(m_pCamera);
 }
 
 CPGCamera::~CPGCamera(void)
@@ -56,14 +57,82 @@ void CPGCamera::setImgSaveDir(GigECamera *pGigECamera) {
     cameraId_ = GetIdCamera(ipAddress.str() );
     if(0 == cameraId_)
     {
-        imgSavePath_ += "/Image/master/";
+        imgSavePath_ += "/Image/";
     }
     else
     {
-        imgSavePath_ += "/Image/";
+        imgSavePath_ += "/Image/panoramas/";
     }
+
+    ros::NodeHandle nh;
+    image_transport::ImageTransport it(nh);
+    if(0 == cameraId_) {
+        pub = it.advertise("camera/image", 0);
+    }
+    else {
+        pub = it.advertise("camera/image" + std::to_string(cameraId_), 0);
+    }
+
     LOG(INFO) << "imgSavePath_: " << imgSavePath_;
-    (void)mkdir(imgSavePath_.c_str(), S_IRWXU);
+    (void)mkdir(imgSavePath_.c_str(), S_IRWXO);
+}
+
+void CPGCamera::setImageBuffer(GigECamera *_pGigECamera) {
+    LOG(INFO) << __FUNCTION__ << " start.";
+
+    FC2Config m_fc2Config;
+    _pGigECamera->GetConfiguration(&m_fc2Config);
+    // Buffer: 200 images
+    m_fc2Config.numBuffers = 200;
+    m_fc2Config.highPerformanceRetrieveBuffer = true;
+    m_fc2Config.grabMode = BUFFER_FRAMES;
+    m_fc2Config.grabTimeout = TIMEOUT_INFINITE;
+    error_ = _pGigECamera->SetConfiguration(&m_fc2Config);
+    if(error_ != PGRERROR_OK)
+    {
+        logErrorTrace(error_);
+        delete _pGigECamera;
+        exit(9);
+    }
+}
+
+void CPGCamera::setTriggerMode(GigECamera *__pGigECamera) {
+    LOG(INFO) << __FUNCTION__ << " start.";
+
+    // Check for external trigger support
+    TriggerModeInfo triggerModeInfo;
+    error_ = __pGigECamera->GetTriggerModeInfo( &triggerModeInfo );
+    if (error_ != PGRERROR_OK)
+    {
+        logErrorTrace( error_ );
+        exit(10);
+    }
+
+    if(!triggerModeInfo.present)
+    {
+        LOG(ERROR) << "Camera does not support external trigger! Exiting...";
+        exit(11);
+    }
+
+    TriggerMode triggerMode;
+    error_ = __pGigECamera->GetTriggerMode( &triggerMode );
+    if (error_ != PGRERROR_OK)
+    {
+        logErrorTrace( error_ );
+        exit(12);
+    }
+
+    triggerMode.onOff = false;
+    triggerMode.mode = 0;
+    triggerMode.parameter = 0;
+    // Triggering the camera externally using source 0.
+    triggerMode.source = 0;
+    error_ = __pGigECamera->SetTriggerMode( &triggerMode );
+    if (error_ != PGRERROR_OK)
+    {
+        logErrorTrace( error_ );
+        exit(13);
+    }
 }
 
 int CPGCamera::GetIdCamera(const std::string &ipaddress)
@@ -97,24 +166,31 @@ int CPGCamera::GetIdCamera(const std::string &ipaddress)
 bool CPGCamera::SetCameragain(int8_t _camGain)
 {
     LOG(INFO) << __FUNCTION__ << " start.";
-    error_ = ((GigECamera *)m_pCamera)->GetProperty(&pProp);
+
+    Property gainProperty;
+    gainProperty.type = GAIN;
+    error_ = m_pCamera->GetProperty(&gainProperty);
     if(error_ != PGRERROR_OK)
     {
-        LOG(INFO) << "SetCameragain: GetProperty.";
+        LOG(INFO) << "Failed to GetProperty.";
         logErrorTrace(error_);
+        return false;
     }
-    pProp.type = GAIN;
-    pProp.absControl = true;
-    pProp.onePush = false;
-    pProp.onOff = true;
-    pProp.autoManualMode = false;
-    pProp.absValue = (float)_camGain;
-    error_ = ((GigECamera *)m_pCamera)->SetProperty(&pProp );
+    LOG(INFO) << "gainProperty: " << gainProperty.absValue;
+
+    gainProperty.type = GAIN;
+    gainProperty.absControl = true;
+    gainProperty.onePush = false;
+    gainProperty.onOff = true;
+    gainProperty.autoManualMode = false;
+    gainProperty.absValue = (float)_camGain;
+    error_ = m_pCamera->SetProperty(&gainProperty);
     if (error_ != PGRERROR_OK)
     {
-        LOG(INFO) << "pProp.absValue: " << pProp.absValue;
-        LOG(INFO) << "SetCameragain: SetProperty.";
+        LOG(WARNING) << "gainProperty.absValue: " << gainProperty.absValue;
+        LOG(WARNING) << "Failed to SetProperty.";
         logErrorTrace(error_);
+        return false;
     }
     LOG(INFO) << __FUNCTION__ << " end.";
     return true;
@@ -167,6 +243,7 @@ bool CPGCamera::StopCapture()
     error_ = m_pCamera->StopCapture();
     if (error_ != PGRERROR_OK)
     {
+        LOG(WARNING) << "Failed to StopCapture, cameraId_: " << cameraId_;
         logErrorTrace(error_);
         return false;
     }
@@ -177,7 +254,7 @@ double CPGCamera::CalcFps(double nowTime) {
     LOG(INFO) << __FUNCTION__ << " start.";
 
     if(lastBeginTime_ < 0) {
-        LOG(INFO) << "1st time grab image, no calculate fps, pPGCamera->lastBeginTime_： " << lastBeginTime_;
+        LOG(INFO) << "1st time grab image, no calculate fps, pPGCamera->lastBeginTime_: " << lastBeginTime_;
         lastBeginTime_ = nowTime;
         return -1;
     }
@@ -189,8 +266,8 @@ double CPGCamera::CalcFps(double nowTime) {
 
 void CPGCamera::XferCallBack(Image *pImage, const void *_pPGCamera)
 {
-    LOG(INFO) << __FUNCTION__ << " start with address: " << _pPGCamera;
     CPGCamera *pPGCamera = (CPGCamera*)_pPGCamera;
+    LOG(INFO) << __FUNCTION__ << " start with cameraId_: " << pPGCamera->cameraId_;
 
     double gpsWeekTimeCorrected = pPGCamera->pCamerasDaddy_->gpsWeekTimeCorrected_;
     bool isGpsTimeValid = pPGCamera->pCamerasDaddy_->isGpsTimeValid_;
@@ -204,17 +281,40 @@ void CPGCamera::XferCallBack(Image *pImage, const void *_pPGCamera)
 
     std::string jpgFile(pPGCamera->imgSavePath_);
     if(isGpsTimeValid) {
-        jpgFile += (std::to_string(gpsWeekTimeCorrected) + "-" + std::to_string(pPGCamera->cameraId_) + ".jpg");
+        if(0 == pPGCamera->cameraId_) {
+            jpgFile += (std::to_string(gpsWeekTimeCorrected) + ".jpg");
+        }
+        else {
+            jpgFile += (std::to_string(gpsWeekTimeCorrected) + "-" + std::to_string(pPGCamera->cameraId_) + ".jpg");
+        }
     }
     else {
         jpgFile += ("sys" + std::to_string(gpsWeekTimeCorrected) + "-" + std::to_string(pPGCamera->cameraId_) + ".jpg");
     }
 
-    FlyCapture2::Error flyError = pImage->Convert(PIXEL_FORMAT_BGR, &(pPGCamera->convertedImage_) );
+    FlyCapture2::Error flyError;
+    flyError = pImage->Convert(PIXEL_FORMAT_BGR, &(pPGCamera->convertedImage_) );
     if(flyError != PGRERROR_OK)
     {
         LOG(WARNING) << "Failed to pImage->Convert " << jpgFile;
+        pPGCamera->logErrorTrace(flyError);
         return;
+    }
+
+    bool matConbool = pPGCamera->convertImage(&(pPGCamera->img_), &(pPGCamera->convertedImage_) );
+    Mat matImageDown;
+    cv::resize(pPGCamera->img_, matImageDown, cv::Size(1920 / 5, 1200 / 5));
+    if(matConbool)
+    {
+        sensor_msgs::ImagePtr msg_img = cv_bridge::CvImage(std_msgs::Header(), "bgr8", matImageDown).toImageMsg();
+        if(NULL == msg_img)
+        {
+            LOG(WARNING) << "Failed to transfer to sensor_msgs::Image, msg_img is null.";
+        }
+        else
+        {
+            pPGCamera->pub.publish(msg_img);
+        }
     }
 
     if(!(pPGCamera->isSaveImg_) )
@@ -223,7 +323,9 @@ void CPGCamera::XferCallBack(Image *pImage, const void *_pPGCamera)
         return;
     }
     LOG(INFO) << "I am gonna save " << jpgFile;
-    flyError = pPGCamera->convertedImage_.Save(jpgFile.c_str(), &(pPGCamera->jpgoption_) );
+
+    FlyCapture2::JPEGOption jpgoption;
+    flyError = pPGCamera->convertedImage_.Save(jpgFile.c_str(), &jpgoption);
     if(flyError != PGRERROR_OK)
     {
         LOG(WARNING) << "Failed to save " << jpgFile;
@@ -231,8 +333,51 @@ void CPGCamera::XferCallBack(Image *pImage, const void *_pPGCamera)
         return;
     }
 
-    LOG(INFO) << __FUNCTION__ << " end with " << " address: " << _pPGCamera;
+    LOG(INFO) << __FUNCTION__ << " end with cameraId_: " << pPGCamera->cameraId_;
     return;
+}
+
+// @function:
+//           convert the format of the image
+// @author:
+//           liuyusen@navinfo.com
+// @date:
+//           2018-01-02
+// @input:
+//           Mat *matImage == output image point which is Mat
+//           Image *image  == input  image point which is Image
+// @output:
+//           bool == tell the result of the convert function
+bool CPGCamera::convertImage(cv::Mat* matImage, Image* image)
+{
+    int rows = matImage->rows;
+    int cols = matImage->cols;
+    int step = matImage->step;
+    uchar* dst_data = (uchar*)matImage->data;
+
+    int height = image->GetRows();
+    int width  = image->GetCols();
+    int stride = image->GetStride();
+    uchar* src_data = (uchar*)image->GetData();
+
+    if(height != rows || width != cols)
+    {
+        LOG(WARNING) << "height(" << height << ") != rows(" << rows << "); " << "width(" << width << ") != cols(" << cols << ").";
+        return false;
+    }
+    int cols_3 = 3 * cols;
+    for(int i = 0; i < rows; ++i)
+    {
+        int i_step = i * step;
+        int i_stride = i * stride;
+        for(int j = 0 ; j < cols_3; j += 3)
+        {
+            dst_data[i_step + j] = src_data[i_stride + j];
+            dst_data[i_step + j + 1] = src_data[i_stride + j + 1];
+            dst_data[i_step + j + 2] = src_data[i_stride + j + 2];
+        }
+    }
+    return true;
 }
 
 

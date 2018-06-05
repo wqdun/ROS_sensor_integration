@@ -78,7 +78,7 @@ start_smart_collector_server() {
     sleep 0.2
 
     pkill sc_map_node
-    /opt/smartc/devel/lib/sc_map/sc_map_node &
+    /opt/smartc/devel/lib/sc_map/sc_map_node "${_absolute_record_path}/" &
     sleep 0.2
 }
 
@@ -92,6 +92,21 @@ do_kill() {
     pkill sc_map_node
     return 0
 }
+
+do_layers() {
+    log_with_time "$FUNCNAME start, param: $*"
+
+    pkill sc_map_layers_
+    local _projects=$1
+    if [ "AA${_projects}" = "AA" ]; then
+        log_with_time "Got no projects."
+        return 0
+    fi
+
+    /opt/smartc/devel/lib/sc_map_layers/sc_map_layers_node "${_projects}" &
+    return 0
+}
+
 
 main() {
     if [ "AA$1" = "AAserver" ]; then
@@ -111,6 +126,12 @@ main() {
 
     if [ "AA$1" = "AAcleanup" ]; then
         do_kill
+        return
+    fi
+
+    if [ "AA$1" = "AAlayers" ]; then
+        local projects=$2
+        do_layers "${projects}"
         return
     fi
 }

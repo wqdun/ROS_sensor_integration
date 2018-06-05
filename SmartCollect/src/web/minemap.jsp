@@ -23,8 +23,64 @@
 </head>
 <body>
 <div id="map">
+    <table class="table table-bordered table-striped">
+        <thead>
+        <tr>
+            <th style="text-align:center;"><label class="checkbox"><input id="isDisplayLayer1" type="checkbox" checked="true" onclick="layer1Display();">显示采集图层
+            </label></th>
+            <th style="text-align:center;"><label class="checkbox"><input id="isDisplayLayer2" type="checkbox" checked="true" onclick="layer2Display();">显示计划图层
+            </label></th>
+        </tr>
+        </thead>
+    </table>
+
 </div>
 <script>
+    function layer1Display(){
+        var isDisplay = document.getElementById("isDisplayLayer1").checked;
+        if(isDisplay) {
+            map.addLayer({
+                "id": "recordedLayerLines",
+                "type": "line",
+                "source": "recordedLayerLineSource",
+                "layout": {
+                    "line-join": "round",
+                    "line-cap": "round"
+                },
+                "paint": {
+                    "line-color": "#00ff00",
+                    "line-width": 1
+                }
+            });
+        }
+        else {
+            map.removeLayer("recordedLayerLines");
+        }
+    }
+
+
+   function layer2Display(){
+        var isDisplay = document.getElementById("isDisplayLayer2").checked;
+        if(isDisplay) {
+            map.addLayer({
+                "id": "planMapLines",
+                "type": "line",
+                "source": "planLineSource",
+                "layout": {
+                    "line-join": "round",
+                    "line-cap": "round"
+                },
+                "paint": {
+                    "line-color": "#0000ff",
+                    "line-width": 1.2
+                }
+            });
+        }
+        else {
+            map.removeLayer("planMapLines");
+        }
+    }
+
     minemap.domainUrl = '//10.42.0.1:8888';
     minemap.spriteUrl = '//10.42.0.1:8888/minemapapi/v1.3/sprite/sprite';
     minemap.serviceUrl = '//10.42.0.1:8888/service';
@@ -34,19 +90,14 @@
     var map = new minemap.Map({
         container: 'map',
         style: "//10.42.0.1:8888/service/solu/style/id/2365",
-        center: [116.38, 39.90],
-        zoom: 15,
+        center: [103.8870089, 1.3607654],
+        zoom: 16,
         // pitch: 0,
     });
     map.addControl(new minemap.Navigation(), "bottom-right");
     map.addControl(new minemap.Scale(), "top-right");
 
     map.on("load", function () {
-        map.flyTo({
-            center: [116.2394822, 40.0719897],
-            pitch: 0,
-        });
-
         map.addSource("unrecordedTrackSource", {
             "type": "geojson",
             "data": {
@@ -204,7 +255,7 @@
 
     var planMapListener_ = new ROSLIB.Topic({
         ros: ros_,
-        name: '/sc_plan_map',
+        name: '/sc_plan_layer',
         messageType: 'sc_msgs/Lines2D'
     });
     planMapListener_.subscribe(
@@ -256,17 +307,84 @@
                     "line-cap": "round"
                 },
                 "paint": {
-                    "line-color": "#000000",
-                    "line-width": 1
+                    "line-color": "#0000ff",
+                    "line-width": 1.2
                 }
             });
+
+            map.moveLayer("planMapLines", "baseMapLines");
 
             console.log("Only subscribe plan map once.");
             planMapListener_.unsubscribe();
         }
     );
 
-    var angle = 0;
+    var recordedLayerListener_ = new ROSLIB.Topic({
+        ros: ros_,
+        name: '/sc_recorded_layer',
+        messageType: 'sc_msgs/Lines2D'
+    });
+    recordedLayerListener_.subscribe(
+        function (recordedLayerMsg) {
+            var lineLength = recordedLayerMsg.lines2D.length;
+            console.log("Found " + lineLength + " lines in " + recordedLayerListener_.name);
+            if (lineLength <= 0) {
+                console.log("Found 0 line in " + recordedLayerListener_.name);
+                recordedLayerListener_.unsubscribe();
+                return;
+            }
+
+            console.log("1st point: " + recordedLayerMsg.lines2D[0].line2D[0].x + ", " + recordedLayerMsg.lines2D[0].line2D[0].y);
+            var recordedLayerLinesFeatureArry = new Array();
+            for (var i = 0; i < lineLength; ++i) {
+                var points = recordedLayerMsg.lines2D[i];
+                var pointsArry = new Array();
+                for (var j = 0; j < points.line2D.length; ++j) {
+                    var onepoint = new Array();
+                    onepoint[0] = points.line2D[j].x;
+                    onepoint[1] = points.line2D[j].y;
+                    pointsArry[j] = onepoint;
+                }
+
+                var lineFeature = {
+                    "type": "Feature",
+                    "properties": {},
+                    "geometry": {
+                        "type": "LineString",
+                        "coordinates": pointsArry
+                    },
+                };
+                recordedLayerLinesFeatureArry.push(lineFeature);
+            }
+
+            map.addSource("recordedLayerLineSource", {
+                "type": "geojson",
+                "data": {
+                    "type": "FeatureCollection",
+                    "features": recordedLayerLinesFeatureArry
+                }
+            });
+            map.addLayer({
+                "id": "recordedLayerLines",
+                "type": "line",
+                "source": "recordedLayerLineSource",
+                "layout": {
+                    "line-join": "round",
+                    "line-cap": "round"
+                },
+                "paint": {
+                    "line-color": "#00ff00",
+                    "line-width": 1
+                }
+            });
+
+            map.moveLayer("recordedLayerLines", "planMapLines");
+
+            console.log("Only subscribe " + recordedLayerListener_.name + " once.");
+            recordedLayerListener_.unsubscribe();
+        }
+    );
+
     var unrecordedPointNumOfLastLineLast_ = -1;
     var unrecordedTrackListener_ = new ROSLIB.Topic({
         ros: ros_,
@@ -309,9 +427,6 @@
             }
             // else {nothing}
             unrecordedPointNumOfLastLineLast_ = pointNumOfLastLine;
-
-            angle += 10;
-
 
             var unrecordedTrackFeatureArry = new Array();
             for (var i = 0; i < lineLength; ++i) {

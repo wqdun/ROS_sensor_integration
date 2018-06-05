@@ -32,7 +32,6 @@ private:
     ros::Subscriber sub422_;
     ros::Subscriber subCameraImg_;
     ros::Subscriber subProjectMonitor_;
-    ros::Subscriber subServer_;
     ros::Publisher pub2client_;
 
     sc_msgs::MonitorMsg monitorMsg_;

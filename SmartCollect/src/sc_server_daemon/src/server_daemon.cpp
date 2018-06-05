@@ -240,6 +240,17 @@ void ServerDaemon::clientCB(const sc_msgs::ClientCmd::ConstPtr& pClientMsg) {
             }
             break;
         }
+        case 6: {
+            LOG(INFO) << "I am gonna display recorded projects: " << pClientMsg->cmd_arguments;
+            LOG(INFO) << "Is cmd_arguments empty?: " << std::boolalpha << pClientMsg->cmd_arguments.empty();
+            const std::string launchScript("/opt/smartc/src/tools/launch_project.sh");
+            if(!(public_tools::PublicTools::isFileExist(launchScript) ) ) {
+                LOG(ERROR) << launchScript << " does not exist.";
+                exit(1);
+            }
+            (void)public_tools::PublicTools::runShellCmd("bash " + launchScript + " layers " + pClientMsg->cmd_arguments);
+            break;
+        }
          default: {
             LOG(ERROR) << "Client command: " << pClientMsg->system_cmd;
          }

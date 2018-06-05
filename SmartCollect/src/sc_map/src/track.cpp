@@ -3,8 +3,22 @@
 // #undef NDEBUG
 #include <glog/logging.h>
 
-Track::Track() {
-    LOG(INFO) << __FUNCTION__ << " start.";
+Track::Track(const std::string &_rawdataDir) {
+    LOG(INFO) << __FUNCTION__ << " start, _rawdataDir: " << _rawdataDir;
+
+    const std::string imuPath(_rawdataDir + "/IMU/");
+    std::string layerFileName("");
+    public_tools::PublicTools::generateFileName(imuPath, layerFileName);
+    layerFileName += "_recorded_layer.txt";
+    layerFile_ = imuPath + layerFileName;
+    LOG(INFO) << "layerFile_: " << layerFile_;
+    std::fstream file(layerFile_, std::ios::out | std::ios::app);
+    if(!file) {
+        LOG(ERROR) << "Failed to open " << layerFile_;
+        exit(1);
+    }
+    file.close();
+
     isRecordLast_ = false;
 }
 
@@ -14,7 +28,7 @@ Track::~Track() {
 }
 
 void Track::run(bool _isRecord, const sc_msgs::Point2D &_gpsPoint) {
-    LOG(INFO) << __FUNCTION__ << " start, _isRecord: " << _isRecord;
+    DLOG(INFO) << __FUNCTION__ << " start, _isRecord: " << _isRecord;
     if(_gpsPoint.x <= 0.0001) {
         LOG(WARNING) << "Got a wrong lat: " << _gpsPoint.x;
         return;
@@ -38,7 +52,7 @@ void Track::run(bool _isRecord, const sc_msgs::Point2D &_gpsPoint) {
     DLOG(INFO) << "debugPointNum(unrecordedLines_): " << recordedPointNum << "; line size(): " << unrecordedLines_.lines2D.size();
     DLOG(INFO) << "debugPointNum(recordedLines_): " << unrecordedPointNum << "; line size(): " << recordedLines_.lines2D.size();
 
-    LOG(INFO) << __FUNCTION__ << " end.";
+    DLOG(INFO) << __FUNCTION__ << " end.";
 }
 
 size_t Track::debugPointNum(const sc_msgs::Lines2D &lines) {
@@ -76,8 +90,15 @@ sc_msgs::Lines2D Track::sparse(const sc_msgs::Lines2D &lines2sparse) {
 void Track::addPoint(bool _isRecord, const sc_msgs::Point2D &_point) {
     LOG(INFO) << __FUNCTION__ << " start, _isRecord: " << _isRecord;
 
+    std::fstream file(layerFile_, std::ios::out | std::ios::app);
+    if(!file) {
+        LOG(ERROR) << "Failed to open " << layerFile_;
+        exit(1);
+    }
+
     if(_isRecord == isRecordLast_) {
         if(_isRecord) {
+            file << _point.x << "," << _point.y << "\n";
             if(unrecordedLines_.lines2D.empty() ) {
                 (void)addLine(true, _point);
             }
@@ -99,12 +120,14 @@ void Track::addPoint(bool _isRecord, const sc_msgs::Point2D &_point) {
             recordedLines_.lines2D.back().line2D.push_back(_point);
         }
         else {
+            file << "\n" << _point.x << "," << _point.y << "\n";
             unrecordedLines_.lines2D.back().line2D.push_back(_point);
         }
         (void)addLine(_isRecord, _point);
     }
 
     isRecordLast_ = _isRecord;
+    file.close();
     LOG_EVERY_N(INFO, 50) << "unrecordedLines_ counts: " << unrecordedLines_.lines2D.size();
     LOG_EVERY_N(INFO, 50) << "recordedLines_ counts: " << recordedLines_.lines2D.size();
     LOG(INFO) << __FUNCTION__ << " end.";

@@ -1,10 +1,13 @@
 #ifndef __TRACK_H__
 #define __TRACK_H__
+
+#include <fstream>
 #include "sc_msgs/Lines2D.h"
+#include "../../sc_lib_public_tools/src/public_tools.h"
 
 class Track {
 public:
-    Track();
+    Track(const std::string &_rawdataDir);
     ~Track();
     void run(bool _isRecord, const sc_msgs::Point2D &_gpsPoint);
 
@@ -18,6 +21,7 @@ private:
     sc_msgs::Lines2D sparse(const sc_msgs::Lines2D &lines2sparse);
     size_t debugPointNum(const sc_msgs::Lines2D &lines);
 
+    std::string layerFile_;;
     bool isRecordLast_;
 };
 

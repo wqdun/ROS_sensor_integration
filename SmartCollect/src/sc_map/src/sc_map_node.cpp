@@ -4,11 +4,16 @@
 #include <glog/logging.h>
 
 int main(int argc, char **argv) {
-    FLAGS_log_dir = "/opt/smartc/log";
     google::InitGoogleLogging(argv[0]);
+    LOG(INFO) << "Got " << argc << " parameters.";
+    if(2 != argc) {
+        LOG(INFO) << "usage: exec path_rawdata.";
+        return -1;
+    }
     ros::init(argc, argv, "sc_map_node");
 
-    BaseMap baseMapper(ros::NodeHandle(), ros::NodeHandle("~") );
+    const std::string rawPath(argv[1]);
+    BaseMap baseMapper(ros::NodeHandle(), ros::NodeHandle("~"), rawPath);
     baseMapper.run();
     return 0;
 }

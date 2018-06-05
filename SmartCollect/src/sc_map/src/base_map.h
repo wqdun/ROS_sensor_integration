@@ -19,7 +19,7 @@
 
 class BaseMap {
 public:
-    BaseMap(ros::NodeHandle nh, ros::NodeHandle private_nh);
+    BaseMap(ros::NodeHandle nh, ros::NodeHandle private_nh, const std::string &rawdataDir);
     ~BaseMap();
     void run();
 
@@ -30,12 +30,14 @@ private:
 
     ros::Subscriber subMonitor_;
     ros::Publisher pubBaseMap_;
-    ros::Publisher pubPlanMap_;
+    ros::Publisher pubPlanLayer_;
+    ros::Publisher pubRecordedLayer_;
     ros::Publisher pubUnrecordedTrack_;
     ros::Publisher pubRecordedTrack_;
 
     sc_msgs::Lines2D baseMapLines_;
-    sc_msgs::Lines2D planMapLines_;
+    sc_msgs::Lines2D planLayerLines_;
+    sc_msgs::Lines2D recordedLayerLines_;
 
     boost::shared_ptr<Track> pTracker_;
     bool isRecord_;

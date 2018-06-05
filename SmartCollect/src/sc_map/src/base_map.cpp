@@ -1,17 +1,18 @@
 #include "base_map.h"
-// #define NDEBUG
-#undef NDEBUG
+#define NDEBUG
+// #undef NDEBUG
 #include <glog/logging.h>
 
-BaseMap::BaseMap(ros::NodeHandle nh, ros::NodeHandle private_nh) {
+BaseMap::BaseMap(ros::NodeHandle nh, ros::NodeHandle private_nh, const std::string &rawdataDir) {
     LOG(INFO) << __FUNCTION__ << " start.";
 
-    pTracker_.reset(new Track() );
+    pTracker_.reset(new Track(rawdataDir) );
     isRecord_ = false;
     subMonitor_ = nh.subscribe("sc_monitor", 0, &BaseMap::monitorCB, this);
 
     pubBaseMap_ = nh.advertise<sc_msgs::Lines2D>("sc_base_map", 0);
-    pubPlanMap_ = nh.advertise<sc_msgs::Lines2D>("sc_plan_map", 0);
+    pubPlanLayer_ = nh.advertise<sc_msgs::Lines2D>("sc_plan_layer", 0);
+    pubRecordedLayer_ = nh.advertise<sc_msgs::Lines2D>("sc_recorded_layer", 0);
 
     pubUnrecordedTrack_ = nh.advertise<sc_msgs::Lines2D>("sc_unrecorded_track", 0);
     pubRecordedTrack_ = nh.advertise<sc_msgs::Lines2D>("sc_recorded_track", 0);
@@ -24,6 +25,7 @@ BaseMap::BaseMap(ros::NodeHandle nh, ros::NodeHandle private_nh) {
     const std::string baseMapPath(smartcPath + "/data/BaseMap/");
     std::vector<std::string> baseMapFiles;
     (void)public_tools::PublicTools::getFilesInDir(baseMapPath, ".shp", baseMapFiles);
+    baseMapLines_.lines2D.clear();
     if(1 != baseMapFiles.size() ) {
         LOG(WARNING) << "Got " << baseMapFiles.size() << " baseMapFiles in " << baseMapPath << ", should be 1.";
     }
@@ -31,14 +33,24 @@ BaseMap::BaseMap(ros::NodeHandle nh, ros::NodeHandle private_nh) {
         (void)getLines(baseMapFiles[0], baseMapLines_);
     }
 
-    const std::string planMapPath(smartcPath + "/data/PlanLayer/");
-    std::vector<std::string> planMapFiles;
-    (void)public_tools::PublicTools::getFilesInDir(planMapPath, ".shp", planMapFiles);
-    if(1 != planMapFiles.size() ) {
-        LOG(WARNING) << "Got " << planMapFiles.size() << " planMapFiles in " << planMapPath << ", should be 1.";
+    const std::string planLayerPath(smartcPath + "/data/PlanLayer/");
+    std::vector<std::string> planLayerFiles;
+    (void)public_tools::PublicTools::getFilesInDir(planLayerPath, ".shp", planLayerFiles);
+    planLayerLines_.lines2D.clear();
+    if(1 != planLayerFiles.size() ) {
+        LOG(WARNING) << "Got " << planLayerFiles.size() << " planLayerFiles in " << planLayerPath << ", should be 1.";
     }
     else {
-        (void)getLines(planMapFiles[0], planMapLines_);
+        (void)getLines(planLayerFiles[0], planLayerLines_);
+    }
+
+    const std::string recordedLayerPath(smartcPath + "/data/RecordedLayer/");
+    std::vector<std::string> recordedLayerFiles;
+    (void)public_tools::PublicTools::getFilesInDir(recordedLayerPath, ".shp", recordedLayerFiles);
+    LOG(INFO) << "Got " << recordedLayerFiles.size() << " recordedLayerFile in " << recordedLayerPath;
+    recordedLayerLines_.lines2D.clear();
+    for(auto &recordedLayerFile: recordedLayerFiles) {
+        (void)getLines(recordedLayerFile, recordedLayerLines_);
     }
 }
 
@@ -69,7 +81,6 @@ void BaseMap::getLines(const std::string &_shpFile, sc_msgs::Lines2D &_lines) {
     GIntBig featureCnt = 0;
     OGRFeature *poFeature;
     poLayer->ResetReading();
-    _lines.lines2D.clear();
     sc_msgs::Line2D baseMapLine;
     sc_msgs::Point2D lngLat;
     while(NULL != (poFeature = poLayer->GetNextFeature() ) ) {
@@ -87,7 +98,7 @@ void BaseMap::getLines(const std::string &_shpFile, sc_msgs::Lines2D &_lines) {
         }
 
         OGRSimpleCurve *poSimpleCurve = (OGRSimpleCurve *)poGeometry;
-        LOG(INFO) << "Feature[" << featureCnt << "] dimension: " << poSimpleCurve->getDimension() << ", contains " << poSimpleCurve->getNumPoints() << " points.";
+        DLOG(INFO) << "Feature[" << featureCnt << "] dimension: " << poSimpleCurve->getDimension() << ", contains " << poSimpleCurve->getNumPoints() << " points.";
 
         baseMapLine.line2D.clear();
         for(int j = 0; j < poSimpleCurve->getNumPoints(); ++j) {
@@ -137,7 +148,8 @@ void BaseMap::run() {
         rate.sleep();
 
         pubBaseMap_.publish(baseMapLines_);
-        pubPlanMap_.publish(planMapLines_);
+        pubPlanLayer_.publish(planLayerLines_);
+        pubRecordedLayer_.publish(recordedLayerLines_);
 
         pTracker_->run(isRecord_, gpsLonLat_);
         pubUnrecordedTrack_.publish(pTracker_->unrecordedLines_);

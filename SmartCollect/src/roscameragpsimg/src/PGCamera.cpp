@@ -301,11 +301,37 @@ void CPGCamera::XferCallBack(Image *pImage, const void *_pPGCamera)
         return;
     }
 
-    bool matConbool = pPGCamera->convertImage(&(pPGCamera->img_), &(pPGCamera->convertedImage_) );
-    Mat matImageDown;
-    cv::resize(pPGCamera->img_, matImageDown, cv::Size(1920 / 5, 1200 / 5));
-    if(matConbool)
-    {
+    if(!(pPGCamera->isSaveImg_) ) {
+        LOG(INFO) << "No save " << jpgFile;
+    }
+    else {
+        LOG(INFO) << "I am gonna save " << jpgFile;
+        FlyCapture2::JPEGOption jpgoption;
+        flyError = pPGCamera->convertedImage_.Save(jpgFile.c_str(), &jpgoption);
+        if(flyError != PGRERROR_OK) {
+            LOG(WARNING) << "Failed to save " << jpgFile;
+            pPGCamera->logErrorTrace(flyError);
+            return;
+        }
+    }
+
+    ++(pPGCamera->updateFreq_);
+    if(0 == pPGCamera->cameraId_) {
+        pPGCamera->updateFreq_ %= 16;
+    }
+    else {
+        pPGCamera->updateFreq_ %= 2;
+    }
+
+    if(0 == pPGCamera->updateFreq_) {
+        LOG(INFO) << "Gonna publish " << jpgFile;
+        bool isConvert2Mat = pPGCamera->convertImage(&(pPGCamera->img_), &(pPGCamera->convertedImage_) );
+        if(!isConvert2Mat) {
+            LOG(ERROR) << "Failed to convertImage " << jpgFile;
+            return;
+        }
+        Mat matImageDown;
+        cv::resize(pPGCamera->img_, matImageDown, cv::Size(1920 / 5, 1200 / 5));
         sensor_msgs::ImagePtr msg_img = cv_bridge::CvImage(std_msgs::Header(), "bgr8", matImageDown).toImageMsg();
         if(NULL == msg_img)
         {
@@ -315,22 +341,6 @@ void CPGCamera::XferCallBack(Image *pImage, const void *_pPGCamera)
         {
             pPGCamera->pub.publish(msg_img);
         }
-    }
-
-    if(!(pPGCamera->isSaveImg_) )
-    {
-        LOG(INFO) << "No save " << jpgFile;
-        return;
-    }
-    LOG(INFO) << "I am gonna save " << jpgFile;
-
-    FlyCapture2::JPEGOption jpgoption;
-    flyError = pPGCamera->convertedImage_.Save(jpgFile.c_str(), &jpgoption);
-    if(flyError != PGRERROR_OK)
-    {
-        LOG(WARNING) << "Failed to save " << jpgFile;
-        pPGCamera->logErrorTrace(flyError);
-        return;
     }
 
     LOG(INFO) << __FUNCTION__ << " end with cameraId_: " << pPGCamera->cameraId_;

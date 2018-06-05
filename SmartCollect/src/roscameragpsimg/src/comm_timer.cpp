@@ -43,9 +43,6 @@ int CommTimer::getTime(Cameras *pCameras)
 
     std::fstream file;
     std::string frameBuf("");
-    std::string pre_time_gps("");
-    double time_s_start, time_s_end;
-    int counts_t = 0;
 
     bool isGpsWeekTimeUpdated = false;
     timespec time_sys_end, time_sys_start;

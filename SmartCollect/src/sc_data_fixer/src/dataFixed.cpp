@@ -3,8 +3,11 @@
 // #undef NDEBUG
 #include <glog/logging.h>
 
-dataFixed::dataFixed(ros::NodeHandle node, ros::NodeHandle private_nh, int cinValue)
+dataFixed::dataFixed(ros::NodeHandle nh, ros::NodeHandle private_nh, int cinValue)
 {
+    pubProgress_ = nh.advertise<sc_msgs::DataFixerProgress>("sc_data_fixer_progress", 10);
+    LOG(INFO) << "Sleep 1 s in case pubProgress_ construct incomplete.";
+    sleep(1);
     imageCollectionHz = cinValue;
     totalFileNum = processNum = 0;
 }
@@ -12,7 +15,6 @@ dataFixed::dataFixed(ros::NodeHandle node, ros::NodeHandle private_nh, int cinVa
 void dataFixed::initMemberVar() {
     LOG(INFO) << __FUNCTION__ << " start.";
 
-    totalFileNum = processNum = 0;
     beganGPSTime = 0;
     endGPSTime = 0;
     minGPSTime = 100000;
@@ -21,10 +23,32 @@ void dataFixed::initMemberVar() {
     belongtoLidarProjectName.clear();
 }
 
+void dataFixed::removeFile(const std::string &file) {
+    LOG(INFO) << __FUNCTION__ << " start, param: " << file;
+
+    if(remove(file.c_str()) != 0) {
+        LOG(INFO) << file << " might not exist, but I don't give a shit.";
+    }
+    return;
+}
+
+void dataFixed::touchFile(const std::string &file) {
+    LOG(INFO) << __FUNCTION__ << " start, param: " << file;
+
+    std::ofstream out(file.c_str() );
+    if(!out) {
+        LOG(WARNING) << "Failed to create " << file;
+    }
+
+    return;
+}
+
 void dataFixed::fixProjectsData(const std::string &_projects)
 {
     LOG(INFO) << __FUNCTION__ << " start, param: " << _projects;
-    (void)initMemberVar();
+
+    const std::string allFixedIndicator("/tmp/data_fixer_progress_100%");
+    (void)removeFile(allFixedIndicator);
 
     std::vector<std::string> projectArr;
     if(!_projects.empty() ) {
@@ -40,7 +64,8 @@ void dataFixed::fixProjectsData(const std::string &_projects)
     std::stringstream ss;
     unsigned long fileNum = 0;
     int returnValue;
-
+    unsigned long processImgNum = 0;
+    unsigned int remaindr = 0;
     const size_t maxLine = 1000;
     char result[maxLine];
     std::vector<int> isProcess(100,0);
@@ -89,6 +114,8 @@ void dataFixed::fixProjectsData(const std::string &_projects)
         std::string lidarCmd = "ls " + lidarPath + "| wc -l";
         std::string imagePath = projectArr[i] + "/Rawdata/Image/";
         std::string imageCmd = "ls " + imagePath + "| wc -l";
+        std::string panoramasPath = projectArr[i] + "/Rawdata/Image/panoramas/";
+        std::string panoramasCmd = "ls " + panoramasPath + "|grep .jpg$" + "| wc -l";
         FILE *fp;
         LOG(INFO) << "I am gonna: " << lidarCmd;
         if ( NULL == (fp = popen(lidarCmd.c_str(), "r") ) )
@@ -136,12 +163,60 @@ void dataFixed::fixProjectsData(const std::string &_projects)
         ss.clear();
         ss << numString;
         ss >> fileNum;
-        this->totalFileNum = this->totalFileNum + fileNum;
+        remaindr = fileNum % img2LidarProsVeloRatio;
+        if(0 == remaindr)
+        {
+            processImgNum = fileNum / img2LidarProsVeloRatio;
+        }
+        else
+        {
+            processImgNum = fileNum / img2LidarProsVeloRatio + 1;
+        }
+        this->totalFileNum = this->totalFileNum + processImgNum;
+
+        int ispanoramasPathExist = access(panoramasPath.c_str(), F_OK);
+        if(0 != ispanoramasPathExist) {
+            LOG(WARNING) << "Failed to access " << panoramasPath;
+        }
+        else {
+            LOG(INFO) << "I am gonna: " << panoramasCmd;
+            if ( NULL == (fp = popen(panoramasCmd.c_str(), "r") ) )
+            {
+                LOG(ERROR) << "Open " << panoramasPath << "Panoramas Image File Pipe Failed";
+                continue;
+            }
+            if( NULL == fgets(result, maxLine, fp) )
+            {
+                LOG(ERROR) << "Read " << panoramasPath << "Panoramas ImageFile size Failed";
+                continue;
+            }
+            LOG(INFO) << "Read " << panoramasPath << "; Panoramas image num: " << result;
+            if(0 != pclose(fp))
+            {
+                LOG(ERROR) << "Close " << panoramasPath << "Panoramas Image File Pipe Failed.";
+                continue;
+            }
+            numString = result;
+            ss.clear();
+            ss << numString;
+            ss >> fileNum;
+            remaindr = fileNum % img2LidarProsVeloRatio;
+            if(0 == remaindr)
+            {
+                processImgNum = fileNum / img2LidarProsVeloRatio;
+            }
+            else
+            {
+                processImgNum = fileNum / img2LidarProsVeloRatio + 1;
+            }
+            this->totalFileNum = this->totalFileNum + processImgNum;
+        }
         isProcess[i] = 1;
         LOG(INFO) << "counting Project: " << projectArr[i] << " fileSize is finished";
     }
 
     LOG(INFO) << "total file number is: " << this->totalFileNum;
+    (void)pubProgress(processNum, totalFileNum);
 
     for(size_t i = 0; i < projectArr.size(); ++i)
     {
@@ -152,7 +227,9 @@ void dataFixed::fixProjectsData(const std::string &_projects)
             continue;
         }
         LOG(INFO) << "start to fix Project: " << projectArr[i];
+        this->initMemberVar();
         this->markPointGeo2Gauss(projectArr[i]);
+        this->panoramasSort(projectArr[i]);
         returnValue = this->readOntimeTraceData(projectArr[i], imuData);
         if( 0 != returnValue )
         {
@@ -171,6 +248,8 @@ void dataFixed::fixProjectsData(const std::string &_projects)
 
         LOG(INFO) << "fixing Project: " << projectArr[i] << " is finished";
     }
+
+    (void)touchFile(allFixedIndicator);
 }
 
 int dataFixed::mkImageTraceData(double imageTime,std::string &projectName,std::vector <ontimeDataFormat> &imuData,std::string &reNewPicture,imageTraceDataFormat &oneImageTraceData)
@@ -181,7 +260,7 @@ int dataFixed::mkImageTraceData(double imageTime,std::string &projectName,std::v
     constDate += projectName.substr(projectName.size()-6,6);
     if(imageTime < minGPSTime || imageTime > maxGPSTime)
     {
-        LOG(WARNING) << imageTime << "can not find Image corresponding GPS Time";
+        LOG(WARNING) << imageTime << " can not find Image corresponding GPS Time";
         return -1;
     }
     if(minGPSTimeMark == 0 || imageTime > endGPSTime)
@@ -191,6 +270,11 @@ int dataFixed::mkImageTraceData(double imageTime,std::string &projectName,std::v
     else
     {
         imuDataSubMark = (unsigned long)((imageTime-beganGPSTime)/hzTime) + minGPSTimeMark;
+    }
+    if(imuDataSubMark >= imuData.size())
+    {
+        LOG(ERROR) << "IMU Ontime trace data(232 Serial) is not continuous";
+        return -1;
     }
     int beltNumber = (imuData[imuDataSubMark].Longitude+1.5)/3;
     std::string beltString = std::to_string(beltNumber);
@@ -215,9 +299,7 @@ int dataFixed::mkImageTraceData(double imageTime,std::string &projectName,std::v
         reNewPicture += '0';
         beijingTime += '0';
         dateString += '0';
-
     }
-
 
     reNewPicture += hourString;
     beijingTime += hourString;
@@ -229,7 +311,6 @@ int dataFixed::mkImageTraceData(double imageTime,std::string &projectName,std::v
         beijingTime += '0';
         dateString += '0';
     }
-
 
     reNewPicture += minuesString;
     beijingTime += minuesString;
@@ -541,6 +622,7 @@ bool dataFixed::markPointGeo2Gauss(std::string &projectPath)
 }
 
 int dataFixed::readOntimeTraceData(std::string &projectPath, std::vector<ontimeDataFormat> &traceFileData){
+    LOG(INFO) << __FUNCTION__ << "start.";
     std::vector<std::string> filesPath;
     std::string traceFilepath = projectPath + "/Rawdata/IMU";
     std::string cmd="ls " + traceFilepath + "/*_rt_track.txt";
@@ -657,6 +739,9 @@ int dataFixed::readOntimeTraceData(std::string &projectPath, std::vector<ontimeD
     {
         beganGPSTime=traceFileData[0].GPSWeekTime;
         endGPSTime=traceFileData[traceFileData.size()-1].GPSWeekTime;
+        LOG(INFO) << "min time is : " << minGPSTime;
+        LOG(INFO) << "max time is : " << maxGPSTime;
+
     }
     return 0;
 }
@@ -743,6 +828,7 @@ int dataFixed::reNameImageAndMkTraceFile(std::string &projectPath,std::vector <o
         LOG(ERROR) << "ProjectName:" << tmpProjectName << "is invalid!";
         return -1;
     }
+    belongtoLidarProjectName.clear();
     for(int k = 0; k < filterString.size(); k++)
     {
         projectName += filterString[k];
@@ -760,7 +846,7 @@ int dataFixed::reNameImageAndMkTraceFile(std::string &projectPath,std::vector <o
         return -1;
     }
 
-     while(1)
+    while(1)
     {
         if(NULL == fgets(result, maxLine, fpin)) {
             LOG(INFO) << "cmd: " << cmd << " return null.";
@@ -844,26 +930,34 @@ int dataFixed::reNameImageAndMkTraceFile(std::string &projectPath,std::vector <o
         }
     }
     LOG(INFO) << "Generating Image ontime Trace Data";
-    saveImageTraceData(processPath,projectName,allImageTraceData,0);
-    if(0 != allLostImageTraceData.size())
+    //saveImageTraceData(processPath,projectName,allImageTraceData,0);
+   /* if(0 != allLostImageTraceData.size())
     {
         LOG(INFO) << "Generating Lost Image ontime Trace Data";
         saveImageTraceData(processPath, projectName, allLostImageTraceData, 1);
-    }
+    }*/
 
     //Rename Picture
     LOG(INFO) << "renaming Image";
     LOG(INFO) << "newPictureName.size(): " << newPictureName.size() <<"; pictureName.size(): " << pictureName.size();
     for(unsigned long i = 0; i < editePictureNameMark.size(); i++)
     {
-        processNum++;
+        if(0 == (i % img2LidarProsVeloRatio))
+        {
+            processNum ++;
+            (void)pubProgress(processNum, totalFileNum);
+        }
         if(editePictureNameMark[i] == 1)
         {
-            FILE * renameImageFpin;
+           FILE * renameImageFpin;
             const std::string renameImagecmd = "cd "+ imagePath +" && mv " + pictureName[i] + " " + newPictureName[i];
             if(NULL == ( renameImageFpin = popen(renameImagecmd.c_str(),"w" ) ) )
                 LOG(ERROR) << projectPath <<":Rename Picture falied";
-            pclose(renameImageFpin);
+            if(0 != pclose(renameImageFpin))
+            {
+                LOG(INFO) << "close renameImageFpin Pipe failed";
+                continue;
+            }
         }
         else
         {
@@ -873,10 +967,16 @@ int dataFixed::reNameImageAndMkTraceFile(std::string &projectPath,std::vector <o
                 const std::string deleImagecmd="cd "+ imagePath+" && rm " + pictureName[i];
                 if(NULL == ( deleImageFpin = popen(deleImagecmd.c_str(),"w" ) ) )
                     LOG(ERROR) << projectPath << ":delete Picture falied";
-                pclose(deleImageFpin);
+                if(0 != pclose(deleImageFpin))
+                {
+                    LOG(INFO) << "close deleImageFpin Pipe failed";
+                    continue;
+                }
             }
         }
+
     }
+    unsigned long totalImageNum = editePictureNameMark.size();
     return 0;
 }
 
@@ -914,6 +1014,7 @@ int dataFixed::mkLidarTraceFile(std::string &projectPath,std::vector <ontimeData
         else
             totalLidarFilePath.push_back(oneLidarFilePath);
     }
+
     if( totalLidarFilePath.empty() )
     {
         LOG(ERROR) << "Load Lidar file falied or there is no lidar file in the project" << lidarFileTotalpath;
@@ -933,22 +1034,24 @@ int dataFixed::mkLidarTraceFile(std::string &projectPath,std::vector <ontimeData
     double hzTime=0.01;
     int findMark=0;
     unsigned long tmpsubMark=0;
+    unsigned long savePointID = 0;
+    double timeDiff = 2.0;
     //define shp file Pointer
-    const char *pszDriverName="ESRI Shapefile";
+    const std::string pszDriverName("ESRI shapefile");
     std::string shapFilePath=projectPath + "/Process/" +projectName;
-    const char *pShpName = shapFilePath.c_str();
+
     GDALDriver *poDriver;
     GDALAllRegister();
-    poDriver = GetGDALDriverManager()->GetDriverByName(pszDriverName );
+    poDriver = GetGDALDriverManager()->GetDriverByName(pszDriverName.c_str() );
     if( poDriver == NULL )
     {
         LOG(ERROR) << projectPath << ":" << pszDriverName << "driver not available";
         return -1;
     }
     GDALDataset *poDS;
-    char cShpName[256];
-    sprintf(cShpName, "%s.shp", pShpName);
-    poDS = poDriver->Create( cShpName, 0, 0, 0, GDT_Unknown, NULL );
+    const std::string shpName(shapFilePath + ".shp");
+
+    poDS = poDriver->Create(shpName.c_str(), 0, 0, 0, GDT_Unknown, NULL );
     if( poDS == NULL )
     {
         LOG(ERROR) << projectPath <<":Creation of output shapFile failed";
@@ -956,20 +1059,30 @@ int dataFixed::mkLidarTraceFile(std::string &projectPath,std::vector <ontimeData
     }
 
     OGRLayer *poLayer;
-    poLayer = poDS->CreateLayer( pShpName, NULL, wkbMultiLineString, NULL );
+    poLayer = poDS->CreateLayer(projectName.c_str(), NULL, wkbLineString, NULL );
     if( poLayer == NULL )
     {
         LOG(ERROR) << projectPath <<":shapLayer creation failed.";
         return -1;
     }
-    char szName[33] = "IntelliSense";
     OGRFeature *poFeatureG;
     poFeatureG = OGRFeature::CreateFeature(poLayer->GetLayerDefn());
-    poFeatureG->SetField("Name", szName);
+
+    OGRFieldDefn projectNameField("Name", OFTString);
+    projectNameField.SetWidth(32);
+    if(poLayer->CreateField(&projectNameField) != OGRERR_NONE)
+    {
+        LOG(ERROR) << "Creating ProjectName field failed";
+        return -1;
+    }
+    LOG(INFO) << "2";
+    poFeatureG->SetField("Name", projectName.c_str());
+    LOG(INFO) << "1";
     OGRLineString *pLineString = 0;
 
     double timeRecord=0;
     double timeOfStop=1.0;
+    pktDataFormat *pPktDatas;
     for(int i = 0; i < totalLidarFilePath.size();i++)
     {
         FILE *lidarFilePointer=fopen(totalLidarFilePath[i].c_str(),"rb");
@@ -983,9 +1096,10 @@ int dataFixed::mkLidarTraceFile(std::string &projectPath,std::vector <ontimeData
         fseek(lidarFilePointer,0,SEEK_END);
         size_t oneLidarSize=ftell(lidarFilePointer);
         fseek(lidarFilePointer,0,SEEK_SET);
-        unsigned int pktNum=oneLidarSize/pktSize;
-        pktDataFormat *P=new pktDataFormat[pktNum];
-        readLength=fread(P,pktSize,pktNum,lidarFilePointer);
+        const unsigned int pktNum=oneLidarSize/pktSize;
+        LOG(INFO) << pktNum << " = " << oneLidarSize << "/" << pktSize;
+        pPktDatas = new pktDataFormat[pktNum];
+        readLength=fread(pPktDatas, pktSize, pktNum, lidarFilePointer);
         if(readLength != pktNum)
         {
             LOG(WARNING) << "read the Lidar :" << totalLidarFilePath[i] << "Failed";
@@ -997,14 +1111,13 @@ int dataFixed::mkLidarTraceFile(std::string &projectPath,std::vector <ontimeData
         unsigned long subMarkRecord=0;
         while(tmpNum <= pktNum)
         {
-            DLOG(INFO) << "P+tmpNum-1: " << P+tmpNum-1;
-            pktData=*(P+tmpNum-1);
+            pktData=*(pPktDatas+tmpNum-1);
             tmpNum++;
             double oneLidarPointTime=pktData.timeStamp;
-
             if( oneLidarPointTime < minGPSTime||oneLidarPointTime >maxGPSTime)
             {
-                LOG(WARNING) << totalLidarFilePath[i] <<"LidarPoint time can not find corresponding GPS Time";
+                LOG(INFO) << "lidar point time is : "<< oneLidarPointTime;
+                LOG(WARNING) << totalLidarFilePath[i] <<" LidarPoint time can not find corresponding GPS Time";
                 continue;
             }
             DLOG(INFO) << "the time of lidarPoint is :" << oneLidarPointTime;
@@ -1025,24 +1138,42 @@ int dataFixed::mkLidarTraceFile(std::string &projectPath,std::vector <ontimeData
             }
             if(lidarPointSeq == 0)
             {
+                LOG(INFO) << "lidarPointSeq: " << lidarPointSeq;
+                //poFeatureG->SetField("Name", projectName.c_str());
                 pLineString=new OGRLineString();
                 LOG(INFO) << "imuData.size(): " << imuData.size() << "; subMarkRecord: " << subMarkRecord;
                 timeRecord = imuData[subMarkRecord].GPSWeekTime;
                 pLineString->addPoint(imuData[subMarkRecord].Longitude, imuData[subMarkRecord].Latitude);
+                savePointID = subMarkRecord;
             }
             else
             {
                 if( fabs(timeRecord-imuData[subMarkRecord].GPSWeekTime) > timeOfStop )
                 {
                     poFeatureG->SetGeometry(pLineString);
+                    if(NULL != pLineString) {
+                        delete pLineString;
+                    }
+
                     if( poLayer->CreateFeature( poFeatureG ) != OGRERR_NONE )
                     {
                        LOG(ERROR) << totalLidarFilePath[i] <<":Falied to create feature in shapefile";
                        return -1;
                     }
-                    pLineString=new OGRLineString();
+                    // LOG(INFO) << "going to delete poFeatureG";
+                    // OGRFeature::DestroyFeature(poFeatureG);
+                    // OGRFeature *poFeatureG;
+                    // poFeatureG = OGRFeature::CreateFeature(poLayer->GetLayerDefn());
+                    // poFeatureG->SetField("Name", projectName.c_str());
+                    pLineString = new OGRLineString();
                 }
-                pLineString->addPoint(imuData[subMarkRecord].Longitude, imuData[subMarkRecord].Latitude);
+
+                double tmpTimeDiff = fabs(imuData[subMarkRecord].GPSWeekTime - imuData[savePointID].GPSWeekTime);
+                if( tmpTimeDiff > timeDiff)
+                {
+                    pLineString->addPoint(imuData[subMarkRecord].Longitude, imuData[subMarkRecord].Latitude);
+                    savePointID = subMarkRecord;
+                }
                 timeRecord=imuData[subMarkRecord].GPSWeekTime;
             }
 
@@ -1065,23 +1196,202 @@ int dataFixed::mkLidarTraceFile(std::string &projectPath,std::vector <ontimeData
 
         }
         fclose(lidarFilePointer);
+        if(NULL == pPktDatas) {
+            LOG(WARNING) << "pPktDatas is: " << pPktDatas;
+        }
+        else {
+            delete[] pPktDatas;
+        }
+        pPktDatas = NULL;
         processNum++;
+
+        (void)pubProgress(processNum, totalFileNum);
     }
     lidarTraceFile.close();
-
     if(pLineString != 0)
     {
         poFeatureG->SetGeometry(pLineString);
+        delete pLineString;
     }
-
     if( poLayer->CreateFeature( poFeatureG ) != OGRERR_NONE )
     {
-        LOG(ERROR) << projectPath << ":Falied to create feature in shapefile";
+        LOG(ERROR) << projectPath << ":Failed to create feature in shapefile";
         return -1;
     }
+    LOG(INFO) << "going to delete poFeatureG";
     OGRFeature::DestroyFeature( poFeatureG );
     GDALClose( poDS );
 
     LOG(INFO) << "processNum: " << processNum << "; totalFileNum: " << totalFileNum;
+}
+
+bool mkImageList(std::string &projectPath, std::vector<std::string> &imageList)
+{
+    std::string panoramasPath = projectPath + "/Rawdata/Image/panoramas/";
+    std::string cmd = "cd " + panoramasPath + " && ls " + " | grep " +  ".jpg$";
+    const size_t maxLine = 1000;
+    char result[maxLine];
+    FILE *fpin;
+    if(NULL == (fpin = popen(cmd.c_str(), "r") ) )
+    {
+        LOG(ERROR) << "creat panoramas Image list  Pipe failed";
+        return false;
+    }
+    int i =0;
+    while(1)
+    {
+        i++;
+        if(NULL == fgets(result, maxLine, fpin))
+        {
+            break;
+        }
+        LOG(INFO) << "i is : " << i;
+        std::string tmpPath = result;
+        LOG(INFO) << "tmpPath: " << tmpPath;
+        if(tmpPath[tmpPath.size()-1] == 10)
+            imageList.push_back(tmpPath.substr(0, tmpPath.size()-1 ) );
+        else
+            imageList.push_back(tmpPath);
+    }
+    if(0 != pclose( fpin ) )
+    {
+        LOG(ERROR) <<":close panoramas Pipe Failed";
+        return false;
+    }
+    for(int i = 0; i < imageList.size(); i++)
+        LOG(INFO) << "imageList： " << imageList[i];
+    if(0 == imageList.size())
+    {
+        return false;
+    }
+    return true;
+}
+
+void isTheSameFrame(std::string first, std::string second, int& flag)
+{
+    int length = first.length();
+    int i = 0;
+    while (first.at(i) != '.')
+    {
+        if (first.at(i) != second.at(i))
+        {
+            flag = 0;
+            return;
+        }
+        i++;
+    }
+
+    flag = 1;
+    return;
+}
+
+bool dataFixed::panoramasSort(std::string &projectPath)
+{
+    std::vector<std::string> imgname;
+    std::string format = ".jpg";
+    std::vector<ImageStruct> image_struct;
+    std::string panoramasPath = projectPath + "//Rawdata//Image//panoramas//";
+    std::string otherPath = panoramasPath + "other//";
+    std::string imglist_txt_path=projectPath+"//Rawdata//Image//panoramas//imglist.txt";
+    bool returnValue = mkImageList(projectPath, imgname);
+    if(!returnValue)
+    {
+        LOG(INFO) << "load panoromas Image List failed";
+        return false;
+    }
+    mkdir(otherPath.c_str(), S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);
+    std::ofstream ofn(imglist_txt_path);
+    FILE *fpin;
+    int size = imgname.size();
+    int count = 0;
+    for (int i = 0; i < size - 1; i++)
+    {
+        int flag = 0;
+        isTheSameFrame(imgname[i], imgname[i + 1], flag);
+        if (flag == 1)
+        {
+            count++;
+        }
+        if (i == size - 2 && count != 4)//ÒÆ¶¯
+        {
+            for (int k = size-1; k > i-count; k--)
+            {
+                std::string cmd = "mv " + panoramasPath + imgname[k] + " " + otherPath;
+                if(NULL == (fpin = popen(cmd.c_str(), "r") ) )
+                {
+                    LOG(INFO) << "create mv unpanoromas picture pipe failed";
+                    return false;
+                }
+                if(0 != pclose(fpin))
+                {
+                    LOG(INFO) << "close unpanoromas picture pipe failed";
+                }
+            }
+            break;
+        }
+
+
+       if(flag == 0 && count != 4)
+        {
+            for(int k = i; k >= i - count; k--)
+            {
+                std::string cmd = "mv " + panoramasPath + imgname[k] + " " + otherPath;
+                if(NULL == (fpin = popen(cmd.c_str(), "r") ) )
+                {
+                    LOG(INFO) << "creat mv unpanoromas picture pipe failed";
+                    return false;
+                }
+                if(0 != pclose(fpin))
+                {
+                    LOG(INFO) << "close unpanoromas picture pipe failed";
+                }
+            }
+        count=0;
+        continue;
+        }
+        if (count == 4)
+        {
+            int sdfasdf = 0;
+            for (int index = i + 1; index > i - 4; index--)
+            {
+                ofn << imgname[index] << std::endl;
+            }
+            ofn << "#" << std::endl;
+            count = 0;
+            i++;
+            if(i == size -2)
+            {
+                std::string cmd = "mv " + panoramasPath + imgname[i+1] + " " + otherPath;
+                if(NULL == (fpin = popen(cmd.c_str(), "r") ) )
+                {
+                    LOG(INFO) << "creat mv unpanoromas picture pipe failed";
+                    return false;
+                }
+                if(0 != pclose(fpin))
+                {
+                    LOG(INFO) << "close unpanoromas picture pipe failed";
+                }
+            }
+        }
+        if(0 == (i % img2LidarProsVeloRatio))
+        {
+            processNum ++;
+        (void)pubProgress(processNum, totalFileNum);
+    }
+
+    }
+
+    ofn.close();
+    imgname.clear();
+    std::vector<std::string>(imgname).swap(imgname);
+    return true;
+}
+
+void dataFixed::pubProgress(unsigned long _processNum, unsigned long _totalFileNum) {
+    LOG(INFO) << __FUNCTION__ << " start: " << _processNum << "/" << _totalFileNum;
+
+    progressMsg_.processNum = _processNum;
+    progressMsg_.totalFileNum = _totalFileNum;
+    pubProgress_.publish(progressMsg_);
 }
 

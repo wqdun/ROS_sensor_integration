@@ -4,6 +4,8 @@
 // #undef NDEBUG
 #include <glog/logging.h>
 
+using namespace std;
+
 Test::Test() {
     LOG(INFO) << __FUNCTION__ << " start.";
 
@@ -46,27 +48,30 @@ void Test::run() {
 
     double x = 116;
     double y = 40;
+    OGRFeature *poFeature = OGRFeature::CreateFeature(poLayer_->GetLayerDefn() );
     const std::string szName("hello");
+    poFeature->SetField("Name", szName.c_str() );
+
     for(int i = 0; i < 3; ++i) {
-        OGRFeature *poFeature = OGRFeature::CreateFeature(poLayer_->GetLayerDefn() );
         OGRLineString line;
         for(int i = 0; i < 3; ++i) {
             x += 0.0001;
             y -= 0.0001;
-            sleep(5);
+            // sleep(5);
             printf("Add one.\n");
             line.addPoint(x, y);
         }
 
         poFeature->SetGeometry(&line);
-        poFeature->SetField("Name", szName.c_str() );
 
+        cout << poFeature << "\n";
         if(poLayer_->CreateFeature(poFeature) != OGRERR_NONE) {
             printf("Failed to create feature in shapefile.\n");
             exit(5);
         }
-        OGRFeature::DestroyFeature(poFeature);
         printf("Add one line.\n");
     }
+
+    OGRFeature::DestroyFeature(poFeature);
 }
 

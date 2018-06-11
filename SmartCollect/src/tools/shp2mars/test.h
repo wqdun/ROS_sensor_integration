@@ -2,6 +2,7 @@
 #define ___TEST_H__
 
 #include "ogrsf_frmts.h"
+#include <iostream>
 
 class Test {
 public:

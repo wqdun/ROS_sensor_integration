@@ -11,8 +11,8 @@
 #include "sc_msgs/imu5651.h"
 #include "velodyne_msgs/Velodyne2Center.h"
 #include "sc_msgs/scIntegrateImu.h"
+#include "sc_msgs/DataFixerProgress.h"
 #include "../../sc_lib_public_tools/src/public_tools.h"
-#include "dataFixed.h"
 #include <boost/thread/thread.hpp>
 #include <boost/bind.hpp>
 #include "disk_monitor.h"
@@ -32,6 +32,7 @@ private:
     ros::Subscriber sub422_;
     ros::Subscriber subCameraImg_;
     ros::Subscriber subProjectMonitor_;
+    ros::Subscriber subDataFixer_;
     ros::Publisher pub2client_;
 
     sc_msgs::MonitorMsg monitorMsg_;
@@ -42,7 +43,6 @@ private:
         "No PPS", "Synchronizing PPS", "PPS locked", "PPS Error"
     };
 
-    boost::shared_ptr<dataFixed> pDataFixer_;
     boost::shared_ptr<DiskMonitor> pDiskMonitor_;
 
 
@@ -54,6 +54,8 @@ private:
     void rawImuCB(const sc_msgs::scIntegrateImu::ConstPtr& pRawImuMsg);
     void cameraImgCB(const std_msgs::Float64::ConstPtr& pCameraImgMsg);
     void projectMonitorCB(const sc_msgs::DiskInfo::ConstPtr& pDiskInfoMsg);
+    void dataFixerCB(const sc_msgs::DataFixerProgress::ConstPtr& pDataFixerProgressMsg);
+
     void updateProjectInfo(const std::string &projectInfo);
 };
 

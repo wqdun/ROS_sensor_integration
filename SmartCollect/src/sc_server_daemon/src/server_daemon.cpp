@@ -16,11 +16,11 @@ ServerDaemon::ServerDaemon(ros::NodeHandle nh, ros::NodeHandle private_nh) {
     sub422_ = nh.subscribe("imu422_hdop", 0, &ServerDaemon::rawImuCB, this);
     subCameraImg_ = nh.subscribe("cam_speed", 0, &ServerDaemon::cameraImgCB, this);
     subProjectMonitor_ = nh.subscribe("sc_disk_info", 0, &ServerDaemon::projectMonitorCB, this);
+    subDataFixer_ = nh.subscribe("sc_data_fixer_progress", 0, &ServerDaemon::dataFixerCB, this);
+
     pub2client_ = nh.advertise<sc_msgs::MonitorMsg>("sc_monitor", 0);
     mGpsTime[0] = mGpsTime[1] = -1;
 
-    int imageCollectionHz = 10;
-    pDataFixer_.reset(new dataFixed(imageCollectionHz) );
     pDiskMonitor_.reset(new DiskMonitor() );
 }
 
@@ -73,9 +73,6 @@ void ServerDaemon::run() {
             isCameraUpdated_ = false;
         }
 
-        monitorMsg_.total_file_num = pDataFixer_->totalFileNum;
-        monitorMsg_.process_num = pDataFixer_->processNum;
-
         // 0.25Hz
         if(0 == (freqDivider % 8) ) {
             if(!isDiskInfoUpdated_) {
@@ -89,10 +86,19 @@ void ServerDaemon::run() {
         monitorMsg_.disk_usage.clear();
         (void)pDiskMonitor_->run("/opt/smartc/record/", monitorMsg_);
 
-        DLOG(INFO) << "Publish a server command: is_record: " << (int)(monitorMsg_.is_record) << ", cam_gain: " << monitorMsg_.cam_gain;
+        if(public_tools::PublicTools::isFileExist("/tmp/data_fixer_progress_100%") ) {
+            monitorMsg_.process_num = monitorMsg_.total_file_num;
+        }
 
         pub2client_.publish(monitorMsg_);
     }
+}
+
+void ServerDaemon::dataFixerCB(const sc_msgs::DataFixerProgress::ConstPtr& pDataFixerProgressMsg) {
+    LOG(INFO) << __FUNCTION__ << " start: " << pDataFixerProgressMsg->processNum << "/" << pDataFixerProgressMsg->totalFileNum;
+
+    monitorMsg_.total_file_num = pDataFixerProgressMsg->totalFileNum;
+    monitorMsg_.process_num = pDataFixerProgressMsg->processNum;
 }
 
 void ServerDaemon::rawImuCB(const sc_msgs::scIntegrateImu::ConstPtr& pRawImuMsg) {
@@ -175,8 +181,8 @@ void ServerDaemon::clientCB(const sc_msgs::ClientCmd::ConstPtr& pClientMsg) {
         case 0: {
             if(pClientMsg->project_name.empty() ) {
                 LOG(INFO) << "Empty project name, gonna update is_record and cam_gain.";
-                monitorMsg_.is_record = pClientMsg->node_params.is_record;
-                monitorMsg_.cam_gain = pClientMsg->node_params.cam_gain;
+                monitorMsg_.is_record = pClientMsg->is_record;
+                monitorMsg_.cam_gain = pClientMsg->cam_gain;
             }
             else {
                 LOG(INFO) << "New project name received, gonna create project: " << pClientMsg->project_name;
@@ -220,8 +226,14 @@ void ServerDaemon::clientCB(const sc_msgs::ClientCmd::ConstPtr& pClientMsg) {
             if(pClientMsg->cmd_arguments.empty() ) {
                 break;
             }
-            boost::thread thrd(boost::bind(&dataFixed::fixProjectsData, pDataFixer_, pClientMsg->cmd_arguments) );
-            LOG(INFO) << "I am a fix_projects_data thread.";
+            const std::string launchScript("/opt/smartc/src/tools/launch_project.sh");
+            if(!(public_tools::PublicTools::isFileExist(launchScript) ) ) {
+                LOG(ERROR) << launchScript << " does not exist.";
+                exit(1);
+            }
+            const std::string fixDataCmd("bash " + launchScript + " fixdata " + pClientMsg->cmd_arguments);
+            LOG(INFO) << "fixDataCmd: " << fixDataCmd;
+            (void)public_tools::PublicTools::runShellCmd(fixDataCmd);
             break;
         }
         case 5: {

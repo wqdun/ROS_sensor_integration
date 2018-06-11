@@ -14,7 +14,7 @@ ProjectMonitor::~ProjectMonitor() {
 }
 
 void ProjectMonitor::setRawdataPath(const std::string &_rawdataPath) {
-    LOG(INFO) << __FUNCTION__ << " start, param: " + _rawdataPath;
+    LOG(INFO) << __FUNCTION__ << " start, param: " << _rawdataPath;
     rawdataPath_ = _rawdataPath;
 }
 

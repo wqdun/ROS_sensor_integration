@@ -7,7 +7,7 @@ int main(int argc, char **argv) {
     google::InitGoogleLogging(argv[0]);
     LOG(INFO) << "Got " << argc << " parameters.";
     if(2 != argc) {
-        LOG(INFO) << "usage: exec path_rawdata.";
+        LOG(ERROR) << "usage: exec path_rawdata.";
         return -1;
     }
     ros::init(argc, argv, "sc_map_node");

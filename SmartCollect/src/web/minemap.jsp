@@ -90,7 +90,7 @@
     var map = new minemap.Map({
         container: 'map',
         style: "//10.42.0.1:8888/service/solu/style/id/2365",
-        center: [103.8870089, 1.3607654],
+        center: [116.2394822, 40.0719897],
         zoom: 16,
         // pitch: 0,
     });
@@ -175,7 +175,6 @@
     var ros_ = new ROSLIB.Ros();
     ros_.connect('ws://<%=ip%>:9090');
 
-
     var currentLocation_ = [116.2394822, 40.0719897];
     var currentHeading_ = 0;
 
@@ -187,6 +186,8 @@
     centerListener.subscribe(function (message) {
         console.log(centerListener.name + '::heading: ' + message.pitch_roll_heading.z);
         currentHeading_ = message.pitch_roll_heading.z;
+        currentHeading_ -= map.getBearing();
+        console.log('currentHeading_: ' + currentHeading_);
     });
 
     var baseMapListener_ = new ROSLIB.Topic({

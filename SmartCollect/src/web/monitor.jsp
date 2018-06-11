@@ -12,13 +12,9 @@
             var camGain = $("#ex1").val();
             console.log("typeof(camGain): " + typeof(camGain) + ", camGain: " + camGain);
 
-            var nodeParamsMsg = new ROSLIB.Message({
+            var clientMsg = new ROSLIB.Message({
                 is_record: Number(isRecord),
                 cam_gain: Number(camGain),
-            });
-
-            var clientMsg = new ROSLIB.Message({
-                node_params: nodeParamsMsg,
             });
 
             pubCmd_.publish(clientMsg);
@@ -141,7 +137,7 @@
             </div>
         </div>
         <div class="row">
-            <div class="span6">
+            <div class="span12">
                 <div class="widget">
                     <div class="widget-header">
                         <i class="icon-star"></i>
@@ -153,16 +149,16 @@
                     </div>
                 </div>
             </div>
+        </div>
 
-            <div class="span6">
+            <div class="row">
+            <div class="span12">
                 <div class="widget">
                     <div class="widget-header">
                         <i class="icon-list-alt"></i>
                         <h3>相机</h3>
                     </div>
                     <div class="widget-content">
-                        <img src="http://<%=ip%>:8080/stream?topic=/camera/image" height="100%" width="100%"
-                             alt="http://<%=ip%>:8080/stream?topic=/camera/image">
                         <table class="table table-bordered table-striped">
                             <thead>
                             <tr>
@@ -177,6 +173,9 @@
                             </tr>
                             </thead>
                         </table>
+                        <img src="http://<%=ip%>:8080/stream?topic=/camera/image" height="100%" width="100%"
+                             alt="http://<%=ip%>:8080/stream?topic=/camera/image">
+
                     </div>
                 </div>
             </div>
@@ -187,7 +186,7 @@
 <%@ include file="include/footer.jsp" %>
 <script>
 
-    
+
     var pinfo = "";
     var markposition = "";
     function marklane() {

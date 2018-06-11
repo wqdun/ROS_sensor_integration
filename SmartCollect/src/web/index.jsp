@@ -723,7 +723,6 @@
             }
             $("#dirname").selectpicker('refresh');
         }
-
       }
     );
 

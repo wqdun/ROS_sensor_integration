@@ -3,28 +3,6 @@
 <html lang="en">
 <head>
   <%@ include file="include/header.jsp" %>
-  <script>
-
-      function pubCtrlParams() {
-          isRecordclicked_ = 5;
-          var isRecord = document.getElementById("isRecordCheckBox").checked;
-          console.log("typeof(isRecord): " + typeof(isRecord) + ", isRecord: " + isRecord);
-          var camGain = $("#ex1").val();
-          console.log("typeof(camGain): " + typeof(camGain) + ", camGain: " + camGain);
-
-          var nodeParamsMsg = new ROSLIB.Message({
-              is_record: Number(isRecord),
-              cam_gain: Number(camGain),
-          });
-
-          var clientMsg = new ROSLIB.Message({
-              node_params: nodeParamsMsg,
-          });
-
-          pubCmd_.publish(clientMsg);
-      }
-
-  </script>
 </head>
 
 <body>

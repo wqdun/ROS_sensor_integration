@@ -107,6 +107,14 @@ do_layers() {
     return 0
 }
 
+do_fixdata() {
+    log_with_time "$FUNCNAME start, param: $*"
+
+    local _projects=$1
+    /opt/smartc/devel/lib/sc_data_fixer/sc_data_fixer_node "${_projects}" &
+    return 0
+}
+
 
 main() {
     if [ "AA$1" = "AAserver" ]; then
@@ -132,6 +140,12 @@ main() {
     if [ "AA$1" = "AAlayers" ]; then
         local projects=$2
         do_layers "${projects}"
+        return
+    fi
+
+    if [ "AA$1" = "AAfixdata" ]; then
+        local projects=$2
+        do_fixdata "${projects}"
         return
     fi
 }

@@ -81,6 +81,7 @@ public:
 
 
 private:
+    double hzTime_;
     int imageCollectionHz;
     double beganGPSTime;
     double endGPSTime;
@@ -98,6 +99,7 @@ private:
     void pubProgress(unsigned long _processNum, unsigned long _totalFileNum);
     void removeFile(const std::string &file);
     void touchFile(const std::string &file);
+    unsigned long findCorrespondImuIndex(double lidarTime);
 };
 
 #pragma pack()

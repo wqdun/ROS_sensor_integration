@@ -5,6 +5,7 @@
 
 dataFixed::dataFixed(ros::NodeHandle nh, ros::NodeHandle private_nh, int cinValue)
 {
+    hzTime_ = 0.01;
     pubProgress_ = nh.advertise<sc_msgs::DataFixerProgress>("sc_data_fixer_progress", 10);
     LOG(INFO) << "Sleep 1 s in case pubProgress_ construct incomplete.";
     sleep(1);
@@ -244,7 +245,8 @@ void dataFixed::fixProjectsData(const std::string &_projects)
         returnValue = this->reNameImageAndMkTraceFile(projectArr[i], imuData);
         if(0 != returnValue)
             continue;
-        this->mkLidarTraceFile(projectArr[i], imuData);
+        LOG(INFO) << "going to invoke mkLidarTraceFile";
+        mkLidarTraceFile(projectArr[i], imuData);
 
         LOG(INFO) << "fixing Project: " << projectArr[i] << " is finished";
     }
@@ -255,7 +257,6 @@ void dataFixed::fixProjectsData(const std::string &_projects)
 int dataFixed::mkImageTraceData(double imageTime,std::string &projectName,std::vector <ontimeDataFormat> &imuData,std::string &reNewPicture,imageTraceDataFormat &oneImageTraceData)
 {
     unsigned long imuDataSubMark = 0;
-    double hzTime = 0.01;
     std::string constDate = "20";
     constDate += projectName.substr(projectName.size()-6,6);
     if(imageTime < minGPSTime || imageTime > maxGPSTime)
@@ -265,11 +266,11 @@ int dataFixed::mkImageTraceData(double imageTime,std::string &projectName,std::v
     }
     if(minGPSTimeMark == 0 || imageTime > endGPSTime)
     {
-        imuDataSubMark = (unsigned long)((imageTime-beganGPSTime)/hzTime);
+        imuDataSubMark = (unsigned long)((imageTime-beganGPSTime)/hzTime_);
     }
     else
     {
-        imuDataSubMark = (unsigned long)((imageTime-beganGPSTime)/hzTime) + minGPSTimeMark;
+        imuDataSubMark = (unsigned long)((imageTime-beganGPSTime)/hzTime_) + minGPSTimeMark;
     }
     if(imuDataSubMark >= imuData.size())
     {
@@ -378,7 +379,6 @@ int dataFixed::mkLostImageTraceData(double imageTime,std::string &projectName,st
     constDate += projectName.substr(projectName.size()-6,6);
     std::string saveImageName;
     unsigned long imuDataSubMark = 0;
-    double hzTime = 0.01;
      if(imageTime < minGPSTime || imageTime > maxGPSTime)
     {
         LOG( WARNING ) << "can not find LostImage corresponding GPS Time";
@@ -386,11 +386,11 @@ int dataFixed::mkLostImageTraceData(double imageTime,std::string &projectName,st
     }
     if(minGPSTimeMark == 0 || imageTime > endGPSTime)
     {
-        imuDataSubMark=(unsigned long)((imageTime-beganGPSTime) / hzTime);
+        imuDataSubMark=(unsigned long)((imageTime-beganGPSTime) / hzTime_);
     }
     else
     {
-        imuDataSubMark=(unsigned long)((imageTime-beganGPSTime)/hzTime) + minGPSTimeMark;
+        imuDataSubMark=(unsigned long)((imageTime-beganGPSTime)/hzTime_) + minGPSTimeMark;
     }
     int beltNumber = (imuData[imuDataSubMark].Longitude + 1.5)/3;
     std::string beltString = std::to_string(beltNumber);
@@ -805,7 +805,7 @@ int dataFixed::reNameImageAndMkTraceFile(std::string &projectPath,std::vector <o
     if(-1 == existImageMark)
     {
         LOG(ERROR) << "There is no Image File in the " << imagePath;
-        return -1;;
+        return -1;
     }
     boost::split(filterString , projectPath , boost::is_any_of("/"));
     if(filterString.size() == 0)
@@ -930,12 +930,12 @@ int dataFixed::reNameImageAndMkTraceFile(std::string &projectPath,std::vector <o
         }
     }
     LOG(INFO) << "Generating Image ontime Trace Data";
-    //saveImageTraceData(processPath,projectName,allImageTraceData,0);
-   /* if(0 != allLostImageTraceData.size())
+    saveImageTraceData(processPath,projectName,allImageTraceData,0);
+    if(0 != allLostImageTraceData.size())
     {
         LOG(INFO) << "Generating Lost Image ontime Trace Data";
         saveImageTraceData(processPath, projectName, allLostImageTraceData, 1);
-    }*/
+    }
 
     //Rename Picture
     LOG(INFO) << "renaming Image";
@@ -980,8 +980,29 @@ int dataFixed::reNameImageAndMkTraceFile(std::string &projectPath,std::vector <o
     return 0;
 }
 
+unsigned long dataFixed::findCorrespondImuIndex(double lidarTime) {
+    DLOG(INFO) << __FUNCTION__ << " start, lidarTime: " << lidarTime;
+
+    if(lidarTime < minGPSTime || lidarTime > maxGPSTime) {
+        LOG(WARNING) << "LidarPoint time can not find corresponding GPS Time.";
+        return -1;
+    }
+
+    unsigned long subMarkRecord = 0;
+    if(minGPSTimeMark==0 || lidarTime > endGPSTime)
+        subMarkRecord=(unsigned long)((lidarTime-beganGPSTime)/hzTime_);
+    else
+    {
+        subMarkRecord=(unsigned long)((lidarTime-beganGPSTime)/hzTime_)+minGPSTimeMark;
+    }
+
+    return subMarkRecord;
+}
+
 int dataFixed::mkLidarTraceFile(std::string &projectPath,std::vector <ontimeDataFormat> &imuData){
     //make lidar effect ontime trace file
+    LOG(INFO) << __FUNCTION__ << " start, projectPath: " << projectPath;
+
     std::string lidarFileTotalpath=projectPath + "/Rawdata/Lidar/";
     int existLidarFileMark=access(lidarFileTotalpath.c_str(),F_OK);
     if(existLidarFileMark == -1)
@@ -1021,9 +1042,9 @@ int dataFixed::mkLidarTraceFile(std::string &projectPath,std::vector <ontimeData
         return -1;
     }
     pktDataFormat pktData;
-    std::string projectName=belongtoLidarProjectName;
-    std::string saveLidarTracePath=projectPath + "/Process/" +projectName + "-RTlaser.txt";
-    std::ofstream lidarTraceFile(saveLidarTracePath);
+    std::string projectName = belongtoLidarProjectName;
+
+
     std::vector <int> lidarPointGPSTimeMark;
     int firstMark=0;
     unsigned long lidarPointSeq=0;
@@ -1031,171 +1052,125 @@ int dataFixed::mkLidarTraceFile(std::string &projectPath,std::vector <ontimeData
     double hzSpeed;
     const size_t pktSize=sizeof(double)+BIT_IN_PACKET_DATA;
     double compareTime=100000;
-    double hzTime=0.01;
     int findMark=0;
     unsigned long tmpsubMark=0;
     unsigned long savePointID = 0;
     double timeDiff = 2.0;
-    //define shp file Pointer
+
     const std::string pszDriverName("ESRI shapefile");
-    std::string shapFilePath=projectPath + "/Process/" +projectName;
-
-    GDALDriver *poDriver;
     GDALAllRegister();
-    poDriver = GetGDALDriverManager()->GetDriverByName(pszDriverName.c_str() );
-    if( poDriver == NULL )
-    {
-        LOG(ERROR) << projectPath << ":" << pszDriverName << "driver not available";
-        return -1;
-    }
-    GDALDataset *poDS;
-    const std::string shpName(shapFilePath + ".shp");
-
-    poDS = poDriver->Create(shpName.c_str(), 0, 0, 0, GDT_Unknown, NULL );
-    if( poDS == NULL )
-    {
-        LOG(ERROR) << projectPath <<":Creation of output shapFile failed";
-        return -1;
+    GDALDriver *poDriver = GetGDALDriverManager()->GetDriverByName(pszDriverName.c_str() );
+    if(!poDriver) {
+        LOG(ERROR) << pszDriverName << " driver not available.";
+        exit(1);
     }
 
-    OGRLayer *poLayer;
-    poLayer = poDS->CreateLayer(projectName.c_str(), NULL, wkbLineString, NULL );
-    if( poLayer == NULL )
-    {
-        LOG(ERROR) << projectPath <<":shapLayer creation failed.";
-        return -1;
-    }
-    OGRFeature *poFeatureG;
-    poFeatureG = OGRFeature::CreateFeature(poLayer->GetLayerDefn());
+    std::string shapFilePath(projectPath + "/Process/" + projectName);
+    const std::string shpFile(shapFilePath + ".shp");
 
-    OGRFieldDefn projectNameField("Name", OFTString);
-    projectNameField.SetWidth(32);
-    if(poLayer->CreateField(&projectNameField) != OGRERR_NONE)
-    {
-        LOG(ERROR) << "Creating ProjectName field failed";
-        return -1;
+    GDALDataset *poDS = poDriver->Create(shpFile.c_str(), 0, 0, 0, GDT_Unknown, NULL);
+    if(!poDS) {
+        LOG(ERROR) << "Failed to create shpFile: " << shpFile;
+        exit(2);
     }
-    LOG(INFO) << "2";
-    poFeatureG->SetField("Name", projectName.c_str());
+
+    OGRLayer *poLayer = poDS->CreateLayer(projectName.c_str(), NULL, wkbLineString, NULL);
+    if(!poLayer) {
+        LOG(ERROR) << "Failed to create poLayer.";
+        exit(3);
+    }
+
+    OGRFieldDefn oField("Name", OFTString);
+    oField.SetWidth(32);
+    if(poLayer->CreateField(&oField) != OGRERR_NONE) {
+        LOG(ERROR) << "Failed to create field.";
+        exit(4);
+    }
+
+    OGRFeature *poFeature = OGRFeature::CreateFeature(poLayer->GetLayerDefn() );
     LOG(INFO) << "1";
-    OGRLineString *pLineString = 0;
+    poFeature->SetField("Name", projectName.c_str() );
+    LOG(INFO) << "2";
 
-    double timeRecord=0;
-    double timeOfStop=1.0;
+    std::string saveLidarTracePath = projectPath + "/Process/" +projectName + "-RTlaser.txt";
+    std::ofstream lidarTraceFile(saveLidarTracePath);
     pktDataFormat *pPktDatas;
-    for(int i = 0; i < totalLidarFilePath.size();i++)
+    for(int i = 0; i < totalLidarFilePath.size(); i++)
     {
-        FILE *lidarFilePointer=fopen(totalLidarFilePath[i].c_str(),"rb");
+        FILE *lidarFilePointer = fopen(totalLidarFilePath[i].c_str(), "rb");
         if(lidarFilePointer == NULL)
         {
             LOG(WARNING) << "Open lidar File" << totalLidarFilePath[i] << "Failed";
             processNum++;
+            (void)pubProgress(processNum, totalFileNum);
             continue;
         }
+
         size_t readLength=0;
         fseek(lidarFilePointer,0,SEEK_END);
         size_t oneLidarSize=ftell(lidarFilePointer);
         fseek(lidarFilePointer,0,SEEK_SET);
         const unsigned int pktNum=oneLidarSize/pktSize;
-        LOG(INFO) << pktNum << " = " << oneLidarSize << "/" << pktSize;
         pPktDatas = new pktDataFormat[pktNum];
+
+        LOG(INFO) << pktNum << " = " << oneLidarSize << "/" << pktSize;
+
         readLength=fread(pPktDatas, pktSize, pktNum, lidarFilePointer);
+        fclose(lidarFilePointer);
         if(readLength != pktNum)
         {
             LOG(WARNING) << "read the Lidar :" << totalLidarFilePath[i] << "Failed";
             processNum++;
+            (void)pubProgress(processNum, totalFileNum);
             continue;
         }
-        unsigned int tmpNum=0;
-        tmpNum++;
-        unsigned long subMarkRecord=0;
-        while(tmpNum <= pktNum)
-        {
-            pktData=*(pPktDatas+tmpNum-1);
-            tmpNum++;
-            double oneLidarPointTime=pktData.timeStamp;
-            if( oneLidarPointTime < minGPSTime||oneLidarPointTime >maxGPSTime)
+
+        OGRLineString line;
+        unsigned long imuIndexLast = -1;
+        for(size_t k = 0; k < pktNum; ++k) {
+            if(k != 0 && k != (pktNum -1))
             {
-                LOG(INFO) << "lidar point time is : "<< oneLidarPointTime;
-                LOG(WARNING) << totalLidarFilePath[i] <<" LidarPoint time can not find corresponding GPS Time";
+                if(k % 200 != 0)
+                    continue;
+            }
+
+            double oneLidarPointTime = (pPktDatas + k)->timeStamp;
+            unsigned long imuIndex = findCorrespondImuIndex(oneLidarPointTime);
+
+            if(imuIndex < 0) {
+                LOG(WARNING) << "Failed to findCorrespondImuIndex: " << oneLidarPointTime;
                 continue;
             }
-            DLOG(INFO) << "the time of lidarPoint is :" << oneLidarPointTime;
-            if(minGPSTimeMark==0 || oneLidarPointTime > endGPSTime )
-                subMarkRecord=(unsigned long)((oneLidarPointTime-beganGPSTime)/hzTime);
-            else
-            {
-                subMarkRecord=(unsigned long)((oneLidarPointTime-beganGPSTime)/hzTime)+minGPSTimeMark;
+            if(imuIndexLast == imuIndex) {
+                DLOG(WARNING) << "Same findCorrespondImuIndex: " << imuIndex;
+                continue;
             }
-            if(lidarPointSeq == 0)
-                tmpsubMark=subMarkRecord;
-            else
-            {
-                if( tmpsubMark ==subMarkRecord )
-                    continue;
-                else
-                    tmpsubMark=subMarkRecord;
-            }
-            if(lidarPointSeq == 0)
-            {
-                LOG(INFO) << "lidarPointSeq: " << lidarPointSeq;
-                //poFeatureG->SetField("Name", projectName.c_str());
-                pLineString=new OGRLineString();
-                LOG(INFO) << "imuData.size(): " << imuData.size() << "; subMarkRecord: " << subMarkRecord;
-                timeRecord = imuData[subMarkRecord].GPSWeekTime;
-                pLineString->addPoint(imuData[subMarkRecord].Longitude, imuData[subMarkRecord].Latitude);
-                savePointID = subMarkRecord;
-            }
-            else
-            {
-                if( fabs(timeRecord-imuData[subMarkRecord].GPSWeekTime) > timeOfStop )
-                {
-                    poFeatureG->SetGeometry(pLineString);
-                    if(NULL != pLineString) {
-                        delete pLineString;
-                    }
+            imuIndexLast = imuIndex;
 
-                    if( poLayer->CreateFeature( poFeatureG ) != OGRERR_NONE )
-                    {
-                       LOG(ERROR) << totalLidarFilePath[i] <<":Falied to create feature in shapefile";
-                       return -1;
-                    }
-                    // LOG(INFO) << "going to delete poFeatureG";
-                    // OGRFeature::DestroyFeature(poFeatureG);
-                    // OGRFeature *poFeatureG;
-                    // poFeatureG = OGRFeature::CreateFeature(poLayer->GetLayerDefn());
-                    // poFeatureG->SetField("Name", projectName.c_str());
-                    pLineString = new OGRLineString();
-                }
+            double pktLng = imuData[imuIndex].Longitude;
+            double pktLat = imuData[imuIndex].Latitude;
+            line.addPoint(pktLng, pktLat);
 
-                double tmpTimeDiff = fabs(imuData[subMarkRecord].GPSWeekTime - imuData[savePointID].GPSWeekTime);
-                if( tmpTimeDiff > timeDiff)
-                {
-                    pLineString->addPoint(imuData[subMarkRecord].Longitude, imuData[subMarkRecord].Latitude);
-                    savePointID = subMarkRecord;
-                }
-                timeRecord=imuData[subMarkRecord].GPSWeekTime;
+            if(0 == k) {
+                LOG(INFO) << "First index: " << imuIndex << "; lng: " << pktLng << "; lat: " << pktLat;
             }
 
-            //make lidar realTime data effective trace
-            lidarPointSeq++;
-            tmpLongitude=imuData[subMarkRecord].Longitude;
-            tmpLatitude=imuData[subMarkRecord].Latitude;
+            tmpLongitude=imuData[imuIndex].Longitude;
+            tmpLatitude=imuData[imuIndex].Latitude;
             GeoToGauss(tmpLongitude,tmpLatitude,3,&northCoordinate,&eastCoordinate);
-            hzSpeed=sqrt(pow(imuData[subMarkRecord].Ve,2) + pow(imuData[subMarkRecord].Vn,2));
+            hzSpeed=sqrt(pow(imuData[imuIndex].Ve,2) + pow(imuData[imuIndex].Vn,2));
             std::string pointSeqString=std::to_string(lidarPointSeq);
             lidarTraceFile << pointSeqString<<"\t" << std::fixed << std::setprecision(2) <<
-            imuData[subMarkRecord].GPSWeekTime << "\t" <<std::fixed << std::setprecision(4) <<
+            imuData[imuIndex].GPSWeekTime << "\t" <<std::fixed << std::setprecision(4) <<
             northCoordinate << "\t" << std::fixed << std::setprecision(4) << eastCoordinate <<
-            "\t" << std::fixed << std::setprecision(3) << imuData[subMarkRecord].Height <<"\t"
+            "\t" << std::fixed << std::setprecision(3) << imuData[imuIndex].Height <<"\t"
             << std::fixed << std::setprecision(11) << tmpLatitude <<"\t" << std::fixed << std::setprecision(11)
             << tmpLongitude <<"\t" << std::fixed << std::setprecision(4) << hzSpeed << "\t" <<
-            std::fixed << std::setprecision(5) << imuData[subMarkRecord].Roll <<"\t" << std::fixed << std::setprecision(5)
-            << imuData[subMarkRecord].Pitch <<"\t" << std::fixed <<std::setprecision(5) << imuData[subMarkRecord].Heading
-            << "\t" << projectName <<"\t" << imuData[subMarkRecord].NSV2 << std::endl;
-
+            std::fixed << std::setprecision(5) << imuData[imuIndex].Roll <<"\t" << std::fixed << std::setprecision(5)
+            << imuData[imuIndex].Pitch <<"\t" << std::fixed <<std::setprecision(5) << imuData[imuIndex].Heading
+            << "\t" << projectName <<"\t" << imuData[imuIndex].NSV2 << std::endl;
         }
-        fclose(lidarFilePointer);
+
         if(NULL == pPktDatas) {
             LOG(WARNING) << "pPktDatas is: " << pPktDatas;
         }
@@ -1203,24 +1178,21 @@ int dataFixed::mkLidarTraceFile(std::string &projectPath,std::vector <ontimeData
             delete[] pPktDatas;
         }
         pPktDatas = NULL;
-        processNum++;
 
+        poFeature->SetGeometry(&line);
+        if(poLayer->CreateFeature(poFeature) != OGRERR_NONE)
+        {
+            LOG(ERROR) << "Failed to create feature in shapefile.";
+            exit(5);
+        }
+        ++processNum;
         (void)pubProgress(processNum, totalFileNum);
     }
+
+    OGRFeature::DestroyFeature(poFeature);
+    GDALClose(poDS);
+
     lidarTraceFile.close();
-    if(pLineString != 0)
-    {
-        poFeatureG->SetGeometry(pLineString);
-        delete pLineString;
-    }
-    if( poLayer->CreateFeature( poFeatureG ) != OGRERR_NONE )
-    {
-        LOG(ERROR) << projectPath << ":Failed to create feature in shapefile";
-        return -1;
-    }
-    LOG(INFO) << "going to delete poFeatureG";
-    OGRFeature::DestroyFeature( poFeatureG );
-    GDALClose( poDS );
 
     LOG(INFO) << "processNum: " << processNum << "; totalFileNum: " << totalFileNum;
 }

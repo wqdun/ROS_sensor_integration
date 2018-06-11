@@ -4,8 +4,8 @@
 #include <glog/logging.h>
 
 int main(int argc, char **argv) {
-    // FLAGS_log_dir = "/opt/smartc/log/";
-    // google::InitGoogleLogging(argv[0]);
+    FLAGS_log_dir = "/opt/smartc/log/";
+    google::InitGoogleLogging(argv[0]);
     LOG(INFO) << "Got " << argc << " parameters.";
     if(2 != argc) {
         LOG(ERROR) << "usage: exec project_1,project_2...";

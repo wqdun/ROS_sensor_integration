@@ -23,37 +23,12 @@ void DiskMonitor::run(const std::string &_projectPath, sc_msgs::MonitorMsg &_mon
 void DiskMonitor::getProjects(const std::string &_projectPath, sc_msgs::MonitorMsg &_monitorMsg) {
     LOG(INFO) << __FUNCTION__ << " start, to monitor " << _projectPath;
 
-    DIR *dir;
-    dirent *ptr;
-
-    if( !(dir = opendir(_projectPath.c_str())) ) {
-        LOG(WARNING) << "Failed to open " << _projectPath;
-        return;
+    std::string lsCmd("ls -t " + _projectPath);
+    if(public_tools::PublicTools::popenWithReturn(lsCmd, _monitorMsg.projects) < 0) {
+        LOG(ERROR) << "Failed to " << lsCmd;
+        exit(1);
     }
 
-    while(ptr = readdir(dir)) {
-        if( !(strcmp(ptr->d_name, ".")) ||
-            !(strcmp(ptr->d_name, "..")) ) {
-            LOG(INFO) << "Ignore: " << ptr->d_name;
-            continue;
-        }
-
-        if(8 == ptr->d_type) {
-            LOG(INFO) << "Ignore regular file: " << ptr->d_name;
-            continue;
-        }
-        // directory
-        if(4 == ptr->d_type) {
-            const std::string dirName(ptr->d_name);
-            LOG(INFO) << "I find a dir: " << dirName;
-            if(isProject(dirName) ) {
-                _monitorMsg.projects.push_back(dirName);
-            }
-        }
-    }
-
-    closedir(dir);
-    LOG(INFO) << "I find " << _monitorMsg.projects.size() << " projects.";
     return;
 }
 

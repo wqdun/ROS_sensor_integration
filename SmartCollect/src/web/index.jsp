@@ -32,8 +32,8 @@
         console.log("Submit a new project.");
         var projectNameWithDate = $('#projname').text();
         var clientMsg = new ROSLIB.Message({
-            project_name: projectNameWithDate,
-            system_cmd: 0,
+            system_cmd: 6,
+            cmd_arguments: projectNameWithDate,
         });
 
         pubCmd_.publish(clientMsg);

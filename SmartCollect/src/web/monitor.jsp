@@ -13,8 +13,8 @@
             console.log("typeof(camGain): " + typeof(camGain) + ", camGain: " + camGain);
 
             var clientMsg = new ROSLIB.Message({
-                is_record: Number(isRecord),
-                cam_gain: Number(camGain),
+                system_cmd: 7,
+                cmd_arguments: Number(isRecord) + "," + camGain,
             });
 
             pubCmd_.publish(clientMsg);

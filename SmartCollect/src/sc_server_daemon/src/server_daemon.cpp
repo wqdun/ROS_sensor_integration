@@ -179,23 +179,7 @@ void ServerDaemon::clientCB(const sc_msgs::ClientCmd::ConstPtr& pClientMsg) {
 
     switch(pClientMsg->system_cmd) {
         case 0: {
-            if(pClientMsg->project_name.empty() ) {
-                LOG(INFO) << "Empty project name, gonna update is_record and cam_gain.";
-                monitorMsg_.is_record = pClientMsg->is_record;
-                monitorMsg_.cam_gain = pClientMsg->cam_gain;
-            }
-            else {
-                LOG(INFO) << "New project name received, gonna create project: " << pClientMsg->project_name;
-                (void)updateProjectInfo(pClientMsg->project_name);
-                const std::string launchScript("/opt/smartc/src/tools/launch_project.sh");
-                if(!(public_tools::PublicTools::isFileExist(launchScript) ) ) {
-                    LOG(ERROR) << launchScript << " does not exist.";
-                    exit(1);
-                }
-                LOG(INFO) << "launchScript: " << launchScript;
-                (void)public_tools::PublicTools::runShellCmd("bash " + launchScript + " server " + pClientMsg->project_name);
-            }
-
+            LOG(INFO) << "I am gonna do nothing.";
             break;
         }
         case 1: {
@@ -246,26 +230,39 @@ void ServerDaemon::clientCB(const sc_msgs::ClientCmd::ConstPtr& pClientMsg) {
 
             LOG(INFO) << "I got " << projectArr.size() << " projects to process.";
             for(auto &project: projectArr) {
-                const std::string cmd("mv /opt/smartc/record/" + project + " /tmp/; true");
+                const std::string cmd("mv \'/opt/smartc/record/" + project + "\' /tmp/; true");
                 LOG(INFO) << "I am gonna: " + cmd;
                 (void)public_tools::PublicTools::runShellCmd(cmd);
             }
             break;
         }
         case 6: {
-            LOG(INFO) << "I am gonna display recorded projects: " << pClientMsg->cmd_arguments;
-            LOG(INFO) << "Is cmd_arguments empty?: " << std::boolalpha << pClientMsg->cmd_arguments.empty();
+            LOG(INFO) << "I am gonna launch a new project: " << pClientMsg->cmd_arguments;
+            (void)updateProjectInfo(pClientMsg->cmd_arguments);
             const std::string launchScript("/opt/smartc/src/tools/launch_project.sh");
             if(!(public_tools::PublicTools::isFileExist(launchScript) ) ) {
                 LOG(ERROR) << launchScript << " does not exist.";
                 exit(1);
             }
-            (void)public_tools::PublicTools::runShellCmd("bash " + launchScript + " layers " + pClientMsg->cmd_arguments);
+            LOG(INFO) << "launchScript: " << launchScript;
+            (void)public_tools::PublicTools::runShellCmd("bash " + launchScript + " server " + pClientMsg->cmd_arguments);
             break;
         }
-         default: {
+        case 7: {
+            LOG(INFO) << "I am gonna update is_record and cam_gain.";
+            LOG(INFO) << "Is cmd_arguments empty?: " << std::boolalpha << pClientMsg->cmd_arguments.empty();
+            std::vector<std::string> isRecord_camGain;
+            if(!pClientMsg->cmd_arguments.empty() ) {
+                (void)boost::split(isRecord_camGain, pClientMsg->cmd_arguments, boost::is_any_of(",") );
+            }
+            monitorMsg_.is_record = public_tools::PublicTools::string2num(isRecord_camGain[0], 0);
+            monitorMsg_.cam_gain = public_tools::PublicTools::string2num(isRecord_camGain[1], 20);
+            break;
+        }
+
+        default: {
             LOG(ERROR) << "Client command: " << pClientMsg->system_cmd;
-         }
+        }
     }
 
     return;

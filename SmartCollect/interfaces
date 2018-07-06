@@ -1,0 +1,62 @@
+# interfaces(5) file used by ifup(8) and ifdown(8)
+auto lo
+iface lo inet loopback
+
+
+auto eth0
+iface eth0 inet static
+address 169.254.64.7
+netmask 255.255.255.192
+network 169.254.64.6
+broadcast 169.254.64.127
+gateway 169.254.64.6
+
+auto eth4
+iface eth4 inet static
+address 169.254.70.7
+netmask 255.255.255.192
+network 169.254.70.6
+broadcast 169.254.70.127
+gateway 169.254.70.6
+
+auto eth1
+iface eth1 inet static
+address 169.254.76.7
+netmask 255.255.255.192
+network 169.254.76.6
+broadcast 169.254.76.127
+gateway 169.254.76.6
+
+auto eth5
+iface eth5 inet static
+address 169.254.82.7
+netmask 255.255.255.192
+network 169.254.82.6
+broadcast 169.254.82.127
+gateway 169.254.82.6
+
+auto eth2
+iface eth2 inet static
+address 169.254.88.7
+netmask 255.255.255.192
+network 169.254.88.6
+broadcast 169.254.88.127
+gateway 169.254.88.6
+
+auto eth3
+iface eth3 inet static
+address 169.254.94.7
+netmask 255.255.255.192
+network 169.254.94.6
+broadcast 169.254.94.127
+gateway 169.254.94.6
+
+auto eth6
+iface eth6 inet static
+address 192.102.0.7
+netmask 255.255.255.0
+network 192.102.0.7
+broadcast 192.102.0.255
+gateway 192.102.0.7
+
+

@@ -167,7 +167,6 @@ set_camera_mtu() {
     ifconfig eth3 mtu 9000 >>$result_log 2>&1
     ifconfig eth4 mtu 9000 >>$result_log 2>&1
     ifconfig eth5 mtu 9000 >>$result_log 2>&1
-    ifconfig eth6 mtu 9000 >>$result_log 2>&1
 
     local mtu=$(netstat -i | grep eth0 | awk '{print $2}')
     log_with_time "Now I have $mtu mtu at eth0."
@@ -175,22 +174,38 @@ set_camera_mtu() {
     log_with_time "$FUNCNAME return $?."
 }
 
-set_camera_route() {
+set_camera_network() {
     log_with_time "$FUNCNAME start."
 
-    ip route add 169.254.70.51 via 169.254.94.7
-    ip route add 169.254.63.174 via 169.254.64.7
-    ip route add 169.254.65.120 via 169.254.76.7
-    ip route add 169.254.66.123 via 169.254.88.7
-    ip route add 169.254.64.2 via 169.254.70.7
-    ip route add 169.254.97.234 via 169.254.82.7
-    ip route add 192.102.0.201 via 192.102.0.7
+    ifconfig eth0 169.254.63.173 netmask 255.255.255.0 >>$result_log 2>&1
+    # route add -host 169.254.63.174 dev eth0 >>$result_log 2>&1
 
-    service network-manager start
+    ifconfig eth1 169.254.64.1 netmask 255.255.255.0 >>$result_log 2>&1
+    # route add -host 169.254.64.2 dev eth1 >>$result_log 2>&1
+
+    ifconfig eth2 169.254.65.119 netmask 255.255.255.0 >>$result_log 2>&1
+    # route add -host 169.254.65.120 dev eth2 >>$result_log 2>&1
+
+    ifconfig eth3 169.254.97.233 netmask 255.255.255.0 >>$result_log 2>&1
+    # route add -host 169.254.97.234 dev eth3 >>$result_log 2>&1
+
+    ifconfig eth4 169.254.66.122 netmask 255.255.255.0 >>$result_log 2>&1
+    # route add -host 169.254.66.123 dev eth4 >>$result_log 2>&1
+
+    ifconfig eth5 169.254.70.50 netmask 255.255.255.0 >>$result_log 2>&1
+    # route add -host 169.254.70.51 dev eth5 >>$result_log 2>&1
+
+    ifconfig eth6 192.102.0.7 netmask 255.255.255.0 >>$result_log 2>&1
+    # route add -host 192.102.0.201 dev eth6 >>$result_log 2>&1
 }
 
 do_start() {
     log_with_time "$FUNCNAME start."
+
+    set_camera_mtu
+    set_camera_network
+    ifconfig >>$result_log
+    sleep 1
 
     mount_data_disk
     sleep 1
@@ -205,9 +220,9 @@ do_start() {
     run_rosbridge
     sleep 1
 
-    set_camera_mtu
-    set_camera_route
-    sleep 1
+    sleep 5
+    /opt/smartc/devel/lib/sc_camera_ip_forcer/sc_camera_ip_forcer_node
+
     run_minemap_service
 
     log_with_time "$FUNCNAME return $?."

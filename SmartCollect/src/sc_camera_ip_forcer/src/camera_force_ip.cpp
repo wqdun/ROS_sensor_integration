@@ -31,6 +31,7 @@ int CameraForceIp::doForceIp() {
         return -3;
     }
 
+    LOG(INFO) << "Got " << cameraNum  << " cameras.";
     return cameraNum;
 }
 

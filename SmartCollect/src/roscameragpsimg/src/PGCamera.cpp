@@ -317,7 +317,7 @@ void CPGCamera::XferCallBack(Image *pImage, const void *_pPGCamera)
 
     ++(pPGCamera->updateFreq_);
     if(0 == pPGCamera->cameraId_) {
-        pPGCamera->updateFreq_ %= 16;
+        pPGCamera->updateFreq_ %= 8;
     }
     else {
         pPGCamera->updateFreq_ %= 2;

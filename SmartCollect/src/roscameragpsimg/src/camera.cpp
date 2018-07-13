@@ -37,6 +37,11 @@ Cameras::Cameras(ros::NodeHandle nh, ros::NodeHandle private_nh, const std::stri
         exit(3);
     }
 
+    const double MASTER_CAMERA_FRAME_RATE = 10;
+    (void)setCameraFrameRate(MASTER_CAMERA_FRAME_RATE);
+    const unsigned int GIGE_PACKET_SIZE = 9000;
+    (void)setAllCamerasGigEPacketSize(GIGE_PACKET_SIZE);
+
     pCommTimer_.reset(new CommTimer(_rawdataDir) );
 }
 
@@ -49,6 +54,88 @@ Cameras::~Cameras() {
     }
 
     timeThread_->join();
+}
+
+void Cameras::setCameraFrameRate(double frameRate) {
+    LOG(INFO) << __FUNCTION__ << " start.";
+
+    FlyCapture2::Error error;
+    Property frameRateProp;
+    frameRateProp.type = FRAME_RATE;
+
+    GigECamera *pMasterGigECamera = pCpgCameras_[masterIndex_]->m_pCamera;
+    error = pMasterGigECamera->GetProperty(&frameRateProp);
+    if(error != PGRERROR_OK) {
+        LOG(ERROR) << "Error getting camera property.";
+        logErrorTrace(error);
+        exit(4);
+    }
+
+    PropertyInfo frameRatePropInfo;
+    frameRatePropInfo.type = FRAME_RATE;
+    error = pMasterGigECamera->GetPropertyInfo(&frameRatePropInfo);
+    if(error != PGRERROR_OK) {
+        LOG(ERROR) << "Error getting camera property information.";
+        logErrorTrace(error);
+        exit(5);
+    }
+
+    if(frameRatePropInfo.absValSupported) {
+        LOG(INFO) << "frameRatePropInfo.absValSupported.";
+        frameRateProp.absValue = static_cast<float>(frameRate);
+        frameRateProp.absControl = true;
+    }
+    else {
+        LOG(WARNING) << "Not frameRatePropInfo.absValSupported.";
+        frameRateProp.valueA = static_cast<unsigned int>(frameRate);
+        frameRateProp.absControl = false;
+    }
+
+    frameRateProp.autoManualMode = false;
+
+    error = pMasterGigECamera->SetProperty(&frameRateProp, false);
+    if(error != PGRERROR_OK) {
+        LOG(ERROR) << "Error setting camera property.";
+        logErrorTrace(error);
+        exit(6);
+    }
+
+    return;
+}
+
+void Cameras::setAllCamerasGigEPacketSize(unsigned int _packetSize) {
+    LOG(INFO) << __FUNCTION__ << " start.";
+
+    for(auto &pCpgCamera: pCpgCameras_) {
+        GigECamera *pGigECamera = pCpgCamera->m_pCamera;
+        (void)setCameraGigEPacketSize(pGigECamera, _packetSize);
+    }
+    return;
+}
+
+void Cameras::setCameraGigEPacketSize(GigECamera *_pGigECamera, unsigned int _packetSize) {
+    LOG(INFO) << __FUNCTION__ << " start.";
+    FlyCapture2::Error error;
+
+    GigEProperty packetSizeProp;
+    packetSizeProp.propType = PACKET_SIZE;
+    packetSizeProp.value = _packetSize;
+    error = _pGigECamera->SetGigEProperty(&packetSizeProp);
+    if(error != PGRERROR_OK) {
+        LOG(ERROR) << "Error setting GigE packet size.";
+        logErrorTrace(error);
+        exit(7);
+    }
+
+    packetSizeProp.value = 0;
+    error = _pGigECamera->GetGigEProperty(&packetSizeProp);
+    if(error != PGRERROR_OK) {
+        LOG(ERROR) << "Error getting current packet size.";
+        logErrorTrace(error);
+        exit(8);
+    }
+    LOG(INFO) << "Set packet size successfully, current packet size: " << packetSizeProp.value;
+    return;
 }
 
 void Cameras::getCameras(unsigned int _cameraNum, const std::string &__rawdataDir) {

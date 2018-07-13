@@ -47,6 +47,10 @@ private:
     bool flyImage2msg(const FlyCapture2::Image &inFlyImage);
     bool convertImage(cv::Mat* matImage, const Image* image);
     int getMasterIndex();
+    void setCameraFrameRate(double frameRate);
+    void setCameraGigEPacketSize(GigECamera *_pGigECamera, unsigned int _packetSize);
+    void setAllCamerasGigEPacketSize(unsigned int _packetSize);
+
 
     ros::Subscriber subServer_;
     ros::Publisher pubCamSpeed_;

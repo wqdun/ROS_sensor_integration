@@ -34,6 +34,10 @@
 #include <velodyne_driver/input.h>
 #include "../../../sc_lib_public_tools/src/public_tools.h"
 
+// #define NDEBUG
+#undef NDEBUG
+#include <glog/logging.h>
+
 namespace velodyne_driver
 {
   ////////////////////////////////////////////////////////////////////////
@@ -171,7 +175,7 @@ namespace velodyne_driver
               }
             if (retval == 0)            // poll() timeout?
               {
-                ROS_WARN("Velodyne poll() timeout");
+                LOG(WARNING) << ("Velodyne poll() timeout, go check IP configuration.");
                 return 1;
               }
             if ((fds[0].revents & POLLERR)

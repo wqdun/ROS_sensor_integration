@@ -65,6 +65,8 @@ start_smart_collector_server() {
     rosrun sc_integrate_imu_recorder sc_integrate_imu_recorder_node "${_absolute_record_path}/IMU/" &
     sleep 0.2
 
+    get_sudo_permission
+    sudo chmod +r /dev/ttyS0
     pkill sc_camera
     /opt/smartc/devel/lib/sc_camera/sc_camera jpg "${_absolute_record_path}/" &
     sleep 0.2

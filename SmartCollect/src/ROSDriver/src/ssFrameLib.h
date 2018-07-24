@@ -38,7 +38,7 @@ static unsigned short UDP_FRAME_MIN =(18);
 #define DEB_FRAME_READ  (0x5a)  //read head sync
 #define DEB_FRAME_ERROR  (0xE7) //err  haad sync
 
-#define FRAME_MSG_LENGTH (1024) 
+#define FRAME_MSG_LENGTH (1024)
 
 const int UDPREG_MAX_COUNT = 256;
 const int ROMREG_MAX_COUNT = 0x7FF;
@@ -67,7 +67,7 @@ const unsigned char RFANS_PRODUCT_MODEL_V6A_X16Odd_0X4E = 0X4E;
 const unsigned char RFANS_PRODUCT_MODEL_V6A_X16M_0X4F = 0X4F;
 const unsigned char RFANS_PRODUCT_MODEL_V6B_X32_0X50=0X50 ;
 
-const unsigned char RFANS_PRODUCT_MODEL_CFANS_X32_0X3780=0X3780 ;
+// const unsigned char RFANS_PRODUCT_MODEL_CFANS_X32_0X3780=0X3780 ;
 const unsigned char RFANS_PRODUCT_MODEL_V6A_E1_0X55 = 0X55;
 const unsigned char RFANS_PRODUCT_MODEL_V6A_E2_0X56 = 0X56;
 

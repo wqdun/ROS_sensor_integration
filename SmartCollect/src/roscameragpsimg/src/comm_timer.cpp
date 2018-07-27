@@ -1,7 +1,6 @@
 #include "comm_timer.h"
 #include "camera.h"
 
-
 #define NDEBUG
 // #undef NDEBUG
 #include <glog/logging.h>

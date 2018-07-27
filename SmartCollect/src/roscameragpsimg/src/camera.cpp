@@ -27,7 +27,7 @@ Cameras::Cameras(ros::NodeHandle nh, ros::NodeHandle private_nh, const std::stri
     }
     LOG(INFO) << "Number of cameras detected: " << cameraNum;
     if(cameraNum < 1) {
-        LOG(INFO) << "Insufficient number of cameras: " << cameraNum;
+        LOG(WARNING) << "Insufficient number of cameras: " << cameraNum;
         exit(2);
     }
     pCpgCameras_.clear();

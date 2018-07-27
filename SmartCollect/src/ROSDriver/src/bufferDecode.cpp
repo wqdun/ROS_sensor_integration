@@ -1,8 +1,11 @@
-﻿#include "bufferDecode.h"
-#include <string.h>
+﻿#include <string.h>
 #include <ros/ros.h>
 #include "ioapi.h"
 
+#define NDEBUG
+// #undef NDEBUG
+#include <glog/logging.h>
+#include "bufferDecode.h"
 
 static const int LINE_POINT_MINI_COUNT = 500; //一条扫描线最少点的个数
 static const float ANGLE_CIRCLE_CONDITION = 270; //角度抖动处理值
@@ -269,7 +272,7 @@ inline int processFrameV6G(RFans_UDP32FRAMEV6G_S *mtFrame, sensor_msgs::PointClo
       tmpRange = mtBlock->laserBlock[i].range *CONVERT_4mm_2_m;
       tmpAngle = (mtBlock->azimuthAngle + (i*s_angleStep))*UINTCONVERT;
 
-      tmpXyz.laserid = i;   
+      tmpXyz.laserid = i;
 
       calcXyz(mtFrame->gmReservedA,tmpRange, tmpAngle, tmpXyz);
       if ( checkFrame_sum(tmpAngle,tmpXyz.laserid ,outCloud) ) rtn =1 ;
@@ -331,9 +334,9 @@ inline int processFrameV5( RFans_UDPFRAMEV5_S *mtFrame, sensor_msgs::PointCloud2
   return rtn;
 }
 
+std::string SSBufferDec::s_lidarDataSavePath_;
 SSBufferDec::SSBufferDec()
 {
-
   reset();
 }
 
@@ -443,6 +446,16 @@ int SSBufferDec::Depacket(rfans_driver::RfansPacket &inPack, sensor_msgs::PointC
   RFans_UDP32FRAMEV6G_S *tmpFrameV6;
   RFans_UDPFRAMEV5_S * tmpFrameV5;
 
+  LOG_EVERY_N(INFO, 100) << "inPack.udpSize: " << inPack.udpSize << "; udpCount: " << inPack.udpCount;
+
+  FILE *pOutFile;
+  std::string lidarPkgName(s_lidarDataSavePath_ + "/lidar.dat");
+  if(!(pOutFile = fopen(lidarPkgName.c_str(), "ab") ) ) {
+    LOG(ERROR) << "Create file:" << lidarPkgName << " failed, errno:" << errno;
+    exit(1);
+  }
+  DLOG(INFO) << "Create file:" << lidarPkgName << " successfully.";
+
   if( UDP_PACKET_SIZE_V5A == inPack.udpSize) {
     for( int i = 0 ; i < inPack.udpCount;i++) {
       tmpFrameV5 = (RFans_UDPFRAMEV5_S*)(&inPack.data[0] + i*inPack.udpSize);
@@ -452,18 +465,33 @@ int SSBufferDec::Depacket(rfans_driver::RfansPacket &inPack, sensor_msgs::PointC
       }
     }
   }
-  else if(UDP_PACKET_SIZE_V6G == inPack.udpSize) {
+  else
+  if(UDP_PACKET_SIZE_V6G == inPack.udpSize) {
     for( int i = 0 ; i < inPack.udpCount;i++) {
       tmpFrameV6 = (RFans_UDP32FRAMEV6G_S*)(&inPack.data[0] + i*inPack.udpSize);
+      DLOG(INFO) << std::fixed << "GPS Time stamp[" << i << "]: " << tmpFrameV6->gpsTimestamp / 1000000 << " s";
+
+      const double pktDaySecond = public_tools::PublicTools::getDaySecond(ros::Time::now().toSec(), tmpFrameV6->gpsTimestamp / 1000000.);
+      (void)fwrite(&pktDaySecond, sizeof(pktDaySecond), 1, pOutFile);
+      (void)fwrite(tmpFrameV6, UDP_PACKET_SIZE_V6G, 1, pOutFile);
+
       if( processFrameV6G(tmpFrameV6,outCloud) ) {
         rosOut.publish(outCloud);
         SSBufferDec::ResetPointCloud2(outCloud);
       }
     }
-  } else {
-    ROS_INFO_STREAM(" inPack.udpSize " <<inPack.udpSize );
   }
+  else {
+    LOG(WARNING) << "inPack.udpSize " <<inPack.udpSize;
+  }
+
+  fclose(pOutFile);
   return rtn ;
+}
+
+void SSBufferDec::SetLidaDataSavePath(const std::string &_lidarSavePath) {
+  LOG(INFO) << __FUNCTION__ << " start.";
+  s_lidarDataSavePath_ = _lidarSavePath;
 }
 
 void SSBufferDec::InitPointcloud2(sensor_msgs::PointCloud2 &initCloud) {
@@ -574,4 +602,5 @@ void SSBufferDec::SetAngleDuration(float value)
     return ;
   s_angle_duration = value;
 }
+
 

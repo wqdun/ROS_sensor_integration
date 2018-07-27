@@ -5,6 +5,7 @@
 #include "rfans_driver/RfansPacket.h"
 #include "ssFrameLib.h"
 #include <ros/ros.h>
+#include "../../sc_lib_public_tools/src/public_tools.h"
 
 typedef enum {
   eReady,
@@ -35,6 +36,7 @@ public:
 
   static int Depacket(rfans_driver::RfansPacket &inPack, sensor_msgs::PointCloud2 &outCloud , ros::Publisher &rosOut);
   static void InitPointcloud2(sensor_msgs::PointCloud2 &initCloud) ;
+  static void SetLidaDataSavePath(const std::string &_lidarSavePath);
   static void ResetPointCloud2(sensor_msgs::PointCloud2 &initCloud) ;
 
   static void SetAngleDuration(float value);
@@ -52,6 +54,7 @@ private:
   float s_preAngle ;
   int m_udpSize;
   int m_udpCount;
+  static std::string s_lidarDataSavePath_;
 };
 
 

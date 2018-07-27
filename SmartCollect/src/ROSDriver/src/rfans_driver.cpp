@@ -16,6 +16,10 @@
 #include "rfans_driver.h"
 #include "rfans_driver/RfansCommand.h"
 
+// #define NDEBUG
+#undef NDEBUG
+#include <glog/logging.h>
+
 namespace rfans_driver {
 
 static const size_t packet_size = sizeof(rfans_driver::RfansPacket().data);
@@ -46,15 +50,11 @@ bool CommandHandle(rfans_driver::RfansCommand::Request  &req,
 
 Rfans_Driver::Rfans_Driver(ros::NodeHandle mtNode, int type)
 {
-
   bool ok = true;
 
-
   std::string filename = s_simuFileName;
-
   //node name
   std::string node_name = ros::this_node::getName();
-
 
   //command name
   std::string command_name = "rfans_control";
@@ -63,6 +63,9 @@ Rfans_Driver::Rfans_Driver(ros::NodeHandle mtNode, int type)
   command_path = "rfans_driver/" + command_name;
   m_svr = mtNode.advertiseService(command_path, CommandHandle);
 
+  m_LidarDataSavePath_ = "/tmp/";
+  ros::param::get(node_name + "/data_save_path", m_LidarDataSavePath_);
+  LOG(INFO) << "m_LidarDataSavePath_: " << m_LidarDataSavePath_;
 
   //advertise name
   std::string advertise_name = "rfans_packets";
@@ -70,6 +73,7 @@ Rfans_Driver::Rfans_Driver(ros::NodeHandle mtNode, int type)
   ros::param::get(advertise_path,advertise_name);
   advertise_path = "rfans_driver/" + advertise_name;
   //ROS_INFO("%s : advertise name %s : %s",node_name.c_str(), advertise_name.c_str(), advertise_path.c_str() );
+
 
   //device  ip name
   std::string device_ip = DEVICE_IP_STRING;

@@ -16,6 +16,10 @@
 
 #include <pcl_conversions/pcl_conversions.h>
 
+// #define NDEBUG
+#undef NDEBUG
+#include <glog/logging.h>
+
 static const int RFANS_POINT_CLOUD_NUM = 1024 ;
 
 static std::vector<SCDRFANS_BLOCK_S> outBlocks ;
@@ -25,14 +29,14 @@ static sensor_msgs::PointCloud2 outCloud ;
 static ros::Publisher  s_output;
 static ros::Subscriber s_sub ;
 
- pcl::PointCloud<pcl::PointXYZI> cloud;
+pcl::PointCloud<pcl::PointXYZI> cloud;
+
 
 static void RFansPacketReceived(rfans_driver::RfansPacket pkt) {
   int rtn = 0 ;
   rtn =  SSBufferDec::Depacket(pkt, outCloud,s_output) ;
   return ;
 }
-
 
 int main ( int argc , char ** argv )
 {
@@ -45,7 +49,13 @@ int main ( int argc , char ** argv )
   //node name
   std::string node_name = ros::this_node::getName();
 
-  //advertise name
+  std::string lidarDataSavePath("/tmp/");
+  ros::param::get(node_name + "/data_save_path", lidarDataSavePath);
+  LOG(INFO) << "lidarDataSavePath: " << lidarDataSavePath;
+  SSBufferDec::SetLidaDataSavePath(lidarDataSavePath);
+
+  SSBufferDec::InitPointcloud2(outCloud) ;
+
   std::string advertise_name = "rfans_points";
   std::string advertise_path = node_name + "/advertise_name";
   ros::param::get(advertise_path,advertise_name);

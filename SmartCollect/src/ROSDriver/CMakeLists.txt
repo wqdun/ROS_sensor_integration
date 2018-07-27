@@ -164,7 +164,7 @@ add_executable(driver_node
   src/ssFrameLib.cpp
   src/bufferDecode.cpp )
 add_dependencies(driver_node rfans_driver_generate_messages_cpp)
-target_link_libraries(driver_node ${catkin_LIBRARIES})
+target_link_libraries(driver_node ${catkin_LIBRARIES} glog sc_lib_public_tools)
 
 #add_executable(rfans_subscriber src/subscriber.cpp src/ioapi.cpp src/ssFrameLib.cpp src/bufferDecode.cpp)
 #add_dependencies(rfans_subscriber rfans_driver_generate_messages_cpp)
@@ -172,7 +172,7 @@ target_link_libraries(driver_node ${catkin_LIBRARIES})
 
 add_executable(calculation_node src/cloud_node.cpp src/ssFrameLib.cpp src/bufferDecode.cpp)
 add_dependencies(calculation_node rfans_driver_generate_messages_cpp)
-target_link_libraries(calculation_node ${catkin_LIBRARIES})
+target_link_libraries(calculation_node ${catkin_LIBRARIES} glog sc_lib_public_tools)
 
 #############
 ## Install ##

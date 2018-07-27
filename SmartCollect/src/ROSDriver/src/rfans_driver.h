@@ -25,7 +25,7 @@ private:
   ros::Publisher m_output;
   ros::ServiceServer m_svr ;
   rfans_driver::RfansPacket tmpPacket;
-
+  std::string m_LidarDataSavePath_;
 };
 
 }

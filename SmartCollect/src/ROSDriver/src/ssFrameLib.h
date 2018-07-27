@@ -340,8 +340,6 @@ typedef struct
   unsigned char gmReservedB;
 }RFans_UDP32FRAMEV6G_S;
 
-
-
 #pragma pack()
 
 #ifdef __cplusplus

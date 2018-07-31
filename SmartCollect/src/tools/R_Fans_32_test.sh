@@ -15,6 +15,7 @@ log_with_time() {
 }
 
 _absolute_record_path="/opt/smartc/record/1001-1-RFANS32-180726/Rawdata/"
+mv "${_absolute_record_path}" "/opt/smartc/record/1001-1-RFANS32-180726/Rawdata_$(date +%Y%m%d_%H_%M_%S)"
 if [ "${_absolute_record_path}AA" == "AA" ]; then
     echo "[ERROR] Need a path of Rawdata."
     exit 1
@@ -59,3 +60,4 @@ mv /opt/smartc/record/lidar.dat /opt/smartc/record/lidar_$(date +%Y%m%d_%H_%M_%S
 roslaunch rfans_driver node_manager_with_data_save_path.launch
 
 
+# to monitor: watch -n1 -d "ls -l /opt/smartc/record/lidar.dat; ls -l /opt/smartc/record/1001-1-RFANS32-180726/Rawdata/IMU; ls -l /opt/smartc/record/1001-1-RFANS32-180726/Rawdata/Image | wc -l;"

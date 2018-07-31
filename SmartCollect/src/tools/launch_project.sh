@@ -73,7 +73,6 @@ start_smart_collector_server() {
     if [ $net_card_num -gt 4 ]; then
         log_with_time "I have $net_card_num network cards, I am gonna force IP."
         /opt/smartc/devel/lib/sc_camera_ip_forcer/sc_camera_ip_forcer_node
-        sleep 5
     else
         log_with_time "I have $net_card_num network cards, I need not force IP."
     fi

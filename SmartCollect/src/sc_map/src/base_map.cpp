@@ -24,10 +24,13 @@ BaseMap::BaseMap(ros::NodeHandle nh, ros::NodeHandle private_nh, const std::stri
 
     const std::string baseMapPath(smartcPath + "/data/BaseMap/");
     std::vector<std::string> baseMapFiles;
-    (void)public_tools::PublicTools::getFilesInDir(baseMapPath, ".shp", baseMapFiles);
+    (void)public_tools::PublicTools::getFilesWithExtensionInDir(baseMapPath, ".shp", baseMapFiles);
     baseMapLines_.lines2D.clear();
     if(1 != baseMapFiles.size() ) {
         LOG(WARNING) << "Got " << baseMapFiles.size() << " baseMapFiles in " << baseMapPath << ", should be 1.";
+        for(auto &baseMapFile: baseMapFiles) {
+            LOG(WARNING) << "baseMapFile: " << baseMapFile;
+        }
     }
     else {
         (void)getLines(baseMapFiles[0], baseMapLines_);
@@ -35,7 +38,7 @@ BaseMap::BaseMap(ros::NodeHandle nh, ros::NodeHandle private_nh, const std::stri
 
     const std::string planLayerPath(smartcPath + "/data/PlanLayer/");
     std::vector<std::string> planLayerFiles;
-    (void)public_tools::PublicTools::getFilesInDir(planLayerPath, ".shp", planLayerFiles);
+    (void)public_tools::PublicTools::getFilesWithExtensionInDir(planLayerPath, ".shp", planLayerFiles);
     planLayerLines_.lines2D.clear();
     if(1 != planLayerFiles.size() ) {
         LOG(WARNING) << "Got " << planLayerFiles.size() << " planLayerFiles in " << planLayerPath << ", should be 1.";
@@ -46,7 +49,7 @@ BaseMap::BaseMap(ros::NodeHandle nh, ros::NodeHandle private_nh, const std::stri
 
     const std::string recordedLayerPath(smartcPath + "/data/RecordedLayer/");
     std::vector<std::string> recordedLayerFiles;
-    (void)public_tools::PublicTools::getFilesInDir(recordedLayerPath, ".shp", recordedLayerFiles);
+    (void)public_tools::PublicTools::getFilesWithExtensionInDir(recordedLayerPath, ".shp", recordedLayerFiles);
     LOG(INFO) << "Got " << recordedLayerFiles.size() << " recordedLayerFile in " << recordedLayerPath;
     recordedLayerLines_.lines2D.clear();
     for(auto &recordedLayerFile: recordedLayerFiles) {
@@ -104,7 +107,7 @@ void BaseMap::getLines(const std::string &_shpFile, sc_msgs::Lines2D &_lines) {
         for(int j = 0; j < poSimpleCurve->getNumPoints(); ++j) {
             lngLat.x = poSimpleCurve->getX(j);
             lngLat.y = poSimpleCurve->getY(j);
-            DLOG(INFO) << std::fixed << "longitude: " << lngLat.x << "; latitude: " << lngLat.y;
+            LOG_EVERY_N(INFO, 100) << std::fixed << j << "th point, longitude: " << lngLat.x << "; latitude: " << lngLat.y;
             baseMapLine.line2D.push_back(lngLat);
         }
         _lines.lines2D.push_back(baseMapLine);

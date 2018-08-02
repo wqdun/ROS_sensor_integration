@@ -67,17 +67,27 @@ start_smart_collector_server() {
 
     get_sudo_permission
     sudo chmod +r /dev/ttyS0
-    pkill sc_camera
 
-    local net_card_num=$(/usr/bin/lspci | grep Ethernet | wc -l)
-    if [ $net_card_num -gt 4 ]; then
-        log_with_time "I have $net_card_num network cards, I am gonna force IP."
-        /opt/smartc/devel/lib/sc_camera_ip_forcer/sc_camera_ip_forcer_node
-    else
-        log_with_time "I have $net_card_num network cards, I need not force IP."
+    /sbin/ifconfig eth0 | /bin/grep -w inet >>$result_log 2>&1
+    if [ $? -ne 0 ]; then
+        log_with_time "sc_camera_ip_forcer_node has not been executed, gonna run it."
+        bash /opt/smartc/src/tools/force_ip_per_minute.sh
     fi
-    /opt/smartc/devel/lib/sc_camera/sc_camera jpg "${_absolute_record_path}/" &
-    sleep 0.2
+    log_with_time "sc_camera_ip_forcer_node already been executed."
+
+    for i in $(seq 30)
+    do
+        pidof sc_camera_ip_forcer_node
+        if [ $? -eq 0 ]; then
+            log_with_time "sc_camera_ip_forcer_node is running, waiting..."
+            sleep 1
+            continue
+        fi
+        pkill sc_camera_ip_
+        pkill sc_camera
+        /opt/smartc/devel/lib/sc_camera/sc_camera jpg "${_absolute_record_path}/" &
+        break
+    done
 
     killall nodelet
     roslaunch velodyne_pointcloud VLP16_points.launch &

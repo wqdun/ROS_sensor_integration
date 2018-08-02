@@ -71,7 +71,7 @@ export_java_env() {
     log_with_time "$FUNCNAME start."
     log_with_time "JRE_HOME: $JRE_HOME"
 
-    export JAVA_HOME=/opt/java/jdk1.8.0_144
+    export JAVA_HOME=/opt/jvm/java/
     export JRE_HOME=${JAVA_HOME}/jre
     export CLASSPATH=.:${JAVA_HOME}/lib:${JRE_HOME}/lib
     export PATH=${JAVA_HOME}/bin:$PATH
@@ -197,7 +197,7 @@ set_singlecam_camera_network() {
 set_singlecam_lidar_network() {
     log_with_time "$FUNCNAME start."
 
-    ifconfig eth1 192.168.1.7 netmask 255.255.255.0 >>$result_log 2>&1
+    ifconfig eth1 192.168.0.7 netmask 255.255.255.0 >>$result_log 2>&1
 }
 
 set_camera_mtu() {

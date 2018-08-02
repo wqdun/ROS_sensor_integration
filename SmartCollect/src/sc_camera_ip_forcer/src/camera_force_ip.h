@@ -1,6 +1,7 @@
 #ifndef __CAMERA_FORCE_IP_H__
 #define __CAMERA_FORCE_IP_H__
 
+#include <fcntl.h>
 #include "FlyCapture2.h"
 #include "Error.h"
 
@@ -9,6 +10,7 @@ public:
     CameraForceIp();
     ~CameraForceIp();
 
+    int getCamerasInfo();
     int doForceIp();
 
 
@@ -18,7 +20,6 @@ private:
 
     bool forceIpFor(size_t tryTimes);
     bool refreshCamerasFor(size_t tryTimes);
-    int getCamerasInfo();
     void logErrorTrace(FlyCapture2::Error error);
 };
 

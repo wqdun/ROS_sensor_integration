@@ -1,8 +1,8 @@
 #include "camera_force_ip.h"
+
 #define NDEBUG
 // #undef NDEBUG
 #include <glog/logging.h>
-
 
 CameraForceIp::CameraForceIp() {
     LOG(INFO) << __FUNCTION__ << " start.";

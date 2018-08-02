@@ -1,2 +1,11 @@
-/SmartCollect/src/web/.idea/
 *.iml
+*.zip
+*.pyc
+*.tar.gz
+*.deb
+*.tar.bz2
+*.rar
+*.so
+*.o
+
+

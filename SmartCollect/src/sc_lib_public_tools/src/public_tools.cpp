@@ -139,6 +139,52 @@ void PublicTools::getFilesInDir(const std::string &baseDir, const std::string &k
     return;
 }
 
+void PublicTools::getFilesWithExtensionInDir(const std::string &baseDir, const std::string &extension, std::vector<std::string> &files) {
+    DIR *dir;
+    dirent *ptr;
+
+    // if dir == NULL
+    if( !(dir = opendir(baseDir.c_str())) ) {
+        LOG(WARNING) << "Failed to open " << baseDir;
+        return;
+    }
+
+    // while ptr != NULL
+    while(ptr = readdir(dir)) {
+        // ignore . and ..
+        if( !(strcmp(ptr->d_name, ".")) ||
+            !(strcmp(ptr->d_name, "..")) ) {
+            continue;
+        }
+
+        // regular file
+        if(8 == ptr->d_type) {
+            // only deal ROAD_LANE_MARKING_GEO mif & mid
+            const std::string fileName(ptr->d_name);
+            if( (fileName.size() - extension.size() ) == fileName.find(extension) ) {
+                LOG(INFO) << fileName.size() << ";" << extension.size() << ";" << fileName.find(extension);
+                files.push_back(baseDir + "/" + fileName);
+            }
+            // else do nothing
+            // else {}
+        }
+        // directory
+        else
+        if(4 == ptr->d_type) {
+            const std::string subDir(baseDir + "/" + ptr->d_name);
+            getFilesWithExtensionInDir(subDir, extension, files);
+        }
+        // else {
+        //     // ignore links(10) & others
+        // }
+    }
+
+    closedir(dir);
+    return;
+}
+
+
+
 int PublicTools::popenWithReturn(const std::string &cmd, std::vector<std::string> &cmdReturn) {
     const size_t maxByte = 1000;
     char result[maxByte];
@@ -249,13 +295,19 @@ void PublicTools::runShellCmd(const std::string &cmd) {
 }
 
 bool PublicTools::isInChina(double lat, double lon) {
-   LOG(INFO) << __FUNCTION__ << " start.";
-   if (lat >= 20) {
-    return true;
-   }
-   return false;
-}
+    LOG(INFO) << __FUNCTION__ << " start.";
+    if(lat >= 32 && lat <= 40 && lon >= 132 && lon <= 144) {
+        LOG_EVERY_N(INFO, 100) << "I am in Japan.";
+        return false;
+    }
+    if(lat <= 20) {
+        LOG_EVERY_N(INFO, 100) << "I am in Singapore.";
+        return false;
+    }
 
+    LOG_EVERY_N(INFO, 100) << "I am in China.";
+    return true;
+}
 
 }
 // namespace public_tools

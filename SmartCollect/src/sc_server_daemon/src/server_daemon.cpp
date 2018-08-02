@@ -230,7 +230,8 @@ void ServerDaemon::clientCB(const sc_msgs::ClientCmd::ConstPtr& pClientMsg) {
 
             LOG(INFO) << "I got " << projectArr.size() << " projects to process.";
             for(auto &project: projectArr) {
-                const std::string cmd("mv \'/opt/smartc/record/" + project + "\' /tmp/; true");
+                // const std::string cmd("mv \'/opt/smartc/record/" + project + "\' /tmp/; true");
+                const std::string cmd("rm -rf \'/opt/smartc/record/" + project + "\'; true");
                 LOG(INFO) << "I am gonna: " + cmd;
                 (void)public_tools::PublicTools::runShellCmd(cmd);
             }

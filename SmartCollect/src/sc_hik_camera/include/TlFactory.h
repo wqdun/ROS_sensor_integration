@@ -21,39 +21,39 @@ namespace MvCamCtrl
 
 
         /** @fn     EnumDevices( unsigned int nTLayerType , MV_CC_DEVICE_INFO_LIST& stDevList )
-         *  @brief  Ã¶¾Ù×ÓÍøÄÚ£¬Ö¸¶¨µÄ´«ÊäĞ­Òé¶ÔÓ¦µÄËùÓĞÉè±¸
-         *  @param  nTLayerType     [IN]    - Ö¸¶¨µÄ´«ÊäĞ­Òé
-                    stDevList       [OUT]   - Éè±¸ĞÅÏ¢ÁĞ±í
-         *  
-         *  @return ³É¹¦£¬·µ»ØMV_OK£»Ê§°Ü£¬·µ»Ø´íÎóÂë
+         *  @brief  æšä¸¾å­ç½‘å†…ï¼ŒæŒ‡å®šçš„ä¼ è¾“åè®®å¯¹åº”çš„æ‰€æœ‰è®¾å¤‡
+         *  @param  nTLayerType     [IN]    - æŒ‡å®šçš„ä¼ è¾“åè®®
+                    stDevList       [OUT]   - è®¾å¤‡ä¿¡æ¯åˆ—è¡¨
+         *
+         *  @return æˆåŠŸï¼Œè¿”å›MV_OKï¼›å¤±è´¥ï¼Œè¿”å›é”™è¯¯ç 
          */
         virtual int EnumDevices( unsigned int nTLayerType , MV_CC_DEVICE_INFO_LIST& stDevList );
 
 
         /** @fn     CreateDevice( const MV_CC_DEVICE_INFO& device )
-         *  @brief  ´´½¨Éè±¸´úÀíÀà
-         *  @param  device          [IN]    - Éè±¸ĞÅÏ¢£¨½öÒªÇó´«Êä²ãÀàĞÍÓĞĞ§¼´¿É£©
-         *  
-         *  @return ³É¹¦£¬·µ»ØÉè±¸´úÀíÊµÀı£»Ê§°Ü£¬·µ»ØNULL
+         *  @brief  åˆ›å»ºè®¾å¤‡ä»£ç†ç±»
+         *  @param  device          [IN]    - è®¾å¤‡ä¿¡æ¯ï¼ˆä»…è¦æ±‚ä¼ è¾“å±‚ç±»å‹æœ‰æ•ˆå³å¯ï¼‰
+         *
+         *  @return æˆåŠŸï¼Œè¿”å›è®¾å¤‡ä»£ç†å®ä¾‹ï¼›å¤±è´¥ï¼Œè¿”å›NULL
          */
         virtual IMvDevice* CreateDevice( const MV_CC_DEVICE_INFO& device );
 
 
         /** @fn     DestroyDevice( IMvDevice* pDevice)
-         *  @brief  Ïú»ÙÖ¸¶¨Éè±¸µÄÄÚ²¿×ÊÔ´
-         *  @param  pDevice         [IN]    - Éè±¸¶ÔÏó
-         *  
-         *  @return ³É¹¦£¬·µ»ØMV_OK£»Ê§°Ü£¬·µ»Ø´íÎóÂë
+         *  @brief  é”€æ¯æŒ‡å®šè®¾å¤‡çš„å†…éƒ¨èµ„æº
+         *  @param  pDevice         [IN]    - è®¾å¤‡å¯¹è±¡
+         *
+         *  @return æˆåŠŸï¼Œè¿”å›MV_OKï¼›å¤±è´¥ï¼Œè¿”å›é”™è¯¯ç 
          */
         virtual int DestroyDevice( IMvDevice* );
 
 
         /** @fn     IsDeviceAccessible( const MV_CC_DEVICE_INFO& deviceInfo)
-         *  @brief  ÅĞ¶ÏÖ¸¶¨µÄÉè±¸ÊÇ·ñ¿ÉÒÔ·ÃÎÊ
-         *  @param  deviceInfo      [IN]    - Ö¸¶¨µÄÉè±¸ĞÅÏ¢
-         *  
-         *  @return ¿ÉÒÔ·ÃÎÊ£¬·µ»Ø true £»Ã»ÓĞÈ¨ÏŞ»òÉè±¸ÒÑµôÏß£¬·µ»Ø false 
-         *  @note   Ôİ²»Ö§³Ö
+         *  @brief  åˆ¤æ–­æŒ‡å®šçš„è®¾å¤‡æ˜¯å¦å¯ä»¥è®¿é—®
+         *  @param  deviceInfo      [IN]    - æŒ‡å®šçš„è®¾å¤‡ä¿¡æ¯
+         *
+         *  @return å¯ä»¥è®¿é—®ï¼Œè¿”å› true ï¼›æ²¡æœ‰æƒé™æˆ–è®¾å¤‡å·²æ‰çº¿ï¼Œè¿”å› false
+         *  @note   æš‚ä¸æ”¯æŒ
          */
         virtual bool IsDeviceAccessible( const MV_CC_DEVICE_INFO& deviceInfo);
 

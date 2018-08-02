@@ -1,4 +1,4 @@
 SHELL=/bin/bash
 PATH=/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin
 
-* * * * * root [ $(/sbin/ifconfig eth0 | /bin/grep "RUNNING" | /usr/bin/wc -l) -gt 0 ] && /opt/smartc/devel/lib/sc_camera_ip_forcer/sc_camera_ip_forcer_node || /bin/echo $(/bin/date +%Y/%m/%d-%H:%M:%S): "Ethernet not power on, no need to force camera-IP." >>/opt/smartc/log/force_ip_per_minute.log
+* * * * * root bash /opt/smartc/src/tools/force_ip_per_minute.sh

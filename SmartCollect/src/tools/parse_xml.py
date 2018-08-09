@@ -103,20 +103,24 @@ def del_node_by_tagkeyvalue(nodelist, tag, kv_map):
                 parent_node.remove(child)
 
 if __name__ == "__main__":
-    record_path = sys.argv[1]
-    velodyne_launch = sys.argv[2]
-    path_lidar = record_path + "/Lidar/"
+    old_xml = sys.argv[1]
+    node2modify = sys.argv[2]
+    name2add = sys.argv[3]
+    value2add = sys.argv[4]
+    new_file = sys.argv[5]
+    print "I am gonna add a new param: %s:%s in %s's node named: %s, generate a new file: %s" %(name2add,value2add,old_xml,node2modify,new_file)
 
     # 1 读取xml文件
-    tree_cld = read_xml(velodyne_launch);
+    tree_cld = read_xml(old_xml);
+
     # 2 属性修改
     # 2.1 找到父节点
     nodes_cld = find_nodes(tree_cld, "node")
     # 2.2 通过属性准确定位子节点
     # add child node
-    result_node_cld = get_node_by_keyvalue(nodes_cld, {"name": "$(arg manager)_driver"})
-    element = create_node("param", {"name": "record_path", "value": path_lidar}, "")
+    result_node_cld = get_node_by_keyvalue(nodes_cld, {"name": node2modify})
+    element = create_node("param", {"name": name2add, "value": value2add})
     add_child_node(result_node_cld, element)
+
     # 3 输出到结果文件
-    new_velodyne_launch = velodyne_launch[:-6] + "xml"
-    write_xml(tree_cld, new_velodyne_launch)
+    write_xml(tree_cld, new_file)

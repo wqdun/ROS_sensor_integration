@@ -42,7 +42,7 @@ add_path_to_veledyne_launch() {
     local absolute_velodyne_launch="${absolute_catkin_path}/src/velodyne/velodyne_driver/launch/nodelet_manager.launch"
     local parse_xml_script="${absolute_script_path}/parse_xml.py"
     chmod +x "${parse_xml_script}"
-    "${parse_xml_script}" "${_absolute_record_path}" "${absolute_velodyne_launch}"
+    "${parse_xml_script}" "${absolute_velodyne_launch}" "\$(arg manager)_driver" "record_path" "${_absolute_record_path}/Lidar/" "${absolute_velodyne_launch%.*}.xml"
 
     log_with_time "Add record path ${_absolute_record_path} to launch file: ${absolute_velodyne_launch}."
 }
@@ -72,8 +72,9 @@ start_smart_collector_server() {
     if [ $? -ne 0 ]; then
         log_with_time "sc_camera_ip_forcer_node has not been executed, gonna run it."
         bash /opt/smartc/src/tools/force_ip_per_minute.sh
+    else
+        log_with_time "sc_camera_ip_forcer_node already been executed."
     fi
-    log_with_time "sc_camera_ip_forcer_node already been executed."
 
     for i in $(seq 30)
     do

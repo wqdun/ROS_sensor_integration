@@ -268,9 +268,6 @@ bool VelodyneDriver::poll(int64_t isSaveLidar)
     const double pktDaySecond = scan->packets[i].stamp.toSec();
     (void)fwrite(&pktDaySecond, sizeof(pktDaySecond), 1, pOutFile);
     (void)fwrite(&(scan->packets[i].data[0]), packet_size, 1, pOutFile);
-    const uint8_t *pAzimuth = &(scan->packets[i].data[2]);
-    const uint16_t azimuth = *(reinterpret_cast<const uint16_t *>(pAzimuth));
-    LOG(INFO) << i << "; azimuth: " << azimuth;
   }
   fclose(pOutFile);
 

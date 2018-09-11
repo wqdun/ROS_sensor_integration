@@ -9,3 +9,7 @@
 *.o
 
 
+*.bmp
+*.jpg
+*.jpeg
+*.png

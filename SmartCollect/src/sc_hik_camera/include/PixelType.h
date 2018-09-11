@@ -31,7 +31,7 @@
 enum MvGvspPixelType
 {
     // Undefined pixel type
-    PixelType_Gvsp_Undefined                = -1, 
+    PixelType_Gvsp_Undefined                = -1,
 
     // Mono buffer format defines
     PixelType_Gvsp_Mono1p                   =   (MV_GVSP_PIX_MONO | MV_PIXEL_BIT_COUNT(1) | 0x0037),
@@ -46,7 +46,7 @@ enum MvGvspPixelType
     PixelType_Gvsp_Mono14                   =   (MV_GVSP_PIX_MONO | MV_PIXEL_BIT_COUNT(16) | 0x0025),
     PixelType_Gvsp_Mono16                   =   (MV_GVSP_PIX_MONO | MV_PIXEL_BIT_COUNT(16) | 0x0007),
 
-    // Bayer buffer format defines 
+    // Bayer buffer format defines
     PixelType_Gvsp_BayerGR8                 =   (MV_GVSP_PIX_MONO | MV_PIXEL_BIT_COUNT(8) | 0x0008),
     PixelType_Gvsp_BayerRG8                 =   (MV_GVSP_PIX_MONO | MV_PIXEL_BIT_COUNT(8) | 0x0009),
     PixelType_Gvsp_BayerGB8                 =   (MV_GVSP_PIX_MONO | MV_PIXEL_BIT_COUNT(8) | 0x000A),
@@ -72,7 +72,7 @@ enum MvGvspPixelType
     PixelType_Gvsp_BayerGB16                =   (MV_GVSP_PIX_MONO | MV_PIXEL_BIT_COUNT(16) | 0x0030),
     PixelType_Gvsp_BayerBG16                =   (MV_GVSP_PIX_MONO | MV_PIXEL_BIT_COUNT(16) | 0x0031),
 
-    // RGB Packed buffer format defines 
+    // RGB Packed buffer format defines
     PixelType_Gvsp_RGB8_Packed              =   (MV_GVSP_PIX_COLOR | MV_PIXEL_BIT_COUNT(24) | 0x0014),
     PixelType_Gvsp_BGR8_Packed              =   (MV_GVSP_PIX_COLOR | MV_PIXEL_BIT_COUNT(24) | 0x0015),
     PixelType_Gvsp_RGBA8_Packed             =   (MV_GVSP_PIX_COLOR | MV_PIXEL_BIT_COUNT(32) | 0x0016),
@@ -88,7 +88,7 @@ enum MvGvspPixelType
     PixelType_Gvsp_RGB565_Packed            =   (MV_GVSP_PIX_COLOR | MV_PIXEL_BIT_COUNT(16) | 0x0035),
     PixelType_Gvsp_BGR565_Packed            =   (MV_GVSP_PIX_COLOR | MV_PIXEL_BIT_COUNT(16) | 0X0036),
 
-    // YUV Packed buffer format defines 
+    // YUV Packed buffer format defines
     PixelType_Gvsp_YUV411_Packed            =   (MV_GVSP_PIX_COLOR | MV_PIXEL_BIT_COUNT(12) | 0x001E),
     PixelType_Gvsp_YUV422_Packed            =   (MV_GVSP_PIX_COLOR | MV_PIXEL_BIT_COUNT(16) | 0x001F),
     PixelType_Gvsp_YUV422_YUYV_Packed       =   (MV_GVSP_PIX_COLOR | MV_PIXEL_BIT_COUNT(16) | 0x0032),
@@ -106,13 +106,13 @@ enum MvGvspPixelType
     PixelType_Gvsp_YCBCR709_422_8_CBYCRY    =   (MV_GVSP_PIX_COLOR | MV_PIXEL_BIT_COUNT(16) | 0x0045),
     PixelType_Gvsp_YCBCR709_411_8_CBYYCRYY  =   (MV_GVSP_PIX_COLOR | MV_PIXEL_BIT_COUNT(12) | 0x0042),
 
-    // RGB Planar buffer format defines 
+    // RGB Planar buffer format defines
     PixelType_Gvsp_RGB8_Planar              =   (MV_GVSP_PIX_COLOR | MV_PIXEL_BIT_COUNT(24) | 0x0021),
     PixelType_Gvsp_RGB10_Planar             =   (MV_GVSP_PIX_COLOR | MV_PIXEL_BIT_COUNT(48) | 0x0022),
     PixelType_Gvsp_RGB12_Planar             =   (MV_GVSP_PIX_COLOR | MV_PIXEL_BIT_COUNT(48) | 0x0023),
     PixelType_Gvsp_RGB16_Planar             =   (MV_GVSP_PIX_COLOR | MV_PIXEL_BIT_COUNT(48) | 0x0024),
 
-    // ◊‘∂®“ÂµƒÕº∆¨∏Ò Ω
+    // Ëá™ÂÆö‰πâÁöÑÂõæÁâáÊ†ºÂºè
     PixelType_Gvsp_Jpeg                     =   (MV_GVSP_PIX_CUSTOM | MV_PIXEL_BIT_COUNT(24) | 0x0001),
 };
 
@@ -121,7 +121,7 @@ enum MvGvspPixelType
 //
 //};
 
-//øÁ∆ΩÃ®∂®“Â
+//Ë∑®Âπ≥Âè∞ÂÆö‰πâ
 #ifdef WIN32
 typedef __int64 int64_t;
 typedef unsigned __int64 uint64_t;

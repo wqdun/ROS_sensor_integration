@@ -8,7 +8,7 @@
 HikCamera::HikCamera() {
     LOG(INFO) << __FUNCTION__ << " start.";
     err_ = MV_OK;
-    handle_ = NULL;
+    handles_.clear();
     memset(&deviceList_, 0, sizeof(MV_CC_DEVICE_INFO_LIST));
 }
 
@@ -24,6 +24,7 @@ void HikCamera::enumGigeDevices() {
         LOG(ERROR) << "MV_CC_EnumDevices failed, err_: " << err_;
         exit(1);
     }
+    LOG(INFO) << "Find " << deviceList_.nDeviceNum << " Devices.";
     if(deviceList_.nDeviceNum <= 0) {
         LOG(WARNING) << "Find No Devices.";
         exit(1);
@@ -43,18 +44,20 @@ void HikCamera::enumGigeDevices() {
 void HikCamera::open_configDevices() {
     LOG(INFO) << __FUNCTION__ << " start.";
     for(size_t i = 0; i < deviceList_.nDeviceNum; ++i) {
-        err_ = MV_CC_CreateHandle(&handle_, deviceList_.pDeviceInfo[i]);
+        void *_handle = NULL;
+        err_ = MV_CC_CreateHandle(&_handle, deviceList_.pDeviceInfo[i]);
         if(MV_OK != err_) {
             LOG(ERROR) << "MV_CC_CreateHandle failed, err_: " << err_ << "; i: " << i;
             exit(1);
         }
 
-        err_ = MV_CC_OpenDevice(handle_);
+        err_ = MV_CC_OpenDevice(_handle);
         if(MV_OK != err_) {
             LOG(ERROR) << "MV_CC_OpenDevice failed, err_: " << err_ << "; i: " << i;
             exit(1);
         }
 
+        handles_.push_back(_handle);
         (void)configDevices(i);
     }
 }
@@ -62,7 +65,7 @@ void HikCamera::open_configDevices() {
 void HikCamera::configDevices(size_t index) {
     LOG(INFO) << __FUNCTION__ << " start.";
     LOG(INFO) << "Set trigger mode as off.";
-    err_ = MV_CC_SetEnumValue(handle_, "TriggerMode", 0);
+    err_ = MV_CC_SetEnumValue(handles_[index], "TriggerMode", MV_TRIGGER_MODE_OFF);
     if(MV_OK != err_) {
         LOG(ERROR) << "MV_CC_SetTriggerMode failed, err_: " << err_;
         exit(1);
@@ -73,13 +76,13 @@ void HikCamera::configDevices(size_t index) {
         LOG(INFO) << "It only works for the GigE camera.";
         return;
     }
-    int nPacketSize = MV_CC_GetOptimalPacketSize(handle_);
+    const int nPacketSize = MV_CC_GetOptimalPacketSize(handles_[index]);
     LOG(INFO) << "Detection network optimal package size, nPacketSize: " << nPacketSize;
     if(nPacketSize <= 0) {
         LOG(ERROR) << "Get Packet Size failed, nPacketSize: " << nPacketSize;
         exit(1);
     }
-    err_ = MV_CC_SetIntValue(handle_, "GevSCPSPacketSize", nPacketSize);
+    err_ = MV_CC_SetIntValue(handles_[index], "GevSCPSPacketSize", nPacketSize);
     if(err_ != MV_OK) {
         LOG(ERROR) << "Set Packet Size failed, err_: " << err_;
         exit(1);
@@ -88,16 +91,18 @@ void HikCamera::configDevices(size_t index) {
 
 void HikCamera::registerCB() {
     LOG(INFO) << __FUNCTION__ << " start.";
-    err_ = MV_CC_RegisterImageCallBackEx(handle_, imageCB, handle_);
-    if(MV_OK != err_) {
-        LOG(ERROR) << "MV_CC_RegisterImageCallBackEx failed, err_: " << err_;
-        exit(1);
-    }
+    for(const auto &handle: handles_) {
+        err_ = MV_CC_RegisterImageCallBackEx(handle, imageCB, handle);
+        if(MV_OK != err_) {
+            LOG(ERROR) << "MV_CC_RegisterImageCallBackEx failed, err_: " << err_;
+            exit(1);
+        }
 
-    err_ = MV_CC_StartGrabbing(handle_);
-    if(MV_OK != err_) {
-        LOG(ERROR) << "MV_CC_StartGrabbing failed, err_: " << err_;
-        exit(1);
+        err_ = MV_CC_StartGrabbing(handle);
+        if(MV_OK != err_) {
+            LOG(ERROR) << "MV_CC_StartGrabbing failed, err_: " << err_;
+            exit(1);
+        }
     }
 }
 
@@ -132,31 +137,30 @@ void HikCamera::run() {
     (void)PressEnterToExit();
 }
 
-
 void HikCamera::doClean() {
     LOG(INFO) << __FUNCTION__ << " start.";
-    err_ = MV_CC_StopGrabbing(handle_);
-    if(MV_OK != err_) {
-        LOG(ERROR) << "MV_CC_StopGrabbing failed, err_: " << err_;
-        exit(1);
-    }
+    for(const auto &handle: handles_) {
+        err_ = MV_CC_StopGrabbing(handle);
+        if(MV_OK != err_) {
+            LOG(ERROR) << "MV_CC_StopGrabbing failed, err_: " << err_;
+            exit(1);
+        }
 
-    err_ = MV_CC_CloseDevice(handle_);
-    if(MV_OK != err_) {
-        LOG(ERROR) << "MV_CC_CloseDevice failed, err_: " << err_;
-        exit(1);
-    }
+        err_ = MV_CC_CloseDevice(handle);
+        if(MV_OK != err_) {
+            LOG(ERROR) << "MV_CC_CloseDevice failed, err_: " << err_;
+            exit(1);
+        }
 
-    err_ = MV_CC_DestroyHandle(handle_);
-    if(MV_OK != err_) {
-        LOG(ERROR) << "MV_CC_DestroyHandle failed, err_: " << err_;
-        exit(1);
+        err_ = MV_CC_DestroyHandle(handle);
+        if(MV_OK != err_) {
+            LOG(ERROR) << "MV_CC_DestroyHandle failed, err_: " << err_;
+            exit(1);
+        }
     }
-    handle_ = NULL;
 }
 
-void HikCamera::PressEnterToExit(void)
-{
+void HikCamera::PressEnterToExit(void) {
     LOG(INFO) << "Wait enter to stop grabbing.";
     int c;
     while( (c = getchar()) != '\n' && c != EOF);

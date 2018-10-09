@@ -2,6 +2,7 @@
 #define __HIK_CAMERA_ARM_H__
 
 #include <stdlib.h>
+#include <vector>
 #include "MvCameraControl.h"
 
 class HikCamera {
@@ -15,7 +16,7 @@ private:
     static void __stdcall imageCB(unsigned char * pData, MV_FRAME_OUT_INFO_EX* pFrameInfo, void* pUser);
 
     int err_;
-    void *handle_;
+    std::vector<void *> handles_;
     MV_CC_DEVICE_INFO_LIST deviceList_;
 
     void enumGigeDevices();

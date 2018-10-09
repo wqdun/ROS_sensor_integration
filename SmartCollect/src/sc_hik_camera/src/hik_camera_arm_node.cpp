@@ -9,7 +9,7 @@ int main(int argc, char **argv) {
     LOG(INFO) << "Got " << argc << " parameters.";
 
     HikCamera hikCamera;
-    hikCamera.run();
+    hikCamera.Run();
     LOG(INFO) << "Returning...";
     return 0;
 }

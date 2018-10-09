@@ -3,7 +3,8 @@
 #define NDEBUG
 // #undef NDEBUG
 #include <glog/logging.h>
-// #define __USE_HIK_API_SAVING_JPG__
+
+MV_CC_PIXEL_CONVERT_PARAM HikCamera::s_convertParam_ = {0};
 
 HikCamera::HikCamera() {
     LOG(INFO) << __FUNCTION__ << " start.";
@@ -14,10 +15,10 @@ HikCamera::HikCamera() {
 
 HikCamera::~HikCamera() {
     LOG(INFO) << __FUNCTION__ << " start.";
-    (void)doClean();
+    (void)DoClean();
 }
 
-void HikCamera::enumGigeDevices() {
+void HikCamera::EnumGigeDevices() {
     LOG(INFO) << __FUNCTION__ << " start.";
     err_ = MV_CC_EnumDevices(MV_GIGE_DEVICE, &deviceList_);
     if(MV_OK != err_) {
@@ -37,11 +38,11 @@ void HikCamera::enumGigeDevices() {
             LOG(ERROR) << "NULL == pDeviceInfo";
             exit(1);
         }
-        (void)printDeviceInfo(pDeviceInfo);
+        (void)PrintDeviceInfo(pDeviceInfo);
     }
 }
 
-void HikCamera::open_configDevices() {
+void HikCamera::OpenConfigDevices() {
     LOG(INFO) << __FUNCTION__ << " start.";
     for(size_t i = 0; i < deviceList_.nDeviceNum; ++i) {
         void *_handle = NULL;
@@ -58,11 +59,11 @@ void HikCamera::open_configDevices() {
         }
 
         handles_.push_back(_handle);
-        (void)configDevices(i);
+        (void)ConfigDevices(i);
     }
 }
 
-void HikCamera::configDevices(size_t index) {
+void HikCamera::ConfigDevices(size_t index) {
     LOG(INFO) << __FUNCTION__ << " start.";
     LOG(INFO) << "Set trigger mode as off.";
     err_ = MV_CC_SetEnumValue(handles_[index], "TriggerMode", MV_TRIGGER_MODE_OFF);
@@ -89,10 +90,10 @@ void HikCamera::configDevices(size_t index) {
     }
 }
 
-void HikCamera::registerCB() {
+void HikCamera::RegisterCB() {
     LOG(INFO) << __FUNCTION__ << " start.";
     for(const auto &handle: handles_) {
-        err_ = MV_CC_RegisterImageCallBackEx(handle, imageCB, handle);
+        err_ = MV_CC_RegisterImageCallBackEx(handle, ImageCB, handle);
         if(MV_OK != err_) {
             LOG(ERROR) << "MV_CC_RegisterImageCallBackEx failed, err_: " << err_;
             exit(1);
@@ -106,7 +107,7 @@ void HikCamera::registerCB() {
     }
 }
 
-void HikCamera::printDeviceInfo(MV_CC_DEVICE_INFO* pstMVDevInfo) {
+void HikCamera::PrintDeviceInfo(MV_CC_DEVICE_INFO* pstMVDevInfo) {
     LOG(INFO) << __FUNCTION__ << " start.";
     if(!pstMVDevInfo) {
         LOG(ERROR) << "The Pointer of pstMVDevInfo is NULL!";
@@ -129,16 +130,16 @@ void HikCamera::printDeviceInfo(MV_CC_DEVICE_INFO* pstMVDevInfo) {
     return;
 }
 
-void HikCamera::run() {
+void HikCamera::Run() {
     LOG(INFO) << __FUNCTION__ << " start.";
-    (void)enumGigeDevices();
-    (void)open_configDevices();
-    (void)registerCB();
+    (void)EnumGigeDevices();
+    (void)OpenConfigDevices();
+    (void)RegisterCB();
     (void)PressEnterToExit();
 }
 
-void HikCamera::doClean() {
-    LOG(INFO) << __FUNCTION__ << " start.";
+void HikCamera::DoClean() {
+
     for(const auto &handle: handles_) {
         err_ = MV_CC_StopGrabbing(handle);
         if(MV_OK != err_) {
@@ -160,7 +161,7 @@ void HikCamera::doClean() {
     }
 }
 
-void HikCamera::PressEnterToExit(void) {
+void HikCamera::PressEnterToExit() {
     LOG(INFO) << "Wait enter to stop grabbing.";
     int c;
     while( (c = getchar()) != '\n' && c != EOF);
@@ -168,11 +169,79 @@ void HikCamera::PressEnterToExit(void) {
     while(getchar() != '\n');
 }
 
-void __stdcall HikCamera::imageCB(unsigned char *pData, MV_FRAME_OUT_INFO_EX* pFrameInfo, void* pUser) {
+void __stdcall HikCamera::ImageCB(unsigned char *pData, MV_FRAME_OUT_INFO_EX *pFrameInfo, void *pUser) {
     if(!pFrameInfo) {
         LOG(ERROR) << "pFrameInfo is NULL.";
         return;
     }
     LOG(INFO) << "GetOneFrame[" << pFrameInfo->nFrameNum << "]: " << pFrameInfo->nWidth << " * " << pFrameInfo->nHeight;
+    (void)ManipulateData(pData, pFrameInfo, pUser);
 }
 
+void HikCamera::ManipulateData(unsigned char *pData, MV_FRAME_OUT_INFO_EX *pFrameInfo, void *pUser) {
+    LOG(INFO) << __FUNCTION__ << " start.";
+    int err = MV_OK;
+    void *handle = pUser;
+
+    unsigned char *pDataForRGB = (unsigned char*)malloc(pFrameInfo->nWidth * pFrameInfo->nHeight * 4 + 2048);
+    if(!pDataForRGB) {
+        LOG(ERROR) << "Failed to allocate memory for pDataForRGB.";
+        exit(-1);
+    }
+    s_convertParam_.nWidth = pFrameInfo->nWidth;
+    s_convertParam_.nHeight = pFrameInfo->nHeight;
+    s_convertParam_.pSrcData = pData;
+    s_convertParam_.nSrcDataLen = pFrameInfo->nFrameLen;
+    s_convertParam_.enSrcPixelType = pFrameInfo->enPixelType;
+    s_convertParam_.enDstPixelType = PixelType_Gvsp_RGB8_Packed;
+    s_convertParam_.pDstBuffer = pDataForRGB;
+    s_convertParam_.nDstBufferSize = pFrameInfo->nWidth * pFrameInfo->nHeight * 4 + 2048;
+
+    err = MV_CC_ConvertPixelType(handle, &s_convertParam_);
+    if(MV_OK != err) {
+        LOG(ERROR) << "MV_CC_ConvertPixelType fail! err: " << err;
+        return;
+    }
+    LOG(INFO) << "ConvertPixelType " << pFrameInfo->enPixelType << " --> " << PixelType_Gvsp_RGB8_Packed;
+
+    // Output image format is JPEG; Compress the uncompressed image
+    tjhandle tjInstance = tjInitCompress();
+    if(NULL == tjInstance) {
+        LOG(ERROR) << "initializing compressor.";
+        exit(-1);
+    }
+    unsigned char *jpegBuf = NULL;
+    unsigned long jpegSize = 0;
+    const int outQual = 80;
+    const int pixelFormat = TJPF_RGB;
+    const int outSubsamp = TJSAMP_444;
+    const int flags = 0;
+    if(tjCompress2(tjInstance, pDataForRGB, pFrameInfo->nWidth, 0, pFrameInfo->nHeight, pixelFormat, &jpegBuf, &jpegSize, outSubsamp, outQual, flags) < 0) {
+        LOG(ERROR) << "compressing image.";
+        exit(-1);
+    }
+    if(pDataForRGB) {
+        free(pDataForRGB);
+        pDataForRGB = NULL;
+    }
+    tjDestroy(tjInstance);
+    tjInstance = NULL;
+
+    std::string imageName("/tmp/" + std::to_string(pFrameInfo->nFrameNum) + ".jpg");
+    FILE *jpegFile = fopen(imageName.c_str(), "wb");
+    if(!jpegFile) {
+        LOG(ERROR) << "Opening output file.";
+        exit(-1);
+    }
+    if(fwrite(jpegBuf, jpegSize, 1, jpegFile) < 1) {
+        LOG(ERROR) << "Writing output file.";
+        exit(-1);
+    }
+    fclose(jpegFile);
+    jpegFile = NULL;
+    tjFree(jpegBuf);
+    jpegBuf = NULL;
+
+    LOG(INFO) << "Save " << imageName;
+    return;
+}

@@ -1,0 +1,14 @@
+%YAML:1.0
+
+TriggerMode: 0
+BinningHorizontal: 2
+BinningVertical: 2
+GainAuto: 2
+AutoGainLowerLimit: 0
+AutoGainUpperLimit: 20
+ExposureAuto: 2
+AutoExposureTimeLowerLimit: 10
+AutoExposureTimeUpperLimit: 15000
+
+
+

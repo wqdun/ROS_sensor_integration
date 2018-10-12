@@ -24,6 +24,7 @@ private:
     int err_;
     std::vector<void *> handles_;
     MV_CC_DEVICE_INFO_LIST deviceList_;
+    boost::shared_ptr<CommTimer> pCommTimer_;
 
     void EnumGigeDevices();
     void PrintDeviceInfo(MV_CC_DEVICE_INFO* pstMVDevInfo);

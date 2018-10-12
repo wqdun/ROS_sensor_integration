@@ -1,7 +1,7 @@
 #include "hik_camera_arm.h"
 
-#define NDEBUG
-// #undef NDEBUG
+// #define NDEBUG
+#undef NDEBUG
 #include <glog/logging.h>
 
 MV_CC_PIXEL_CONVERT_PARAM HikCamera::s_convertParam_ = {0};
@@ -66,15 +66,19 @@ void HikCamera::OpenConfigDevices() {
 void HikCamera::ConfigDevices(size_t index) {
     LOG(INFO) << __FUNCTION__ << " start.";
     void *handle = handles_[index];
+    const std::string hikConfig("/opt/smartc/config/hik_config.yaml");
+    cv::FileStorage fs(hikConfig, cv::FileStorage::READ);
+    int configValue1 = -1;
+    int configValue2 = -1;
 
-    LOG(INFO) << "Set trigger mode as off.";
-    err_ = MV_CC_SetEnumValue(handle, "TriggerMode", MV_TRIGGER_MODE_OFF);
+    fs["TriggerMode"] >> configValue1;
+    err_ = MV_CC_SetEnumValue(handle, "TriggerMode", configValue1);
     if(MV_OK != err_) {
         LOG(ERROR) << "MV_CC_SetTriggerMode failed, err_: " << err_;
         exit(1);
     }
+    LOG(INFO) << "Set trigger mode: " << configValue1;
 
-    LOG(INFO) << "Detection network optimal package size.";
     if(deviceList_.pDeviceInfo[index]->nTLayerType != MV_GIGE_DEVICE) {
         LOG(INFO) << "It only works for the GigE camera.";
         return;
@@ -91,26 +95,31 @@ void HikCamera::ConfigDevices(size_t index) {
         exit(1);
     }
 
-    // LOG(INFO) << "Set image size.";
-    // MVCC_INTVALUE currentWidth = {0};
-    // err_ = MV_CC_GetWidth(handle, &currentWidth);
-    // if(err_ != MV_OK) {
-    //     LOG(ERROR) << "MV_CC_GetWidth failed, err_: " << err_;
-    //     exit(1);
-    // }
-    // MVCC_INTVALUE currentHeight = {0};
-    // err_ = MV_CC_GetHeight(handle, &currentHeight);
-    // if(err_ != MV_OK) {
-    //     LOG(ERROR) << "MV_CC_GetHeight failed, err_: " << err_;
-    //     exit(1);
-    // }
-    // unsigned int nValue = currentWidth.nMax;
-    // LOG(ERROR) << "nValue: " << nValue;
-    // err_ = MV_CC_SetWidth(handle, 960);
-    // if(err_ != MV_OK) {
-    //     LOG(ERROR) << "MV_CC_SetWidth failed, err_: " << err_;
-    //     exit(1);
-    // }
+    MVCC_ENUMVALUE currentBinningHorizontal = {0};
+    err_ = MV_CC_GetEnumValue(handle, "BinningHorizontal", &currentBinningHorizontal);
+    if(MV_OK != err_) {
+        LOG(ERROR) << "Get BinningHorizontal failed, err_: " << err_;
+        exit(1);
+    }
+    MVCC_ENUMVALUE currentBinningVertical = {0};
+    err_ = MV_CC_GetEnumValue(handle, "BinningVertical", &currentBinningVertical);
+    if(MV_OK != err_) {
+        LOG(ERROR) << "Get BinningVertical failed, err_: " << err_;
+        exit(1);
+    }
+    fs["BinningHorizontal"] >> configValue1;
+    err_ = MV_CC_SetEnumValue(handle, "BinningHorizontal", configValue1);
+    if(MV_OK != err_) {
+        LOG(ERROR) << "Set BinningHorizontal failed, err_: " << err_;
+        exit(1);
+    }
+    fs["BinningVertical"] >> configValue2;
+    err_ = MV_CC_SetEnumValue(handle, "BinningVertical", configValue2);
+    if(MV_OK != err_) {
+        LOG(ERROR) << "Set BinningHorizontal failed, err_: " << err_;
+        exit(1);
+    }
+    LOG(INFO) << "Current binning: " << currentBinningHorizontal.nCurValue << "*" << currentBinningVertical.nCurValue << "-->" << configValue1 << "*" << configValue2;
 
     MVCC_ENUMVALUE currentPixel = {0};
     err_ = MV_CC_GetPixelFormat(handle, &currentPixel);
@@ -118,13 +127,97 @@ void HikCamera::ConfigDevices(size_t index) {
         LOG(ERROR) << "MV_CC_GetPixelFormat failed, err_: " << err_;
         exit(1);
     }
-    unsigned int pixel = PixelType_Gvsp_BayerRG8;
+    unsigned int pixel = PixelType_Gvsp_RGB8_Packed;
     err_ = MV_CC_SetPixelFormat(handle, pixel);
     if(err_ != MV_OK) {
         LOG(ERROR) << "MV_CC_SetPixelFormat failed, err_: " << err_;
         exit(1);
     }
-    LOG(INFO) << "PixelFormat: " << currentPixel.nCurValue << "-->" << pixel;
+    LOG(INFO) << "PixelFormat: " << currentPixel.nCurValue << " --> " << pixel;
+
+    MVCC_FLOATVALUE currentFrameRate = {0};
+    err_ = MV_CC_GetFrameRate(handle, &currentFrameRate);
+    if(err_ != MV_OK) {
+        LOG(ERROR) << "GetFrameRate failed, err_: " << err_;
+        exit(1);
+    }
+    const float frameRate = 10;
+    err_ = MV_CC_SetFrameRate(handle, frameRate);
+    if(err_ != MV_OK) {
+        LOG(ERROR) << "SetFrameRate failed, err_: " << err_;
+        exit(1);
+    }
+    LOG(INFO) << "Frame rate: " << currentFrameRate.fCurValue << " --> " << frameRate;
+
+    MVCC_ENUMVALUE currentGainMode = {0};
+    err_ = MV_CC_GetGainMode(handle, &currentGainMode);
+    if(MV_OK != err_) {
+        LOG(ERROR) << "MV_CC_GetGainMode failed, err_: " << err_;
+        exit(1);
+    }
+    fs["GainAuto"] >> configValue1;
+    err_ = MV_CC_SetEnumValue(handle, "GainAuto", configValue1);
+    if(MV_OK != err_) {
+        LOG(ERROR) << "MV_CC_SetTriggerMode failed, err_: " << err_;
+        exit(1);
+    }
+    LOG(INFO) << "GainAuto: " << currentGainMode.nCurValue << " --> " << configValue1;
+
+    MVCC_FLOATVALUE currentAutoGainLowerLimit = {0};
+    err_ = MV_CC_GetFloatValue(handle, "AutoGainLowerLimit", &currentAutoGainLowerLimit);
+    if(MV_OK != err_) {
+        LOG(ERROR) << "MV_CC_GetFloatValue failed, err_: " << err_;
+        exit(1);
+    }
+    MVCC_FLOATVALUE currentAutoGainUpperLimit = {0};
+    err_ = MV_CC_GetFloatValue(handle, "AutoGainUpperLimit", &currentAutoGainUpperLimit);
+    if(MV_OK != err_) {
+        LOG(ERROR) << "MV_CC_GetFloatValue failed, err_: " << err_;
+        exit(1);
+    }
+    fs["AutoGainLowerLimit"] >> configValue1;
+    fs["AutoGainUpperLimit"] >> configValue2;
+    err_ = MV_CC_SetFloatValue(handle, "AutoGainLowerLimit", configValue1);
+    err_ = MV_CC_SetFloatValue(handle, "AutoGainUpperLimit", configValue2);
+    if(MV_OK != err_) {
+        LOG(ERROR) << "MV_CC_SetFloatValue failed, err_: " << err_;
+        exit(1);
+    }
+    LOG(INFO) << "AutoGain [" << currentAutoGainLowerLimit.fCurValue << ", " << currentAutoGainUpperLimit.fCurValue << "] --> [" << configValue1 << ", " << configValue2 << "]";
+
+    MVCC_ENUMVALUE currentExposureAuto = {0};
+    err_ = MV_CC_GetEnumValue(handle, "ExposureAuto", &currentExposureAuto);
+    if(MV_OK != err_) {
+        LOG(ERROR) << "MV_CC_GetEnumValue failed, err_: " << err_;
+        exit(1);
+    }
+    fs["ExposureAuto"] >> configValue1;
+    err_ = MV_CC_SetEnumValue(handle, "ExposureAuto", configValue1);
+    if(MV_OK != err_) {
+        LOG(ERROR) << "MV_CC_SetEnumValue failed, err_: " << err_;
+        exit(1);
+    }
+    LOG(INFO) << "ExposureAuto: " << currentExposureAuto.nCurValue << " --> " << configValue1;
+
+    MVCC_INTVALUE currentAutoExposureTimeLowerLimit = {0};
+    MVCC_INTVALUE currentAutoExposureTimeUpperLimit = {0};
+    err_ = MV_CC_GetIntValue(handle, "AutoExposureTimeLowerLimit", &currentAutoExposureTimeLowerLimit);
+    err_ = MV_CC_GetIntValue(handle, "AutoExposureTimeUpperLimit", &currentAutoExposureTimeUpperLimit);
+    if(MV_OK != err_) {
+        LOG(ERROR) << "MV_CC_GetIntValue failed, err_: " << err_;
+        exit(1);
+    }
+    fs["AutoExposureTimeLowerLimit"] >> configValue1;
+    fs["AutoExposureTimeUpperLimit"] >> configValue2;
+    err_ = MV_CC_SetIntValue(handle, "AutoExposureTimeLowerLimit", configValue1);
+    err_ = MV_CC_SetIntValue(handle, "AutoExposureTimeUpperLimit", configValue2);
+    if(MV_OK != err_) {
+        LOG(ERROR) << "MV_CC_SetIntValue failed, err_: " << err_;
+        exit(1);
+    }
+    LOG(INFO) << "AutoExposureTime [" << currentAutoExposureTimeLowerLimit.nCurValue << ", " << currentAutoExposureTimeUpperLimit.nCurValue << "] --> [" << configValue1 << ", " << configValue2 << "]";
+
+    fs.release();
 }
 
 void HikCamera::RegisterCB() {
@@ -222,38 +315,38 @@ void HikCamera::Convert2Mat(unsigned char *pData, MV_FRAME_OUT_INFO_EX *pFrameIn
     int err = MV_OK;
     void *handle = pUser;
 
-    unsigned char *pDataForRGB = (unsigned char*)malloc(pFrameInfo->nWidth * pFrameInfo->nHeight * 4 + 2048);
-    if(!pDataForRGB) {
-        LOG(ERROR) << "Failed to allocate memory for pDataForRGB.";
-        exit(-1);
-    }
-    s_convertParam_.nWidth = pFrameInfo->nWidth;
-    s_convertParam_.nHeight = pFrameInfo->nHeight;
-    s_convertParam_.pSrcData = pData;
-    s_convertParam_.nSrcDataLen = pFrameInfo->nFrameLen;
-    s_convertParam_.enSrcPixelType = pFrameInfo->enPixelType;
-    s_convertParam_.enDstPixelType = PixelType_Gvsp_RGB8_Packed;
-    s_convertParam_.pDstBuffer = pDataForRGB;
-    s_convertParam_.nDstBufferSize = pFrameInfo->nWidth * pFrameInfo->nHeight * 4 + 2048;
-    DLOG(INFO) << __FUNCTION__;
-    err = MV_CC_ConvertPixelType(handle, &s_convertParam_);
-    if(MV_OK != err) {
-        LOG(ERROR) << "MV_CC_ConvertPixelType fail! err: " << err;
-        return;
-    }
-    LOG(INFO) << "ConvertPixelType " << pFrameInfo->enPixelType << " --> " << PixelType_Gvsp_RGB8_Packed;
+    // unsigned char *pDataForRGB = (unsigned char*)malloc(pFrameInfo->nWidth * pFrameInfo->nHeight * 4 + 2048);
+    // if(!pDataForRGB) {
+    //     LOG(ERROR) << "Failed to allocate memory for pDataForRGB.";
+    //     exit(-1);
+    // }
+    // s_convertParam_.nWidth = pFrameInfo->nWidth;
+    // s_convertParam_.nHeight = pFrameInfo->nHeight;
+    // s_convertParam_.pSrcData = pData;
+    // s_convertParam_.nSrcDataLen = pFrameInfo->nFrameLen;
+    // s_convertParam_.enSrcPixelType = pFrameInfo->enPixelType;
+    // s_convertParam_.enDstPixelType = PixelType_Gvsp_RGB8_Packed;
+    // s_convertParam_.pDstBuffer = pDataForRGB;
+    // s_convertParam_.nDstBufferSize = pFrameInfo->nWidth * pFrameInfo->nHeight * 4 + 2048;
+    // DLOG(INFO) << __FUNCTION__;
+    // err = MV_CC_ConvertPixelType(handle, &s_convertParam_);
+    // if(MV_OK != err) {
+    //     LOG(ERROR) << "MV_CC_ConvertPixelType failed, err: " << err;
+    //     return;
+    // }
+    // LOG(INFO) << "ConvertPixelType " << pFrameInfo->enPixelType << " --> " << PixelType_Gvsp_RGB8_Packed;
 
-    cv::Mat matDst(pFrameInfo->nHeight, pFrameInfo->nWidth, CV_8UC3);
-    memcpy(matDst.data, pDataForRGB, pFrameInfo->nWidth * pFrameInfo->nHeight * 3);
-    if(pDataForRGB) {
-        free(pDataForRGB);
-        pDataForRGB = NULL;
-    }
+    cv::Mat matImage(pFrameInfo->nHeight, pFrameInfo->nWidth, CV_8UC3);
+    memcpy(matImage.data, pData, pFrameInfo->nWidth * pFrameInfo->nHeight * 3);
+    // if(pDataForRGB) {
+    //     free(pDataForRGB);
+    //     pDataForRGB = NULL;
+    // }
     cv::Mat matBGR(pFrameInfo->nHeight, pFrameInfo->nWidth, CV_8UC3);
-    cv::cvtColor(matDst, matBGR, cv::COLOR_RGB2BGR);
-    cv::imshow("image", matBGR);
-    DLOG(INFO) << __FUNCTION__;
-    // cv::imwrite("/tmp/image.jpg", matDst);
+    cv::cvtColor(matImage, matBGR, cv::COLOR_RGB2BGR);
+    cv::imshow("matBGR", matBGR);
+    DLOG(INFO) << "cvtColor end.";
+    // cv::imwrite("/tmp/image.jpg", matBGR);
     cv::waitKey(1);
     DLOG(INFO) << __FUNCTION__ << " end.";
 }

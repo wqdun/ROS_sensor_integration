@@ -76,7 +76,7 @@ void PublicTools::multiply_matrix(const T &in_xyz, const double tf_matrix[][3], 
     out_xyz.x = tf_matrix[0][0] * in_xyz.x + tf_matrix[0][1] * in_xyz.y + tf_matrix[0][2] * in_xyz.z;
     out_xyz.y = tf_matrix[1][0] * in_xyz.x + tf_matrix[1][1] * in_xyz.y + tf_matrix[1][2] * in_xyz.z;
     out_xyz.z = tf_matrix[2][0] * in_xyz.x + tf_matrix[2][1] * in_xyz.y + tf_matrix[2][2] * in_xyz.z;
-  }
+}
 
 template <typename T>
 void PublicTools::tf_rotate(const T &in_xyz, const pointXYZ_t &angle_xyz, const pointXYZ_t &offset, T &out_xyz) {

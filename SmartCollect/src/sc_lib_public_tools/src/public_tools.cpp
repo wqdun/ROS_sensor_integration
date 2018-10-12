@@ -183,8 +183,6 @@ void PublicTools::getFilesWithExtensionInDir(const std::string &baseDir, const s
     return;
 }
 
-
-
 int PublicTools::popenWithReturn(const std::string &cmd, std::vector<std::string> &cmdReturn) {
     const size_t maxByte = 1000;
     char result[maxByte];

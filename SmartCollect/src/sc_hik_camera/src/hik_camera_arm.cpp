@@ -1,21 +1,25 @@
 #include "hik_camera_arm.h"
 
-// #define NDEBUG
-#undef NDEBUG
+#define NDEBUG
+// #undef NDEBUG
 #include <glog/logging.h>
 
 MV_CC_PIXEL_CONVERT_PARAM HikCamera::s_convertParam_ = {0};
+boost::shared_ptr<SerialReader> HikCamera::s_pSerialReader_;
 
 HikCamera::HikCamera() {
     LOG(INFO) << __FUNCTION__ << " start.";
     err_ = MV_OK;
     handles_.clear();
     memset(&deviceList_, 0, sizeof(MV_CC_DEVICE_INFO_LIST));
+    s_pSerialReader_.reset(new SerialReader() );
 }
 
 HikCamera::~HikCamera() {
     LOG(INFO) << __FUNCTION__ << " start.";
+    s_pSerialReader_->isGonnaRun_ = false;
     (void)DoClean();
+    pThread_->join();
 }
 
 void HikCamera::EnumGigeDevices() {
@@ -262,6 +266,7 @@ void HikCamera::PrintDeviceInfo(MV_CC_DEVICE_INFO* pstMVDevInfo) {
 
 void HikCamera::Run() {
     LOG(INFO) << __FUNCTION__ << " start.";
+    pThread_ = boost::shared_ptr<boost::thread>(new boost::thread(boost::bind(&SerialReader::Run, s_pSerialReader_) ) );
     (void)EnumGigeDevices();
     (void)OpenConfigDevices();
     (void)RegisterCB();
@@ -305,117 +310,20 @@ void __stdcall HikCamera::ImageCB(unsigned char *pData, MV_FRAME_OUT_INFO_EX *pF
         return;
     }
     LOG(INFO) << "GetOneFrame[" << pFrameInfo->nFrameNum << "]: " << pFrameInfo->nWidth << " * " << pFrameInfo->nHeight;
-    // (void)ConvertSaveImage(pData, pFrameInfo, pUser);
     (void)Convert2Mat(pData, pFrameInfo, pUser);
-
 }
 
 void HikCamera::Convert2Mat(unsigned char *pData, MV_FRAME_OUT_INFO_EX *pFrameInfo, void *pUser) {
-    LOG(INFO) << __FUNCTION__ << " start.";
+    DLOG(INFO) << __FUNCTION__ << " start.";
+    DLOG(INFO) << std::fixed << s_pSerialReader_->slamData_.gpsTime;
     int err = MV_OK;
-    void *handle = pUser;
-
-    // unsigned char *pDataForRGB = (unsigned char*)malloc(pFrameInfo->nWidth * pFrameInfo->nHeight * 4 + 2048);
-    // if(!pDataForRGB) {
-    //     LOG(ERROR) << "Failed to allocate memory for pDataForRGB.";
-    //     exit(-1);
-    // }
-    // s_convertParam_.nWidth = pFrameInfo->nWidth;
-    // s_convertParam_.nHeight = pFrameInfo->nHeight;
-    // s_convertParam_.pSrcData = pData;
-    // s_convertParam_.nSrcDataLen = pFrameInfo->nFrameLen;
-    // s_convertParam_.enSrcPixelType = pFrameInfo->enPixelType;
-    // s_convertParam_.enDstPixelType = PixelType_Gvsp_RGB8_Packed;
-    // s_convertParam_.pDstBuffer = pDataForRGB;
-    // s_convertParam_.nDstBufferSize = pFrameInfo->nWidth * pFrameInfo->nHeight * 4 + 2048;
-    // DLOG(INFO) << __FUNCTION__;
-    // err = MV_CC_ConvertPixelType(handle, &s_convertParam_);
-    // if(MV_OK != err) {
-    //     LOG(ERROR) << "MV_CC_ConvertPixelType failed, err: " << err;
-    //     return;
-    // }
-    // LOG(INFO) << "ConvertPixelType " << pFrameInfo->enPixelType << " --> " << PixelType_Gvsp_RGB8_Packed;
 
     cv::Mat matImage(pFrameInfo->nHeight, pFrameInfo->nWidth, CV_8UC3);
     memcpy(matImage.data, pData, pFrameInfo->nWidth * pFrameInfo->nHeight * 3);
-    // if(pDataForRGB) {
-    //     free(pDataForRGB);
-    //     pDataForRGB = NULL;
-    // }
     cv::Mat matBGR(pFrameInfo->nHeight, pFrameInfo->nWidth, CV_8UC3);
     cv::cvtColor(matImage, matBGR, cv::COLOR_RGB2BGR);
     cv::imshow("matBGR", matBGR);
     DLOG(INFO) << "cvtColor end.";
-    // cv::imwrite("/tmp/image.jpg", matBGR);
     cv::waitKey(1);
     DLOG(INFO) << __FUNCTION__ << " end.";
 }
-
-// void HikCamera::ConvertSaveImage(unsigned char *pData, MV_FRAME_OUT_INFO_EX *pFrameInfo, void *pUser) {
-//     LOG(INFO) << __FUNCTION__ << " start.";
-//     int err = MV_OK;
-//     void *handle = pUser;
-
-//     unsigned char *pDataForRGB = (unsigned char*)malloc(pFrameInfo->nWidth * pFrameInfo->nHeight * 4 + 2048);
-//     if(!pDataForRGB) {
-//         LOG(ERROR) << "Failed to allocate memory for pDataForRGB.";
-//         exit(-1);
-//     }
-
-//     s_convertParam_.nWidth = pFrameInfo->nWidth;
-//     s_convertParam_.nHeight = pFrameInfo->nHeight;
-//     s_convertParam_.pSrcData = pData;
-//     s_convertParam_.nSrcDataLen = pFrameInfo->nFrameLen;
-//     s_convertParam_.enSrcPixelType = pFrameInfo->enPixelType;
-//     s_convertParam_.enDstPixelType = PixelType_Gvsp_RGB8_Packed;
-//     s_convertParam_.pDstBuffer = pDataForRGB;
-//     s_convertParam_.nDstBufferSize = pFrameInfo->nWidth * pFrameInfo->nHeight * 4 + 2048;
-
-//     err = MV_CC_ConvertPixelType(handle, &s_convertParam_);
-//     if(MV_OK != err) {
-//         LOG(ERROR) << "MV_CC_ConvertPixelType fail! err: " << err;
-//         return;
-//     }
-//     LOG(INFO) << "ConvertPixelType " << pFrameInfo->enPixelType << " --> " << PixelType_Gvsp_RGB8_Packed;
-
-//     // Output image format is JPEG; Compress the uncompressed image
-//     tjhandle tjInstance = tjInitCompress();
-//     if(NULL == tjInstance) {
-//         LOG(ERROR) << "initializing compressor.";
-//         exit(-1);
-//     }
-//     unsigned char *jpegBuf = NULL;
-//     unsigned long jpegSize = 0;
-//     const int outQual = 80;
-//     const int pixelFormat = TJPF_RGB;
-//     const int outSubsamp = TJSAMP_444;
-//     const int flags = 0;
-//     if(tjCompress2(tjInstance, pDataForRGB, pFrameInfo->nWidth, 0, pFrameInfo->nHeight, pixelFormat, &jpegBuf, &jpegSize, outSubsamp, outQual, flags) < 0) {
-//         LOG(ERROR) << "compressing image.";
-//         exit(-1);
-//     }
-//     if(pDataForRGB) {
-//         free(pDataForRGB);
-//         pDataForRGB = NULL;
-//     }
-//     tjDestroy(tjInstance);
-//     tjInstance = NULL;
-
-//     std::string imageName("/tmp/" + std::to_string(pFrameInfo->nFrameNum) + ".jpg");
-//     FILE *jpegFile = fopen(imageName.c_str(), "wb");
-//     if(!jpegFile) {
-//         LOG(ERROR) << "Opening output file.";
-//         exit(-1);
-//     }
-//     if(fwrite(jpegBuf, jpegSize, 1, jpegFile) < 1) {
-//         LOG(ERROR) << "Writing output file.";
-//         exit(-1);
-//     }
-//     fclose(jpegFile);
-//     jpegFile = NULL;
-//     tjFree(jpegBuf);
-//     jpegBuf = NULL;
-
-//     LOG(INFO) << "Save " << imageName;
-//     return;
-// }

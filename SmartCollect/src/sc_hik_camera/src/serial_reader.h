@@ -10,6 +10,7 @@
 #include "../../sc_lib_public_tools/src/tools_no_ros.h"
 
 typedef struct {
+    double unixTime;
     double gpsTime;
 
     double gyroX;
@@ -23,6 +24,8 @@ typedef struct {
     double lat;
     double lon;
     double hei;
+
+    double encoder_v;
 } slamProtocol_t;
 
 class SerialReader {
@@ -34,7 +37,6 @@ public:
 
     bool isGonnaRun_;
     slamProtocol_t slamData_;
-    std::deque<slamProtocol_t> slam10Datas_(10);
 
 
 private:

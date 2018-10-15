@@ -18,7 +18,7 @@ using namespace cv;
 
 //true: use loop closure
 //false don't use loop closure
-#define LOOP_CLOSURE true // false
+#define LOOP_CLOSURE false
 
 #define MIN_LOOP_NUM 20
 #define LOOP_FREQ 3
@@ -173,7 +173,7 @@ public:
  |  /
  | /
  |/--------->X
- 
+
  */
 enum StateOrder
 {

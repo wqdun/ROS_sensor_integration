@@ -83,7 +83,9 @@ void SerialReader::ReadSerial() {
             switch(buf[i]) {
             case '$': {
                 isFirstFrame = false;
-                frameBuf = "$";
+                struct timeval now;
+                gettimeofday(&now, NULL);
+                frameBuf = std::to_string(now.tv_sec + now.tv_usec / 1000000.) + ",$";
                 break;
             }
             case '\r':
@@ -129,22 +131,19 @@ void SerialReader::Parse2SlamData(const std::string &_slamProtocol) {
     std::vector<std::string> slamParsed;
     //$GTIMU,0,13651.300,-0.2424,-0.0248,0.0491,0.0054,0.0202,0.9980,0,53.9*75,0.0000000,0.0000000,0.00
     boost::split(slamParsed, _slamProtocol, boost::is_any_of(",") );
-    if(14 != slamParsed.size() ) {
+    if(15 != slamParsed.size() ) {
         LOG(ERROR) << "Error parsing " << _slamProtocol << ", size: " << slamParsed.size() ;
         return;
     }
-
-    slamData_.gpsTime = public_tools::ToolsNoRos::string2double(slamParsed[2]);
-    slamData_.gyroX = public_tools::ToolsNoRos::string2double(slamParsed[3]);
-    slamData_.gyroY = public_tools::ToolsNoRos::string2double(slamParsed[4]);
-    slamData_.gyroZ = public_tools::ToolsNoRos::string2double(slamParsed[5]);
-    slamData_.accX = public_tools::ToolsNoRos::string2double(slamParsed[6]);
-    slamData_.accY = public_tools::ToolsNoRos::string2double(slamParsed[7]);
-    slamData_.accZ = public_tools::ToolsNoRos::string2double(slamParsed[8]);
-    slamData_.lat = public_tools::ToolsNoRos::string2double(slamParsed[11]);
-    slamData_.lon = public_tools::ToolsNoRos::string2double(slamParsed[12]);
-    slamData_.hei = public_tools::ToolsNoRos::string2double(slamParsed[13]);
-
-    slam10Datas_.emplace_back(slamData_);
-    slam10Datas_.pop_front();
+    slamData_.unixTime = public_tools::ToolsNoRos::string2double(slamParsed[0]);
+    slamData_.gpsTime = public_tools::ToolsNoRos::string2double(slamParsed[3]);
+    slamData_.gyroX = public_tools::ToolsNoRos::string2double(slamParsed[4]);
+    slamData_.gyroY = public_tools::ToolsNoRos::string2double(slamParsed[5]);
+    slamData_.gyroZ = public_tools::ToolsNoRos::string2double(slamParsed[6]);
+    slamData_.accX = public_tools::ToolsNoRos::string2double(slamParsed[7]);
+    slamData_.accY = public_tools::ToolsNoRos::string2double(slamParsed[8]);
+    slamData_.accZ = public_tools::ToolsNoRos::string2double(slamParsed[9]);
+    slamData_.lat = public_tools::ToolsNoRos::string2double(slamParsed[12]);
+    slamData_.lon = public_tools::ToolsNoRos::string2double(slamParsed[13]);
+    slamData_.hei = public_tools::ToolsNoRos::string2double(slamParsed[14]);
 }

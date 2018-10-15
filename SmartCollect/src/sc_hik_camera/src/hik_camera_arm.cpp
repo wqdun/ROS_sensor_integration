@@ -13,6 +13,14 @@ HikCamera::HikCamera() {
     handles_.clear();
     memset(&deviceList_, 0, sizeof(MV_CC_DEVICE_INFO_LIST));
     // s_pSerialReader_.reset(new SerialReader() );
+///////////////////start vins//////////////////////////////
+    const char* cvocfile = "/opt/smartc/config/briefk10l6.bin";
+    const char* cpatternfile = "/opt/smartc/config/briefpattern.yml";
+    const char* csettingfile = "/opt/smartc/config/vehicle-dikuencoder.yaml";
+    string svocfile(cvocfile);
+    string spatternfile(cpatternfile);
+    string ssettingfile(csettingfile);
+    mSystem.create(svocfile,spatternfile,ssettingfile);
 }
 
 HikCamera::~HikCamera() {
@@ -309,11 +317,14 @@ void __stdcall HikCamera::ImageCB(unsigned char *pData, MV_FRAME_OUT_INFO_EX *pF
         LOG(ERROR) << "pFrameInfo is NULL.";
         return;
     }
-    LOG(INFO) << "GetOneFrame[" << pFrameInfo->nFrameNum << "]: " << pFrameInfo->nWidth << " * " << pFrameInfo->nHeight;
-    (void)Convert2Mat(pData, pFrameInfo, pUser);
+    struct timeval now;
+    gettimeofday(&now, NULL);
+    const double unixTime = now.tv_sec + now.tv_usec / 1000000.;
+    LOG(INFO) << "GetOneFrame[" << pFrameInfo->nFrameNum << "]: " << pFrameInfo->nWidth << " * " << pFrameInfo->nHeight << " at " << unixTime;
+    (void)Convert2Mat(pData, pFrameInfo, pUser, unixTime);
 }
 
-void HikCamera::Convert2Mat(unsigned char *pData, MV_FRAME_OUT_INFO_EX *pFrameInfo, void *pUser) {
+void HikCamera::Convert2Mat(unsigned char *pData, MV_FRAME_OUT_INFO_EX *pFrameInfo, void *pUser, double _unixTime) {
     DLOG(INFO) << __FUNCTION__ << " start.";
     DLOG(INFO) << std::fixed << s_pSerialReader_->slam10Datas_.back().gpsTime;
     DLOG(INFO) << s_pSerialReader_->slam10Datas_.size();
@@ -324,8 +335,41 @@ void HikCamera::Convert2Mat(unsigned char *pData, MV_FRAME_OUT_INFO_EX *pFrameIn
     memcpy(matImage.data, pData, pFrameInfo->nWidth * pFrameInfo->nHeight * 3);
     cv::Mat matBGR(pFrameInfo->nHeight, pFrameInfo->nWidth, CV_8UC3);
     cv::cvtColor(matImage, matBGR, cv::COLOR_RGB2BGR);
-    cv::imshow("matBGR", matBGR);
-    DLOG(INFO) << "cvtColor end.";
-    cv::waitKey(1);
-    DLOG(INFO) << __FUNCTION__ << " end.";
+
+    (void)IMUProc(slam10Datas_, system_);
+
+    std::vector<Box> emptybox;
+    pair<double,vector<Box>> emptyonebox;
+    emptyonebox.first = _unixTime;
+    emptyonebox.second = emptybox;
+    (void)ImageProc(matBGR, _unixTime, &system_, emptyonebox);
+
+    // cv::imshow("matBGR", matBGR);
+    // DLOG(INFO) << "cvtColor end.";
+    // cv::waitKey(1);
+    // DLOG(INFO) << __FUNCTION__ << " end.";
+}
+
+void HikCamera::IMUProc(const std::deque<slamProtocol_t> &tenIMUMeasurements, vinssystem &mSystem)
+{
+    DLOG(INFO) << __FUNCTION__ << " start.";
+    for(size_t i = 0; i < 10; ++i) {
+        ImuConstPtr imu_msg = new IMU_MSG();
+
+        imu_msg->header = tenIMUMeasurements[i].unixTime;
+        imu_msg->acc(0) = tenIMUMeasurements[i].accX;
+        imu_msg->acc(1) = tenIMUMeasurements[i].accY;
+        imu_msg->acc(2) = tenIMUMeasurements[i].accZ;
+        imu_msg->gyr(0) = tenIMUMeasurements[i].gyroX;
+        imu_msg->gyr(1) = tenIMUMeasurements[i].gyroY;
+        imu_msg->gyr(2) = tenIMUMeasurements[i].gyroZ;
+        imu_msg->encoder_v = tenIMUMeasurements[i].encoder_v;
+        mSystem.inputIMU(imu_msg);
+    }
+}
+
+cv::Mat HikCamera::ImageProc(cv::Mat srcImage, double header, vinssystem* mpSystem, pair<double,vector<Box>> onebox)
+{
+    cv::Mat resImage = mpSystem->inputImage(srcImage,header,onebox);
+    return resImage.clone();
 }

@@ -8,6 +8,7 @@
 
 #include "MvCameraControl.h"
 #include "serial_reader.h"
+#include "system.h"
 
 class HikCamera {
 public:
@@ -19,7 +20,9 @@ public:
 private:
     static void __stdcall ImageCB(unsigned char * pData, MV_FRAME_OUT_INFO_EX* pFrameInfo, void* pUser);
     static void ConvertSaveImage(unsigned char *pData, MV_FRAME_OUT_INFO_EX *pFrameInfo, void *pUser);
-    static void Convert2Mat(unsigned char *pData, MV_FRAME_OUT_INFO_EX *pFrameInfo, void *pUser);
+    static void Convert2Mat(unsigned char *pData, MV_FRAME_OUT_INFO_EX *pFrameInfo, void *pUser, double time);
+    void IMUProc(IMUMeasument oneIMUMeasurement, double header, vinssystem* mpSystem);
+    cv::Mat ImageProc(cv::Mat srcImage, double header, vinssystem* mpSystem,pair<double,vector<Box>> onebox);
 
     static MV_CC_PIXEL_CONVERT_PARAM s_convertParam_;
     static boost::shared_ptr<SerialReader> s_pSerialReader_;
@@ -28,6 +31,8 @@ private:
     std::vector<void *> handles_;
     MV_CC_DEVICE_INFO_LIST deviceList_;
     boost::shared_ptr<boost::thread> pThread_;
+    vinssystem system_;
+
 
     void EnumGigeDevices();
     void PrintDeviceInfo(MV_CC_DEVICE_INFO* pstMVDevInfo);

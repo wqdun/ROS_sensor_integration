@@ -133,6 +133,7 @@ void SerialReader::Parse2SlamData(const std::string &_slamProtocol) {
         LOG(ERROR) << "Error parsing " << _slamProtocol << ", size: " << slamParsed.size() ;
         return;
     }
+
     slamData_.gpsTime = public_tools::ToolsNoRos::string2double(slamParsed[2]);
     slamData_.gyroX = public_tools::ToolsNoRos::string2double(slamParsed[3]);
     slamData_.gyroY = public_tools::ToolsNoRos::string2double(slamParsed[4]);
@@ -143,4 +144,7 @@ void SerialReader::Parse2SlamData(const std::string &_slamProtocol) {
     slamData_.lat = public_tools::ToolsNoRos::string2double(slamParsed[11]);
     slamData_.lon = public_tools::ToolsNoRos::string2double(slamParsed[12]);
     slamData_.hei = public_tools::ToolsNoRos::string2double(slamParsed[13]);
+
+    slam10Datas_.emplace_back(slamData_);
+    slam10Datas_.pop_front();
 }

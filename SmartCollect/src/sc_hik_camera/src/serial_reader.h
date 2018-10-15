@@ -34,6 +34,7 @@ public:
 
     bool isGonnaRun_;
     slamProtocol_t slamData_;
+    std::deque<slamProtocol_t> slam10Datas_(10);
 
 
 private:

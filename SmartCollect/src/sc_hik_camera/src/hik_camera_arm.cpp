@@ -12,7 +12,7 @@ HikCamera::HikCamera() {
     err_ = MV_OK;
     handles_.clear();
     memset(&deviceList_, 0, sizeof(MV_CC_DEVICE_INFO_LIST));
-    s_pSerialReader_.reset(new SerialReader() );
+    // s_pSerialReader_.reset(new SerialReader() );
 }
 
 HikCamera::~HikCamera() {
@@ -266,7 +266,7 @@ void HikCamera::PrintDeviceInfo(MV_CC_DEVICE_INFO* pstMVDevInfo) {
 
 void HikCamera::Run() {
     LOG(INFO) << __FUNCTION__ << " start.";
-    pThread_ = boost::shared_ptr<boost::thread>(new boost::thread(boost::bind(&SerialReader::Run, s_pSerialReader_) ) );
+    // pThread_ = boost::shared_ptr<boost::thread>(new boost::thread(boost::bind(&SerialReader::Run, s_pSerialReader_) ) );
     (void)EnumGigeDevices();
     (void)OpenConfigDevices();
     (void)RegisterCB();
@@ -315,7 +315,9 @@ void __stdcall HikCamera::ImageCB(unsigned char *pData, MV_FRAME_OUT_INFO_EX *pF
 
 void HikCamera::Convert2Mat(unsigned char *pData, MV_FRAME_OUT_INFO_EX *pFrameInfo, void *pUser) {
     DLOG(INFO) << __FUNCTION__ << " start.";
-    DLOG(INFO) << std::fixed << s_pSerialReader_->slamData_.gpsTime;
+    DLOG(INFO) << std::fixed << s_pSerialReader_->slam10Datas_.back().gpsTime;
+    DLOG(INFO) << s_pSerialReader_->slam10Datas_.size();
+
     int err = MV_OK;
 
     cv::Mat matImage(pFrameInfo->nHeight, pFrameInfo->nWidth, CV_8UC3);

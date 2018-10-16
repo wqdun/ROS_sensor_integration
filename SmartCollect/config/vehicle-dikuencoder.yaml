@@ -5,21 +5,21 @@ imu_topic: "/imu0"
 image_topic: "/cam0/image_raw"
 output_path: "/config/euroc/vins_result.csv"         # vins outputs will be wrttento vins_folder_path + output_path
 
-#camera calibration 
+#camera calibration
 model_type: PINHOLE
 camera_name: camera
-image_width: 768
-image_height: 480
+image_width: 960
+image_height: 600
 distortion_parameters:
-   k1: -6.030e-02
-   k2: 1.961e-01
-   p1: -7.479e-04
-   p2: -2.316e-03
+   k1: -2.424e-01
+   k2: 4.378e-01
+   p1: -2.760e-04
+   p2: -1.870e-03
 projection_parameters:
-   fx: 1.112e+03
-   fy: 1.112e+03
-   cx: 3.793e+02
-   cy: 2.341e+02
+   fx: 1.377e+03
+   fy: 1.377e+03
+   cx: 4.715e+02
+   cy: 3.149e+02
 
 # Extrinsic parameter between IMU and Camera.
 estimate_extrinsic: 1   # 0  Have an accurate extrinsic parameters. We will trust the following imu^R_cam, imu^T_cam, don't change it.
@@ -76,7 +76,7 @@ acc_n: 0.05          # accelerometer measurement noise standard deviation. #0.2
 gyr_n: 0.02         # gyroscope measurement noise standard deviation.     #0.05
 acc_w: 0.0002         # accelerometer bias random work noise standard deviation.  #0.02
 gyr_w: 2.0e-5      # gyroscope bias random work noise standard deviation.     #4.0e-5
-env_n: 0.05        # encoder velocity noise
+env_n: 10000        # encoder velocity noise
 g_norm: 9.81007     # gravity magnitude
 
 

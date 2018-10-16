@@ -247,7 +247,7 @@ void FeatureTracker::readImage(const cv::Mat &_img, cv::Mat &result, double _cur
                 //////////////////////////////////////////////////////////
                 //goodFeaturesToTrack( forw_img, n_pts, 150, 0.05, min_dis, mask);
                 goodFeaturesToTrack( forw_img, n_pts, 150, 0.05, min_dis,mask);
-                /*if(n_pts.size() +  forw_pts.size() < n_max_cnt/2)
+                /*if(n_pts.size() + forw_pts.size() < n_max_cnt/2)
                 {
                     n_pts.clear();
                     goodFeaturesToTrack(forw_img, n_pts, n_max_cnt, 0.10, min_dis, mask);

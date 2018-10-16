@@ -55,7 +55,7 @@ find_package(Eigen3  REQUIRED)
 
 find_package(Pangolin REQUIRED)
 
-find_package(SuiteSparse REQUIRED)
+# find_package(SuiteSparse REQUIRED)
 
 #set(${OpenCV_INCLUDE_DIRS} /usr/local/opencv320/include)
 
@@ -86,6 +86,7 @@ include_directories(
         ${Pangolin_INCLUDE_DIRS}
         ${SUITESPARSE_INCLUDE_DIR}
         ${OpenCV_INCLUDE_DIRS}
+        /opt/mvs/include
 )
 
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/lib)
@@ -201,8 +202,9 @@ add_executable(system_test   src/hik_camera_arm_node.cpp
 		src/serial_reader.cpp
 		../sc_lib_public_tools/src/tools_no_ros.cpp
 		)
+link_directories(/opt/mvs/lib/arm64/)
 
-target_link_libraries(system_test ${PROJECT_NAME} camera_model)
+target_link_libraries(system_test ${PROJECT_NAME} camera_model boost_thread /opt/mvs/lib/arm64/libMvCameraControl.so)
 
 #add_executable(system_test_euroc   src/Example/system_test_euroc.cpp)
 

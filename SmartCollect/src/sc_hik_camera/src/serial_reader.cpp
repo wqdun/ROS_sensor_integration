@@ -7,6 +7,11 @@
 SerialReader::SerialReader() {
     LOG(INFO) << __FUNCTION__ << " start.";
     isGonnaRun_ = true;
+    slam10Datas_.resize(10);
+    for(auto &slamData: slam10Datas_) {
+        slamData = {0};
+    }
+
     fd_ = open("/dev/ttyUSB0", O_RDWR);
     if(fd_ < 0) {
         LOG(ERROR) << "Failed to open device.";
@@ -52,11 +57,11 @@ void SerialReader::GetPositionFromGpfpd(const std::string &gpfpd, std::string &p
     DLOG(INFO) << __FUNCTION__ << " start.";
     std::vector<std::string> gpfpdParsed;
     boost::split(gpfpdParsed, gpfpd, boost::is_any_of( ",*" ) );
-    if(17 != gpfpdParsed.size() ) {
-        LOG(ERROR) << "Error parsing " << gpfpd;
+    if(18 != gpfpdParsed.size() ) {
+        LOG(ERROR) << "Error parsing " << gpfpd << gpfpdParsed.size();
         return;
     }
-    position = gpfpdParsed[6] + "," + gpfpdParsed[7] + "," + gpfpdParsed[8];
+    position = gpfpdParsed[7] + "," + gpfpdParsed[8] + "," + gpfpdParsed[9];
     return;
 }
 
@@ -108,15 +113,18 @@ void SerialReader::ReadSerial() {
                 continue;
             }
 
-            if('F' == frameCompleted[3]) {
-                DLOG(INFO) << "$GPFPD received: " << frameCompleted;
+            if(frameCompleted.find("GPFPD") < frameCompleted.size() ) {
+                // 1539608480.746874,$GPFPD,0,2083.510,0.000,0.074,13.047,0.0000000,0.0000000,0.00,0.000,0.000,0.000,0.000,0,0,00*48
+                LOG(INFO) << "$GPFPD received: " << frameCompleted;
                 (void)GetPositionFromGpfpd(frameCompleted, latLonHei);
             }
             else
-            if('I' == frameCompleted[3]) {
+            if(frameCompleted.find("GTIMU") < frameCompleted.size() ) {
+                // 1539608480.750918,$GTIMU,0,2083.510,0.0300,-0.3019,0.1624,-0.2248,0.0010,0.9730,0,52.7*46
                 DLOG(INFO) << "$GTIMU received: " << frameCompleted;
                 slamProtocol = frameCompleted + "," + latLonHei;
-                DLOG(INFO) << slamProtocol;
+                // 1539608480.750918,$GTIMU,0,2083.510,0.0300,-0.3019,0.1624,-0.2248,0.0010,0.9730,0,52.7*46,0.0000000,0.0000000,0.00
+                DLOG(INFO) << "slamProtocol: " << slamProtocol;
                 (void)Parse2SlamData(slamProtocol);
             }
             else {
@@ -129,21 +137,24 @@ void SerialReader::ReadSerial() {
 void SerialReader::Parse2SlamData(const std::string &_slamProtocol) {
     DLOG(INFO) << __FUNCTION__ << " start.";
     std::vector<std::string> slamParsed;
-    //$GTIMU,0,13651.300,-0.2424,-0.0248,0.0491,0.0054,0.0202,0.9980,0,53.9*75,0.0000000,0.0000000,0.00
+    // 1539608480.750918,$GTIMU,0,2083.510,0.0300,-0.3019,0.1624,-0.2248,0.0010,0.9730,0,52.7*46,0.0000000,0.0000000,0.00
     boost::split(slamParsed, _slamProtocol, boost::is_any_of(",") );
     if(15 != slamParsed.size() ) {
-        LOG(ERROR) << "Error parsing " << _slamProtocol << ", size: " << slamParsed.size() ;
+        LOG(ERROR) << "Error parsing " << _slamProtocol << ", size: " << slamParsed.size();
         return;
     }
     slamData_.unixTime = public_tools::ToolsNoRos::string2double(slamParsed[0]);
     slamData_.gpsTime = public_tools::ToolsNoRos::string2double(slamParsed[3]);
-    slamData_.gyroX = public_tools::ToolsNoRos::string2double(slamParsed[4]);
-    slamData_.gyroY = public_tools::ToolsNoRos::string2double(slamParsed[5]);
-    slamData_.gyroZ = public_tools::ToolsNoRos::string2double(slamParsed[6]);
-    slamData_.accX = public_tools::ToolsNoRos::string2double(slamParsed[7]);
-    slamData_.accY = public_tools::ToolsNoRos::string2double(slamParsed[8]);
-    slamData_.accZ = public_tools::ToolsNoRos::string2double(slamParsed[9]);
+    slamData_.gyroX = public_tools::ToolsNoRos::string2double(slamParsed[4]) / 180 * 3.141592654;
+    slamData_.gyroY = public_tools::ToolsNoRos::string2double(slamParsed[5]) / 180 * 3.141592654;
+    slamData_.gyroZ = public_tools::ToolsNoRos::string2double(slamParsed[6]) / 180 * 3.141592654;
+    slamData_.accX = public_tools::ToolsNoRos::string2double(slamParsed[7]) * 9.81007;
+    slamData_.accY = public_tools::ToolsNoRos::string2double(slamParsed[8]) * 9.81007;
+    slamData_.accZ = public_tools::ToolsNoRos::string2double(slamParsed[9]) * 9.81007;
     slamData_.lat = public_tools::ToolsNoRos::string2double(slamParsed[12]);
     slamData_.lon = public_tools::ToolsNoRos::string2double(slamParsed[13]);
     slamData_.hei = public_tools::ToolsNoRos::string2double(slamParsed[14]);
+
+    slam10Datas_.emplace_back(slamData_);
+    slam10Datas_.pop_front();
 }

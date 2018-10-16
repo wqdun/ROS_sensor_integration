@@ -1,8 +1,10 @@
 #ifndef __SERIAL_READER_H__
 #define __SERIAL_READER_H__
 
+#include <deque>
 #include <sys/types.h>
 #include <sys/stat.h>
+#include <sys/time.h>
 #include <fcntl.h>
 #include <string>
 #include <boost/algorithm/string/classification.hpp>
@@ -32,11 +34,11 @@ class SerialReader {
 public:
     SerialReader();
     ~SerialReader();
-
     void Run();
 
     bool isGonnaRun_;
     slamProtocol_t slamData_;
+    std::deque<slamProtocol_t> slam10Datas_;
 
 
 private:

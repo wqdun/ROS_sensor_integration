@@ -53,11 +53,11 @@ struct greaterThanPtr :
 class FeatureTracker
 {
 public:
-    FeatureTracker(camodocal::CameraPtr m_camera,int col,int row,int max_cnt,int min_dis);
+    FeatureTracker(camodocal::CameraPtr m_camera,int col,int row,int max_cnt,int min_dis, double _fx, double _fy, double _cx, double _cy);
     void FindFeatures(const cv::Mat &_img, cv::Mat &result);
-    void readImage(const cv::Mat &_img, cv::Mat &result, double _cur_time, int _frame_cnt, vector<Point2f> &good_pts, vector<double> &track_len,vector<int>& _track_cnt);
+    void readImage(const cv::Mat &_img, cv::Mat &result, double _cur_time, int _frame_cnt, vector<Point2f> &good_pts, vector<double> &track_len,vector<int>& _track_cnt, cv::Mat& rot12);
     void setMask();
-    void rejectWithF();
+    bool rejectWithF(cv::Mat& rot12);
     void addPoints();
     bool updateID(unsigned int i);
     vector<cv::Point2f> undistortedPoints();
@@ -87,6 +87,11 @@ public:
     int col,row;
     int max_cnt;  // max count of points for LK
     int min_dis;  // minDistance Minimum possible Euclidean distance between the returned corners.
+
+    double m_fx;
+    double m_fy;
+    double m_cx;
+    double m_cy;
 
 
     /*

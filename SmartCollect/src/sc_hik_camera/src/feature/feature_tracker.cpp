@@ -13,7 +13,7 @@ extern "C++"
 {
 int FeatureTracker::n_id = 0;
 
-FeatureTracker::FeatureTracker(camodocal::CameraPtr m_camera,int col,int row,int max_cnt,int min_dis)
+FeatureTracker::FeatureTracker(camodocal::CameraPtr m_camera,int col,int row,int max_cnt,int min_dis, double _fx, double _fy, double _cx, double _cy)
         : mask{row, col, CV_8UC1},update_finished{false},img_cnt{0}
 {
     this->m_camera = m_camera;
@@ -21,6 +21,10 @@ FeatureTracker::FeatureTracker(camodocal::CameraPtr m_camera,int col,int row,int
     this->row = row;
     this->max_cnt = max_cnt;
     this->min_dis = min_dis;
+    m_fx = _fx;
+    m_fy = _fy;
+    m_cx = _cx;
+    m_cy = _cy;
     printf("init ok\n");
 }
 /*********************************************************tools function for feature tracker start*****************************************************/
@@ -96,7 +100,7 @@ void FeatureTracker::setMask()
     //}
 }
 
-void FeatureTracker::rejectWithF()
+bool FeatureTracker::rejectWithF(cv::Mat& rot12)
 {
     if (forw_pts.size() >= 8)
     {
@@ -111,15 +115,77 @@ void FeatureTracker::rejectWithF()
         reduceVector(track_cnt, status);
         reduceVector(parallax_cnt, status);
 
-        // printf("FM ransac: %d -> %lu: %f\n", size_a, forw_pts.size(), 1.0 * forw_pts.size() / size_a);
+        vector<Point2f> tmp_pre_un_pts;
+        vector<Point2f> tmp_forw_un_pts;
 
+        for(int i = 0 ; i < pre_pts.size(); i++)
+        {
+            Eigen::Vector2d a(pre_pts[i].x, pre_pts[i].y);
+            Eigen::Vector3d b;
+            m_camera->liftProjective(a, b);
+            //tmp_pre_un_pts.push_back(cv::Point2f(b.x() / b.z(), b.y() / b.z()));
+            //cout << b.x()/b.z() << "\t" << b.y()/b.z() << endl;
+            tmp_pre_un_pts.push_back(cv::Point2f(m_fx * b.x() / b.z() + m_cx, m_fy * b.y() / b.z() + m_cy));
+        }
+
+        for(int i = 0 ; i < forw_pts.size(); i++)
+        {
+            Eigen::Vector2d a(forw_pts[i].x, forw_pts[i].y);
+            Eigen::Vector3d b;
+            m_camera->liftProjective(a, b);
+            //tmp_forw_un_pts.push_back(cv::Point2f(b.x() / b.z(), b.y() / b.z()));
+            tmp_forw_un_pts.push_back(cv::Point2f(m_fx * b.x() / b.z() + m_cx, m_fy * b.y() / b.z() + m_cy));
+        }
+
+        //m_camera->
+        cv::Mat cameraMatrix = (cv::Mat_<double>(3, 3) << m_fx, 0, m_cx, 0, m_fy, m_cy, 0, 0, 1);
+
+        //cout << "cameraMatrix" << cameraMatrix << endl;
+        cv::Mat E = cv::findEssentialMat(tmp_pre_un_pts, tmp_forw_un_pts,cameraMatrix,cv::FM_RANSAC, 0.99);
+
+        cv::Mat rot21, trans;
+
+        /*cv::Mat R1; cv::Mat R2; cv::Mat t;
+        cv::decomposeEssentialMat(E, R1, R2, t);
+        cv::Mat rvec1; cv::Mat rvec2;
+        Rodrigues(R1, rvec1);
+        Rodrigues(R2, rvec2);
+
+        cout << "R1: \t" << R1 << endl;
+        cout << "R2: \t" << R2 << endl;
+        cout << "norm1: \t" << cv::norm(rvec1) << endl;
+        cout << "norm2: \t" << cv::norm(rvec2) << endl;*/
+
+        int inlier_cnt;
+        if(pre_pts.size() > 5)
+        {
+            inlier_cnt = cv::recoverPose(E, pre_pts, forw_pts, rot21, trans);
+            if(inlier_cnt > 10 && ((inlier_cnt + 0.0) / pre_pts.size() > 0.5))
+            {
+                cout << "inlier num: \t " << inlier_cnt << "\t" << "pre_pts_size:\t" << pre_pts.size()<< endl;
+                rot12 = rot21.t();
+                return true;
+            }
+            else
+            {
+                cout << "inlier num: \t " << inlier_cnt << "\t" << "pre_pts_size:\t" << pre_pts.size()<< endl;
+                rot12 = cv::Mat();
+                return false;
+            }
+        }
+        else
+        {
+            cout << "inlier num: \t " << -1 << "\t" << "pre_pts_size:\t" << pre_pts.size() << endl;
+            rot12 = cv::Mat();
+            return false;
+        }
     }
 }
 
 /*********************************************************tools function for feature tracker ending*****************************************************/
 
 
-void FeatureTracker::readImage(const cv::Mat &_img, cv::Mat &result, double _cur_time, int _frame_cnt, vector<Point2f> &good_pts, vector<double> &track_len, vector<int>& _track_cnt)
+void FeatureTracker::readImage(const cv::Mat &_img, cv::Mat &result, double _cur_time, int _frame_cnt, vector<Point2f> &good_pts, vector<double> &track_len, vector<int>& _track_cnt, cv::Mat& rot12)
 {
 
     result = _img;
@@ -208,7 +274,7 @@ void FeatureTracker::readImage(const cv::Mat &_img, cv::Mat &result, double _cur
 
         if(img_cnt==0)
         {
-            rejectWithF();
+            rejectWithF(rot12);
 
             for (int i = 0; i< forw_pts.size(); i++)
             {
@@ -247,7 +313,7 @@ void FeatureTracker::readImage(const cv::Mat &_img, cv::Mat &result, double _cur
                 //////////////////////////////////////////////////////////
                 //goodFeaturesToTrack( forw_img, n_pts, 150, 0.05, min_dis, mask);
                 goodFeaturesToTrack( forw_img, n_pts, 150, 0.05, min_dis,mask);
-                /*if(n_pts.size() + forw_pts.size() < n_max_cnt/2)
+                /*if(n_pts.size() +  forw_pts.size() < n_max_cnt/2)
                 {
                     n_pts.clear();
                     goodFeaturesToTrack(forw_img, n_pts, n_max_cnt, 0.10, min_dis, mask);

@@ -19,7 +19,7 @@ double IntegrationBase::v_n = 0;
 
 vinssystem::vinssystem()
 {
-   
+
 }
 
 
@@ -110,7 +110,7 @@ void vinssystem::create(string voc_file, string pattern_file,string setting_file
 
 
 
-    mpFeaturetracker = new FeatureTracker(m_camera,imgWidth,imgHeight,max_cnt,min_dis);
+    mpFeaturetracker = new FeatureTracker(m_camera,imgWidth,imgHeight,max_cnt,min_dis,FOCUS_LENGTH_X,FOCUS_LENGTH_Y,PX,PY);
 
     fSettings["acc_n"] >> a_n;
     fSettings["acc_w"] >> a_w;
@@ -134,8 +134,6 @@ void vinssystem::create(string voc_file, string pattern_file,string setting_file
 
     float fps = 20;
     mT = 1e3/fps;
-
-
 }
 
 void vinssystem::updateView() {
@@ -144,10 +142,50 @@ void vinssystem::updateView() {
 
     if (mpEstimator->solver_flag == VINS::INITIAL)
     {
-        s << "ypr: wait for initialization" ;  //需要使用mutex
-        s1 << "v: wait for initialization" ;  //需要使用mutex
-        s2 << "p: wait for initialization" ;  //需要使用mutex
-        s3 << "cost: wait for initialization";
+        {
+            Vector3d P_real;
+            P_real = mpEstimator->r_drift * (mpEstimator->pre_cumu_P + mpEstimator->pre_cumu_R * mpEstimator->tic) + mpEstimator->t_drift;
+            /*Matrix3d*/ //ric_double = ric.cast<double>();
+            Matrix3d R_real;
+            R_real = (mpEstimator->r_drift * mpEstimator->pre_cumu_R)*mpEstimator->ric;
+
+            Quaterniond Qs{mpEstimator->pre_cumu_R * mpEstimator->ric};
+            DRAWFRAME_DATA temp_frame;
+            temp_frame.P_origin = mpEstimator->pre_cumu_P + mpEstimator->pre_cumu_R * mpEstimator->tic;
+            temp_frame.P_draw = P_real;
+            temp_frame.header = mpEstimator->rec_header;
+            temp_frame.iskeyframeflag = false;
+            temp_frame.Q_origin = Qs;
+            temp_frame.dt = mpEstimator->dt2;
+            temp_frame.R_draw = R_real;
+            temp_frame.ric = mpEstimator->ric;
+            temp_frame.tic = mpEstimator->tic;
+            keyframe_database.m_draw.lock();
+            keyframe_database.frames_to_draw.push_back(temp_frame);
+            for(int i = keyframe_database.frames_to_draw.size() - 1; i >= 0; i--)
+            {
+                if((mpEstimator->frame_count == WINDOW_SIZE) && (mpEstimator->Headers[WINDOW_SIZE - 2] == keyframe_database.frames_to_draw[i].header))
+                {
+                    keyframe_database.frames_to_draw[i].iskeyframeflag = true;
+                    break;
+                }
+            }
+            mpDrawer->SetAllFrames(keyframe_database.frames_to_draw);
+            keyframe_database.m_draw.unlock();
+
+            m_points3d.lock();
+            points_3d.clear();
+            mpDrawer->SetAllPoints(points_3d);
+            m_points3d.unlock();
+            s << "ypr: wait for initialization" ;  //需要使用mutex
+            s1 << "v: wait for initialization" ;  //需要使用mutex
+            s2 << "P:" << setprecision(3)
+               << P_real.x() << " "
+               << P_real.y() << " "
+               << P_real.z() << " ";  //需要使用mutex
+            s3 << "cost: wait for initialization";
+        }
+
         return;
     }
 
@@ -182,21 +220,32 @@ void vinssystem::updateView() {
     twc.copyTo(Twc.rowRange(0,3).col(3));
 
     Vector3d P_real;
-    P_real = mpEstimator->r_drift * mpEstimator->Ps[WINDOW_SIZE-1] + mpEstimator->t_drift;
+    P_real = mpEstimator->r_drift * (mpEstimator->Ps[WINDOW_SIZE-1] + mpEstimator->Rs[WINDOW_SIZE - 1] * mpEstimator->tic) + mpEstimator->t_drift;
     /*Matrix3d*/ ric_double = ric.cast<double>();
     Matrix3d R_real;
-    R_real = (mpEstimator->r_drift * mpEstimator->Rs[WINDOW_SIZE-1])*ric_double;
+    R_real = (mpEstimator->r_drift * mpEstimator->Rs[WINDOW_SIZE-1])*mpEstimator->ric;
 
-    Quaterniond Qs{mpEstimator->Rs[WINDOW_SIZE-1]};
+    Quaterniond Qs{mpEstimator->Rs[WINDOW_SIZE-1] * mpEstimator->ric};
     DRAWFRAME_DATA temp_frame;
-    temp_frame.P_origin = mpEstimator->Ps[WINDOW_SIZE-1];
+    temp_frame.P_origin = mpEstimator->Ps[WINDOW_SIZE-1] + mpEstimator->Rs[WINDOW_SIZE - 1] * mpEstimator->tic;
     temp_frame.P_draw = P_real;
     temp_frame.header = mpEstimator->Headers[WINDOW_SIZE-1] - 0.00;
+    temp_frame.iskeyframeflag = false;
     temp_frame.Q_origin = Qs;
     temp_frame.dt = mpEstimator->dt2;
     temp_frame.R_draw = R_real;
+    temp_frame.ric = mpEstimator->ric;
+    temp_frame.tic = mpEstimator->tic;
     keyframe_database.m_draw.lock();
     keyframe_database.frames_to_draw.push_back(temp_frame);
+    for(int i = keyframe_database.frames_to_draw.size() - 1; i >= 0; i--)
+    {
+        if(mpEstimator->Headers[WINDOW_SIZE - 2] == keyframe_database.frames_to_draw[i].header)
+        {
+            keyframe_database.frames_to_draw[i].iskeyframeflag = true;
+            break;
+        }
+    }
     mpDrawer->SetAllFrames(keyframe_database.frames_to_draw);
     keyframe_database.m_draw.unlock();
 
@@ -228,7 +277,7 @@ void vinssystem::updateView() {
        {
            int imu_i = it_per_id.start_frame;
            Vector3d pts_i = it_per_id.feature_per_frame[0].point * it_per_id.estimated_depth;
-           Vector3d tmp = corrected_Rs[imu_i] * (ric_double * pts_i + tic_double) + corrected_Ps[imu_i];
+           Vector3d tmp = corrected_Rs[imu_i] * (mpEstimator->ric * pts_i + tic_double) + corrected_Ps[imu_i];
            points_3d.push_back(tmp);
        }
     }
@@ -359,7 +408,7 @@ void vinssystem::process() {
                 image[feature_id].emplace_back(0, xyz_uv_velocity);
             }
             //TS(process_image);
-            mpEstimator->processImage(image,header,waiting_lists);
+            mpEstimator->processImage(image,header,waiting_lists, img_msg->rot12.clone());
             //TE(process_image);
 
 
@@ -922,7 +971,8 @@ cv::Mat vinssystem::inputImage(cv::Mat& image,double t,pair<double,vector<Box>> 
     vector<Point2f> good_pts;
     vector<double> track_len;
     vector<int> track_cnt;
-    mpFeaturetracker->readImage(img_equa, img_with_feature, img_msg->header, frame_cnt, good_pts, track_len,track_cnt);
+    cv::Mat rot12;
+    mpFeaturetracker->readImage(img_equa, img_with_feature, img_msg->header, frame_cnt, good_pts, track_len,track_cnt, rot12);
 
     //  TE(time_feature);
 
@@ -931,6 +981,7 @@ cv::Mat vinssystem::inputImage(cv::Mat& image,double t,pair<double,vector<Box>> 
     if (mpFeaturetracker->img_cnt == 0) {
 
         img_msg->point_clouds = mpFeaturetracker->image_msg;
+        img_msg->rot12 = rot12.clone();
         //img_msg callback
         m_buf.lock();
         //img_msg->header += dt_initial;
@@ -992,6 +1043,86 @@ cv::Mat vinssystem::inputImage(cv::Mat& image,double t,pair<double,vector<Box>> 
 
 void vinssystem::Run()
 {
+
+//         //创建一个窗口
+//     pangolin::CreateWindowAndBind("Main",640,480);
+//     //启动深度测试
+//     glEnable(GL_DEPTH_TEST);
+
+//     // Define Projection and initial ModelView matrix
+//     pangolin::OpenGlRenderState s_cam(
+//             pangolin::ProjectionMatrix(640,480,420,420,320,240,0.2,100),
+//             //对应的是gluLookAt,摄像机位置,参考点位置,up vector(上向量)
+//             pangolin::ModelViewLookAt(0,-10,0.1,0,0,0,pangolin::AxisNegY)
+//     );
+
+//     // Create Interactive View in window
+//     pangolin::Handler3D handler(s_cam);
+//     //setBounds 跟opengl的viewport 有关
+//     //看SimpleDisplay中边界的设置就知道
+//     pangolin::View &d_cam = pangolin::CreateDisplay().SetBounds(0.0,1.0,0.0,1.0,-640.0f/480.0f)
+//                             .SetHandler(&handler);
+
+//     while(!pangolin::ShouldQuit())
+//     {
+//         // Clear screen and activate view to render into
+//         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+//         d_cam.Activate(s_cam);
+
+//         // Render OpenGL Cube
+// //        pangolin::glDrawColouredCube();\
+//         //坐标轴的创建
+//         pangolin::glDrawAxis(3);
+
+//         //点的创建
+//         glPointSize(10.0f);
+//         glBegin(GL_POINTS);
+//         glColor3f(1.0,1.0,1.0);
+//         glVertex3f(0.0f,0.0f,0.0f);
+//         glVertex3f(1,0,0);
+//         glVertex3f(0,2,0);
+//         glEnd();
+
+//         //把下面的点都做一次旋转变换
+//         glPushMatrix();
+//         //col major
+//         std::vector<GLfloat > Twc = {1,0,0,0, 0,1,0,0 , 0,0,1,0 ,0,0,5,1};
+//         glMultMatrixf(Twc.data());
+
+//         //直线的创建
+//         const float w = 2;
+//         const float h = w*0.75;
+//         const float z = w*0.6;
+//         glLineWidth(2);
+//         glColor3f(1.0,0,0);
+//         glBegin(GL_LINES);
+
+//         glVertex3f(0,0,0);
+//         glVertex3f(w,h,z);
+//         glVertex3f(0,0,0);
+//         glVertex3f(w,-h,z);
+//         glVertex3f(0,0,0);
+//         glVertex3f(-w,-h,z);
+//         glVertex3f(0,0,0);
+//         glVertex3f(-w,h,z);
+//         glVertex3f(w,h,z);
+//         glVertex3f(-w,h,z);
+//         glVertex3f(-w,h,z);
+//         glVertex3f(-w,-h,z);
+//         glVertex3f(-w,-h,z);
+//         glVertex3f(w,-h,z);
+//         glVertex3f(w,-h,z);
+//         glVertex3f(w,h,z);
+//         glEnd();
+
+//         glPopMatrix();
+
+//         // Swap frames and Process Events
+//         pangolin::FinishFrame();
+//     }
+
+
+
     pangolin::CreateWindowAndBind("VINS-PC: Map Viewer",1024,768);
     // 3D Mouse handler requires depth testing to be enabled
     glEnable(GL_DEPTH_TEST);
@@ -1000,14 +1131,14 @@ void vinssystem::Run()
     glEnable (GL_BLEND);
     glBlendFunc (GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
-    pangolin::CreatePanel("menu").SetBounds(0.0,1.0,0.0,pangolin::Attach::Pix(175));
-    pangolin::Var<bool> menuFollowCamera("menu.Follow Camera",true,true);
-    pangolin::Var<bool> menuShowPoints("menu.Show Points",true,true);
-    pangolin::Var<bool> menuShowKeyFrames("menu.Show KeyFrames",true,true);
-    pangolin::Var<bool> menuShowGraph("menu.Show Graph",true,true);
-    pangolin::Var<bool> menuLocalizationMode("menu.Localization Mode",false,true);
-    pangolin::Var<bool> menuReset("menu.Reset",false,false);
-    pangolin::Var<bool> menuWriteFrames("menu.WriteFrames",false,false);
+    // pangolin::CreatePanel("menu").SetBounds(0.0,1.0,0.0,pangolin::Attach::Pix(175));
+    // pangolin::Var<bool> menuFollowCamera("menu.Follow Camera",true,true);
+    // pangolin::Var<bool> menuShowPoints("menu.Show Points",true,true);
+    // pangolin::Var<bool> menuShowKeyFrames("menu.Show KeyFrames",true,true);
+    // pangolin::Var<bool> menuShowGraph("menu.Show Graph",true,true);
+    // pangolin::Var<bool> menuLocalizationMode("menu.Localization Mode",false,true);
+    // pangolin::Var<bool> menuReset("menu.Reset",false,false);
+    // pangolin::Var<bool> menuWriteFrames("menu.WriteFrames",false,false);
 
     float mViewpointF = 500;
     float mViewpointX = -1.0;
@@ -1045,11 +1176,64 @@ void vinssystem::Run()
             cv::waitKey(mT);
         }
         usleep(100000);
-        if(menuWriteFrames)
-        {
-            string strwriteframepath = msdatafolder + "frames.txt";
-            keyframe_database.WriteAllFrames(strwriteframepath.c_str(),ric_double.inverse());
-            menuWriteFrames = false;
-        }
+        // if(menuWriteFrames)
+        // {
+        //     string strwriteframepath = msdatafolder + "frames.txt";
+        //     keyframe_database.WriteAllFrames(strwriteframepath.c_str(),ric_double.inverse());
+        //     menuWriteFrames = false;
+        // }
+//          glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+//         d_cam.Activate(s_cam);
+
+//         // Render OpenGL Cube
+// //        pangolin::glDrawColouredCube();\
+//         //坐标轴的创建
+//         pangolin::glDrawAxis(3);
+
+//         //点的创建
+//         glPointSize(10.0f);
+//         glBegin(GL_POINTS);
+//         glColor3f(1.0,1.0,1.0);
+//         glVertex3f(0.0f,0.0f,0.0f);
+//         glVertex3f(1,0,0);
+//         glVertex3f(0,2,0);
+//         glEnd();
+
+//         //把下面的点都做一次旋转变换
+//         glPushMatrix();
+//         //col major
+//         std::vector<GLfloat > Twc = {1,0,0,0, 0,1,0,0 , 0,0,1,0 ,0,0,5,1};
+//         glMultMatrixf(Twc.data());
+
+//         //直线的创建
+//         const float w = 2;
+//         const float h = w*0.75;
+//         const float z = w*0.6;
+//         glLineWidth(2);
+//         glColor3f(1.0,0,0);
+//         glBegin(GL_LINES);
+
+//         glVertex3f(0,0,0);
+//         glVertex3f(w,h,z);
+//         glVertex3f(0,0,0);
+//         glVertex3f(w,-h,z);
+//         glVertex3f(0,0,0);
+//         glVertex3f(-w,-h,z);
+//         glVertex3f(0,0,0);
+//         glVertex3f(-w,h,z);
+//         glVertex3f(w,h,z);
+//         glVertex3f(-w,h,z);
+//         glVertex3f(-w,h,z);
+//         glVertex3f(-w,-h,z);
+//         glVertex3f(-w,-h,z);
+//         glVertex3f(w,-h,z);
+//         glVertex3f(w,-h,z);
+//         glVertex3f(w,h,z);
+//         glEnd();
+
+//         glPopMatrix();
+
+//         // Swap frames and Process Events
+//         pangolin::FinishFrame();
     }
 }

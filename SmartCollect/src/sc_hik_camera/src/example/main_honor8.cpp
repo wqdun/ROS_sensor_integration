@@ -20,18 +20,20 @@ void IMUProc(IMUMeasument oneIMUMeasurement, double header, vinssystem* mpSystem
 
 void ReadObjects(const string &strFolderPath,vector<pair<double,vector<Box>>>& boxes);
 cv::Mat ImageProc(cv::Mat srcImage, double header, vinssystem* mpSystem, pair<double,vector<Box>> onebox);
+vinssystem mSystem;
 int main(int argc, char** argv){
 
 
 
 
-    const char* cvocfile = "/home/nvidia/Documents/VINS-pc/config/briefk10l6.bin";
-    const char* cpatternfile = "/home/nvidia/Documents/VINS-pc/config/briefpattern.yml";
-    const char* csettingfile = "/home/nvidia/Documents/VINS-pc/config/vehicle-dikuencoder.yaml";
+    const char* cvocfile = "/opt/smartc4/config/briefk10l6.bin";
+    const char* cpatternfile = "/opt/smartc4/config/briefpattern.yml";
+    const char* csettingfile = "/opt/smartc4/config/vehicle-offline.yaml";
     string svocfile(cvocfile);
     string spatternfile(cpatternfile);
     string ssettingfile(csettingfile);
-    vinssystem mSystem(svocfile,spatternfile,ssettingfile);
+    
+    mSystem.create(svocfile,spatternfile,ssettingfile);
     cout << "OK" << endl;
     //cv::namedWindow("VINS: Current Frame",CV_WINDOW_NORMAL);
 

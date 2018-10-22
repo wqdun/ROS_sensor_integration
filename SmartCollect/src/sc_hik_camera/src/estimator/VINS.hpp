@@ -119,6 +119,7 @@ public:
     Matrix3f correct_Rs[WINDOW_SIZE];
     Vector3d t_drift;
     Matrix3d r_drift;
+    double rec_header;
 
     MarginalizationInfo *last_marginalization_info;
     vector<double *> last_marginalization_parameter_blocks;
@@ -130,7 +131,7 @@ public:
     double myawio;
     int optimize_num;
     string msdatafolder;
-    string mswriteodometrypath;
+    //string mswriteodometrypath;
 
     IntegrationBase *pre_integrations[10 * (WINDOW_SIZE + 1)];
     IntegrationBase *cumulate_preintegrations[10 * (WINDOW_SIZE + 1)];
@@ -162,6 +163,9 @@ public:
     Vector3d init_P;
     Vector3d init_V;
     Matrix3d init_R;
+
+    Matrix3d pre_cumu_R;
+    Vector3d pre_cumu_P;
 
     SolverFlag solver_flag;
     Matrix3d Rc[10 * (WINDOW_SIZE + 1)];
@@ -233,6 +237,7 @@ public:
     int cl;
     bool csolve_visiononly;
     bool vsolve_visiononly;
+    vector<pair<double, pair<Matrix3d, Vector3d>>> vpos_before_initialize;
 
     void solve_ceres(int buf_num);
     void solve_pnp();
@@ -245,20 +250,23 @@ public:
     void slideWindowNew();
     void slideWindowOld();
     int decideImuLink();
-    void processImage(const map<int, vector<pair<int, Eigen::Matrix<double, 7, 1>>>> &image, double header, int buf_num);
+    void processImage(const map<int, vector<pair<int, Eigen::Matrix<double, 7, 1>>>> &image, double header, int buf_num, cv::Mat rot12);
     void processIMU(double t, double dt, double encoder_v, const Vector3d &linear_acceleration, const Vector3d &angular_velocity);
     void changeState();
     bool solveInitial();
+    bool solveInitialWithOdometry2();
     bool solveInitialWithOdometry();
     bool relativePose(int camera_id, Matrix3d &relative_R, Vector3d &relative_T, int &l);
     bool relativePosewithOdometry(int camera_id);
     bool relativePose2(int camera_id, Matrix3d &relative_R, Vector3d &relative_T, int &l);
     bool visualInitialAlign();
+    bool visualInitialAlignOdometry();
     bool failureDetection();
     void failureRecover();
     void update_loop_correction();
     void PrepareForVisionOnlyBA();
     void GetInitialPosesFromOdometry(Quaterniond* q, Vector3d* T);
+    void GetInitialPosesFromOdometry2(Quaterniond* q, Vector3d* T, Quaterniond* q2, Vector3d* T2);
 
 
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW

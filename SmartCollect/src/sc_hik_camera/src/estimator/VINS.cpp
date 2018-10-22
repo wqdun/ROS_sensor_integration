@@ -29,9 +29,11 @@ failure_hand{false},is_failure{false}
     fSettings["extrinsicRotation"] >> cv_R;
     fSettings["extrinsicTranslation"] >> cv_T;
     fSettings["datafolder"] >> msdatafolder;
-    mswriteodometrypath = msdatafolder + "odometry.txt";
-    FILE* fpodometry = fopen(mswriteodometrypath.c_str(),"w");
-    fclose(fpodometry);
+    //mswriteodometrypath = "odometry.txt";
+cout << "before opening txt" << endl;
+    //FILE* fpodometry = fopen(mswriteodometrypath.c_str(),"w");
+    //fclose(fpodometry);
+cout << "after closing txt" << endl;
     cv::cv2eigen(cv_R, config_ric);
     cv::cv2eigen(cv_T, config_tic);
 
@@ -92,10 +94,13 @@ void VINS::clearState()
     dt2 = 0;
     //myawio = -0.017;
     //myawio = -0.02;
+    rec_header = 0;
     myawio = -0.012;
     optimize_num = 0;
     mean_diff_accs = 0;
     count_keyframe = 0;
+    pre_cumu_R.setIdentity();
+    pre_cumu_P.setZero();
     Delta_t.clear();
     Min_thetas.clear();
 
@@ -645,7 +650,7 @@ int VINS::decideImuLink()
         }
 }
 
-void VINS::processImage(const map<int, vector<pair<int, Eigen::Matrix<double, 7, 1>>>> &image, double header, int buf_num)
+void VINS::processImage(const map<int, vector<pair<int, Eigen::Matrix<double, 7, 1>>>> &image, double header, int buf_num, cv::Mat rot12)
 {
     //printf("adding feature points %lu\n", image_msg.size());
     int track_num;
@@ -688,7 +693,9 @@ void VINS::processImage(const map<int, vector<pair<int, Eigen::Matrix<double, 7,
     else
         Qualities[frame_count] = false;
     ImuLinks[frame_count] = decideImuLink();
-    ImageFrame imageframe(image, header);
+    ImageFrame imageframe(image, header, rot12.clone());
+    //cout << setprecision(16) << "header:" << "\t" << header << endl;
+    //cout << rot12 << endl;
     imageframe.pre_integration = tmp_pre_integration;
     all_image_frame.insert(make_pair(header, imageframe));
 
@@ -701,10 +708,10 @@ void VINS::processImage(const map<int, vector<pair<int, Eigen::Matrix<double, 7,
         tmp_pre_integration = new IntegrationBase{acc_0, gyr_0, encoder_v0, Vector3d(0,0,0), Vector3d(0,0,0),recent_rio};
         if(output_pre_integration != nullptr)
         {
-            FILE* fpodometry = fopen(mswriteodometrypath.c_str(),"a");
-            double normodometry = sqrt(output_pre_integration->delta_encoder_p[0]*output_pre_integration->delta_encoder_p[0]+output_pre_integration->delta_encoder_p[1]*output_pre_integration->delta_encoder_p[1]+output_pre_integration->delta_encoder_p[2]*output_pre_integration->delta_encoder_p[2]);
-            fprintf(fpodometry,"%lf\t%lf\n",header,normodometry);
-            fclose(fpodometry);
+            //FILE* fpodometry = fopen(mswriteodometrypath.c_str(),"a");
+            //double normodometry = sqrt(output_pre_integration->delta_encoder_p[0]*output_pre_integration->delta_encoder_p[0]+output_pre_integration->delta_encoder_p[1]*output_pre_integration->delta_encoder_p[1]+output_pre_integration->delta_encoder_p[2]*output_pre_integration->delta_encoder_p[2]);
+            //fprintf(fpodometry,"%lf\t%lf\n",header,normodometry);
+            //fclose(fpodometry);
             delete output_pre_integration;
             output_pre_integration = nullptr;
         }
@@ -728,8 +735,9 @@ void VINS::processImage(const map<int, vector<pair<int, Eigen::Matrix<double, 7,
             bool result = false;
             if(header - initial_timestamp > 0.1)
             {
-                result = solveInitial();
+                //result = solveInitial();
                 //result = solveInitialWithOdometry();
+                result = solveInitialWithOdometry2();
                 initial_timestamp = header;
             }
             if(result)
@@ -761,11 +769,37 @@ void VINS::processImage(const map<int, vector<pair<int, Eigen::Matrix<double, 7,
             }
             else
             {
+                Matrix3d pre_cumu_Rnew;
+                pre_cumu_Rnew = pre_cumu_R * imageframe.pre_integration->delta_q.toRotationMatrix();
+                pre_cumu_P = pre_cumu_P + pre_cumu_R * ( imageframe.pre_integration->delta_encoder_p + config_tio) - pre_cumu_Rnew * config_tio;
+                pre_cumu_R = pre_cumu_Rnew;
+                rec_header = header;
+                pair<double,pair<Matrix3d, Vector3d>> pos_before_initialize;
+                pos_before_initialize.first = rec_header;
+                pos_before_initialize.second.first = pre_cumu_R;
+                pos_before_initialize.second.second = pre_cumu_P;
+                vpos_before_initialize.push_back(pos_before_initialize);
                 slideWindow();
             }
         }
         else
+        {
+            if(imageframe.pre_integration != NULL)
+            {
+                Matrix3d pre_cumu_Rnew;
+                pre_cumu_Rnew = pre_cumu_R * imageframe.pre_integration->delta_q.toRotationMatrix();
+                pre_cumu_P = pre_cumu_P + pre_cumu_R * ( imageframe.pre_integration->delta_encoder_p + config_tio) - pre_cumu_Rnew * config_tio;
+                pre_cumu_R = pre_cumu_Rnew;
+            }
+            rec_header = header;
+            pair<double,pair<Matrix3d, Vector3d>> pos_before_initialize;
+            pos_before_initialize.first = rec_header;
+            pos_before_initialize.second.first = pre_cumu_R;
+            pos_before_initialize.second.second = pre_cumu_P;
+            vpos_before_initialize.push_back(pos_before_initialize);
             frame_count++;
+        }
+
     }
     else
     {
@@ -864,7 +898,7 @@ void VINS::solve_pnp()
     ceres::Solver::Options options;
 
     options.linear_solver_type = ceres::DENSE_SCHUR;
-    //options.num_threads = 8;
+    options.num_threads = 4;
     options.trust_region_strategy_type = ceres::DOGLEG;
     options.use_explicit_schur_complement = true;
     options.minimizer_progress_to_stdout = false;
@@ -1270,6 +1304,97 @@ void VINS::solve_ceres(int buf_num)
 
 }
 
+bool VINS::solveInitialWithOdometry2() {
+    printf("solve initial------------------------------------------\n");
+
+    if (!relativePosewithOdometry(0))
+    {
+        printf("init solve 5pts between first frame and last frame failed\n");
+        return false;
+    }
+    Quaterniond *Q = new Quaterniond[all_image_frame.size()];
+    Vector3d *T = new Vector3d[all_image_frame.size()];
+
+    Quaterniond *Q2 = new Quaterniond[frame_count + 1];
+    Vector3d* T2 = new Vector3d[frame_count + 1];
+
+    GetInitialPosesFromOdometry2(Q, T, Q2, T2);
+
+    map<double, ImageFrame>::iterator frame_it;
+    frame_it = all_image_frame.begin();
+    int idxhehe = 0;
+    for (int i = 0; frame_it != all_image_frame.end(); frame_it++)
+    {
+        if((frame_it->first) == Headers[i])
+        {
+            //cout << "key frame " << i << endl;
+            frame_it->second.is_key_frame = true;
+            frame_it->second.R = Q[idxhehe].toRotationMatrix();
+            frame_it->second.T = T[idxhehe] + Q[idxhehe].toRotationMatrix() * tic;
+            i++;
+            idxhehe++;
+            continue;
+        }
+        if((frame_it->first) > Headers[i])
+        {
+            //frame_it->second.is_key_frame = false;
+            i++;
+        }
+        frame_it->second.is_key_frame = false;
+        frame_it->second.R = Q[idxhehe].toRotationMatrix();
+        frame_it->second.T = T[idxhehe] + Q[idxhehe].toRotationMatrix() * tic;
+        idxhehe++;
+    }
+
+    Vector3d g_odo(0, 0, G_NORM);
+    g = config_rio * g_odo;
+
+    delete[] Q;
+    delete[] T;
+    delete[] Q2;
+    delete[] T2;
+
+
+    {
+        cout << "before calibrate Bgs" << endl;
+        map<double, ImageFrame>::iterator frame_it2;
+        frame_it2 = all_image_frame.begin();
+        frame_it2++;
+        double sum_error = 0;
+        for(; frame_it2 != all_image_frame.end(); frame_it2++)
+        {
+            Eigen::Quaterniond q_ij(ric * frame_it2->second.eigenrot12 * ric.transpose());
+            sum_error += ((frame_it2->second.pre_integration->delta_q.inverse() * q_ij).vec().norm()) * ((frame_it2->second.pre_integration->delta_q.inverse() * q_ij).vec().norm());
+        }
+        cout << sqrt(sum_error) << endl;
+    }
+
+    if (visualInitialAlignOdometry())
+    {
+        {
+            cout << "after calibrate Bgs" << endl;
+            map<double, ImageFrame>::iterator frame_it2;
+            frame_it2 = all_image_frame.begin();
+            frame_it2++;
+            double sum_error = 0;
+            for(; frame_it2 != all_image_frame.end(); frame_it2++)
+            {
+                Eigen::Quaterniond q_ij(ric * frame_it2->second.eigenrot12 * ric.transpose());
+                sum_error += ((frame_it2->second.pre_integration->delta_q.inverse() * q_ij).vec().norm()) * ((frame_it2->second.pre_integration->delta_q.inverse() * q_ij).vec().norm());
+            }
+            cout << sqrt(sum_error) << endl;
+        }
+
+        return true;
+    }
+    else
+    {
+        init_status = FAIL_ALIGN;
+        fail_times++;
+        return false;
+    }
+}
+
 //#pragma GCC pop_options
 bool VINS::solveInitialWithOdometry()
 {
@@ -1489,6 +1614,45 @@ void VINS::GetInitialPosesFromOdometry(Quaterniond* q, Vector3d* T)
     {
         T[i] = -(q[i] * T[i]);
     }
+}
+
+void VINS::GetInitialPosesFromOdometry2(Quaterniond* q, Vector3d* T, Quaterniond* q2, Vector3d* T2) {
+    {
+        q[0].w() = 1; q[0].x() = 0; q[0].y() = 0; q[0].z() = 0;
+        T[0].setZero();
+        Quaterniond q_total;
+        q_total.setIdentity();
+        Vector3d *dT = new Vector3d[all_image_frame.size()];
+        dT[0].setZero();
+        map<double, ImageFrame>::iterator frame_it;
+        frame_it = all_image_frame.begin( );
+        frame_it++;
+        for (int i = 1; i < all_image_frame.size(); i++) {
+            q_total = frame_it->second.pre_integration->delta_q.inverse() * q_total;
+            q[i] = q_total.inverse();
+            dT[i] = frame_it->second.pre_integration->delta_encoder_p + config_tio - q[i - 1] * q[i].inverse() * config_tio;
+            T[i] = T[i - 1] + q[i - 1] * dT[i];
+            frame_it++;
+        }
+    }
+
+    {
+        q2[0].w() = 1; q2[0].x() = 0; q2[0].y() = 0; q2[0].z() = 0;
+        T2[0].setZero();
+        Quaterniond q_total2;
+        q_total2.setIdentity();
+        Vector3d* dT2 = new Vector3d[frame_count + 1];
+        dT2[0].setZero();
+        for(int i = 1; i < (frame_count + 1); i++)
+        {
+            q_total2 = pre_integrations[i]->delta_q.inverse() * q_total2;
+            q2[i] = q_total2.inverse();
+            dT2[i] = pre_integrations[i]->delta_encoder_p + config_tio - q2[i - 1] * q2[i].inverse() * config_tio;
+            T2[i] = T2[i - 1] + q2[i - 1] * dT2[i];
+        }
+    }
+
+
 }
 
 bool VINS::solveInitial()
@@ -1772,6 +1936,115 @@ bool VINS::visualInitialAlign()
         init_poses.push_back(Ps[i]);
     }
 
+    return true;
+}
+
+bool VINS::visualInitialAlignOdometry()
+{
+    TS(solve_g);
+    VectorXd x;
+    //solve scale
+    bool result = VisualIMUAlignmentOdometry(all_image_frame, Bgs, g, x, config_tio, config_ric);
+
+    if(!result)
+    {
+        printf("solve g failed!");
+        printf("init PS alignment failed %lf %lf %lf\n", Ps[0].x(),Ps[0].y(), Ps[0].z());
+        return false;
+    }
+    TE(solve_g);
+    printf("init PS algnment succ:Ps %lf %lf %lf\n", Ps[0].x(),Ps[0].y(), Ps[0].z());
+    printf("init PS algnment succ:Vs %lf %lf %lf\n", Vs[0].x(),Vs[0].y(), Vs[0].z());
+
+    for (int i = 0; i <= frame_count; i++)
+    {
+        Matrix3d Ri = all_image_frame[Headers[i]].R;
+        Vector3d Pi = all_image_frame[Headers[i]].T;//camera position
+        Ps[i] = Pi;
+        Rs[i] = Ri;
+        all_image_frame[Headers[i]].is_key_frame = true;
+    }
+
+    VectorXd dep = f_manager->getDepthVector();
+    for (int i = 0; i < dep.size(); i++)
+        dep[i] = -1;
+    f_manager->clearDepth(dep);
+
+    Vector3d TIC_TMP;
+    TIC_TMP.setZero();
+    f_manager->triangulate(Ps, TIC_TMP, ric, true);
+
+    //double s = (x.tail<1>())(0);
+    for (int i = 0; i <= WINDOW_SIZE; i++)
+    {
+        pre_integrations[i]->repropagate(Vector3d::Zero(), Bgs[i]);
+    }
+    for (int i = frame_count; i >= 0; i--)
+        Ps[i] = Ps[i] - Rs[i] * tic - (Ps[0] - Rs[0] * tic);
+
+    printf("PS after scale %lf %lf %lf\n", Ps[0].x(),Ps[0].y(), Ps[0].z());
+    printf("VS after scale %lf %lf %lf\n", Vs[0].x(),Vs[0].y(), Vs[0].z());
+
+    int kv = -1;
+    map<double, ImageFrame>::iterator frame_i;
+    for (frame_i = all_image_frame.begin(); frame_i != all_image_frame.end(); frame_i++)
+    {
+        if(frame_i->second.is_key_frame)
+        {
+            kv++;
+            Vs[kv] = frame_i->second.R * x.segment<3>(kv * 3);
+        }
+    }
+    printf("init finish--------------------\n");
+
+    for (auto &it_per_id : f_manager->feature)
+    {
+        it_per_id.used_num = it_per_id.feature_per_frame.size();
+        //if (!(it_per_id.used_num >= 2 && it_per_id.start_frame < WINDOW_SIZE - 2))
+        //    continue;
+        //it_per_id.estimated_depth *= s;
+    }
+
+    cout << "g:" << "\t" << g << endl;
+
+    Matrix3d R0 = Utility::g2R(g);
+    double yaw0 = Utility::R2ypr(R0* Rs[0]).x();
+    //    double yaw0 = Utility::R2ypr(R0).x();
+
+    Matrix3d yaw_refine = Utility::ypr2R(Vector3d{-yaw0,0,0});
+    R0 = yaw_refine * R0;
+    g = R0 * g;
+    //Matrix3d rot_diff = R0 * Rs[0].transpose();
+    Matrix3d rot_diff = R0;
+    for (int i = 0; i <= frame_count; i++)
+    {
+        Ps[i] = rot_diff * Ps[i];
+        Rs[i] = rot_diff * Rs[i];
+        Vs[i] = rot_diff * Vs[i];
+        init_poses.push_back(Ps[i]);
+    }
+
+    for(int j = 0; j < vpos_before_initialize.size(); j++)
+    {
+        if(vpos_before_initialize[j].first == Headers[0])
+        {
+            Matrix3d tmp_ROri = vpos_before_initialize[j].second.first;
+            Vector3d tmp_POri = vpos_before_initialize[j].second.second;
+            double tmp_yaw_diff = Utility::R2ypr(tmp_ROri).x() - Utility::R2ypr(Rs[0]).x();
+            Matrix3d tmp_Ryaw_diff = Utility::ypr2R(Vector3d{tmp_yaw_diff, 0, 0});
+            for(int i = 0; i <= frame_count; i++)
+            {
+                Ps[i] = tmp_Ryaw_diff * Ps[i];
+                Rs[i] = tmp_Ryaw_diff * Rs[i];
+                Vs[i] = tmp_Ryaw_diff * Vs[i];
+            }
+            for(int i = 0; i <= frame_count; i++)
+            {
+                Ps[i] = Ps[i] + tmp_POri;
+            }
+            break;
+        }
+    }
     return true;
 }
 

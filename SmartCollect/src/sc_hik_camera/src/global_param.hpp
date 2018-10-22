@@ -18,7 +18,7 @@ using namespace cv;
 
 //true: use loop closure
 //false don't use loop closure
-#define LOOP_CLOSURE false
+#define LOOP_CLOSURE true
 
 #define MIN_LOOP_NUM 20
 #define LOOP_FREQ 3
@@ -125,6 +125,7 @@ struct IMUMeasument {
 struct IMG_MSG {
     double header;
     map<int, Matrix<double, 7, 1>> point_clouds;
+    cv::Mat rot12;
 };
 
 struct IMG_DATA {

@@ -43,6 +43,7 @@ public:
 
 private:
     int fd_;
+    boost::shared_ptr<boost::thread> pCanParserThread_;
 
     void GetPositionFromGpfpd(const std::string &gpfpd, std::string &position);
     void WriteSerial();

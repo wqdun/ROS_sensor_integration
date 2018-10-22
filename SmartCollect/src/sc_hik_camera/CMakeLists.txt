@@ -31,15 +31,12 @@ else()
     message(FATAL_ERROR "The compiler ${CMAKE_CXX_COMPILER} has no C++11 support. Please use a different C++ compiler.")
 endif()
 
-
-
-
 #List cmake modules
 LIST(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake_modules)
 
 #for opencv 3
 # http://blog.csdn.net/thornsuge/article/details/71171272
-set(OpenCV_DIR "/home/nvidia/opencv320install/share/OpenCV")
+# set(OpenCV_DIR "/home/nvidia/opencv320install/share/OpenCV")
 
 find_package(OpenCV 3.0 QUIET)
 if(NOT OpenCV_FOUND)
@@ -160,7 +157,6 @@ add_library(${PROJECT_NAME} SHARED
         src/system/system.h
         src/system/system.cpp  src/viewer/Viewer.cpp src/viewer/MapDrawer.cpp src/viewer/MapDrawer.h src/integration_base2.h src/factor/YawLocalParameterization.cpp src/factor/YawLocalParameterization.h)
 
-
 target_link_libraries(${PROJECT_NAME}
         ${OpenCV_LIBS}
         ${EIGEN3_LIBS}
@@ -170,12 +166,9 @@ target_link_libraries(${PROJECT_NAME}
         DUtils
         DVision
         DBoW
-        )
+)
 
 ###################################################################################
-
-
-
 
 ########################## camera part ############################################
 add_library(camera_model
@@ -197,11 +190,13 @@ target_link_libraries(camera_model ${Boost_LIBRARIES} ${OpenCV_LIBS} ${CERES_LIB
 ###########################################################################################
 
 
-add_executable(system_test   src/hik_camera_arm_node.cpp
-		src/hik_camera_arm.cpp
-		src/serial_reader.cpp
-		../sc_lib_public_tools/src/tools_no_ros.cpp
-		)
+add_executable(system_test
+    src/hik_camera_arm_node.cpp
+	src/hik_camera_arm.cpp
+	src/serial_reader.cpp
+	src/can_parser.cpp
+    ../sc_lib_public_tools/src/tools_no_ros.cpp
+)
 link_directories(/opt/mvs/lib/arm64/)
 
 target_link_libraries(system_test ${PROJECT_NAME} camera_model boost_thread /opt/mvs/lib/arm64/libMvCameraControl.so)

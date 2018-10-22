@@ -14,7 +14,8 @@ HikCamera::HikCamera() {
     handles_.clear();
     memset(&deviceList_, 0, sizeof(MV_CC_DEVICE_INFO_LIST));
     s_pSerialReader_.reset(new SerialReader() );
-///////////////////start vins//////////////////////////////
+
+    LOG(INFO) << "VINS start.";
     const char* cvocfile = "/opt/smartc/config/briefk10l6.bin";
     const char* cpatternfile = "/opt/smartc/config/briefpattern.yml";
     const char* csettingfile = "/opt/smartc/config/vehicle-dikuencoder.yaml";

@@ -8,6 +8,9 @@ SerialReader::SerialReader() {
     LOG(INFO) << __FUNCTION__ << " start.";
     isGonnaRun_ = true;
     slam10Datas_.resize(10);
+
+    pCanParser_.reset(new CanParser() );
+
     for(auto &slamData: slam10Datas_) {
         slamData = {0};
     }
@@ -27,10 +30,13 @@ SerialReader::SerialReader() {
 SerialReader::~SerialReader() {
     LOG(INFO) << __FUNCTION__ << " start.";
     close(fd_);
+    pCanParserThread_->join();
 }
 
 void SerialReader::Run() {
     LOG(INFO) << __FUNCTION__ << " start.";
+    pCanParserThread_ = boost::shared_ptr<boost::thread>(new boost::thread(boost::bind(&CanParser::Run, pCanParser_) ) );
+
     (void)WriteSerial();
     (void)ReadSerial();
 }
@@ -154,6 +160,8 @@ void SerialReader::Parse2SlamData(const std::string &_slamProtocol) {
     slamData_.lat = public_tools::ToolsNoRos::string2double(slamParsed[12]);
     slamData_.lon = public_tools::ToolsNoRos::string2double(slamParsed[13]);
     slamData_.hei = public_tools::ToolsNoRos::string2double(slamParsed[14]);
+
+    slamData_.encoder_v = 0;
 
     slam10Datas_.emplace_back(slamData_);
     slam10Datas_.pop_front();

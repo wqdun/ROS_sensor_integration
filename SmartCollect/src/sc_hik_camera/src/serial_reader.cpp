@@ -161,9 +161,8 @@ void SerialReader::Parse2SlamData(const std::string &_slamProtocol) {
     slamData_.lat = public_tools::ToolsNoRos::string2double(slamParsed[12]);
     slamData_.lon = public_tools::ToolsNoRos::string2double(slamParsed[13]);
     slamData_.hei = public_tools::ToolsNoRos::string2double(slamParsed[14]);
-
-    public_tools::ToolsNoRos::GeoToGauss(slamData_.lon, slamData_.lat, 20, 6, &(slamData_.east), &(slamData_.north), -1000);
-
+    DLOG(INFO) << slamData_.lon << ":" << slamData_.lat;
+    public_tools::ToolsNoRos::GeoToGauss(slamData_.lon, slamData_.lat, 3, 39, (slamData_.east), (slamData_.north));
     slamData_.encoder_v = pCanParser_->decimalResult_;
     slamData_.yaw = 0;
     slamData_.pitch = 0;

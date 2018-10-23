@@ -76,7 +76,6 @@ include_directories(
         ${PROJECT_SOURCE_DIR}/src/loop/ThirdParty/DUtils
         ${PROJECT_SOURCE_DIR}/src/loop/ThirdParty/DVision
         ${PROJECT_SOURCE_DIR}/src/loop/ThirdParty
-        ${PROJECT_SOURCE_DIR}/../sc_lib_public_tools/src
         #${PROJECT_SOURCE_DIR}/src/system
         ${PROJECT_SOURCE_DIR}/src/viewer
         ${EIGEN3_INCLUDE_DIR}
@@ -194,7 +193,6 @@ add_executable(system_test
 	src/hik_camera_arm.cpp
 	src/serial_reader.cpp
 	src/can_parser.cpp
-    ../sc_lib_public_tools/src/public_tools.cpp
     ../sc_lib_public_tools/src/tools_no_ros.cpp
 )
 

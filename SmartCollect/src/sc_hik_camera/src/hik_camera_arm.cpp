@@ -23,7 +23,7 @@ HikCamera::HikCamera(const bool &_isNodeRunning) {
     string svocfile(cvocfile);
     string spatternfile(cpatternfile);
     string ssettingfile(csettingfile);
-    system_.create(svocfile, spatternfile, ssettingfile);
+    system_.create(svocfile,spatternfile,ssettingfile);
 }
 
 HikCamera::~HikCamera() {
@@ -389,7 +389,10 @@ void HikCamera::IMUProc(const std::deque<slamProtocol_t> &tenIMUMeasurements, vi
             << imu_msg->gyr(0) << ", "
             << imu_msg->gyr(1) << ", "
             << imu_msg->gyr(2) << ", "
-            << imu_msg->encoder_v;
+            << imu_msg->encoder_v << ", "
+            << imu_msg->enh(0) << ", "
+            << imu_msg->enh(1) << ", "
+            << imu_msg->enh(2);
         mSystem.inputIMU(imu_msg);
     }
 }

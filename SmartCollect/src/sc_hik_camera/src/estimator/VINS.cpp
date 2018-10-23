@@ -2035,6 +2035,12 @@ bool VINS::visualInitialAlignOdometry()
     disdiff_gps = pre_integrations[frame_count]->enh_0 - pre_integrations[1]->enh_0;
     disdiff_local[2] = 0;
     disdiff_gps[2] = 0;
+    double norm_local = sqrt( disdiff_local[0] * disdiff_local[0] + disdiff_local[1] * disdiff_local[1]);
+    double norm_gps = sqrt( disdiff_gps[0]* disdiff_gps[0] + disdiff_gps[1] * disdiff_gps[1]);
+    disdiff_local[0] /= norm_local;
+    disdiff_local[1] /= norm_local;
+    disdiff_gps[0] /= norm_gps;
+    disdiff_gps[1] /= norm_gps;
     Matrix3d Rgl = Eigen::Quaterniond::FromTwoVectors(disdiff_local, disdiff_gps).toRotationMatrix();
     for(int i = 0; i <= frame_count; i++)
     {

@@ -88,7 +88,7 @@ void SerialReader::ReadSerial() {
             continue;
         }
 
-        for(size_t i = 0; i < nread; ++i) {
+        for(int i = 0; i < nread; ++i) {
             bool isFrameCompleted = false;
             std::string frameCompleted("");
             switch(buf[i]) {
@@ -161,7 +161,12 @@ void SerialReader::Parse2SlamData(const std::string &_slamProtocol) {
     slamData_.lon = public_tools::ToolsNoRos::string2double(slamParsed[13]);
     slamData_.hei = public_tools::ToolsNoRos::string2double(slamParsed[14]);
 
+    public_tools::GeoToGauss(slamData_.lon, slamData_.lat, 20, 6, &(slamData_.east), &(slamData_.north));
+
     slamData_.encoder_v = 0;
+    slamData_.yaw = 0;
+    slamData_.pitch = 0;
+    slamData_.roll = 0;
 
     slam10Datas_.emplace_back(slamData_);
     slam10Datas_.pop_front();

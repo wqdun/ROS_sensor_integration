@@ -76,6 +76,7 @@ include_directories(
         ${PROJECT_SOURCE_DIR}/src/loop/ThirdParty/DUtils
         ${PROJECT_SOURCE_DIR}/src/loop/ThirdParty/DVision
         ${PROJECT_SOURCE_DIR}/src/loop/ThirdParty
+        ${PROJECT_SOURCE_DIR}/../sc_lib_public_tools/src
         #${PROJECT_SOURCE_DIR}/src/system
         ${PROJECT_SOURCE_DIR}/src/viewer
         ${EIGEN3_INCLUDE_DIR}
@@ -172,34 +173,39 @@ target_link_libraries(${PROJECT_NAME}
 
 ########################## camera part ############################################
 add_library(camera_model
-        src/camera2/src/calib/CameraCalibration.cc
-        src/camera2/src/camera_models/Camera.cc
-        src/camera2/src/camera_models/CameraFactory.cc
-        src/camera2/src/camera_models/CostFunctionFactory.cc
-        src/camera2/src/camera_models/PinholeCamera.cc
-        src/camera2/src/camera_models/CataCamera.cc
-        src/camera2/src/camera_models/EquidistantCamera.cc
-        src/camera2/src/camera_models/ScaramuzzaCamera.cc
-        src/camera2/src/sparse_graph/Transform.cc
-        src/camera2/src/gpl/gpl.cc
-        src/camera2/src/gpl/EigenQuaternionParameterization.cc
-
-        )
+    src/camera2/src/calib/CameraCalibration.cc
+    src/camera2/src/camera_models/Camera.cc
+    src/camera2/src/camera_models/CameraFactory.cc
+    src/camera2/src/camera_models/CostFunctionFactory.cc
+    src/camera2/src/camera_models/PinholeCamera.cc
+    src/camera2/src/camera_models/CataCamera.cc
+    src/camera2/src/camera_models/EquidistantCamera.cc
+    src/camera2/src/camera_models/ScaramuzzaCamera.cc
+    src/camera2/src/sparse_graph/Transform.cc
+    src/camera2/src/gpl/gpl.cc
+    src/camera2/src/gpl/EigenQuaternionParameterization.cc
+)
 
 target_link_libraries(camera_model ${Boost_LIBRARIES} ${OpenCV_LIBS} ${CERES_LIBRARIES})
 ###########################################################################################
-
 
 add_executable(system_test
     src/hik_camera_arm_node.cpp
 	src/hik_camera_arm.cpp
 	src/serial_reader.cpp
 	src/can_parser.cpp
+    ../sc_lib_public_tools/src/public_tools.cpp
     ../sc_lib_public_tools/src/tools_no_ros.cpp
 )
-link_directories(/opt/mvs/lib/arm64/)
 
-target_link_libraries(system_test ${PROJECT_NAME} camera_model boost_thread /opt/mvs/lib/arm64/libMvCameraControl.so)
+target_link_libraries(system_test
+    ${PROJECT_NAME}
+    camera_model
+    boost_thread
+    controlcan
+    /opt/mvs/lib/arm64/libMvCameraControl.so
+    /opt/smartc/3rd/libcontrolcan.so
+)
 
 #add_executable(system_test_euroc   src/Example/system_test_euroc.cpp)
 

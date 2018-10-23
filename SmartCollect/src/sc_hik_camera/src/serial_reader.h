@@ -5,10 +5,14 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/time.h>
+#include <>
 #include <fcntl.h>
 #include <string>
 #include <boost/algorithm/string/classification.hpp>
 #include <boost/algorithm/string/split.hpp>
+#include <boost/thread/thread.hpp>
+#include "can_parser.h"
+#include <public_tools.h>
 #include "../../sc_lib_public_tools/src/tools_no_ros.h"
 
 typedef struct {
@@ -27,7 +31,13 @@ typedef struct {
     double lon;
     double hei;
 
+    double east;
+    double north;
+
     double encoder_v;
+    double yaw;
+    double pitch;
+    double roll;
 } slamProtocol_t;
 
 class SerialReader {
@@ -43,6 +53,7 @@ public:
 
 private:
     int fd_;
+    boost::shared_ptr<CanParser> pCanParser_;
     boost::shared_ptr<boost::thread> pCanParserThread_;
 
     void GetPositionFromGpfpd(const std::string &gpfpd, std::string &position);

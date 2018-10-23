@@ -8,13 +8,14 @@ MV_CC_PIXEL_CONVERT_PARAM HikCamera::s_convertParam_ = {0};
 boost::shared_ptr<SerialReader> HikCamera::s_pSerialReader_;
 vinssystem HikCamera::system_;
 
-HikCamera::HikCamera(const bool &_isNodeRunning) {
+HikCamera::HikCamera(bool &_isNodeRunning):
+    isCameraRunning_(_isNodeRunning)
+{
     LOG(INFO) << __FUNCTION__ << " start.";
     err_ = MV_OK;
     handles_.clear();
     memset(&deviceList_, 0, sizeof(MV_CC_DEVICE_INFO_LIST));
     s_pSerialReader_.reset(new SerialReader() );
-    isCameraRunning_ = _isNodeRunning;
 
     LOG(INFO) << "VINS start.";
     const char* cvocfile = "/opt/smartc/config/briefk10l6.bin";
@@ -281,11 +282,11 @@ void HikCamera::Run() {
     (void)EnumGigeDevices();
     (void)OpenConfigDevices();
     (void)RegisterCB();
-    // (void)PressEnterToExit();
-    while(isCameraRunning_) {
-        DLOG(INFO) << __FUNCTION__ << " isRunning_: " << isCameraRunning_;
-        sleep(1);
-    }
+    (void)PressEnterToExit();
+    // while(isCameraRunning_) {
+    //     LOG(INFO) << __FUNCTION__ << " isRunning_: " << isCameraRunning_;
+    //     sleep(1);
+    // }
 }
 
 void HikCamera::DoClean() {

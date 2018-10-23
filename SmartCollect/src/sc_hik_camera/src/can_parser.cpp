@@ -12,6 +12,7 @@ CanParser::CanParser() {
 
     if(1 != VCI_OpenDevice(VCI_USBCAN2, 0, 0)) {
         LOG(ERROR) << "Open device error.";
+        StopDevice();
         exit(1);
     }
     if(1 != VCI_ReadBoardInfo(VCI_USBCAN2, 0, &vciInfo_) ) {

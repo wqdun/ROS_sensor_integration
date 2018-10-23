@@ -122,7 +122,7 @@ void SerialReader::ReadSerial() {
 
             if(frameCompleted.find("GPFPD") < frameCompleted.size() ) {
                 // 1539608480.746874,$GPFPD,0,2083.510,0.000,0.074,13.047,0.0000000,0.0000000,0.00,0.000,0.000,0.000,0.000,0,0,00*48
-                LOG(INFO) << "$GPFPD received: " << frameCompleted;
+                DLOG(INFO) << "$GPFPD received: " << frameCompleted;
                 (void)GetPositionFromGpfpd(frameCompleted, latLonHei);
             }
             else
@@ -135,7 +135,7 @@ void SerialReader::ReadSerial() {
                 (void)Parse2SlamData(slamProtocol);
             }
             else {
-                LOG(INFO) << "Receive " << frameCompleted;
+                DLOG(INFO) << "Receive " << frameCompleted;
             }
         }
     }

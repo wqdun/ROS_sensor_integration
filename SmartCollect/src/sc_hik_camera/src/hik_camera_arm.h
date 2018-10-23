@@ -12,7 +12,7 @@
 
 class HikCamera {
 public:
-    HikCamera(const bool &_isNodeRunning);
+    HikCamera(bool &_isNodeRunning);
     ~HikCamera();
     void Run();
 

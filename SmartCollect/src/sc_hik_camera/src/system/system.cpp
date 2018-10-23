@@ -16,6 +16,7 @@ double IntegrationBase::a_w = 0;
 double IntegrationBase::g_n = 0;
 double IntegrationBase::g_w = 0;
 double IntegrationBase::v_n = 0;
+bool vinssystem::stopflag = false;
 
 vinssystem::vinssystem()
 {
@@ -37,6 +38,11 @@ vinssystem::~vinssystem() {
 //    if (loop_detection != NULL) delete loop_detection;
 }
 
+void vinssystem::setstopflag()
+{
+   stopflag = true;
+}
+
 void vinssystem::create(string voc_file, string pattern_file,string setting_file)
 {
     start_global_optimization=false;
@@ -47,6 +53,7 @@ void vinssystem::create(string voc_file, string pattern_file,string setting_file
    //synchronizing_flag = false;
    //synchronized_flag = false;
     dx = dy = dz = rx = ry = rz = 0;
+    px = py = pz = gps_yaw = gps_pitch = gps_roll = 0;
     rencoder_v = 0;
 
     mVocFile = voc_file;
@@ -301,10 +308,10 @@ void vinssystem::updateView() {
        << mpEstimator->Bgs[WINDOW_SIZE-1].x() << " "
        << mpEstimator->Bgs[WINDOW_SIZE-1].y() << " "
        << mpEstimator->Bgs[WINDOW_SIZE-1].z() << " ";  //需要使用mutex
-    s2 << "P:" << setprecision(3)
-       << P_real.x() << " "
-       << P_real.y() << " "
-       << P_real.z() << " ";  //需要使用mutex
+    s2 << "P:" << setprecision(12)
+       << P_real.x() + mpEstimator->rec_enh[0] << " "
+       << P_real.y() + mpEstimator->rec_enh[1] << " "
+       << P_real.z() + mpEstimator->rec_enh[2]<< " ";  //需要使用mutex
 
     s3 << "cost: " << mpEstimator->final_cost;
 
@@ -408,7 +415,7 @@ void vinssystem::process() {
                 image[feature_id].emplace_back(0, xyz_uv_velocity);
             }
             //TS(process_image);
-            mpEstimator->processImage(image,header,waiting_lists, img_msg->rot12.clone());
+            mpEstimator->processImage(image,header,waiting_lists, img_msg->rot12.clone(), Vector3d(px, py, pz), Vector3d(gps_yaw, gps_pitch, gps_roll));
             //TE(process_image);
 
 
@@ -620,8 +627,18 @@ void vinssystem::send_imu(const ImuConstPtr &imu_msg,double header) {
         rx = imu_msg->gyr.x() ;
         ry = imu_msg->gyr.y() ;
         rz = imu_msg->gyr.z() ;
+
+        px = imu_msg->enh.x();
+        py = imu_msg->enh.y();
+        pz = imu_msg->enh.z();
+
+        gps_yaw = imu_msg->ypr.x();
+        gps_pitch = imu_msg->ypr.y();
+        gps_roll = imu_msg->ypr.z();
+
+
         rencoder_v = imu_msg->encoder_v;
-        mpEstimator->processIMU(t, dt, rencoder_v, Vector3d(dx, dy, dz), Vector3d(rx, ry, rz));
+        mpEstimator->processIMU(t, dt, rencoder_v, Vector3d(dx, dy, dz), Vector3d(rx, ry, rz), Vector3d(px, py, pz), Vector3d(gps_yaw, gps_pitch, gps_roll));
     }
     else
     {
@@ -637,7 +654,16 @@ void vinssystem::send_imu(const ImuConstPtr &imu_msg,double header) {
         ry = w1 * ry + w2 * imu_msg->gyr.y();
         rz = w1 * rz + w2 * imu_msg->gyr.z();
         rencoder_v = w1 * rencoder_v + w2 * imu_msg->encoder_v;
-        mpEstimator->processIMU(t, dt_1, rencoder_v, Vector3d(dx, dy, dz), Vector3d(rx, ry, rz));
+
+        px = w1 * px + w2 * imu_msg->enh.x();
+        py = w1 * py + w2 * imu_msg->enh.y();
+        pz = w1 * pz + w2 * imu_msg->enh.z();
+
+        gps_yaw = w1 * gps_yaw + w2 * imu_msg->ypr.x();
+        gps_pitch = w1 * gps_pitch + w2 * imu_msg->ypr.y();
+        gps_roll = w1 * gps_roll + w2 * imu_msg->ypr.z();
+
+        mpEstimator->processIMU(t, dt_1, rencoder_v, Vector3d(dx, dy, dz), Vector3d(rx, ry, rz), Vector3d(px, py, pz), Vector3d(gps_yaw, gps_pitch, gps_roll));
     }
     //  printf("IMU %f, dt: %f, acc: %f %f %f, gyr: %f %f %f\n", t, dt, dx, dy, dz, rx, ry, rz);
 
@@ -1033,7 +1059,7 @@ cv::Mat vinssystem::inputImage(cv::Mat& image,double t,pair<double,vector<Box>> 
     //imText.rowRange(image.rows,imText.rows) = cv::Mat::zeros((textSize.height+10)*4,image.cols,image.type(),cv::Scalar(0,0,0,255));
 //    cv::putText(imText,s.str(),cv::Point(5,imText.rows-5-(textSize.height+10)*3),cv::FONT_HERSHEY_PLAIN,5,cv::Scalar(255,0,255,255),5,8);
 //    cv::putText(imText,s1.str(),cv::Point(5,imText.rows-5-(textSize.height+10)*2),cv::FONT_HERSHEY_PLAIN,5,cv::Scalar(255,0,255,255),5,8);
-    cv::putText(imText,s2.str(),cv::Point(5,imText.rows-5-(textSize.height+10)),cv::FONT_HERSHEY_PLAIN,3,cv::Scalar(255,0,255,255),3,8);
+    cv::putText(imText,s2.str(),cv::Point(5,imText.rows-5-(textSize.height+10)),cv::FONT_HERSHEY_PLAIN,1,cv::Scalar(255,0,255,255),1,8);
   //  cv::putText(imText,s3.str(),cv::Point(5,imText.rows-5),cv::FONT_HERSHEY_PLAIN,1,cv::Scalar(255,0,255,255),1,8);
     imText.copyTo(mimText);
     return imText;
@@ -1155,6 +1181,8 @@ void vinssystem::Run()
     pangolin::View& d_cam = pangolin::CreateDisplay()
             .SetBounds(0.0, 1.0, pangolin::Attach::Pix(175), 1.0, -1024.0f/768.0f)
             .SetHandler(new pangolin::Handler3D(s_cam));
+
+    pangolin::RegisterKeyPressCallback(pangolin::PANGO_CTRL + 'a', vinssystem::setstopflag);
 
     pangolin::OpenGlMatrix Twc;
     Twc.SetIdentity();

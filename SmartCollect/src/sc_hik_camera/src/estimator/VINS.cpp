@@ -101,6 +101,7 @@ void VINS::clearState()
     count_keyframe = 0;
     pre_cumu_R.setIdentity();
     pre_cumu_P.setZero();
+    rec_enh.setZero();
     Delta_t.clear();
     Min_thetas.clear();
 
@@ -411,7 +412,7 @@ void VINS::update_loop_correction()
     }
 }
 
-void VINS::processIMU(double t, double dt, double encoder_v , const Vector3d &linear_acceleration, const Vector3d &angular_velocity)
+void VINS::processIMU(double t, double dt, double encoder_v , const Vector3d &linear_acceleration, const Vector3d &angular_velocity, const Vector3d &gps_position, const Vector3d &gps_altitude)
 {
     if (!first_imu)
     {
@@ -419,6 +420,8 @@ void VINS::processIMU(double t, double dt, double encoder_v , const Vector3d &li
         acc_0 = linear_acceleration;
         gyr_0 = angular_velocity;
         encoder_v0 = encoder_v;
+        enh_0 = gps_position;
+        ypr_0 = gps_altitude;
         t0 = t;
     }
 
@@ -429,10 +432,10 @@ void VINS::processIMU(double t, double dt, double encoder_v , const Vector3d &li
                 sin(myawio), cos(myawio), 0,
                 0, 0, 1;
         Eigen::Matrix3d recent_rio = tmp_Ryawio * config_rio;
-        pre_integrations[frame_count] = new IntegrationBase{acc_0, gyr_0, encoder_v0, Bas[frame_count], Bgs[frame_count],recent_rio};
+        pre_integrations[frame_count] = new IntegrationBase{acc_0, gyr_0, encoder_v0, enh_0, ypr_0, Bas[frame_count], Bgs[frame_count],recent_rio};
         if(frame_count == WINDOW_SIZE - 1 && !preintegrations_lasttwo)
         {
-            preintegrations_lasttwo = new IntegrationBase{acc_0, gyr_0, encoder_v0, Bas[frame_count], Bgs[frame_count],recent_rio};
+            preintegrations_lasttwo = new IntegrationBase{acc_0, gyr_0, encoder_v0, enh_0, ypr_0, Bas[frame_count], Bgs[frame_count],recent_rio};
         }
     }
 
@@ -482,6 +485,8 @@ void VINS::processIMU(double t, double dt, double encoder_v , const Vector3d &li
     acc_0 = linear_acceleration;
     gyr_0 = angular_velocity;
     encoder_v0 = encoder_v;
+    enh_0 = gps_position;
+    ypr_0 = gps_altitude;
     //cout << setprecision(13) << t << "\t" << encoder_v << endl;
 
     if(dt_buf[frame_count].size() == 2)
@@ -650,7 +655,7 @@ int VINS::decideImuLink()
         }
 }
 
-void VINS::processImage(const map<int, vector<pair<int, Eigen::Matrix<double, 7, 1>>>> &image, double header, int buf_num, cv::Mat rot12)
+void VINS::processImage(const map<int, vector<pair<int, Eigen::Matrix<double, 7, 1>>>> &image, double header, int buf_num, cv::Mat rot12, Eigen::Vector3d xyz, Eigen::Vector3d ypr)
 {
     //printf("adding feature points %lu\n", image_msg.size());
     int track_num;
@@ -705,7 +710,7 @@ void VINS::processImage(const map<int, vector<pair<int, Eigen::Matrix<double, 7,
                 sin(myawio), cos(myawio), 0,
                 0, 0, 1;
         Eigen::Matrix3d recent_rio = tmp_Ryawio * config_rio;
-        tmp_pre_integration = new IntegrationBase{acc_0, gyr_0, encoder_v0, Vector3d(0,0,0), Vector3d(0,0,0),recent_rio};
+        tmp_pre_integration = new IntegrationBase{acc_0, gyr_0, encoder_v0, enh_0, ypr_0, Vector3d(0,0,0), Vector3d(0,0,0),recent_rio};
         if(output_pre_integration != nullptr)
         {
             //FILE* fpodometry = fopen(mswriteodometrypath.c_str(),"a");
@@ -717,7 +722,7 @@ void VINS::processImage(const map<int, vector<pair<int, Eigen::Matrix<double, 7,
         }
 
 
-        output_pre_integration = new IntegrationBase{acc_0, gyr_0, encoder_v0, Vector3d(0,0,0), Vector3d(0,0,0),recent_rio};
+        output_pre_integration = new IntegrationBase{acc_0, gyr_0, encoder_v0, enh_0, ypr_0, Vector3d(0,0,0), Vector3d(0,0,0),recent_rio};
     }
 
 
@@ -2024,7 +2029,24 @@ bool VINS::visualInitialAlignOdometry()
         init_poses.push_back(Ps[i]);
     }
 
-    for(int j = 0; j < vpos_before_initialize.size(); j++)
+    Vector3d disdiff_local;
+    disdiff_local = Ps[frame_count - 1] - Ps[0];
+    Vector3d disdiff_gps;
+    disdiff_gps = pre_integrations[frame_count]->enh_0 - pre_integrations[1]->enh_0;
+    disdiff_local[2] = 0;
+    disdiff_gps[2] = 0;
+    Matrix3d Rgl = Eigen::Quaterniond::FromTwoVectors(disdiff_local, disdiff_gps).toRotationMatrix();
+    for(int i = 0; i <= frame_count; i++)
+    {
+        Ps[i] = Rgl * Ps[i];
+        Rs[i] = Rgl * Rs[i];
+        Vs[i] = Rgl * Vs[i];
+    }
+
+    rec_enh[0] = pre_integrations[1]->enh_0[0];
+    rec_enh[1] = pre_integrations[1]->enh_0[1];
+    rec_enh[2] = pre_integrations[1]->enh_0[2];
+    /*for(int j = 0; j < vpos_before_initialize.size(); j++)
     {
         if(vpos_before_initialize[j].first == Headers[0])
         {
@@ -2044,7 +2066,7 @@ bool VINS::visualInitialAlignOdometry()
             }
             break;
         }
-    }
+    }*/
     return true;
 }
 
@@ -2197,8 +2219,8 @@ void VINS::slideWindow()
                     sin(myawio), cos(myawio), 0,
                     0, 0, 1;
             Eigen::Matrix3d recent_rio = tmp_Ryawio * config_rio;
-            tmp_pre_integration = new IntegrationBase{acc_0, gyr_0, encoder_v0, Vector3d(0,0,0), Vector3d(0,0,0),recent_rio};
-            preintegrations_lasttwo = new IntegrationBase{pre_integrations[frame_count]->linearized_acc, pre_integrations[frame_count]->linearized_gyr, pre_integrations[frame_count]->linearized_encoder_v, Bas[frame_count - 1], Bgs[frame_count - 1], recent_rio};
+            tmp_pre_integration = new IntegrationBase{acc_0, gyr_0, encoder_v0, enh_0, ypr_0, Vector3d(0,0,0), Vector3d(0,0,0),recent_rio};
+            preintegrations_lasttwo = new IntegrationBase{pre_integrations[frame_count]->linearized_acc, pre_integrations[frame_count]->linearized_gyr, pre_integrations[frame_count]->linearized_encoder_v, enh_0, ypr_0, Bas[frame_count - 1], Bgs[frame_count - 1], recent_rio};
             for(int i = 0; i < pre_integrations[frame_count]->acc_buf.size(); i++ )
             {
                 Vector3d acc_now = pre_integrations[frame_count]->acc_buf[i];
@@ -2236,7 +2258,7 @@ void VINS::slideWindow()
             {
                 delete pre_integrations[WINDOW_SIZE];
             }
-            pre_integrations[WINDOW_SIZE] = new IntegrationBase{acc_0, gyr_0, encoder_v0,Bas[WINDOW_SIZE], Bgs[WINDOW_SIZE],recent_rio};
+            pre_integrations[WINDOW_SIZE] = new IntegrationBase{acc_0, gyr_0, encoder_v0, enh_0, ypr_0, Bas[WINDOW_SIZE], Bgs[WINDOW_SIZE],recent_rio};
 
             dt_buf[WINDOW_SIZE].clear();
             encoder_v_buf[WINDOW_SIZE].clear();
@@ -2304,8 +2326,8 @@ void VINS::slideWindow()
                     sin(myawio), cos(myawio), 0,
                     0, 0, 1;
             Eigen::Matrix3d recent_rio = tmp_Ryawio * config_rio;
-            tmp_pre_integration = new IntegrationBase{acc_0, gyr_0, encoder_v0, Vector3d(0,0,0), Vector3d(0,0,0),recent_rio};
-            pre_integrations[WINDOW_SIZE] = new IntegrationBase{acc_0, gyr_0, encoder_v0,Bas[WINDOW_SIZE], Bgs[WINDOW_SIZE], recent_rio};
+            tmp_pre_integration = new IntegrationBase{acc_0, gyr_0, encoder_v0, enh_0, ypr_0, Vector3d(0,0,0), Vector3d(0,0,0),recent_rio};
+            pre_integrations[WINDOW_SIZE] = new IntegrationBase{acc_0, gyr_0, encoder_v0, enh_0, ypr_0, Bas[WINDOW_SIZE], Bgs[WINDOW_SIZE], recent_rio};
 
             dt_buf[WINDOW_SIZE].clear();
             linear_acceleration_buf[WINDOW_SIZE].clear();

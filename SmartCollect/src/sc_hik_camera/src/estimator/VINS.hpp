@@ -138,6 +138,7 @@ public:
     IntegrationBase *preintegrations_lasttwo;
     bool first_imu;
     Vector3d acc_0, gyr_0;
+    Vector3d enh_0, ypr_0;
     double encoder_v0;
     vector<double> dt_buf[10 * (WINDOW_SIZE + 1)];
     vector<Vector3d> linear_acceleration_buf[10 * (WINDOW_SIZE + 1)];
@@ -189,6 +190,8 @@ public:
 
     Matrix3d last_R,last_R_old;
     Vector3d last_P,last_P_old;
+
+    Vector3d rec_enh;
 
     //for visulization
     //DrawResult drawresult;
@@ -250,8 +253,8 @@ public:
     void slideWindowNew();
     void slideWindowOld();
     int decideImuLink();
-    void processImage(const map<int, vector<pair<int, Eigen::Matrix<double, 7, 1>>>> &image, double header, int buf_num, cv::Mat rot12);
-    void processIMU(double t, double dt, double encoder_v, const Vector3d &linear_acceleration, const Vector3d &angular_velocity);
+    void processImage(const map<int, vector<pair<int, Eigen::Matrix<double, 7, 1>>>> &image, double header, int buf_num, cv::Mat rot12, Eigen::Vector3d xyz, Eigen::Vector3d ypr);
+    void processIMU(double t, double dt, double encoder_v, const Vector3d &linear_acceleration, const Vector3d &angular_velocity, const Vector3d &gps_position, const Vector3d &gps_altitude);
     void changeState();
     bool solveInitial();
     bool solveInitialWithOdometry2();

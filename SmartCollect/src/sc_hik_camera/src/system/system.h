@@ -57,6 +57,8 @@ public:
     Vector3d tio;
     double rencoder_v;
     double v_n;
+    static void setstopflag();
+    static bool stopflag;
     ~vinssystem();
 
 
@@ -156,6 +158,7 @@ private:
     Vector3d corrected_Ps[WINDOW_SIZE];
     Matrix3d corrected_Rs[WINDOW_SIZE];
     double dx , dy, dz, rx, ry, rz;
+    double px, py, pz, gps_yaw, gps_pitch, gps_roll;
 
     double a_n,a_w,g_n,g_w;
 

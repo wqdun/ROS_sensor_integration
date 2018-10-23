@@ -6,7 +6,7 @@
 
 SerialReader::SerialReader() {
     LOG(INFO) << __FUNCTION__ << " start.";
-    isGonnaRun_ = true;
+    isSerialRunning_ = true;
     slam10Datas_.resize(10);
 
     pCanParser_.reset(new CanParser() );
@@ -30,6 +30,7 @@ SerialReader::SerialReader() {
 SerialReader::~SerialReader() {
     LOG(INFO) << __FUNCTION__ << " start.";
     close(fd_);
+    pCanParser_->isCanParserRunning_ = false;
     pCanParserThread_->join();
 }
 
@@ -80,7 +81,7 @@ void SerialReader::ReadSerial() {
     std::string slamProtocol("");
     bool isFirstFrame = true;
 
-    while(isGonnaRun_) {
+    while(isSerialRunning_) {
         bzero(buf, BUFFER_SIZE);
         int nread = read(fd_, buf, BUFFER_SIZE);
         if(nread <= 0) {
@@ -161,9 +162,9 @@ void SerialReader::Parse2SlamData(const std::string &_slamProtocol) {
     slamData_.lon = public_tools::ToolsNoRos::string2double(slamParsed[13]);
     slamData_.hei = public_tools::ToolsNoRos::string2double(slamParsed[14]);
 
-    public_tools::GeoToGauss(slamData_.lon, slamData_.lat, 20, 6, &(slamData_.east), &(slamData_.north));
+    public_tools::ToolsNoRos::GeoToGauss(slamData_.lon, slamData_.lat, 20, 6, &(slamData_.east), &(slamData_.north), -1000);
 
-    slamData_.encoder_v = 0;
+    slamData_.encoder_v = pCanParser_->decimalResult_;
     slamData_.yaw = 0;
     slamData_.pitch = 0;
     slamData_.roll = 0;

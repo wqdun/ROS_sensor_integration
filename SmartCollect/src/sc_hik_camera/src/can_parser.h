@@ -10,13 +10,14 @@ public:
     ~CanParser();
     void Run();
     void Receiver();
-    void stopDevice();
+    void StopDevice();
+
+    double decimalResult_;
+    bool isCanParserRunning_;
 
 
 private:
-    double decimalResult_;
     VCI_BOARD_INFO vciInfo_;
-    int isRunning;
 };
 
 

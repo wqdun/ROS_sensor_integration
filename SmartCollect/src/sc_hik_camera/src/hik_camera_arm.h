@@ -12,7 +12,7 @@
 
 class HikCamera {
 public:
-    HikCamera();
+    HikCamera(const bool &_isNodeRunning);
     ~HikCamera();
     void Run();
 
@@ -32,6 +32,7 @@ private:
     std::vector<void *> handles_;
     MV_CC_DEVICE_INFO_LIST deviceList_;
     boost::shared_ptr<boost::thread> pThread_;
+    bool &isCameraRunning_;
 
     void EnumGigeDevices();
     void PrintDeviceInfo(MV_CC_DEVICE_INFO* pstMVDevInfo);

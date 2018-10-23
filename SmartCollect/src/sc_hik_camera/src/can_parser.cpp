@@ -7,7 +7,8 @@
 CanParser::CanParser() {
     LOG(INFO) << __FUNCTION__ << " start.";
 
-    decimalResult_ = 0;
+    decimalResult_ = -1.;
+    isCanParserRunning_ = true;
 
     if(1 != VCI_OpenDevice(VCI_USBCAN2, 0, 0)) {
         LOG(ERROR) << "Open device error.";
@@ -49,15 +50,14 @@ CanParser::CanParser() {
     }
 }
 
-CanParser::StopDevice()
-{
-    isRunning = false;
-    usleep(100000);//延时100ms。
+void CanParser::StopDevice() {
+    isCanParserRunning_ = false;
+    usleep(100000);//延时100ms
     VCI_ResetCAN(VCI_USBCAN2, 0, 0);//复位CAN1通道。
-    usleep(100000);//延时100ms。
+    usleep(100000);//延时100ms
     VCI_ResetCAN(VCI_USBCAN2, 0, 1);//复位CAN2通道。
-    usleep(100000);//延时100ms。
-    VCI_CloseDevice(VCI_USBCAN2,0);
+    usleep(100000);//延时100ms
+    VCI_CloseDevice(VCI_USBCAN2, 0);
 }
 
 CanParser::~CanParser() {
@@ -79,12 +79,13 @@ void CanParser::Run() {
 
 void CanParser::Receiver() {
     int reclen = 0;
-    VCI_CAN_OBJ rec[3000];//接收缓存，设为3000为佳。
+    VCI_CAN_OBJ rec[3000];//接收缓存，设为3000为佳
 
     const double CIRCUMFERENCE = 2.1595677;
 
     int ind = 0;
-    while(isRunning) {
+    LOG(INFO) << "isCanParserRunning_: " << isCanParserRunning_;
+    while(isCanParserRunning_) {
         // 调用接收函数，如果有数据，进行数据处理显示
         if( (reclen = VCI_Receive(VCI_USBCAN2, 0, ind, rec, 3000, 0) ) > 0) {
             for(int j = 0; j < reclen; j++) {
@@ -95,7 +96,7 @@ void CanParser::Receiver() {
                 decimalResult_ = rpm / 60. * CIRCUMFERENCE;
             }
         }
-        // 变换通道号，以便下次读取另一通道，交替读取。
+        // 变换通道号，以便下次读取另一通道，交替读取
         ind = !ind;
     }
 

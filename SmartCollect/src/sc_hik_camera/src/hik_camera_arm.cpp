@@ -8,12 +8,13 @@ MV_CC_PIXEL_CONVERT_PARAM HikCamera::s_convertParam_ = {0};
 boost::shared_ptr<SerialReader> HikCamera::s_pSerialReader_;
 vinssystem HikCamera::system_;
 
-HikCamera::HikCamera() {
+HikCamera::HikCamera(const bool &_isNodeRunning) {
     LOG(INFO) << __FUNCTION__ << " start.";
     err_ = MV_OK;
     handles_.clear();
     memset(&deviceList_, 0, sizeof(MV_CC_DEVICE_INFO_LIST));
     s_pSerialReader_.reset(new SerialReader() );
+    isCameraRunning_ = _isNodeRunning;
 
     LOG(INFO) << "VINS start.";
     const char* cvocfile = "/opt/smartc/config/briefk10l6.bin";
@@ -22,12 +23,12 @@ HikCamera::HikCamera() {
     string svocfile(cvocfile);
     string spatternfile(cpatternfile);
     string ssettingfile(csettingfile);
-    system_.create(svocfile,spatternfile,ssettingfile);
+    system_.create(svocfile, spatternfile, ssettingfile);
 }
 
 HikCamera::~HikCamera() {
     LOG(INFO) << __FUNCTION__ << " start.";
-    s_pSerialReader_->isGonnaRun_ = false;
+    s_pSerialReader_->isSerialRunning_ = false;
     (void)DoClean();
     pThread_->join();
 }
@@ -280,7 +281,11 @@ void HikCamera::Run() {
     (void)EnumGigeDevices();
     (void)OpenConfigDevices();
     (void)RegisterCB();
-    (void)PressEnterToExit();
+    // (void)PressEnterToExit();
+    while(isCameraRunning_) {
+        DLOG(INFO) << __FUNCTION__ << " isRunning_: " << isCameraRunning_;
+        sleep(1);
+    }
 }
 
 void HikCamera::DoClean() {
@@ -342,19 +347,16 @@ void HikCamera::Convert2Mat(unsigned char *pData, MV_FRAME_OUT_INFO_EX *pFrameIn
     emptyonebox.first = _unixTime;
     emptyonebox.second = emptybox;
     (void)ImageProc(matBGR, _unixTime, &system_, emptyonebox);
-    if(vinssystem::stopflag == true)
-        {
-            cout << "here we are going to exit!" << endl;
-    cout << "here we are going to exit!" << endl;
-    cout << "here we are going to exit!" << endl;
-    cout << "here we are going to exit!" << endl;
-    cout << "here we are going to exit!" << endl;
-
-    cout << "here we are going to exit!" << endl;
-
-    s_pSerialReader_->pCanParser->stopDevice();
-            exit(1);
-        }
+    if(vinssystem::stopflag == true) {
+        cout << "here we are going to exit!" << endl;
+        cout << "here we are going to exit!" << endl;
+        cout << "here we are going to exit!" << endl;
+        cout << "here we are going to exit!" << endl;
+        cout << "here we are going to exit!" << endl;
+        cout << "here we are going to exit!" << endl;
+        s_pSerialReader_->pCanParser_->StopDevice();
+        exit(1);
+    }
 
     DLOG(INFO) << __FUNCTION__ << " end.";
 }

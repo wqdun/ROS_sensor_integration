@@ -10,6 +10,7 @@ public:
     ~CanParser();
     void Run();
     void Receiver();
+    void stopDevice();
 
 
 private:

@@ -2,6 +2,7 @@
 
 int main() {
     CanParser canParser;
+    exit(1);
     return 0;
 }
 

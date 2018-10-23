@@ -49,6 +49,17 @@ CanParser::CanParser() {
     }
 }
 
+CanParser::StopDevice()
+{
+    isRunning = false;
+    usleep(100000);//延时100ms。
+    VCI_ResetCAN(VCI_USBCAN2, 0, 0);//复位CAN1通道。
+    usleep(100000);//延时100ms。
+    VCI_ResetCAN(VCI_USBCAN2, 0, 1);//复位CAN2通道。
+    usleep(100000);//延时100ms。
+    VCI_CloseDevice(VCI_USBCAN2,0);
+}
+
 CanParser::~CanParser() {
     LOG(INFO) << __FUNCTION__ << " start.";
 

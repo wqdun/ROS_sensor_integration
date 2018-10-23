@@ -108,6 +108,8 @@ struct IMU_MSG {
     double header;
     Vector3d acc;
     Vector3d gyr;
+    Vector3d enh;
+    Vector3d ypr;
     double encoder_v;
 };
 

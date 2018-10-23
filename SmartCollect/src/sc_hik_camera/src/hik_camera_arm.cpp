@@ -342,6 +342,19 @@ void HikCamera::Convert2Mat(unsigned char *pData, MV_FRAME_OUT_INFO_EX *pFrameIn
     emptyonebox.first = _unixTime;
     emptyonebox.second = emptybox;
     (void)ImageProc(matBGR, _unixTime, &system_, emptyonebox);
+    if(vinssystem::stopflag == true)
+        {
+            cout << "here we are going to exit!" << endl;
+    cout << "here we are going to exit!" << endl;
+    cout << "here we are going to exit!" << endl;
+    cout << "here we are going to exit!" << endl;
+    cout << "here we are going to exit!" << endl;
+
+    cout << "here we are going to exit!" << endl;
+
+    s_pSerialReader_->pCanParser->stopDevice();
+            exit(1);
+        }
 
     DLOG(INFO) << __FUNCTION__ << " end.";
 }
@@ -359,6 +372,12 @@ void HikCamera::IMUProc(const std::deque<slamProtocol_t> &tenIMUMeasurements, vi
         imu_msg->gyr(1) = tenIMUMeasurements[i].gyroY;
         imu_msg->gyr(2) = tenIMUMeasurements[i].gyroZ;
         imu_msg->encoder_v = tenIMUMeasurements[i].encoder_v;
+        imu_msg->enh(0) = tenIMUMeasurements[i].east;
+        imu_msg->enh(1) = tenIMUMeasurements[i].north;
+        imu_msg->enh(2) = tenIMUMeasurements[i].hei;
+        imu_msg->ypr(0) = tenIMUMeasurements[i].yaw;
+        imu_msg->ypr(1) = tenIMUMeasurements[i].pitch;
+        imu_msg->ypr(2) = tenIMUMeasurements[i].roll;
 
         DLOG(INFO) << std::fixed
             << imu_msg->header << ", "

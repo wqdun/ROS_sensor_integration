@@ -19,9 +19,8 @@ class IntegrationBase
 public:
 
     IntegrationBase() = delete;
-    IntegrationBase(const Eigen::Vector3d &_acc_0, const Eigen::Vector3d &_gyr_0,const double &_encoder_v0,
-                    const Eigen::Vector3d &_linearized_ba, const Eigen::Vector3d &_linearized_bg, const Eigen::Matrix3d &_Rio)
-    : acc_0{_acc_0}, gyr_0{_gyr_0}, encoder_v0{_encoder_v0}, linearized_acc{_acc_0}, linearized_gyr{_gyr_0}, linearized_encoder_v{_encoder_v0},
+    IntegrationBase(const Eigen::Vector3d &_acc_0, const Eigen::Vector3d &_gyr_0,const double &_encoder_v0, const Eigen::Vector3d &_enh_0, const Eigen::Vector3d &_ypr_0, const Eigen::Vector3d &_linearized_ba, const Eigen::Vector3d &_linearized_bg, const Eigen::Matrix3d &_Rio)
+    : acc_0{_acc_0}, gyr_0{_gyr_0}, encoder_v0{_encoder_v0}, enh_0{_enh_0}, ypr_0{_ypr_0}, linearized_acc{_acc_0}, linearized_gyr{_gyr_0}, linearized_encoder_v{_encoder_v0},
     linearized_ba{_linearized_ba}, linearized_bg{_linearized_bg}, Rio{_Rio},
     m_jacobian{Eigen::Matrix<double, 16, 16>::Identity()}, m_covariance{Eigen::Matrix<double, 16, 16>::Zero()},
     jacobian{Eigen::Matrix<double, 15, 15>::Identity()}, covariance{Eigen::Matrix<double, 15, 15>::Zero()},
@@ -69,7 +68,7 @@ public:
         encoder_v_buf.push_back(encoder_v);
         propagate(dt, encoder_v, acc, gyr);
     }
-    
+
     void repropagate(const Eigen::Vector3d &_linearized_ba, const Eigen::Vector3d &_linearized_bg)
     {
         sum_dt = 0.0;
@@ -159,22 +158,22 @@ public:
         result_delta_encoder_p = delta_encoder_p + un_encoderv_vec * _dt;
         result_linearized_ba = linearized_ba;
         result_linearized_bg = linearized_bg;
-        
+
         if(update_jacobian)
         {
             Vector3d w_x = 0.5 * (_gyr_0 + _gyr_1) - linearized_bg;
             Vector3d a_0_x = _acc_0 - linearized_ba;
             Vector3d a_1_x = _acc_1 - linearized_ba;
             Matrix3d R_w_x, R_a_0_x, R_a_1_x;
-            
+
             R_w_x<< 0, -w_x(2), w_x(1),
                     w_x(2), 0, -w_x(0),
                     -w_x(1), w_x(0), 0;
-            
+
             R_a_0_x<< 0, -a_0_x(2), a_0_x(1),
                       a_0_x(2), 0, -a_0_x(0),
                       -a_0_x(1), a_0_x(0), 0;
-            
+
             R_a_1_x<< 0, -a_1_x(2), a_1_x(1),
                       a_1_x(2), 0, -a_1_x(0),
                       -a_1_x(1), a_1_x(0), 0;
@@ -188,7 +187,7 @@ public:
             R_v_en_1_x << 0, -v_en_1_x(2), v_en_1_x(1),
                     v_en_1_x(2), 0, -v_en_1_x(0),
                     -v_en_1_x(1), v_en_1_x(0), 0;
-            
+
             MatrixXd F = MatrixXd::Zero(15, 15);
             F.block<3, 3>(0, 0) = Matrix3d::Identity();
             F.block<3, 3>(0, 3) = -0.25 * delta_q.toRotationMatrix() * R_a_0_x * _dt * _dt +
@@ -206,7 +205,7 @@ public:
             F.block<3, 3>(9, 9) = Matrix3d::Identity();
             F.block<3, 3>(12, 12) = Matrix3d::Identity();
             //cout<<"A"<<endl<<A<<endl;
-            
+
             MatrixXd V = MatrixXd::Zero(15,18);
             V.block<3, 3>(0, 0) =  0.25 * delta_q.toRotationMatrix() * _dt * _dt;
             V.block<3, 3>(0, 3) =  0.25 * -result_delta_q.toRotationMatrix() * R_a_1_x  * _dt * _dt * 0.5 * _dt;
@@ -220,7 +219,7 @@ public:
             V.block<3, 3>(6, 9) =  V.block<3, 3>(6, 3);
             V.block<3, 3>(9, 12) = MatrixXd::Identity(3,3) * _dt;
             V.block<3, 3>(12, 15) = MatrixXd::Identity(3,3) * _dt;
-            
+
             //step_jacobian = F;
             //step_V = V;
             jacobian = F * jacobian;
@@ -268,7 +267,7 @@ public:
             jacobian2 = F2 * jacobian2;
             covariance2 = F2 * covariance2 * F2.transpose() + V2 * noise2 * V2.transpose();
         }
-        
+
     }
 
     void propagate(double _dt, double _encoder_v1, const Eigen::Vector3d &_acc_1, const Eigen::Vector3d &_gyr_1)
@@ -304,27 +303,27 @@ public:
         encoder_v0 = encoder_v1;
 
     }
-    
+
     Eigen::Matrix<double, 15, 1> evaluate(const Eigen::Vector3d &Pi, const Eigen::Quaterniond &Qi, const Eigen::Vector3d &Vi, const Eigen::Vector3d &Bai, const Eigen::Vector3d &Bgi,
                                           const Eigen::Vector3d &Pj, const Eigen::Quaterniond &Qj, const Eigen::Vector3d &Vj, const Eigen::Vector3d &Baj, const Eigen::Vector3d &Bgj)
     {
         Eigen::Matrix<double, 15, 1> residuals;
-        
+
         Eigen::Matrix3d dp_dba = jacobian.block<3, 3>(O_P, O_BA);
         Eigen::Matrix3d dp_dbg = jacobian.block<3, 3>(O_P, O_BG);
 
         Eigen::Matrix3d dq_dbg = jacobian.block<3, 3>(O_R, O_BG);
-        
+
         Eigen::Matrix3d dv_dba = jacobian.block<3, 3>(O_V, O_BA);
         Eigen::Matrix3d dv_dbg = jacobian.block<3, 3>(O_V, O_BG);
-        
+
         Eigen::Vector3d dba = Bai - linearized_ba;
         Eigen::Vector3d dbg = Bgi - linearized_bg;
-        
+
         Eigen::Quaterniond corrected_delta_q = delta_q * Utility::deltaQ(dq_dbg * dbg);
         Eigen::Vector3d corrected_delta_v = delta_v + dv_dba * dba + dv_dbg * dbg;
         Eigen::Vector3d corrected_delta_p = delta_p + dp_dba * dba + dp_dbg * dbg;
-        
+
         Vector3d G{0,0,GRAVITY};
         residuals.block<3, 1>(O_P, 0) = Qi.inverse() * (0.5 * G * sum_dt * sum_dt + Pj - Pi - Vi * sum_dt) - corrected_delta_p;
         residuals.block<3, 1>(O_R, 0) = 2 * (corrected_delta_q.inverse() * (Qi.inverse() * Qj)).vec();
@@ -435,26 +434,27 @@ public:
             residuals.block<3, 1>(O_BG, 0) = Bgj - Bgi;
             return residuals;
     }*/
-    
+
     double dt;
     Eigen::Vector3d acc_0, gyr_0;
     Eigen::Vector3d acc_1, gyr_1;
+    Eigen::Vector3d enh_0, ypr_0;
     double encoder_v0;
     double encoder_v1;
     double linearized_encoder_v;
-    
+
     const Eigen::Vector3d linearized_acc, linearized_gyr;
     Eigen::Vector3d linearized_ba, linearized_bg;
-    
+
     Eigen::Matrix<double, 16, 16> m_jacobian, m_covariance;
-    
+
     Eigen::Matrix<double, 15, 15> jacobian, covariance;
     Eigen::Matrix<double, 15, 15> step_jacobian;
     Eigen::Matrix<double, 15, 18> step_V;
     Eigen::Matrix<double, 18, 18> noise;
     Eigen::Matrix<double, 18, 18> jacobian2, covariance2;
     Eigen::Matrix<double, 24, 24> noise2;
-    
+
     double sum_dt;
     double vins_dt;
     Eigen::Vector3d delta_p;
@@ -463,7 +463,7 @@ public:
     Eigen::Matrix3d Rio;
 
     Eigen::Vector3d delta_encoder_p;
-    
+
     std::vector<double> dt_buf;
     std::vector<Eigen::Vector3d> acc_buf;
     std::vector<Eigen::Vector3d> gyr_buf;

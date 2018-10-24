@@ -8,7 +8,7 @@ class CanParser {
 public:
     CanParser();
     ~CanParser();
-    void Run();
+    int Run();
     void Receiver();
     void StopDevice();
 

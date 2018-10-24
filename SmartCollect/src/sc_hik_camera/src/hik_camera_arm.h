@@ -26,7 +26,8 @@ private:
     static cv::Mat ImageProc(cv::Mat srcImage, double header, vinssystem* mpSystem,pair<double,vector<Box>> onebox);
 
     static MV_CC_PIXEL_CONVERT_PARAM s_convertParam_;
-    static boost::shared_ptr<SerialReader> s_pSerialReader_;
+    // static boost::shared_ptr<SerialReader> s_pSerialReader_;
+    static SerialReader *s_pSerialReader_;
     static vinssystem system_;
 
     int err_;

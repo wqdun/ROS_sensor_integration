@@ -42,7 +42,7 @@ class SerialReader {
 public:
     SerialReader();
     ~SerialReader();
-    void Run();
+    int Run();
 
     bool isSerialRunning_;
     slamProtocol_t slamData_;

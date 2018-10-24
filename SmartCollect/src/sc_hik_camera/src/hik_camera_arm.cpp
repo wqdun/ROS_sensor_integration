@@ -5,7 +5,9 @@
 #include <glog/logging.h>
 
 MV_CC_PIXEL_CONVERT_PARAM HikCamera::s_convertParam_ = {0};
-boost::shared_ptr<SerialReader> HikCamera::s_pSerialReader_;
+// boost::shared_ptr<SerialReader> HikCamera::s_pSerialReader_;
+SerialReader *HikCamera::s_pSerialReader_;
+
 vinssystem HikCamera::system_;
 
 HikCamera::HikCamera(bool &_isNodeRunning):
@@ -15,8 +17,8 @@ HikCamera::HikCamera(bool &_isNodeRunning):
     err_ = MV_OK;
     handles_.clear();
     memset(&deviceList_, 0, sizeof(MV_CC_DEVICE_INFO_LIST));
-    s_pSerialReader_.reset(new SerialReader() );
-
+    // s_pSerialReader_.reset(new SerialReader() );
+    s_pSerialReader_ = new SerialReader();
     LOG(INFO) << "VINS start.";
     const char* cvocfile = "/opt/smartc/config/briefk10l6.bin";
     const char* cpatternfile = "/opt/smartc/config/briefpattern.yml";
@@ -24,7 +26,7 @@ HikCamera::HikCamera(bool &_isNodeRunning):
     string svocfile(cvocfile);
     string spatternfile(cpatternfile);
     string ssettingfile(csettingfile);
-    system_.create(svocfile,spatternfile,ssettingfile);
+    system_.create(svocfile, spatternfile, ssettingfile);
 }
 
 HikCamera::~HikCamera() {
@@ -32,6 +34,11 @@ HikCamera::~HikCamera() {
     s_pSerialReader_->isSerialRunning_ = false;
     (void)DoClean();
     pThread_->join();
+    if(s_pSerialReader_) {
+        delete s_pSerialReader_;
+        s_pSerialReader_ = NULL;
+    }
+    LOG(INFO) << __FUNCTION__ << " end.";
 }
 
 void HikCamera::EnumGigeDevices() {
@@ -47,7 +54,7 @@ void HikCamera::EnumGigeDevices() {
         exit(1);
     }
 
-    for(int i = 0; i < deviceList_.nDeviceNum; ++i) {
+    for(size_t i = 0; i < deviceList_.nDeviceNum; ++i) {
         LOG(INFO) << "device: " << i;
         MV_CC_DEVICE_INFO* pDeviceInfo = deviceList_.pDeviceInfo[i];
         if(!pDeviceInfo) {
@@ -287,6 +294,7 @@ void HikCamera::Run() {
     //     LOG(INFO) << __FUNCTION__ << " isRunning_: " << isCameraRunning_;
     //     sleep(1);
     // }
+    LOG(INFO) << __FUNCTION__ << " end: isRunning_: " << isCameraRunning_;
 }
 
 void HikCamera::DoClean() {
@@ -328,7 +336,7 @@ void __stdcall HikCamera::ImageCB(unsigned char *pData, MV_FRAME_OUT_INFO_EX *pF
     struct timeval now;
     gettimeofday(&now, NULL);
     const double unixTime = now.tv_sec + now.tv_usec / 1000000.;
-    LOG(INFO) << "GetOneFrame[" << pFrameInfo->nFrameNum << "]: " << pFrameInfo->nWidth << " * " << pFrameInfo->nHeight << " at " << std::fixed << unixTime;
+    DLOG(INFO) << "GetOneFrame[" << pFrameInfo->nFrameNum << "]: " << pFrameInfo->nWidth << " * " << pFrameInfo->nHeight << " at " << std::fixed << unixTime;
     (void)Convert2Mat(pData, pFrameInfo, pUser, unixTime);
 }
 

@@ -14,7 +14,7 @@ void CtrlCHandler(int signo) {
 int main(int argc, char **argv) {
     google::InitGoogleLogging(argv[0]);
     LOG(INFO) << "Got " << argc << " parameters.";
-    signal(SIGINT, CtrlCHandler);
+    // signal(SIGINT, CtrlCHandler);
 
     HikCamera hikCamera(isNodeRunning);
     hikCamera.Run();

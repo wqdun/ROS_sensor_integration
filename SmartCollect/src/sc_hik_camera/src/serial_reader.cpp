@@ -14,17 +14,6 @@ SerialReader::SerialReader() {
     for(auto &slamData: slam10Datas_) {
         slamData = {0};
     }
-
-    fd_ = open("/dev/ttyUSB0", O_RDWR);
-    if(fd_ < 0) {
-        LOG(ERROR) << "Failed to open device.";
-        exit(1);
-    }
-
-    if(public_tools::ToolsNoRos::setSerialOption(fd_, 230400, 8, 'N', 1) < 0) {
-        LOG(ERROR) << "Failed to setup " << ttyname(fd_);
-        exit(1);
-    }
 }
 
 SerialReader::~SerialReader() {
@@ -34,12 +23,24 @@ SerialReader::~SerialReader() {
     pCanParserThread_->join();
 }
 
-void SerialReader::Run() {
+int SerialReader::Run() {
     LOG(INFO) << __FUNCTION__ << " start.";
     pCanParserThread_ = boost::shared_ptr<boost::thread>(new boost::thread(boost::bind(&CanParser::Run, pCanParser_) ) );
 
+    fd_ = open("/dev/ttyUSB0", O_RDWR);
+    if(fd_ < 0) {
+        LOG(ERROR) << "Failed to open device.";
+        return -1;
+    }
+
+    if(public_tools::ToolsNoRos::setSerialOption(fd_, 230400, 8, 'N', 1) < 0) {
+        LOG(ERROR) << "Failed to setup " << ttyname(fd_);
+        return -1;
+    }
+
     (void)WriteSerial();
     (void)ReadSerial();
+    return 0;
 }
 
 void SerialReader::WriteSerial() {

@@ -5,6 +5,7 @@
 #include <vector>
 #include <opencv2/opencv.hpp>
 #include <boost/thread/thread.hpp>
+#include <signal.h>
 
 #include "MvCameraControl.h"
 #include "serial_reader.h"

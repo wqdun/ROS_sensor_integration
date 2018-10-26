@@ -1,7 +1,6 @@
 #ifndef _PTHREAD_POOL_
 #define _PTHREAD_POOL_
 
-#include "locker.h"
 #include <list>
 #include <stdio.h>
 #include <exception>
@@ -10,6 +9,7 @@
 #include <iostream>
 #include <stdlib.h>
 #include <vector>
+#include "locker.h"
 
 template<class T>
 class threadpool
@@ -22,6 +22,7 @@ private:
     mutex_locker queue_mutex_locker;
     sem_locker queue_sem_locker;
     bool is_stop;
+    int busyWorker_;
 public:
     threadpool(int thread_num = 20, int max_task_num = 30);
     ~threadpool();
@@ -39,7 +40,8 @@ template <class T>
 threadpool<T>::threadpool(int thread_num, int max_task_num):
     thread_number(thread_num),
     max_task_number(max_task_num),
-    is_stop(false)
+    is_stop(false),
+    busyWorker_(0)
 {
     all_threads.clear();
     if((thread_num <= 0) || max_task_num <= 0) {
@@ -77,7 +79,6 @@ void threadpool<T>::start() {
     std::cout << __FUNCTION__ << " start.\n";
     for(int i = 0; i < thread_number; ++i) {
         std::cout << "create the " << i << "th thread.\n";
-
         if(pthread_create(&(all_threads[i]), NULL, worker, this) != 0) {
             all_threads.clear();
             throw std::exception();
@@ -93,6 +94,7 @@ void threadpool<T>::start() {
 template <class T>
 bool threadpool<T>::append_task(T *task) {
     std::cout << __FUNCTION__ << " start.\n";
+    ++busyWorker_;
     queue_mutex_locker.mutex_lock();
     std::cout << "task_queue.size(): " << task_queue.size() << "\n";
     if(task_queue.size() >= max_task_number) {
@@ -141,6 +143,10 @@ void threadpool<T>::run() {
         }
         std::cout << "pthreadId = " << (unsigned long)pthread_self() << "\n";
         task->doit();
+        delete task;
+        task = NULL;
+        --busyWorker_;
+        std::cout << busyWorker_ << " busyWorker_.\n";
     }
 
     std::cout << "Close " << (unsigned long)pthread_self() << "\n";

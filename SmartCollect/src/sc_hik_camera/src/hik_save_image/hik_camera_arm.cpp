@@ -5,6 +5,7 @@
 #include <glog/logging.h>
 
 bool *HikCamera::s_pIsCameraRunning_;
+threadpool<ImageTask> HikCamera::s_threadPool_(10, 20);
 
 HikCamera::HikCamera(bool *_isNodeRunning) {
     LOG(INFO) << __FUNCTION__ << " start.";
@@ -12,11 +13,13 @@ HikCamera::HikCamera(bool *_isNodeRunning) {
     err_ = MV_OK;
     handles_.clear();
     memset(&deviceList_, 0, sizeof(MV_CC_DEVICE_INFO_LIST));
+    s_threadPool_.start();
 }
 
 HikCamera::~HikCamera() {
     LOG(INFO) << __FUNCTION__ << " start.";
     (void)DoClean();
+    s_threadPool_.stop();
     pThread_->join();
 }
 
@@ -331,13 +334,8 @@ void HikCamera::SaveImage(unsigned char *pData, MV_FRAME_OUT_INFO_EX *pFrameInfo
         return;
     }
 
-    try {
-        cv::imwrite(picName, matBGR);
-        LOG(INFO) << "Save " << picName;
-    }
-    catch(cv::Exception &ex) {
-        LOG(ERROR) << ex.what();
-    }
+    ImageTask *pImageTask = new ImageTask(picName, matBGR);
+    s_threadPool_.append_task(pImageTask);
 
     DLOG(INFO) << __FUNCTION__ << " end.";
 }

@@ -8,6 +8,9 @@
 #include <signal.h>
 
 #include "MvCameraControl.h"
+#include "../../../sc_lib_public_tools/src/thread_pool.h"
+#include "image_task.h"
+
 
 class HikCamera {
 public:
@@ -22,6 +25,7 @@ private:
     static void Convert2Mat(unsigned char *pData, MV_FRAME_OUT_INFO_EX *pFrameInfo, void *pUser, double time);
     static void SaveImage(unsigned char *pData, MV_FRAME_OUT_INFO_EX *pFrameInfo, void *pUser, double _unixTime);
     static bool *s_pIsCameraRunning_;
+    static threadpool<ImageTask> s_threadPool_;
 
 
     int err_;

@@ -15,6 +15,8 @@ public:
     static double string2double(const std::string& str);
     static void GeoToGauss(double longitude, double latitude, short beltWidth, int beltNumber, double &y, double &x);
 
+    static bool isOK_;
+
 
 private:
 

@@ -4,17 +4,16 @@
 // #undef NDEBUG
 #include <glog/logging.h>
 
-
-bool isNodeRunning = true;
+bool public_tools::ToolsNoRos::isOK_ = true;
 void CtrlCHandler(int signo) {
     LOG(INFO) << "Receive a Control+C.";
-    isNodeRunning = !isNodeRunning;
+    public_tools::ToolsNoRos::isOK_ = false;
 }
 
 int main(int argc, char **argv) {
     google::InitGoogleLogging(argv[0]);
     LOG(INFO) << "Got " << argc << " parameters.";
-    // signal(SIGINT, CtrlCHandler);
+    signal(SIGINT, CtrlCHandler);
 
     HikCamera hikCamera(&isNodeRunning);
     hikCamera.Run();

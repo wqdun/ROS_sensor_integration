@@ -334,6 +334,8 @@ void HikCamera::SaveImage(unsigned char *pData, MV_FRAME_OUT_INFO_EX *pFrameInfo
         return;
     }
 
+    std::cout << "public_tools::ToolsNoRos::isOK_: " << public_tools::ToolsNoRos::isOK_ << "\n";
+
     ImageTask *pImageTask = new ImageTask(picName, matBGR);
     s_threadPool_.append_task(pImageTask);
 

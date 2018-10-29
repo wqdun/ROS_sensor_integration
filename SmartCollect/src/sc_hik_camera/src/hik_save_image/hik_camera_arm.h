@@ -9,6 +9,7 @@
 
 #include "MvCameraControl.h"
 #include "../../../sc_lib_public_tools/src/thread_pool.h"
+#include "../../../sc_lib_public_tools/src/tools_no_ros.h"
 #include "image_task.h"
 
 

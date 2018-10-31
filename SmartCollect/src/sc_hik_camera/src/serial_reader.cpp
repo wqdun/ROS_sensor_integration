@@ -7,7 +7,7 @@
 SerialReader::SerialReader() {
     LOG(INFO) << __FUNCTION__ << " start.";
     isSerialRunning_ = true;
-    slam10Datas_.resize(10);
+    slam10Datas_.resize(50);
 
     pCanParser_.reset(new CanParser() );
 

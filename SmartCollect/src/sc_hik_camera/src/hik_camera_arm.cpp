@@ -5,9 +5,9 @@
 #include <glog/logging.h>
 
 MV_CC_PIXEL_CONVERT_PARAM HikCamera::s_convertParam_ = {0};
-// boost::shared_ptr<SerialReader> HikCamera::s_pSerialReader_;
-SerialReader *HikCamera::s_pSerialReader_;
-
+boost::shared_ptr<SerialReader> HikCamera::s_pSerialReader_;
+std::deque<mat2SlamProtocols_t> HikCamera::s_mat2Slams_;
+mutex_locker HikCamera::s_mutexLocker_;
 vinssystem HikCamera::system_;
 
 HikCamera::HikCamera(bool &_isNodeRunning):
@@ -17,8 +17,8 @@ HikCamera::HikCamera(bool &_isNodeRunning):
     err_ = MV_OK;
     handles_.clear();
     memset(&deviceList_, 0, sizeof(MV_CC_DEVICE_INFO_LIST));
-    // s_pSerialReader_.reset(new SerialReader() );
-    s_pSerialReader_ = new SerialReader();
+    s_pSerialReader_.reset(new SerialReader() );
+
     LOG(INFO) << "VINS start.";
     const char* cvocfile = "/opt/smartc/config/briefk10l6.bin";
     const char* cpatternfile = "/opt/smartc/config/briefpattern.yml";
@@ -34,10 +34,7 @@ HikCamera::~HikCamera() {
     s_pSerialReader_->isSerialRunning_ = false;
     (void)DoClean();
     pThread_->join();
-    if(s_pSerialReader_) {
-        delete s_pSerialReader_;
-        s_pSerialReader_ = NULL;
-    }
+
     LOG(INFO) << __FUNCTION__ << " end.";
 }
 
@@ -289,12 +286,26 @@ void HikCamera::Run() {
     (void)EnumGigeDevices();
     (void)OpenConfigDevices();
     (void)RegisterCB();
-    (void)PressEnterToExit();
-    // while(isCameraRunning_) {
-    //     LOG(INFO) << __FUNCTION__ << " isRunning_: " << isCameraRunning_;
-    //     sleep(1);
-    // }
-    LOG(INFO) << __FUNCTION__ << " end: isRunning_: " << isCameraRunning_;
+    while(1) {
+        LOG(INFO) << "while start.";
+        s_mutexLocker_.mutex_lock();
+        std::deque<mat2SlamProtocols_t> _mat2Slams = s_mat2Slams_;
+        s_mutexLocker_.mutex_unlock();
+
+        LOG(INFO) << "inputImage start.";
+        std::vector<Box> emptybox;
+        pair<double,vector<Box>> emptyonebox;
+        struct timeval now;
+        gettimeofday(&now, NULL);
+        const double unixTime = now.tv_sec + now.tv_usec / 1000000.;
+        emptyonebox.first = unixTime;
+        emptyonebox.second = emptybox;
+        (void)ImageProc(_mat2Slams.back().matImage, unixTime, &system_, emptyonebox);
+        LOG(INFO) << "inputImage end.";
+
+        (void)IMUProc(_mat2Slams.back().slams, system_);
+        LOG(INFO) << "while end.";
+    }
 }
 
 void HikCamera::DoClean() {
@@ -333,14 +344,12 @@ void __stdcall HikCamera::ImageCB(unsigned char *pData, MV_FRAME_OUT_INFO_EX *pF
         LOG(ERROR) << "pFrameInfo is NULL.";
         return;
     }
-    struct timeval now;
-    gettimeofday(&now, NULL);
-    const double unixTime = now.tv_sec + now.tv_usec / 1000000.;
-    DLOG(INFO) << "GetOneFrame[" << pFrameInfo->nFrameNum << "]: " << pFrameInfo->nWidth << " * " << pFrameInfo->nHeight << " at " << std::fixed << unixTime;
-    (void)Convert2Mat(pData, pFrameInfo, pUser, unixTime);
+
+    LOG(INFO) << "GetOneFrame[" << pFrameInfo->nFrameNum << "]: " << pFrameInfo->nWidth << " * " << pFrameInfo->nHeight;
+    (void)Convert2Mat(pData, pFrameInfo, pUser);
 }
 
-void HikCamera::Convert2Mat(unsigned char *pData, MV_FRAME_OUT_INFO_EX *pFrameInfo, void *pUser, double _unixTime) {
+void HikCamera::Convert2Mat(unsigned char *pData, MV_FRAME_OUT_INFO_EX *pFrameInfo, void *pUser) {
     DLOG(INFO) << __FUNCTION__ << " start: " << std::fixed << s_pSerialReader_->slam10Datas_.back().unixTime;
     DLOG(INFO) << s_pSerialReader_->slam10Datas_.size();
 
@@ -349,32 +358,20 @@ void HikCamera::Convert2Mat(unsigned char *pData, MV_FRAME_OUT_INFO_EX *pFrameIn
     cv::Mat matBGR(pFrameInfo->nHeight, pFrameInfo->nWidth, CV_8UC3);
     cv::cvtColor(matImage, matBGR, cv::COLOR_RGB2BGR);
 
-    (void)IMUProc(s_pSerialReader_->slam10Datas_, system_);
-
-    std::vector<Box> emptybox;
-    pair<double,vector<Box>> emptyonebox;
-    emptyonebox.first = _unixTime;
-    emptyonebox.second = emptybox;
-    (void)ImageProc(matBGR, _unixTime, &system_, emptyonebox);
-    if(vinssystem::stopflag == true) {
-        cout << "here we are going to exit!" << endl;
-        cout << "here we are going to exit!" << endl;
-        cout << "here we are going to exit!" << endl;
-        cout << "here we are going to exit!" << endl;
-        cout << "here we are going to exit!" << endl;
-        cout << "here we are going to exit!" << endl;
-        s_pSerialReader_->pCanParser_->StopDevice();
-        exit(1);
-    }
+    mat2SlamProtocols_t mat2Slams;
+    mat2Slams.matImage = matBGR;
+    mat2Slams.slams = s_pSerialReader_->slam10Datas_;
+    s_mutexLocker_.mutex_lock();
+    s_mat2Slams_.emplace_back(mat2Slams);
+    s_mutexLocker_.mutex_unlock();
 
     DLOG(INFO) << __FUNCTION__ << " end.";
 }
 
 void HikCamera::IMUProc(const std::deque<slamProtocol_t> &tenIMUMeasurements, vinssystem &mSystem) {
     DLOG(INFO) << __FUNCTION__ << " start.";
-    for(size_t i = 0; i < 10; ++i) {
+    for(size_t i = 0; i < 50; ++i) {
         ImuConstPtr imu_msg = new IMU_MSG();
-
         imu_msg->header = tenIMUMeasurements[i].unixTime;
         imu_msg->acc(0) = tenIMUMeasurements[i].accX;
         imu_msg->acc(1) = tenIMUMeasurements[i].accY;

@@ -84,6 +84,12 @@ include_directories(
         ${SUITESPARSE_INCLUDE_DIR}
         ${OpenCV_INCLUDE_DIRS}
         /opt/mvs/include
+        /home/nvidia/projects/SmartCollectorDalmer/detection
+        /home/nvidia/projects/SmartCollectorDalmer/detection_cpu
+        /home/nvidia/projects/SmartCollectorDalmer/main_project
+        /home/nvidia/projects/SmartCollectorDalmer/classification
+	/home/nvidia/caffe/include/
+        /usr/local/cuda-8.0/targets/aarch64-linux/include/
 )
 
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/lib)
@@ -163,6 +169,11 @@ target_link_libraries(${PROJECT_NAME}
         ${Pangolin_LIBRARIES}
         ${CERES_LIBRARIES}
         ${SUITESPARSE_LIBRARIES}
+        /home/nvidia/projects/SmartCollectorDalmer/build/detection/libdetection.a
+        /home/nvidia/projects/SmartCollectorDalmer/build/classification/libclassification.a
+        /home/nvidia/projects/SmartCollectorDalmer/build/main_project/libmain_project.a
+        /home/nvidia/projects/SmartCollectorDalmer/build/detection_cpu/libdetection_cpu.a
+        /home/nvidia/caffe/build/lib/libcaffe.so
         DUtils
         DVision
         DBoW
@@ -205,6 +216,12 @@ target_link_libraries(system_test
     /opt/smartc/3rd/libcontrolcan.so
 )
 
+######################## offline test ######################################
+# add_executable(offline_test src/example/main_honor8.cpp)
+# target_link_libraries(offline_test ${PROJECT_NAME} camera_model boost_thread)
+
+# add_executable(tx2_test src/example/main_tx2.cpp)
+# target_link_libraries(tx2_test ${PROJECT_NAME} camera_model boost_thread)
 #add_executable(system_test_euroc   src/Example/system_test_euroc.cpp)
 
 #target_link_libraries(system_test_euroc ${PROJECT_NAME} camera_model)

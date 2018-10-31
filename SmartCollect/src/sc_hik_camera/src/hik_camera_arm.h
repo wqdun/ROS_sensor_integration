@@ -6,10 +6,23 @@
 #include <opencv2/opencv.hpp>
 #include <boost/thread/thread.hpp>
 #include <signal.h>
+#include <sstream>
+#include <boost/algorithm/string.hpp>
+#include <time.h>
 
 #include "MvCameraControl.h"
 #include "serial_reader.h"
 #include "system.h"
+#include "data_input.h"
+#include "data_output.h"
+#include "classification.h"
+#include "detection.h"
+#include "../../sc_lib_public_tools/src/locker.h"
+
+typedef struct {
+    cv::Mat matImage;
+    std::deque<slamProtocol_t> slams;
+} mat2SlamProtocols_t;
 
 class HikCamera {
 public:
@@ -21,13 +34,14 @@ public:
 private:
     static void __stdcall ImageCB(unsigned char * pData, MV_FRAME_OUT_INFO_EX* pFrameInfo, void* pUser);
     static void ConvertSaveImage(unsigned char *pData, MV_FRAME_OUT_INFO_EX *pFrameInfo, void *pUser);
-    static void Convert2Mat(unsigned char *pData, MV_FRAME_OUT_INFO_EX *pFrameInfo, void *pUser, double time);
+    static void Convert2Mat(unsigned char *pData, MV_FRAME_OUT_INFO_EX *pFrameInfo, void *pUser);
     static void IMUProc(const std::deque<slamProtocol_t> &tenIMUMeasurements, vinssystem &mSystem);
     static cv::Mat ImageProc(cv::Mat srcImage, double header, vinssystem* mpSystem,pair<double,vector<Box>> onebox);
 
     static MV_CC_PIXEL_CONVERT_PARAM s_convertParam_;
-    // static boost::shared_ptr<SerialReader> s_pSerialReader_;
-    static SerialReader *s_pSerialReader_;
+    static boost::shared_ptr<SerialReader> s_pSerialReader_;
+    static std::deque<mat2SlamProtocols_t> s_mat2Slams_;
+    static mutex_locker s_mutexLocker_;
     static vinssystem system_;
 
     int err_;

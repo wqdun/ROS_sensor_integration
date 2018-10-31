@@ -158,7 +158,9 @@ public:
     vector<Vector3d> init_poses;
     vector<Vector3d> init_velocity;
     vector<Matrix3d> init_rotation;
+    vector<MarkerPerID> vmarkerspID;
     vector<Eigen::Quaterniond> init_quaternion;
+    vector<MarkerPoints3D> mvcurrentmarkers;
     double initial_timestamp;
     vector<Vector3d> gt_init_poses;
     Vector3d init_P;
@@ -233,6 +235,7 @@ public:
     bool big_turning;
     bool imu_written;
     double t0;
+    int nmarkerID;
 
     vector<SFMFeature> csfm_f;
     Matrix3d crelative_R;
@@ -242,6 +245,7 @@ public:
     bool vsolve_visiononly;
     vector<pair<double, pair<Matrix3d, Vector3d>>> vpos_before_initialize;
 
+    void solve_marker();
     void solve_ceres(int buf_num);
     void solve_pnp();
     void solveCalibration();
@@ -253,7 +257,7 @@ public:
     void slideWindowNew();
     void slideWindowOld();
     int decideImuLink();
-    void processImage(const map<int, vector<pair<int, Eigen::Matrix<double, 7, 1>>>> &image, double header, int buf_num, cv::Mat rot12, Eigen::Vector3d xyz, Eigen::Vector3d ypr);
+    void processImage(const map<int, vector<pair<int, Eigen::Matrix<double, 7, 1>>>> &image, double header, int buf_num, cv::Mat rot12, Eigen::Vector3d xyz, Eigen::Vector3d ypr, vector<MarkerPerFrame> vmarkerspf);
     void processIMU(double t, double dt, double encoder_v, const Vector3d &linear_acceleration, const Vector3d &angular_velocity, const Vector3d &gps_position, const Vector3d &gps_altitude);
     void changeState();
     bool solveInitial();
@@ -270,6 +274,7 @@ public:
     void PrepareForVisionOnlyBA();
     void GetInitialPosesFromOdometry(Quaterniond* q, Vector3d* T);
     void GetInitialPosesFromOdometry2(Quaterniond* q, Vector3d* T, Quaterniond* q2, Vector3d* T2);
+    cv::Mat Triangulation(const std::vector<cv::Mat> vPoses, const std::vector<cv::Mat> vobs, cv::Mat P3w, cv::Mat K, int niterate, bool& which,float &norm1,float &norm2);
 
 
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW

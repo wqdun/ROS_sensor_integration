@@ -12,6 +12,7 @@
 #include <mutex>
 #include <loop/keyframe_database.h>
 #include <vector>
+#include "global_param.hpp"
 
 class MapDrawer {
 public:
@@ -23,10 +24,12 @@ public:
     void DrawKeyFrames(const bool bDrawKF, const bool bDrawGraph);
     void DrawGrids();
     void DrawCurrentCamera(pangolin::OpenGlMatrix &Twc);
+    void DrawMarkerPoints();
     void SetCurrentCameraPose(const cv::Mat &Tcw);
     void GetCurrentOpenGLCameraMatrix(pangolin::OpenGlMatrix &M);
     void SetAllFrames(std::vector<DRAWFRAME_DATA> frames_to_draw);
     void SetAllPoints(std::vector<Vector3d> points_3d);
+    void SetMarkerPoints(VINS* pEstimator);
 
     float mScaleic;
 
@@ -40,11 +43,13 @@ private:
     float mCameraLineWidth;
     vector<cv::Mat> cvTwcs;
     vector<cv::Mat> cvpoints_3d;
+    vector<MarkerPoints3D> eimarkers_3d;
 
     cv::Mat mCameraPose;
 
     std::mutex mMutexCamera;
     std::mutex mMutexPoints;
+    std::mutex mMutexMarkers;
 };
 
 

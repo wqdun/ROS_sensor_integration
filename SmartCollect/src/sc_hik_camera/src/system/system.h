@@ -24,6 +24,15 @@
 #include <viewer/Viewer.h>
 #include <viewer/MapDrawer.h>
 
+#include <sstream>
+#include "data_input.h"
+#include "data_output.h"
+#include "classification.h"
+#include "detection.h"
+#include <boost/algorithm/string.hpp>
+#include <vector>
+#include <time.h>
+
 using namespace cv;
 using namespace std;
 using namespace Eigen;
@@ -60,7 +69,7 @@ public:
     static void setstopflag();
     static bool stopflag;
     ~vinssystem();
-
+    Detector* pdetector_SSD;
 
 
 

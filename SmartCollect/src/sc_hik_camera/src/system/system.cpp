@@ -6,9 +6,21 @@
 #include <pangolin/var/var.h>
 #include <pangolin/pangolin.h>
 #include <global_param.hpp>
+#include <glog/logging.h>
 #include "system.h"
 
-
+DEFINE_string(mean_file, "",
+    "The mean file used to subtract from the input image.");
+DEFINE_string(mean_value, "104,117,123",
+    "If specified, can be one value or can be same as image channels"
+    " - would subtract from the corresponding channel). Separated by ','."
+    "Either mean_file or mean_value should be provided, not both.");
+DEFINE_string(file_type, "image",
+    "The file type in the list_file. Currently support image and video.");
+DEFINE_string(out_file, "",
+    "If provided, store the detection results in the out_file.");
+DEFINE_double(confidence_threshold, 0.01,
+    "Only store detections with score higher than the threshold.");
 //静态变量必须在类外初始化，否则编译器报错，找不到引用
 
 double IntegrationBase::a_n = 0;
@@ -141,6 +153,22 @@ void vinssystem::create(string voc_file, string pattern_file,string setting_file
 
     float fps = 20;
     mT = 1e3/fps;
+
+FLAGS_alsologtostderr = 1;
+	//[0]数据输入
+	string list = "../input/image_input/list.txt";
+	CInputData DataInput(list);
+	//[1]模型初始化
+        DataInput.mean_file_D_SSD  = FLAGS_mean_file;
+        DataInput.mean_value_D_SSD = FLAGS_mean_value;
+        pdetector_SSD = new Detector(DataInput.model_file_D_SSD, DataInput.weights_file_D_SSD, DataInput.mean_file_D_SSD, DataInput.mean_value_D_SSD);
+
+       cout << "system initialization completed!" << endl;
+
+	//FILE* fp_mpts1 = fopen("/home/nvidia/markerpoints1.txt", "w");
+	//fclose(fp_mpts1);
+	//FILE* fp_mpts2 = fopen("/home/nvidia/markerpoints2.txt", "w");
+	//fclose(fp_mpts2);
 }
 
 void vinssystem::updateView() {
@@ -149,10 +177,9 @@ void vinssystem::updateView() {
 
     if (mpEstimator->solver_flag == VINS::INITIAL)
     {
-        {
+        /*{
             Vector3d P_real;
             P_real = mpEstimator->r_drift * (mpEstimator->pre_cumu_P + mpEstimator->pre_cumu_R * mpEstimator->tic) + mpEstimator->t_drift;
-            /*Matrix3d*/ //ric_double = ric.cast<double>();
             Matrix3d R_real;
             R_real = (mpEstimator->r_drift * mpEstimator->pre_cumu_R)*mpEstimator->ric;
 
@@ -191,7 +218,11 @@ void vinssystem::updateView() {
                << P_real.y() << " "
                << P_real.z() << " ";  //需要使用mutex
             s3 << "cost: wait for initialization";
-        }
+        }*/
+        s << "ypr: wait for initialization" ;
+        s1 << "v: wait for initialization" ;
+        s2 << "p: wait for initialization" ;
+        s3 << "cost: wait for initialization" ;
 
         return;
     }
@@ -291,6 +322,7 @@ void vinssystem::updateView() {
     mpDrawer->SetAllPoints(points_3d);
     m_points3d.unlock();
     //--------------------------------------------------------
+    mpDrawer->SetMarkerPoints(mpEstimator);
 
     s << "ypr: " << setprecision(3)
       << ypr.x()<< " "
@@ -415,7 +447,7 @@ void vinssystem::process() {
                 image[feature_id].emplace_back(0, xyz_uv_velocity);
             }
             //TS(process_image);
-            mpEstimator->processImage(image,header,waiting_lists, img_msg->rot12.clone(), Vector3d(px, py, pz), Vector3d(gps_yaw, gps_pitch, gps_roll));
+            mpEstimator->processImage(image,header,waiting_lists, img_msg->rot12.clone(), Vector3d(px, py, pz), Vector3d(gps_yaw, gps_pitch, gps_roll), img_msg->vmarkerspf);
             //TE(process_image);
 
 
@@ -968,9 +1000,60 @@ void vinssystem::inputIMU(ImuConstPtr imu_msg) {
 
 
 
+std::vector<cv::Point> vec_process(Mat& img, std::vector<std::vector<float>> & detections_SSD)
+{
+    std::vector<cv::Point> g_vec_points;
+    int count_pt = 0;
+    g_vec_points.clear();
+    for (int i = 0; i < static_cast<int>(detections_SSD.size()); ++i)
+	{
+            if(static_cast<int>(detections_SSD.size())>50)
+            {
+                //continue;
+            }
+            const vector<float>& d = detections_SSD[i];
+
+            // Detection format: [image_id, label, score, xmin, ymin, xmax, ymax].
+            CHECK_EQ(d.size(), 7);
+	    const float label = d[1];
+            const float score = d[2];
+	    const int xmin = static_cast<int>(d[3] * img.cols);
+	    const int ymin = static_cast<int>(d[4] * img.rows);
+	    const int xmax = static_cast<int>(d[5] * img.cols);
+	    const int ymax = static_cast<int>(d[6] * img.rows);
+
+            if (score >= 0.85)
+	    {
+                count_pt++;
+                if(count_pt>3)
+                {
+                    return g_vec_points;
+                }
+                int xminn = xmin > 0 ? xmin : 0;
+                int yminn = ymin > 0 ? ymin : 0;
+                int width = xmax-xmin > 0 && xmax-xmin < img.cols ? xmax-xmin : 0;
+                int height= ymax-ymin > 0 && ymax-ymin < img.rows ? ymax-ymin : 0;
+                if(xminn < 100 && yminn > 1000)
+                {
+                   continue;
+                }
+                if(xminn < 10 || xminn > 1920 || xminn + width > 1920 ){continue;}
+                if(yminn < 20 || yminn > 1200 || yminn + height > 1200){continue;}
+                if(yminn > 600){continue;}
+                if(height> 400){continue;}
+
+                Point pt(xminn+width/2 , yminn+height/2);
+                g_vec_points.push_back(pt);
+	    }
+
+        }//detection_ssd result
+        return g_vec_points;
+}
+
 cv::Mat vinssystem::inputImage(cv::Mat& image,double t,pair<double,vector<Box>> onebox) {
 
 //    printf("image processing\n");
+
 
 
     IMG_MSG *img_msg = new IMG_MSG();
@@ -1000,14 +1083,49 @@ cv::Mat vinssystem::inputImage(cv::Mat& image,double t,pair<double,vector<Box>> 
     cv::Mat rot12;
     mpFeaturetracker->readImage(img_equa, img_with_feature, img_msg->header, frame_cnt, good_pts, track_len,track_cnt, rot12);
 
-    //  TE(time_feature);
+
 
     //image msg buf
     int is_calculate = false;
+    bool is_detected = false;
     if (mpFeaturetracker->img_cnt == 0) {
+
+
+    //LOG(ERROR) << "start.";
+	DLOG(INFO) << "detection start.";
+	cout << endl << endl << endl << "detection start." << endl;
+        std::vector<vector<float> > detections_SSD =pdetector_SSD->Detect(image);
+	cout << endl << endl << endl << "detection end." << endl;
+	DLOG(INFO) << "detection end.";
+        //LOG(ERROR) << "end.";
+        std::vector<cv::Point> vec_points = vec_process(image,detections_SSD);
+	//std::vector<cv::Point> vec_points;
+ 	for(int i = 0; i < vec_points.size(); i++)
+        {
+		cv::circle(image, vec_points[i], 15, cv::Scalar(0, 255, 255,255), -1);
+        }
+	is_detected = true;
+    //  TE(time_feature);
 
         img_msg->point_clouds = mpFeaturetracker->image_msg;
         img_msg->rot12 = rot12.clone();
+        for(int i = 0; i < vec_points.size(); i++)
+        {
+		MarkerPerFrame markerpf;
+		markerpf.frame_idx = -1;
+		markerpf.pt[0] = vec_points[i].x;
+		markerpf.pt[1] = vec_points[i].y;
+		img_msg->vmarkerspf.push_back(markerpf);
+	}
+
+	//FILE* fp_mpts1 = fopen("/home/nvidia/markerpoints1.txt", "a");
+	//for(int i = 0; i < vec_points.size(); i++)
+	//{
+
+	//	double aaa = 1; double aaaa = 1; double aaaaa = 1; double aaaaaa = 1;
+	//	fprintf(fp_mpts1, "%16.6lf\t%d\t%d\t%lf\t%lf\t%lf\t%lf\t%lf\t%lf\n", img_msg->header, vec_points[i].x, vec_points[i].y, img_msg->vmarkerspf[i].pt[0], img_msg->vmarkerspf[i].pt[1], aaa, aaaa, aaaaa, aaaaaa);
+	//}
+	//fclose(fp_mpts1);
         //img_msg callback
         m_buf.lock();
         //img_msg->header += dt_initial;
@@ -1015,6 +1133,7 @@ cv::Mat vinssystem::inputImage(cv::Mat& image,double t,pair<double,vector<Box>> 
         is_calculate = true;
 //        printf("Img timestamp %lf\n",img_msg_buf.front()->header);
         m_buf.unlock();
+
         con.notify_one();
 
         if (LOOP_CLOSURE) {
@@ -1059,9 +1178,12 @@ cv::Mat vinssystem::inputImage(cv::Mat& image,double t,pair<double,vector<Box>> 
     //imText.rowRange(image.rows,imText.rows) = cv::Mat::zeros((textSize.height+10)*4,image.cols,image.type(),cv::Scalar(0,0,0,255));
 //    cv::putText(imText,s.str(),cv::Point(5,imText.rows-5-(textSize.height+10)*3),cv::FONT_HERSHEY_PLAIN,5,cv::Scalar(255,0,255,255),5,8);
 //    cv::putText(imText,s1.str(),cv::Point(5,imText.rows-5-(textSize.height+10)*2),cv::FONT_HERSHEY_PLAIN,5,cv::Scalar(255,0,255,255),5,8);
-    cv::putText(imText,s2.str(),cv::Point(5,imText.rows-5-(textSize.height+10)),cv::FONT_HERSHEY_PLAIN,1,cv::Scalar(255,0,255,255),1,8);
+    cv::putText(imText,s2.str(),cv::Point(5,imText.rows-5-(textSize.height+10)),cv::FONT_HERSHEY_PLAIN,1.5,cv::Scalar(0,0,255,255),1.5,8);
   //  cv::putText(imText,s3.str(),cv::Point(5,imText.rows-5),cv::FONT_HERSHEY_PLAIN,1,cv::Scalar(255,0,255,255),1,8);
+    if(is_detected == true)
+{
     imText.copyTo(mimText);
+}
     return imText;
     //cv::imshow("VINS: Current Frame",imText);
     //cv::waitKey(100);
@@ -1169,7 +1291,7 @@ void vinssystem::Run()
     float mViewpointF = 500;
     float mViewpointX = -1.0;
     float mViewpointY = -3.8;
-    float mViewpointZ = 7.0;
+    float mViewpointZ = 100.0;
 
     // Define Camera Render Object (for view / scene browsing)
     pangolin::OpenGlRenderState s_cam(
@@ -1187,6 +1309,8 @@ void vinssystem::Run()
     pangolin::OpenGlMatrix Twc;
     Twc.SetIdentity();
     cv::namedWindow("VINS-PC2: Current Frame", CV_WINDOW_NORMAL);
+    string strwriteframepath = "/home/nvidia/frames.txt";
+    int countframe = 0;
     while(true)
     {
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -1197,6 +1321,7 @@ void vinssystem::Run()
         mpDrawer->DrawGrids();
         mpDrawer->DrawMapPoints();
         mpDrawer->DrawKeyFrames(true,true);
+	mpDrawer->DrawMarkerPoints();
         pangolin::FinishFrame();
         if(!mimText.empty())
         {
@@ -1204,6 +1329,11 @@ void vinssystem::Run()
             cv::waitKey(mT);
         }
         usleep(100000);
+	countframe++;
+        if(countframe % 100 == 0)
+	{
+	    keyframe_database.WriteAllFrames(strwriteframepath.c_str(),ric_double.inverse(), mpEstimator->rec_enh);
+	}
         // if(menuWriteFrames)
         // {
         //     string strwriteframepath = msdatafolder + "frames.txt";

@@ -463,14 +463,14 @@ void KeyFrameDatabase::WriteKeyFrames(const char* filepath)
     }
     fclose(fp);
 }
-void KeyFrameDatabase::WriteAllFrames(const char* filepath, Eigen::Matrix3d ric_double_inv)
+void KeyFrameDatabase::WriteAllFrames(const char* filepath, Eigen::Matrix3d ric_double_inv, Eigen::Vector3d enh0)
 {
     FILE* fp = fopen(filepath, "w");
     for( int i = 0; i < frames_to_draw.size(); i++ )
     {
         Vector3d P_draw = frames_to_draw[i].P_draw;
         fprintf(fp,"%lf\t", frames_to_draw[i].header);
-        fprintf(fp,"%lf\t%lf\t%lf\t",P_draw.x(),P_draw.y(),P_draw.z());
+        fprintf(fp,"%lf\t%lf\t%lf\t",P_draw.x() + enh0.x(),P_draw.y() + enh0.y(),P_draw.z() + enh0.z());
         Matrix3d R_draw = frames_to_draw[i].R_draw * frames_to_draw[i].ric.inverse();
         Vector3d rpy = Utility::R2rpy(R_draw);
         fprintf(fp,"%lf\t%lf\t%lf\t",rpy.x(),rpy.y(),rpy.z());

@@ -51,6 +51,8 @@ cout << "after closing txt" << endl;
     last_R.setIdentity();
     last_P_old.setZero();
     last_R_old.setIdentity();
+    
+    nmarkerID = 0;
 //    cout << ProjectionFactor::sqrt_info <<endl;
 //
     this->setIMUModel();
@@ -214,6 +216,309 @@ void VINS::old2new()
     VectorXd dep = f_manager->getDepthVector();
     for (int i = 0; i < f_manager->getFeatureCount(); i++)
         para_Feature[i][0] = dep(i);
+}
+
+void VINS::solve_marker()
+{
+    Vector3d Pcs[frame_count - 1];
+    Matrix3d Rcs[frame_count - 1];
+    vector<cv::Mat> vcvPs;
+    for(int i = 0; i < frame_count - 1; i++)
+    {
+        Pcs[i] = Ps[i] + Rs[i] * tic;
+        Rcs[i] = Rs[i] * ric;
+	Matrix3d Rws = Rcs[i].inverse();
+        Vector3d tws = -Rws * Pcs[i];
+        cv::Mat mP(3, 4, CV_64F);
+	for(int row = 0; row < 3; row++)
+	{
+	    for(int col = 0; col < 3; col++)
+	    {
+		mP.at<double>(row, col) = Rws(row, col);
+            }
+	    mP.at<double>(row, 3) = tws(row, 0);
+	}
+	vcvPs.push_back(mP.clone());
+    }
+
+    //FILE* fp_mpts2 = fopen("/home/nvidia/markerpoints2.txt", "a");
+    //for(int i = 0; i < vmarkerspID.size(); i++)
+    //{
+	//for(int j = 0; j < vmarkerspID[i].vmarkerspf.size(); j++)
+	//{
+	//	fprintf(fp_mpts2, "%16.6lf\t", Headers[vmarkerspID[i].vmarkerspf[j].frame_idx]);
+	//	fprintf(fp_mpts2, "%lf\t,%lf\n", vmarkerspID[i].vmarkerspf[j].pt[0], vmarkerspID[i].vmarkerspf[j].pt[1]);	
+	//}
+    //}
+    //fprintf(fp_mpts2, "\n\n");
+    //fclose(fp_mpts2);
+
+    Eigen::Matrix3d mK = Eigen::Matrix3d::Identity();
+    mK(0, 0) = 1377;
+    mK(1, 1) = 1377;
+    mK(0, 2) = 471.5;
+    mK(1, 2) = 314.9;
+    Eigen::Matrix3d mK_inv = mK.inverse();
+    
+    cv::Mat DistCoef(4, 1, CV_64F);
+    DistCoef.at<double>(0, 0) = -0.2424;
+    DistCoef.at<double>(1, 0) = 0.4378;
+    DistCoef.at<double>(2, 0) = -0.000276;
+    DistCoef.at<double>(3, 0) = -0.00187;
+
+    cv::Mat cvK = cv::Mat::eye(3, 3, CV_64F);
+    cvK.at<double>(0, 0) = mK(0, 0);
+    cvK.at<double>(0, 2) = mK(0, 2);
+    cvK.at<double>(1, 1) = mK(1, 1);
+    cvK.at<double>(1, 2) = mK(1, 2);
+
+    vector<MarkerPoints3D> vgood3DPointshehe;
+    for(int i = 0; i < vmarkerspID.size(); i++)
+    {
+        int count_markers = 0;
+        for(int j = 0; j < vmarkerspID[i].vmarkerspf.size(); j++)
+	{
+	    if(vmarkerspID[i].vmarkerspf[j].frame_idx >= 0 && vmarkerspID[i].vmarkerspf[j].frame_idx < (frame_count - 1))
+            {
+		count_markers++;
+            }
+	}
+	cout << "count_markers(keyframe count):" << count_markers<<endl;
+
+        if(count_markers < 3)
+            continue;
+
+	vector<cv::Mat> vgoodPoses;
+        vector<cv::Mat> vgoodobs;
+	for(int j = 0; j < vmarkerspID[i].vmarkerspf.size(); j++)
+        {
+	     if(vmarkerspID[i].vmarkerspf[j].frame_idx >= 0 && vmarkerspID[i].vmarkerspf[j].frame_idx < (frame_count - 1))
+             {
+                 double mx = vmarkerspID[i].vmarkerspf[j].pt[0];
+                 double my = vmarkerspID[i].vmarkerspf[j].pt[1];
+                 //Eigen::Vector3d vm(mx, my, 1);
+                 //Eigen::Vector3d vdp;
+                 //vdp = mK_inv * vm;
+                 cv::Mat cvpd(1, 2, CV_64F);
+                 cvpd.at<double>(0, 0) = mx;
+                 cvpd.at<double>(0, 1) = my;
+		 cout << cvpd << endl;
+                 cvpd = cvpd.reshape(2);
+                 cv::undistortPoints(cvpd, cvpd,cvK, DistCoef,cv::Mat(),cv::Mat::eye(3, 3, CV_64F));		 
+                 cvpd = cvpd.reshape(1);
+		 cout << cvpd << endl; 
+                 cv::Mat tmp_obs(2, 1, CV_64F); 
+                 tmp_obs.at<double>(0, 0) = cvpd.at<double>(0, 0);
+                 tmp_obs.at<double>(1, 0) = cvpd.at<double>(0, 1);
+		 vgoodobs.push_back(tmp_obs.clone());
+		 vgoodPoses.push_back(vcvPs[vmarkerspID[i].vmarkerspf[j].frame_idx].clone());
+             }
+        }
+
+	
+
+	 cv::Mat P1 = vgoodPoses.front().clone();
+         cv::Mat P2 = vgoodPoses.back().clone();
+         cv::Mat ptu1 = vgoodobs.front().clone();
+         cv::Mat ptu2 = vgoodobs.back().clone();
+         cv::Mat ah3Dpt(4, 1, CV_64F);
+         cv::triangulatePoints(P1, P2, ptu1, ptu2, ah3Dpt);
+
+
+
+         cv::Mat a3Dpt(3, 1, CV_64F);
+         a3Dpt.at<double>(0, 0) = ah3Dpt.at<double>(0, 0) / ah3Dpt.at<double>(3, 0);
+         a3Dpt.at<double>(1, 0) = ah3Dpt.at<double>(1, 0) / ah3Dpt.at<double>(3, 0);
+         a3Dpt.at<double>(2, 0) = ah3Dpt.at<double>(2, 0) / ah3Dpt.at<double>(3, 0);
+
+			cv::Mat mP_last1 = P1.clone();
+			cv::Mat mR_last1 = mP_last1.colRange(0, 3).rowRange(0, 3);
+			cv::Mat mt_last1 = mP_last1.rowRange(0, 3).col(3);
+			cv::Mat pincamera1(3, 1, CV_64F);
+			pincamera1 = mR_last1 * a3Dpt + mt_last1;
+			cout << "last z:"<<" " << pincamera1.at<double>(2, 0) << endl;
+	
+			cv::Mat mP_last2 = P2.clone();
+			cv::Mat mR_last2 = mP_last2.colRange(0, 3).rowRange(0, 3);
+			cv::Mat mt_last2 = mP_last2.rowRange(0, 3).col(3);
+			cv::Mat pincamera2(3, 1, CV_64F);
+			pincamera2 = mR_last2 * a3Dpt + mt_last2;
+			cout << "last z:"<<" " << pincamera2.at<double>(2, 0) << endl;
+	 cv::Point3f pa3Dpt;
+         pa3Dpt.x = a3Dpt.at<double>(0, 0);
+	 pa3Dpt.y = a3Dpt.at<double>(1, 0);
+         pa3Dpt.z = a3Dpt.at<double>(2, 0);
+         vector<cv::Point3f> vpa3Dpt;
+         vpa3Dpt.push_back(pa3Dpt);
+	vector<cv::Mat> vrealgoodPoses;
+        vector<cv::Mat> vrealgoodobs;
+	int count_real_good = 0;
+	 for(int j = 0; j < vgoodobs.size(); j++)
+	{
+		//cv::Mat rvec(3, 1, CV_64F);
+         	//cv::Rodrigues(vgoodPoses[j].rowRange(0, 3).colRange(0, 3), rvec);
+		//cv::Mat tvec(3, 1, CV_64F);
+                //tvec = vgoodPoses[j].rowRange(0, 3).col(3);
+	        //vector<cv::Point2f>  vpimgpt;
+	        //cv::projectPoints(vpa3Dpt, rvec, tvec, cv::Mat::eye(3, 3, CV_64F), DistCoef, vpimgpt);
+		cv::Mat Rn(3, 3, CV_64F);
+		cv::Mat tn(3, 1, CV_64F);
+		Rn = vgoodPoses[j].rowRange(0, 3).colRange(0, 3);
+		tn = vgoodPoses[j].rowRange(0, 3).col(3);
+		cv::Mat imnh(3, 1, CV_64F);
+		cv::Mat imn(2, 1, CV_64F);
+                imnh = Rn * a3Dpt + tn;
+                            imn.at<double>(0, 0) = imnh.at<double>(0, 0) / imnh.at<double>(2, 0);
+                            imn.at<double>(1, 0) = imnh.at<double>(1, 0) / imnh.at<double>(2, 0);
+		//if(sqrt((vpimgpt[0].x - vgoodobs[j].at<double>(0, 0)) * (vpimgpt[0].x - vgoodobs[j].at<double>(0, 0)) + (vpimgpt[1].x - vgoodobs[j].at<double>(1, 0)) * (vpimgpt[1].x - vgoodobs[j].at<double>(1, 0))) * 1100 < 50 )
+		if(sqrt((imn.at<double>(0, 0) - vgoodobs[j].at<double>(0, 0)) * (imn.at<double>(0, 0) - vgoodobs[j].at<double>(0, 0)) + (imn.at<double>(1, 0) - vgoodobs[j].at<double>(1, 0)) * (imn.at<double>(1, 0) - vgoodobs[j].at<double>(1, 0))) * 1100 < 50 )
+		{
+			count_real_good++;
+			vrealgoodPoses.push_back(vgoodPoses[j].clone());
+			vrealgoodobs.push_back(vgoodobs[j].clone());
+		}
+
+cout<<"Pose of keyframe:"<<endl;
+cout << vgoodPoses[j] << endl;
+cout << vgoodobs[j] << endl;		
+
+cout <<"reprojection error:"<< sqrt((imn.at<double>(0, 0) - vgoodobs[j].at<double>(0, 0)) * (imn.at<double>(0, 0) - vgoodobs[j].at<double>(0, 0)) + (imn.at<double>(1, 0) - vgoodobs[j].at<double>(1, 0)) * (imn.at<double>(1, 0) - vgoodobs[j].at<double>(1, 0))) * 1100 << endl;
+	}
+	cout << "count_real_good:"<< count_real_good << endl;
+         if(count_real_good < 3)
+	{
+		continue;
+	}
+	else
+	{
+		bool flag_refined;
+         	float norm1;
+         	float norm2;
+         	cv::Mat worldpos_refined = Triangulation(vrealgoodPoses, vrealgoodobs, a3Dpt.clone(), cv::Mat::eye(3, 3, CV_64F), 10, flag_refined, norm1, norm2);
+		
+		cout << "marker	ID:" <<  vmarkerspID[i].ID << " " <<"worldpos_refined:" << worldpos_refined <<endl;
+		bool minusflag = false;
+		for(int j = 0; j < vrealgoodobs.size(); j++)
+		{
+			cv::Mat mP_last = vrealgoodPoses[j].clone();
+			cv::Mat mR_last = mP_last.colRange(0, 3).rowRange(0, 3);
+			cv::Mat mt_last = mP_last.rowRange(0, 3).col(3);
+			cv::Mat pincamera(3, 1, CV_64F);
+			pincamera = mR_last * worldpos_refined + mt_last;
+			cout << "last z:"<<"j:"<<j<<" " << pincamera.at<double>(2, 0) << endl;
+			if(pincamera.at<double>(2, 0) < 0)
+			{
+				minusflag = true;
+				cout << "break" << endl;
+				break; 
+			}
+		}
+		if(minusflag == true)
+		{
+			continue;
+		}
+
+		if(flag_refined == true)
+		{
+			cout << "refinement is successful" << "\t" << norm1 << "\t" << norm2 << endl;
+		}
+		else
+		{
+			cout << "refinement is unsuccessful" << "\t" << norm1 << "\t" << norm2  << endl;
+		}
+		MarkerPoints3D rec_pt3D;
+		rec_pt3D.ID = vmarkerspID[i].ID;
+		rec_pt3D.maxobsnum = count_real_good;
+		rec_pt3D.pos[0] = worldpos_refined.at<double>(0, 0);
+		rec_pt3D.pos[1] = worldpos_refined.at<double>(1, 0);
+		rec_pt3D.pos[2] = worldpos_refined.at<double>(2, 0);  	
+		vgood3DPointshehe.push_back(rec_pt3D);
+	}
+
+	
+    }
+    mvcurrentmarkers = vgood3DPointshehe;
+}
+
+cv::Mat VINS::Triangulation(const std::vector<cv::Mat> vPoses, const std::vector<cv::Mat> vobs, cv::Mat P3w, cv::Mat K, int niterate, bool& which,float &norm1,float &norm2)
+{
+    if(vPoses.size() < 2)
+    {
+        which = false;
+        norm1 = 0;
+        norm2 = 0;
+        return P3w.clone();
+    }
+    cv::Mat matA(2 * vPoses.size(),3,CV_64F);
+    cv::Mat matb(2 * vPoses.size(),1,CV_64F);
+    std::vector<cv::Mat> vJacobian2;
+    std::vector<cv::Mat> vKt;
+    cv::Mat P3wIni = P3w.clone();
+    for(int i = 0; i < vPoses.size(); i++)
+    {
+        cv::Mat Pose = vPoses[i];
+        cv::Mat R = Pose.rowRange(0,3).colRange(0,3);
+        cv::Mat t = Pose.rowRange(0,3).col(3);
+        cv::Mat Jacobian2 = K * R;
+        cv::Mat Kt = K * t;
+        vJacobian2.push_back(Jacobian2.clone());
+        vKt.push_back(Kt.clone());
+    }
+    int countiterate = 0;
+    cv::Mat resini;
+    while(countiterate < niterate + 1)
+    {
+        countiterate++;
+        for(int i = 0; i < vJacobian2.size(); i++)
+        {
+            cv::Mat Jacobian2 = vJacobian2[i].clone();
+            cv::Mat Kt = vKt[i].clone();
+            cv::Mat P3c = Jacobian2 * P3w + Kt;
+            cv::Mat Jacobian1 = cv::Mat::zeros(2,3,CV_64F);
+            double Xbar = P3c.at<double>(0,0);
+            double Ybar = P3c.at<double>(1,0);
+            double Zbar = P3c.at<double>(2,0);
+            Jacobian1.at<double>(0,0) = 1.0/Zbar;
+            Jacobian1.at<double>(0,2) = -Xbar/(Zbar * Zbar);
+            Jacobian1.at<double>(1,1) = 1.0/Zbar;
+            Jacobian1.at<double>(1,2) = -Ybar/(Zbar * Zbar);
+            cv::Mat Jacobian = Jacobian1 * Jacobian2;
+            Jacobian.copyTo(matA.rowRange(2 * i, 2 * i + 2).colRange(0,3));
+            double ubar = Xbar/Zbar;
+            double vbar = Ybar/Zbar;
+            cv::Mat obsbar(2,1,CV_64F);
+            obsbar.at<double>(0,0) = ubar;
+            obsbar.at<double>(1,0) = vbar;
+            cv::Mat res = vobs[i] - obsbar;
+            res.copyTo(matb.rowRange(2 * i, 2 * i + 2));
+        }
+        cv::Mat mDeltaX(3,1,CV_64F);
+        cv::solve(matA,matb,mDeltaX,cv::DECOMP_SVD);
+        if(countiterate < niterate + 1)
+        {
+            P3w = P3w + mDeltaX;
+            //cout << matA << endl;
+            //cout << matb << endl;
+            //cout << mDeltaX << endl;
+            //cout << P3w <<endl;
+        }
+
+        if(countiterate == 1)
+            resini = matb.clone();
+
+    }
+    norm1 = cv::norm(resini);
+    norm2 = cv::norm(matb);
+    if(cv::norm(matb) < cv::norm(resini))
+    {
+        which = true;
+        return P3w.clone();
+    } else{
+        which = false;
+        return P3wIni.clone();
+    }
+
+
 }
 
 void VINS::new2old()
@@ -655,7 +960,7 @@ int VINS::decideImuLink()
         }
 }
 
-void VINS::processImage(const map<int, vector<pair<int, Eigen::Matrix<double, 7, 1>>>> &image, double header, int buf_num, cv::Mat rot12, Eigen::Vector3d xyz, Eigen::Vector3d ypr)
+void VINS::processImage(const map<int, vector<pair<int, Eigen::Matrix<double, 7, 1>>>> &image, double header, int buf_num, cv::Mat rot12, Eigen::Vector3d xyz, Eigen::Vector3d ypr, vector<MarkerPerFrame> vmarkerspf)
 {
     //printf("adding feature points %lu\n", image_msg.size());
     int track_num;
@@ -666,7 +971,37 @@ void VINS::processImage(const map<int, vector<pair<int, Eigen::Matrix<double, 7,
     else
         marginalization_flag = MARGIN_SECOND_NEW;
 
-
+	cout<<"vmarkerspf size:"<<vmarkerspf.size()<<endl;
+    for(int i = 0; i < vmarkerspf.size(); i++)
+    {
+		cout<<"vmarker:"<<vmarkerspf[i].pt[0] << "  " << vmarkerspf[i].pt[1] << endl;
+		bool findflag = false;
+		for(int j = 0; j < vmarkerspID.size(); j++)
+		{
+			if((sqrt((vmarkerspID[j].pt_last.pt[0] - vmarkerspf[i].pt[0]) * (vmarkerspID[j].pt_last.pt[0] - vmarkerspf[i].pt[0]) + (vmarkerspID[j].pt_last.pt[1] - vmarkerspf[i].pt[1]) * (vmarkerspID[j].pt_last.pt[1] - vmarkerspf[i].pt[1])) < 300) && (vmarkerspID[j].pt_last.frame_idx < frame_count))
+			{
+				vmarkerspf[i].frame_idx = frame_count;
+				vmarkerspID[j].vmarkerspf.push_back(vmarkerspf[i]);
+				vmarkerspID[j].pt_last = vmarkerspf[i];
+				findflag = true;
+				break;
+			}
+			//else{
+				
+			//}
+		}
+		if(findflag == false)
+		{
+			cout << "minimum distance more than 300" << endl;
+			MarkerPerID markerpID;
+			markerpID.ID = nmarkerID;
+			vmarkerspf[i].frame_idx = frame_count;
+			markerpID.vmarkerspf.push_back(vmarkerspf[i]);
+			markerpID.pt_last = vmarkerspf[i];
+			vmarkerspID.push_back(markerpID);
+			nmarkerID++;
+		}
+	}
 
 
 //    printf("marginalization_flag %d\n", int(marginalization_flag));
@@ -1140,6 +1475,8 @@ void VINS::solve_ceres(int buf_num)
         }
     new2old();
 
+    solve_marker();
+
     vector<ceres::ResidualBlockId> residual_set;
     problem.GetResidualBlocks(&residual_set);
     for (auto it : residual_set)
@@ -1311,12 +1648,26 @@ void VINS::solve_ceres(int buf_num)
 
 bool VINS::solveInitialWithOdometry2() {
     printf("solve initial------------------------------------------\n");
+    double sum_dis = 0;
+double min_dis = 10000;
+    for(int i = 0; i < 10; i++)
+{
+	sum_dis += pre_integrations[i]->delta_encoder_p.norm();
+if( pre_integrations[i]->delta_encoder_p.norm() < min_dis)
+{
+	min_dis = pre_integrations[i]->delta_encoder_p.norm();
+}
+}
+    
 
-    if (!relativePosewithOdometry(0))
+    //if (!relativePosewithOdometry(0))
+    //if(false)
+    if(sum_dis < 3.5 || min_dis < 0.15)
     {
         printf("init solve 5pts between first frame and last frame failed\n");
         return false;
     }
+cout << "sum_dis:" << endl;
     Quaterniond *Q = new Quaterniond[all_image_frame.size()];
     Vector3d *T = new Vector3d[all_image_frame.size()];
 
@@ -2037,21 +2388,41 @@ bool VINS::visualInitialAlignOdometry()
     disdiff_gps[2] = 0;
     double norm_local = sqrt( disdiff_local[0] * disdiff_local[0] + disdiff_local[1] * disdiff_local[1]);
     double norm_gps = sqrt( disdiff_gps[0]* disdiff_gps[0] + disdiff_gps[1] * disdiff_gps[1]);
+    if(norm_gps > 0.00001)
+{
     disdiff_local[0] /= norm_local;
     disdiff_local[1] /= norm_local;
     disdiff_gps[0] /= norm_gps;
     disdiff_gps[1] /= norm_gps;
+
     Matrix3d Rgl = Eigen::Quaterniond::FromTwoVectors(disdiff_local, disdiff_gps).toRotationMatrix();
+    cout << "transformed local:" << Rgl * (Ps[frame_count -1] - Ps[0]) << endl;
+    cout << "gps diff: "<< pre_integrations[frame_count]->enh_0 - pre_integrations[1]->enh_0 << endl;
     for(int i = 0; i <= frame_count; i++)
     {
         Ps[i] = Rgl * Ps[i];
         Rs[i] = Rgl * Rs[i];
         Vs[i] = Rgl * Vs[i];
     }
+}
 
+ for(int i = 0; i <= frame_count; i++)
+    {
+         cout << "ps:" << Ps[i] << endl;
+         cout << "rs:" << Rs[i] << endl;
+         cout << "vs:" << Vs[i] << endl;
+    }
     rec_enh[0] = pre_integrations[1]->enh_0[0];
     rec_enh[1] = pre_integrations[1]->enh_0[1];
     rec_enh[2] = pre_integrations[1]->enh_0[2];
+
+    //FILE* fp1 = fopen("/home/nvidia/initialgps.txt", "w");
+//for(int i = 1; i <= frame_count; i++)
+//{
+//    fprintf(fp1, "%f\t%f\t%f\t%f\n", Headers[i - 1], pre_integrations[i]->enh_0[0], pre_integrations[i]->enh_0[1], pre_integrations[i]->enh_0[2]);
+
+//}
+//fclose(fp1);
     /*for(int j = 0; j < vpos_before_initialize.size(); j++)
     {
         if(vpos_before_initialize[j].first == Headers[0])
@@ -2259,6 +2630,28 @@ void VINS::slideWindow()
             Rs[WINDOW_SIZE] = Rs[WINDOW_SIZE - 1];
             Bas[WINDOW_SIZE] = Bas[WINDOW_SIZE - 1];
             Bgs[WINDOW_SIZE] = Bgs[WINDOW_SIZE - 1];
+            
+            vector<MarkerPerID>::iterator Iter;
+            for(Iter = vmarkerspID.begin(); Iter != vmarkerspID.end(); )
+            {
+				(*Iter).pt_last.frame_idx -= 1;
+				for(int j = 0; j < (*Iter).vmarkerspf.size(); j++)
+				{
+					(*Iter).vmarkerspf[j].frame_idx -= 1;
+				}
+				if((*Iter).vmarkerspf.front().frame_idx < 0)
+				{
+					(*Iter).vmarkerspf.erase((*Iter).vmarkerspf.begin());
+				}
+				if((*Iter).vmarkerspf.size() == 0)
+				{
+					Iter = vmarkerspID.erase(Iter);
+				}
+				else
+				{
+					Iter++;
+				}
+			}
 
             if(pre_integrations[WINDOW_SIZE] != NULL)
             {
@@ -2327,6 +2720,37 @@ void VINS::slideWindow()
             {
                 delete pre_integrations[WINDOW_SIZE];
             }
+            
+            vector<MarkerPerID>::iterator Iter;
+            for(Iter = vmarkerspID.begin(); Iter != vmarkerspID.end(); )
+            {
+				for(int j = 0; j < (*Iter).vmarkerspf.size(); j++)
+				{
+					if((*Iter).vmarkerspf[j].frame_idx == (frame_count - 1))
+					{
+						(*Iter).vmarkerspf.erase((*Iter).vmarkerspf.begin() + j);
+					}
+					if((*Iter).vmarkerspf[j].frame_idx == frame_count)
+					{
+						(*Iter).vmarkerspf[j].frame_idx -= 1;
+					}
+				}
+				if((*Iter).vmarkerspf.size() == 0)
+				{
+					Iter = vmarkerspID.erase(Iter);
+					continue;
+				}
+				if((*Iter).pt_last.frame_idx == (frame_count - 1))
+				{
+					(*Iter).pt_last = (*Iter).vmarkerspf.back();
+				}
+				if((*Iter).pt_last.frame_idx == frame_count)
+				{
+					(*Iter).pt_last.frame_idx -= 1;
+				}
+				Iter++;
+			}
+            
             Eigen::Matrix3d tmp_Ryawio;
             tmp_Ryawio << cos(myawio), -sin(myawio), 0,
                     sin(myawio), cos(myawio), 0,

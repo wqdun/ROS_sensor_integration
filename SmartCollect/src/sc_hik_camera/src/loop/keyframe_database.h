@@ -53,7 +53,7 @@ public:
     void updateVisualization();
     void updateDrawFrames();
     void addLoop(int loop_index);
-    void WriteAllFrames(const char* filepath,  Eigen::Matrix3d ric_double_inv);
+    void WriteAllFrames(const char* filepath,  Eigen::Matrix3d ric_double_inv, Eigen::Vector3d enh0);
     
     vector<Vector3f> refine_path;
     vector<KEYFRAME_DATA> all_keyframes;

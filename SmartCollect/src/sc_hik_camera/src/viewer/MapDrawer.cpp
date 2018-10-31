@@ -25,6 +25,59 @@ void MapDrawer::SetCurrentCameraPose(const cv::Mat &Tcw)
     mCameraPose = Tcw.clone();
 }
 
+void MapDrawer::SetMarkerPoints(VINS* pEstimator)
+{
+    std::unique_lock<std::mutex> lock(mMutexMarkers);
+    //for(int i = 0; i < pEstimator->mvcurrentmarkers.size(); i++)
+    //{
+    //    Vector3d ori_marker3d(pEstimator->mvcurrentmarkers[i].at<double>(0, 0), pEstimator->mvcurrentmarkers[i].at<double>(1, 0), pEstimator->mvcurrentmarkers[i].at<double>(2, 0));
+    //    Vector3d trans_marker3d = pEstimator->r_drift * ori_marker3d + pEstimator->t_drift;
+    //    eimarkers_3d.push_back(trans_marker3d);
+    //}
+    for(int i = 0; i < pEstimator->mvcurrentmarkers.size(); i++)
+    {
+          bool findflag = false;
+	  for(int j = 0; j < eimarkers_3d.size(); j++)
+	  {
+               if(eimarkers_3d[j].ID == pEstimator->mvcurrentmarkers[i].ID)
+	       {
+			
+			if(eimarkers_3d[j].maxobsnum < pEstimator->mvcurrentmarkers[i].maxobsnum)
+			{
+				eimarkers_3d[j].maxobsnum = pEstimator->mvcurrentmarkers[i].maxobsnum;
+				eimarkers_3d[j].pos = pEstimator->mvcurrentmarkers[i].pos;				
+			}
+			findflag = true;
+			break;
+	       }
+	  }
+	  if(findflag == false)
+	  {
+		MarkerPoints3D newdrawmarker;
+		newdrawmarker.ID = pEstimator->mvcurrentmarkers[i].ID;
+ 		newdrawmarker.maxobsnum = pEstimator->mvcurrentmarkers[i].maxobsnum;
+		newdrawmarker.pos = pEstimator->mvcurrentmarkers[i].pos;
+		eimarkers_3d.push_back(newdrawmarker);
+	  }	
+    }	
+}
+
+void MapDrawer::DrawMarkerPoints()
+{
+    std::unique_lock<std::mutex> lock(mMutexMarkers);
+    glPointSize(10);
+    glBegin(GL_POINTS);
+    glColor3f(0.0,1.0,0.0);
+
+    for(int i = 0; i < eimarkers_3d.size() ; i++)
+    {
+        Vector3d pos = eimarkers_3d[i].pos;
+        glVertex3f(pos[0]/mScaleic,pos[1]/mScaleic,pos[2]/mScaleic);
+    }
+
+    glEnd();
+}
+
 void MapDrawer::GetCurrentOpenGLCameraMatrix(pangolin::OpenGlMatrix &M)
 {
     if(!mCameraPose.empty())
@@ -118,8 +171,9 @@ void MapDrawer::DrawGrids()
     //glLineWidth(mKeyFrameLineWidth);
     //glColor3f(0.5f,0.5f,0.5f);
     //glBegin(GL_LINES);
-    const float axis_length = 1.5;
-    const float grid_width = 0.9;
+    const float axis_length = 30;
+    const int grid_width = 20;
+
     ///////////Draw Axis////////////////////////////////////////////////
     glLineWidth(mKeyFrameLineWidth*2);
     glColor3f(1.0f,0.0f,0.0f);
@@ -143,35 +197,52 @@ void MapDrawer::DrawGrids()
     glLineWidth(mKeyFrameLineWidth);
     glColor3f(0.5f,0.5f,0.5f);
     glBegin(GL_LINES);
-    glVertex3f(-grid_width,-grid_width,0);
-    glVertex3f(-grid_width,grid_width,0);
-    glVertex3f(-2.0/3.0*grid_width,-grid_width,0);
-    glVertex3f(-2.0/3.0*grid_width,grid_width,0);
-    glVertex3f(-1.0/3.0*grid_width,-grid_width,0);
-    glVertex3f(-1.0/3.0*grid_width,grid_width,0);
-    glVertex3f(0,-grid_width,0);
-    glVertex3f(0,grid_width,0);
-    glVertex3f(1.0/3.0*grid_width,-grid_width,0);
-    glVertex3f(1.0/3.0*grid_width,grid_width,0);
-    glVertex3f(2.0/3.0*grid_width,-grid_width,0);
-    glVertex3f(2.0/3.0*grid_width,grid_width,0);
-    glVertex3f(grid_width,-grid_width,0);
-    glVertex3f(grid_width,grid_width,0);
 
-    glVertex3f(-grid_width,-grid_width,0);
-    glVertex3f(grid_width,-grid_width,0);
-    glVertex3f(-grid_width,-2.0/3.0*grid_width,0);
-    glVertex3f(grid_width,-2.0/3.0*grid_width,0);
-    glVertex3f(-grid_width,-1.0/3.0*grid_width,0);
-    glVertex3f(grid_width,-1.0/3.0*grid_width,0);
-    glVertex3f(-grid_width,0,0);
-    glVertex3f(grid_width,0,0);
-    glVertex3f(-grid_width,1.0/3.0*grid_width,0);
-    glVertex3f(grid_width,1.0/3.0*grid_width,0);
-    glVertex3f(-grid_width,2.0/3.0*grid_width,0);
-    glVertex3f(grid_width,2.0/3.0*grid_width,0);
-    glVertex3f(-grid_width,grid_width,0);
-    glVertex3f(grid_width,grid_width,0);
+    for(int vidx = -grid_width; vidx <= grid_width; vidx++)
+    {
+	if(vidx % 2 == 0)
+	{
+		glVertex3f((float) vidx , (float) -grid_width, 0);
+        	glVertex3f((float) vidx , (float) grid_width, 0);
+	}
+    }
+    //glVertex3f(-grid_width,-grid_width,0);
+    //glVertex3f(-grid_width,grid_width,0);
+    //glVertex3f(-2.0/3.0*grid_width,-grid_width,0);
+    //glVertex3f(-2.0/3.0*grid_width,grid_width,0);
+    //glVertex3f(-1.0/3.0*grid_width,-grid_width,0);
+    //glVertex3f(-1.0/3.0*grid_width,grid_width,0);
+    //glVertex3f(0,-grid_width,0);
+    //glVertex3f(0,grid_width,0);
+    //glVertex3f(1.0/3.0*grid_width,-grid_width,0);
+    //glVertex3f(1.0/3.0*grid_width,grid_width,0);
+    //glVertex3f(2.0/3.0*grid_width,-grid_width,0);
+    //glVertex3f(2.0/3.0*grid_width,grid_width,0);
+    //glVertex3f(grid_width,-grid_width,0);
+    //glVertex3f(grid_width,grid_width,0);
+
+    for(int vidx = -grid_width; vidx <= grid_width; vidx++)
+    {
+	if(vidx % 2 == 0)
+	{
+		glVertex3f((float) -grid_width , (float) vidx, 0);
+        	glVertex3f((float) grid_width , (float) vidx, 0);
+	}
+    }
+    //glVertex3f(-grid_width,-grid_width,0);
+    //glVertex3f(grid_width,-grid_width,0);
+    //glVertex3f(-grid_width,-2.0/3.0*grid_width,0);
+    //glVertex3f(grid_width,-2.0/3.0*grid_width,0);
+    //glVertex3f(-grid_width,-1.0/3.0*grid_width,0);
+    //glVertex3f(grid_width,-1.0/3.0*grid_width,0);
+    //glVertex3f(-grid_width,0,0);
+    //glVertex3f(grid_width,0,0);
+    //glVertex3f(-grid_width,1.0/3.0*grid_width,0);
+    //glVertex3f(grid_width,1.0/3.0*grid_width,0);
+    //glVertex3f(-grid_width,2.0/3.0*grid_width,0);
+    //glVertex3f(grid_width,2.0/3.0*grid_width,0);
+    //glVertex3f(-grid_width,grid_width,0);
+    //glVertex3f(grid_width,grid_width,0);
     //////////////////Draw Texts//////////////////////
     const float textscale = grid_width / 3.0;
     glVertex3f(4*textscale,0.2*textscale,0*textscale);

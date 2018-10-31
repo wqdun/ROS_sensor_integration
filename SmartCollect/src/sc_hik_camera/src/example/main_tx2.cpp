@@ -28,7 +28,7 @@ int main(int argc, char** argv){
 
     const char* cvocfile = "/opt/smartc6/config/briefk10l6.bin";
     const char* cpatternfile = "/opt/smartc6/config/briefpattern.yml";
-    const char* csettingfile = "/opt/smartc6/config/vehicle-offline.yaml";
+    const char* csettingfile = "/opt/smartc6/config/vehicle_offline_tx2.yaml";
     string svocfile(cvocfile);
     string spatternfile(cpatternfile);
     string ssettingfile(csettingfile);
@@ -162,7 +162,7 @@ void LoadImages(const string &strCamPath, vector<string> &vstrImages, vector<dou
         if(!s.empty())
         {
             vstrImages.push_back(names[1]);
-            vTimeStamps.push_back(atol(names[0].c_str())/1e9);
+            vTimeStamps.push_back(strtod(names[0].c_str(), NULL));
 
         }
     }
@@ -186,11 +186,12 @@ void LoadIMUData(const string &strIMUPath, vector<IMUMeasument> &vIMUMeasuments,
         if(!s.empty())
         {
 
-            IMUMeasument measument = {strtod(names[4].c_str(),NULL),strtod(names[5].c_str(),NULL),strtod(names[6].c_str(),NULL),
-                                      strtod(names[1].c_str(),NULL),strtod(names[2].c_str(),NULL),strtod(names[3].c_str(),NULL),strtod(names[7].c_str(), NULL)};
+            IMUMeasument measument = {strtod(names[1].c_str(),NULL),strtod(names[2].c_str(),NULL),strtod(names[3].c_str(),NULL),
+                                      strtod(names[4].c_str(),NULL),strtod(names[5].c_str(),NULL),strtod(names[6].c_str(),NULL),strtod(names[7].c_str(), NULL),
+					strtod(names[8].c_str(), NULL), strtod(names[9].c_str(), NULL), strtod(names[10].c_str(), NULL)};
             vIMUMeasuments.push_back(measument);
 
-            vTimeStamps.push_back(atol(names[0].c_str())/1e9); //+0.01都不行  要毫秒级的同步精度
+            vTimeStamps.push_back(strtod(names[0].c_str(), NULL)); //+0.01都不行  要毫秒级的同步精度
 
         }
     }
@@ -207,9 +208,9 @@ void IMUProc(IMUMeasument oneIMUMeasurement, double header, vinssystem* mpSystem
     imu_msg->gyr(0) = oneIMUMeasurement.w_x;
     imu_msg->gyr(1) = oneIMUMeasurement.w_y;
     imu_msg->gyr(2) = oneIMUMeasurement.w_z;
-    imu_msg->enh(0) = 0;
-    imu_msg->enh(1) = 0;
-    imu_msg->enh(2) = 0;
+    imu_msg->enh(0) = oneIMUMeasurement.enh_x;
+    imu_msg->enh(1) = oneIMUMeasurement.enh_y;
+    imu_msg->enh(2) = oneIMUMeasurement.enh_z;
     imu_msg->encoder_v = oneIMUMeasurement.encoder_v;
     mpSystem->inputIMU(imu_msg);
 }

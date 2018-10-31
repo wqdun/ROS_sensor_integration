@@ -121,13 +121,32 @@ struct IMUMeasument {
     double w_y;
     double w_z;
     double encoder_v;
+    double enh_x;
+    double enh_y;
+    double enh_z;
 };
 //#pragma GCC push_options
 //#pragma GCC optimize ("O0")
+
+struct MarkerPerFrame
+{
+	int frame_idx;
+	Eigen::Vector2d pt;
+};
+
 struct IMG_MSG {
     double header;
     map<int, Matrix<double, 7, 1>> point_clouds;
+    vector<MarkerPerFrame> vmarkerspf;
     cv::Mat rot12;
+};
+
+
+struct MarkerPerID
+{
+	int ID;
+	MarkerPerFrame pt_last;
+	vector<MarkerPerFrame> vmarkerspf;
 };
 
 struct IMG_DATA {
@@ -154,6 +173,12 @@ struct VINS_DATA_CACHE {
     double header;
     Vector3f P;
     Matrix3f R;
+};
+
+struct MarkerPoints3D{
+    int maxobsnum;
+    int ID;
+    Vector3d pos;				
 };
 
 typedef IMU_MSG* ImuConstPtr;

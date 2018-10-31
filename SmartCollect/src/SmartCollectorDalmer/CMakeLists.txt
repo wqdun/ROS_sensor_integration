@@ -1,0 +1,44 @@
+cmake_minimum_required(VERSION 2.8)
+project(SmartCollector)
+find_package(Boost 1.54.0 COMPONENTS filesystem system program_options)
+find_package(OpenCV 3.1.0 REQUIRED)
+find_package(Protobuf REQUIRED)
+
+
+set(CMAKE_CXX_STANDARD 11)
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -fPIC")
+set(CAFFE_INCLUDE_DIR "/home/nvidia/caffe/include/")
+set(CAFFE_INCLUDE_DIR_BUILD "/home/nvidia/caffe/build/include/")
+set(CAFFE_LIBS_DIR "/home/nvidia/caffe/build/lib")
+
+
+#set ( PROJECT_LINK_LIBS libpthread.so libcaffe.so libopencv_ml.so libopencv_cudawarping.so libopencv_cudaimgproc.so libopencv_cudaobjdetect.so libglog.so libgflags.so libcudart.so )
+set ( PROJECT_LINK_LIBS libpthread.so libcaffe.so libopencv_ml.so libglog.so libgflags.so libcudart.so )
+
+set ( CMAKE_CXX_FLAGS_DEBUG "-g -O0" )
+set ( CMAKE_CXX_FLAGS_RELEASE "-g" )
+set ( CMAKE_CXX_STANDARD 11 )
+set ( CMAKE_CXX_STANDARD_REQUIRED ON )
+
+#include(classification/CMakeLists.txt )
+#include(detection/CMakeLists.txt)
+#include(main_project/CMakeLists.txt)
+aux_source_directory(. /home/nvidia/projects/SmartCollectorDalmer)
+
+include_directories(${CAFFE_INCLUDE_DIR} ${CAFFE_INCLUDE_DIR_BUILD} /usr/local/cuda-8.0/include ${OpenCV_INCLUDE_DIRS} ${Boost_INCLUDE_DIRS} ${PROTOBUF_INCLUDE_DIRS} ./classification ./detection ./detection_cpu ./main_project)
+
+add_subdirectory(detection)
+add_subdirectory(detection_cpu)
+add_subdirectory(main_project)
+add_subdirectory(classification)
+
+link_directories(${CAFFE_LIBS_DIR} /usr/local/cuda-8.0/lib64)
+
+set(SOURCE_FILES  ./main.cpp)
+
+add_definitions(-Wall)
+add_definitions(-DUSE_OPENCV)
+add_definitions(-DUSE_CUDA)
+
+add_executable(SmartCollector ${SOURCE_FILES})
+target_link_libraries(SmartCollector ${PROJECT_LINK_LIBS} ${OpenCV_LIBS} ${Boost_LIBRARIES} ${PROTOBUF_LIBRARIES} detection main_project classification detection_cpu)

@@ -169,6 +169,8 @@ void SerialReader::Parse2SlamData(const std::string &_slamProtocol) {
     slamData_.pitch = 0;
     slamData_.roll = 0;
 
+    slam10DatasMutex_.lock();
     slam10Datas_.emplace_back(slamData_);
     slam10Datas_.pop_front();
+    slam10DatasMutex_.unlock();
 }

@@ -10,6 +10,7 @@
 #include <boost/algorithm/string/classification.hpp>
 #include <boost/algorithm/string/split.hpp>
 #include <boost/thread/thread.hpp>
+#include <mutex>
 #include "can_parser.h"
 #include "../../sc_lib_public_tools/src/tools_no_ros.h"
 
@@ -48,6 +49,7 @@ public:
     slamProtocol_t slamData_;
     std::deque<slamProtocol_t> slam10Datas_;
     boost::shared_ptr<CanParser> pCanParser_;
+    std::mutex slam10DatasMutex_;
 
 
 private:

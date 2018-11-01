@@ -28,7 +28,7 @@
 #include "data_input.h"
 #include "data_output.h"
 #include "classification.h"
-#include "detection.h"
+#include "detection_cuda.h"
 #include <boost/algorithm/string.hpp>
 #include <vector>
 #include <time.h>
@@ -138,6 +138,7 @@ private:
     int old_index = -1;
     FeatureTracker *mpFeaturetracker;
     int frame_cnt = 0;
+    int count_inputImage;
 
     void updateView();
     //void update();

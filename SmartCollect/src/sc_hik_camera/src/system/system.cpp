@@ -153,6 +153,7 @@ void vinssystem::create(string voc_file, string pattern_file,string setting_file
 
     float fps = 20;
     mT = 1e3/fps;
+    count_inputImage = 0;
 
 FLAGS_alsologtostderr = 1;
 	//[0]数据输入
@@ -161,6 +162,7 @@ FLAGS_alsologtostderr = 1;
 	//[1]模型初始化
         DataInput.mean_file_D_SSD  = FLAGS_mean_file;
         DataInput.mean_value_D_SSD = FLAGS_mean_value;
+        LOG(INFO) << "DataInput: " << DataInput.model_file_D_SSD << DataInput.weights_file_D_SSD << DataInput.mean_file_D_SSD << DataInput.mean_value_D_SSD;
         pdetector_SSD = new Detector(DataInput.model_file_D_SSD, DataInput.weights_file_D_SSD, DataInput.mean_file_D_SSD, DataInput.mean_value_D_SSD);
 
        cout << "system initialization completed!" << endl;
@@ -1089,20 +1091,18 @@ cv::Mat vinssystem::inputImage(cv::Mat& image,double t,pair<double,vector<Box>> 
     int is_calculate = false;
     bool is_detected = false;
     if (mpFeaturetracker->img_cnt == 0) {
-
-
-    //LOG(ERROR) << "start.";
-	DLOG(INFO) << "detection start.";
-	cout << endl << endl << endl << "detection start." << endl;
-        std::vector<vector<float> > detections_SSD =pdetector_SSD->Detect(image);
-	cout << endl << endl << endl << "detection end." << endl;
-	DLOG(INFO) << "detection end.";
-        //LOG(ERROR) << "end.";
-        std::vector<cv::Point> vec_points = vec_process(image,detections_SSD);
-	//std::vector<cv::Point> vec_points;
- 	for(int i = 0; i < vec_points.size(); i++)
+        std::vector<cv::Point> vec_points;
+        if(count_inputImage % 3 == 0)
         {
-		cv::circle(image, vec_points[i], 15, cv::Scalar(0, 255, 255,255), -1);
+            std::vector<vector<float> > detections_SSD =pdetector_SSD->Detect(image);
+            vec_points = vec_process(image,detections_SSD);
+        }
+        count_inputImage++;
+
+
+        for(int i = 0; i < vec_points.size(); i++)
+        {
+		      cv::circle(image, vec_points[i], 15, cv::Scalar(0, 255, 255,255), -1);
         }
 	is_detected = true;
     //  TE(time_feature);

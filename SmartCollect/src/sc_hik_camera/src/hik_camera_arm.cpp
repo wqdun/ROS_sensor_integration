@@ -27,6 +27,7 @@ HikCamera::HikCamera(bool &_isNodeRunning):
     string spatternfile(cpatternfile);
     string ssettingfile(csettingfile);
     system_.create(svocfile, spatternfile, ssettingfile);
+    lastinputtime = 0;
 }
 
 HikCamera::~HikCamera() {
@@ -290,6 +291,14 @@ void HikCamera::Run() {
         LOG(INFO) << "while start.";
         s_mutexLocker_.mutex_lock();
         std::deque<mat2SlamProtocols_t> _mat2Slams = s_mat2Slams_;
+        LOG(INFO) << "dequeue size" << s_mat2Slams_.size();
+        if(s_mat2Slams_.empty()) {
+            LOG(INFO) << "s_mat2Slams_.empty()";
+            s_mutexLocker_.mutex_unlock();
+            usleep(50000);
+            continue;
+        }
+        s_mat2Slams_.pop_front();
         s_mutexLocker_.mutex_unlock();
 
         LOG(INFO) << "inputImage start.";
@@ -300,10 +309,10 @@ void HikCamera::Run() {
         const double unixTime = now.tv_sec + now.tv_usec / 1000000.;
         emptyonebox.first = unixTime;
         emptyonebox.second = emptybox;
-        (void)ImageProc(_mat2Slams.back().matImage, unixTime, &system_, emptyonebox);
+        (void)ImageProc(_mat2Slams.front().matImage, unixTime, &system_, emptyonebox);
         LOG(INFO) << "inputImage end.";
 
-        (void)IMUProc(_mat2Slams.back().slams, system_);
+        (void)IMUProc(_mat2Slams.front().slams, system_);
         LOG(INFO) << "while end.";
     }
 }
@@ -351,7 +360,7 @@ void __stdcall HikCamera::ImageCB(unsigned char *pData, MV_FRAME_OUT_INFO_EX *pF
 
 void HikCamera::Convert2Mat(unsigned char *pData, MV_FRAME_OUT_INFO_EX *pFrameInfo, void *pUser) {
     DLOG(INFO) << __FUNCTION__ << " start: " << std::fixed << s_pSerialReader_->slam10Datas_.back().unixTime;
-    DLOG(INFO) << s_pSerialReader_->slam10Datas_.size();
+
 
     cv::Mat matImage(pFrameInfo->nHeight, pFrameInfo->nWidth, CV_8UC3);
     memcpy(matImage.data, pData, pFrameInfo->nWidth * pFrameInfo->nHeight * 3);
@@ -360,7 +369,12 @@ void HikCamera::Convert2Mat(unsigned char *pData, MV_FRAME_OUT_INFO_EX *pFrameIn
 
     mat2SlamProtocols_t mat2Slams;
     mat2Slams.matImage = matBGR;
+
+    s_pSerialReader_->slam10DatasMutex_.lock();
+    DLOG(INFO) << s_pSerialReader_->slam10Datas_.size();
     mat2Slams.slams = s_pSerialReader_->slam10Datas_;
+    s_pSerialReader_->slam10DatasMutex_.unlock();
+
     s_mutexLocker_.mutex_lock();
     s_mat2Slams_.emplace_back(mat2Slams);
     s_mutexLocker_.mutex_unlock();
@@ -370,9 +384,13 @@ void HikCamera::Convert2Mat(unsigned char *pData, MV_FRAME_OUT_INFO_EX *pFrameIn
 
 void HikCamera::IMUProc(const std::deque<slamProtocol_t> &tenIMUMeasurements, vinssystem &mSystem) {
     DLOG(INFO) << __FUNCTION__ << " start.";
-    for(size_t i = 0; i < 50; ++i) {
+    for(size_t i = 0; i < tenIMUMeasurements.size(); ++i) {
         ImuConstPtr imu_msg = new IMU_MSG();
         imu_msg->header = tenIMUMeasurements[i].unixTime;
+        if(imu_msg->header <= lastinputtime)
+        {
+            continue;
+        }
         imu_msg->acc(0) = tenIMUMeasurements[i].accX;
         imu_msg->acc(1) = tenIMUMeasurements[i].accY;
         imu_msg->acc(2) = tenIMUMeasurements[i].accZ;
@@ -400,7 +418,9 @@ void HikCamera::IMUProc(const std::deque<slamProtocol_t> &tenIMUMeasurements, vi
             << imu_msg->enh(1) << ", "
             << imu_msg->enh(2);
         mSystem.inputIMU(imu_msg);
+        lastinputtime = imu_msg->header;
     }
+
 }
 
 cv::Mat HikCamera::ImageProc(cv::Mat srcImage, double header, vinssystem* mpSystem, pair<double,vector<Box>> onebox)

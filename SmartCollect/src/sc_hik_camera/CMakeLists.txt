@@ -225,3 +225,14 @@ target_link_libraries(system_test
 #add_executable(system_test_euroc   src/Example/system_test_euroc.cpp)
 
 #target_link_libraries(system_test_euroc ${PROJECT_NAME} camera_model)
+
+add_executable(can_killer
+    src/can_killer.cc
+)
+
+target_link_libraries(can_killer
+    /opt/smartc/3rd/libcontrolcan.so
+    glog
+)
+
+

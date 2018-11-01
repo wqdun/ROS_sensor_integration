@@ -20,6 +20,7 @@
 
 typedef struct {
     cv::Mat matImage;
+    double header;
     std::deque<slamProtocol_t> slams;
 } mat2SlamProtocols_t;
 
@@ -56,7 +57,7 @@ private:
     void DoClean();
     void PressEnterToExit();
     void IMUProc(const std::deque<slamProtocol_t> &tenIMUMeasurements, vinssystem &mSystem);
-    cv::Mat ImageProc(cv::Mat srcImage, double header, vinssystem* mpSystem,pair<double,vector<Box>> onebox);
+    cv::Mat ImageProc(cv::Mat srcImage, double header, vinssystem* mpSystem,pair<double,vector<Box>> onebox, int queue_length = 0);
 
 };
 

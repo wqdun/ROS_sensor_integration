@@ -304,16 +304,16 @@ void HikCamera::Run() {
         LOG(INFO) << "inputImage start.";
         std::vector<Box> emptybox;
         pair<double,vector<Box>> emptyonebox;
-        struct timeval now;
-        gettimeofday(&now, NULL);
-        const double unixTime = now.tv_sec + now.tv_usec / 1000000.;
+        double unixTime = _mat2Slams.front().header;
         emptyonebox.first = unixTime;
         emptyonebox.second = emptybox;
-        (void)ImageProc(_mat2Slams.front().matImage, unixTime, &system_, emptyonebox);
-        LOG(INFO) << "inputImage end.";
 
         (void)IMUProc(_mat2Slams.front().slams, system_);
-        LOG(INFO) << "while end.";
+        LOG(INFO) << "IMUProc end.";
+
+        int queue_length = _mat2Slams.size();
+        (void)ImageProc(_mat2Slams.front().matImage, unixTime, &system_, emptyonebox, queue_length);
+        LOG(INFO) << "inputImage end.";
     }
 }
 
@@ -359,8 +359,11 @@ void __stdcall HikCamera::ImageCB(unsigned char *pData, MV_FRAME_OUT_INFO_EX *pF
 }
 
 void HikCamera::Convert2Mat(unsigned char *pData, MV_FRAME_OUT_INFO_EX *pFrameInfo, void *pUser) {
-    DLOG(INFO) << __FUNCTION__ << " start: " << std::fixed << s_pSerialReader_->slam10Datas_.back().unixTime;
+    DLOG(INFO) << __FUNCTION__ << " start.";
 
+    struct timeval now;
+    gettimeofday(&now, NULL);
+    const double unixTime = now.tv_sec + now.tv_usec / 1000000.;
 
     cv::Mat matImage(pFrameInfo->nHeight, pFrameInfo->nWidth, CV_8UC3);
     memcpy(matImage.data, pData, pFrameInfo->nWidth * pFrameInfo->nHeight * 3);
@@ -423,9 +426,9 @@ void HikCamera::IMUProc(const std::deque<slamProtocol_t> &tenIMUMeasurements, vi
 
 }
 
-cv::Mat HikCamera::ImageProc(cv::Mat srcImage, double header, vinssystem* mpSystem, pair<double,vector<Box>> onebox)
+cv::Mat HikCamera::ImageProc(cv::Mat srcImage, double header, vinssystem* mpSystem, pair<double,vector<Box>> onebox, int queue_length)
 {
     DLOG(INFO) << __FUNCTION__ << " start.";
-    cv::Mat resImage = mpSystem->inputImage(srcImage,header,onebox);
+    cv::Mat resImage = mpSystem->inputImage(srcImage,header,onebox, queue_length);
     return resImage.clone();
 }

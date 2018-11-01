@@ -45,7 +45,7 @@ public:
     vinssystem();
     void create(string voc_file, string pattern_file,string setting_file);
     void inputIMU(ImuConstPtr imu_msg);
-    cv::Mat inputImage(cv::Mat& image,double t,pair<double,vector<Box>> onebox);
+    cv::Mat inputImage(cv::Mat& image,double t,pair<double,vector<Box>> onebox, int queue_length = 0);
     void Run();
     KeyFrameDatabase keyframe_database;
     VINS *mpEstimator;

@@ -1052,7 +1052,7 @@ std::vector<cv::Point> vec_process(Mat& img, std::vector<std::vector<float>> & d
         return g_vec_points;
 }
 
-cv::Mat vinssystem::inputImage(cv::Mat& image,double t,pair<double,vector<Box>> onebox) {
+cv::Mat vinssystem::inputImage(cv::Mat& image,double t,pair<double,vector<Box>> onebox, int queue_length) {
 
 //    printf("image processing\n");
 
@@ -1090,12 +1090,36 @@ cv::Mat vinssystem::inputImage(cv::Mat& image,double t,pair<double,vector<Box>> 
     //image msg buf
     int is_calculate = false;
     bool is_detected = false;
+
+    int detect_freq;
+    if(queue_length < 10)
+    {
+        detect_freq = 3;
+    }
+    else if(queue_length < 30)
+    {
+	detect_freq = 5;
+    }
+    else if(queue_length < 50)
+    {
+        detect_freq = 7;
+    }
+    else if(queue_length < 75)
+    {
+	detect_freq = 10;
+    }
+    else
+    {
+        detect_freq = 20; 
+    }		
     if (mpFeaturetracker->img_cnt == 0) {
         std::vector<cv::Point> vec_points;
-        if(count_inputImage % 3 == 0)
+        if(count_inputImage % detect_freq == 0 && mpEstimator->solver_flag == VINS::NON_LINEAR)
         {
-            std::vector<vector<float> > detections_SSD =pdetector_SSD->Detect(image);
+           DLOG(INFO) << "detection_start."; 
+	  std::vector<vector<float> > detections_SSD =pdetector_SSD->Detect(image);
             vec_points = vec_process(image,detections_SSD);
+	  DLOG(INFO) << "detection_end."; 
         }
         count_inputImage++;
 

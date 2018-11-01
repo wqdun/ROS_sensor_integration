@@ -25,7 +25,7 @@ void StopDevice() {
     usleep(100000);//延时100ms
 }
 
-int main() {
+int main(int argc, char **argv) {
     google::InitGoogleLogging(argv[0]);
     LOG(INFO) << __FUNCTION__ << " start.";
     if(VCI_OpenDevice(VCI_USBCAN2, 0, 0) != 1) {

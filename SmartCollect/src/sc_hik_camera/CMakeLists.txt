@@ -59,6 +59,8 @@ find_package(Pangolin REQUIRED)
 MESSAGE("Build type: " ${OPENCV_INCLUDE_DIRS})
 
 
+MESSAGE("PROJECT_SOURCE_DIR: " ${PROJECT_SOURCE_DIR})
+
 #find_package(Glog REQUIRED)
 #include_directories(BEFORE ${GLOG_INCLUDE_DIRS})
 include_directories(
@@ -213,15 +215,15 @@ target_link_libraries(system_test
     boost_thread
     controlcan
     /opt/mvs/lib/arm64/libMvCameraControl.so
-    /opt/smartc/3rd/libcontrolcan.so
+    ${PROJECT_SOURCE_DIR}/../../3rd/libcontrolcan.so
 )
 
 ######################## offline test ######################################
 # add_executable(offline_test src/example/main_honor8.cpp)
 # target_link_libraries(offline_test ${PROJECT_NAME} camera_model boost_thread)
 
-# add_executable(tx2_test src/example/main_tx2.cpp)
-# target_link_libraries(tx2_test ${PROJECT_NAME} camera_model boost_thread)
+add_executable(tx2_test src/example/main_tx2.cpp)
+target_link_libraries(tx2_test ${PROJECT_NAME} camera_model boost_thread)
 #add_executable(system_test_euroc   src/Example/system_test_euroc.cpp)
 
 #target_link_libraries(system_test_euroc ${PROJECT_NAME} camera_model)
@@ -231,7 +233,7 @@ add_executable(can_killer
 )
 
 target_link_libraries(can_killer
-    /opt/smartc/3rd/libcontrolcan.so
+    ${PROJECT_SOURCE_DIR}/../../3rd/libcontrolcan.so
     glog
 )
 

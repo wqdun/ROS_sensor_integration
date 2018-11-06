@@ -26,9 +26,9 @@ int main(int argc, char** argv){
 
 
 
-    const char* cvocfile = "/opt/smartc6/config/briefk10l6.bin";
-    const char* cpatternfile = "/opt/smartc6/config/briefpattern.yml";
-    const char* csettingfile = "/opt/smartc6/config/vehicle_offline_tx2.yaml";
+    const char* cvocfile = "../../../config/briefk10l6.bin";
+    const char* cpatternfile = "../../../config/briefpattern.yml";
+    const char* csettingfile = "../../../config/vehicle_offline_tx2.yaml";
     string svocfile(cvocfile);
     string spatternfile(cpatternfile);
     string ssettingfile(csettingfile);

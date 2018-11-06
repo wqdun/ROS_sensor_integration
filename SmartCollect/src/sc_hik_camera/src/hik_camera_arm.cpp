@@ -20,9 +20,9 @@ HikCamera::HikCamera(bool &_isNodeRunning):
     s_pSerialReader_.reset(new SerialReader() );
 
     LOG(INFO) << "VINS start.";
-    const char* cvocfile = "/opt/smartc/config/briefk10l6.bin";
-    const char* cpatternfile = "/opt/smartc/config/briefpattern.yml";
-    const char* csettingfile = "/opt/smartc/config/vehicle-dikuencoder.yaml";
+    const char* cvocfile = "../../../config/briefk10l6.bin";
+    const char* cpatternfile = "../../../config/briefpattern.yml";
+    const char* csettingfile = "../../../config/vehicle-dikuencoder.yaml";
     string svocfile(cvocfile);
     string spatternfile(cpatternfile);
     string ssettingfile(csettingfile);
@@ -87,7 +87,7 @@ void HikCamera::OpenConfigDevices() {
 void HikCamera::ConfigDevices(size_t index) {
     LOG(INFO) << __FUNCTION__ << " start.";
     void *handle = handles_[index];
-    const std::string hikConfig("/opt/smartc/config/hik_config.yaml");
+    const std::string hikConfig("../../../config/hik_config.yaml");
     cv::FileStorage fs(hikConfig, cv::FileStorage::READ);
     int configValue1 = -1;
     int configValue2 = -1;

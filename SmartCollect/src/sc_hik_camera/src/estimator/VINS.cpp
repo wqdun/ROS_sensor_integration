@@ -1383,14 +1383,86 @@ void VINS::solve_ceres(int buf_num)
                     {
                         if(front_pose.header == Headers[i])
                         {
-                            for (int k = 0; k < 7; k++)
-                                front_pose.loop_pose[k] = para_Pose[i][k];
+                            //for (int k = 0; k < 7; k++)
+                              //  front_pose.loop_pose[k] = para_Pose[i][k];
+				vector<Point2d> loop_all_2dpts;
+				vector<Point3d> loop_all_3dpts;
+			    int retrive_feature_index = 0;
+			    for (auto &it_per_id : f_manager->feature)
+                            {
+                                it_per_id.used_num = it_per_id.feature_per_frame.size();
+                                if (!(it_per_id.used_num >= 2 && it_per_id.start_frame < WINDOW_SIZE - 2))
+                                    continue;
+				int start = it_per_id.start_frame;
+                                //feature has been obeserved in ith frame
+                                int end = (int)(start + it_per_id.feature_per_frame.size() - i - 1);
+				if(start <= i && end >=0)
+                                {
+					while(front_pose.features_ids[retrive_feature_index] < it_per_id.feature_id)
+                                    {
+                                        retrive_feature_index++;
+                                    }
+
+                                    if(front_pose.features_ids[retrive_feature_index] == it_per_id.feature_id)
+                                    {
+                                        Point2d pts_j;
+					pts_j.x = front_pose.measurements[retrive_feature_index].x;
+					pts_j.y = front_pose.measurements[retrive_feature_index].y;	
+					//Vector3d pts_j = Vector3d(front_pose.measurements[retrive_feature_index].x, front_pose.measurements[retrive_feature_index].y, 1.0);
+					Vector3d vpts_i = it_per_id.feature_per_frame[0].point * it_per_id.estimated_depth;
+					int loop_imu_i = it_per_id.start_frame;
+					Quaterniond loop_Qi(para_Pose[loop_imu_i][6], para_Pose[loop_imu_i][3], para_Pose[loop_imu_i][4], para_Pose[loop_imu_i][5]);
+					Vector3d loop_Pi(para_Pose[loop_imu_i][0], para_Pose[loop_imu_i][1], para_Pose[loop_imu_i][2]);	
+					Matrix3d loop_Ri = loop_Qi.toRotationMatrix();				
+					Vector3d loop_3Dpt = loop_Ri * (ric * vpts_i + tic) + loop_Pi;
+					Point3d pts_3d;
+					pts_3d.x = loop_3Dpt[0];  pts_3d.y = loop_3Dpt[1]; pts_3d.z = loop_3Dpt[2]; 
+					loop_all_2dpts.push_back(pts_j);
+					loop_all_3dpts.push_back(pts_3d);
+				    }
+				}
+			    }
+			    cv::Mat loop_rvec(3, 1, CV_64F);
+			    cv::Mat loop_tvec(3, 1, CV_64F);		
+			    cv::solvePnPRansac(loop_all_3dpts, loop_all_2dpts, cv::Mat::eye(3, 3, CV_64F), cv::Mat(), loop_rvec, loop_tvec, false, 100, 0.007, 0.95, cv::noArray() );
+			    cv::Mat loop_solvedRcw(3, 3, CV_64F);
+			    cv::Rodrigues(loop_rvec, loop_solvedRcw);
+			    cv::Mat solvedRwc(3, 3, CV_64F);
+			    solvedRwc =	loop_solvedRcw.t();
+			    cv::Mat solvedtwc(3, 1, CV_64F);
+			    solvedtwc = -loop_solvedRcw.t() * loop_tvec;
+			    cv::Mat cvric; cvric = Utility::toCvMatd(ric);	
+			    cv::Mat cvtic; cvtic = Utility::toCvMatd(tic);
+			    cv::Mat solvedRwi(3, 3, CV_64F);
+			    solvedRwi = solvedRwc * cvric.t();
+			    cv::Mat solvedtwi(3, 1, CV_64F);
+			    solvedtwi = solvedtwc - solvedRwi * cvtic;
+			    Matrix3d solvedRwi_eigen;
+			    Vector3d solvedtwi_eigen;
+			    for(int row = 0; row < 3; row++)
+			    {
+				for(int col = 0; col < 3; col++)
+				{
+					solvedRwi_eigen(row, col) = solvedRwi.at<double>(row, col);
+				}
+				solvedtwi_eigen(row, 0) = solvedtwi.at<double>(row, 0);
+			    }
+			    Quaterniond solvedQ{solvedRwi_eigen};
+			    front_pose.loop_pose[0] = solvedtwi_eigen[0];		
+			    front_pose.loop_pose[1] = solvedtwi_eigen[1];
+			    front_pose.loop_pose[2] = solvedtwi_eigen[2];
+			    front_pose.loop_pose[3] = solvedQ.x();
+			    front_pose.loop_pose[4] = solvedQ.y();
+			    front_pose.loop_pose[5] = solvedQ.z(); 
+			    front_pose.loop_pose[6] = solvedQ.w(); 		 	 	
+		 					
                             ceres::LocalParameterization *local_parameterization = new PoseLocalParameterization();
                             problem.AddParameterBlock(front_pose.loop_pose, SIZE_POSE, local_parameterization);
 
                             Ps_retrive = front_pose.P_old;
                             Qs_retrive = front_pose.Q_old.toRotationMatrix();
-                            int retrive_feature_index = 0;
+                            //int retrive_feature_index = 0;
+			    retrive_feature_index = 0;
                             int feature_index = -1;
                             int loop_factor_cnt = 0;
                             for (auto &it_per_id : f_manager->feature)

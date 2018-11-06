@@ -520,8 +520,26 @@ void vinssystem::solve_markers()
 
 	
 
+	
+
 	 cv::Mat P1 = vgoodPoses.front().clone();
          cv::Mat P2 = vgoodPoses.back().clone();
+
+
+	cv::Mat rotation1 = P1.colRange(0, 3).rowRange(0, 3);
+	cv::Mat rotation2 = P2.colRange(0, 3).rowRange(0, 3);
+	cv::Mat translation1 = P1.rowRange(0, 3).col(3);
+	cv::Mat translation2 = P2.rowRange(0, 3).col(3);
+	cv::Mat position1 = -rotation1.t() * translation1;
+	cv::Mat position2 = -rotation2.t() * translation2;
+	cv::Mat diff_position(3, 1, CV_64F);
+	diff_position = position2 - position1;
+	cout << "baseline:" << sqrt(diff_position.at<double>(0, 0) * diff_position.at<double>(0, 0) + diff_position.at<double>(1, 0) * diff_position.at<double>(1, 0) + diff_position.at<double>(2, 0) * diff_position.at<double>(2, 0)) << endl;
+	if(sqrt(diff_position.at<double>(0, 0) * diff_position.at<double>(0, 0) + diff_position.at<double>(1, 0) * diff_position.at<double>(1, 0) + diff_position.at<double>(2, 0) * diff_position.at<double>(2, 0)) < 1)
+{
+continue;
+}
+
          cv::Mat ptu1 = vgoodobs.front().clone();
          cv::Mat ptu2 = vgoodobs.back().clone();
          cv::Mat ah3Dpt(4, 1, CV_64F);
@@ -1404,6 +1422,7 @@ std::vector<cv::Point> vec_process(Mat& img, std::vector<std::vector<float>> & d
 	    const int xmax = static_cast<int>(d[5] * img.cols);
 	    const int ymax = static_cast<int>(d[6] * img.rows);
 
+		int flag = 0;
             if (score >= 0.85)
 	    {
                 count_pt++;
@@ -1423,9 +1442,41 @@ std::vector<cv::Point> vec_process(Mat& img, std::vector<std::vector<float>> & d
                 if(yminn < 20 || yminn > 1200 || yminn + height > 1200){continue;}
                 if(yminn > 600){continue;}
                 if(height> 400){continue;}
-
+				int label_change = int(label);
+                switch(label_change)
+				{
+					case 1: 
+					{
+						//labels = "5100";
+						flag   = 1; 
+						break;
+					}
+					case 2:
+					{
+						//lables = "5101";
+						flag   = 1;
+						break;
+					}
+					case 3: 
+					{
+						//labels = "5102";
+						flag   = 0;
+						break;
+					}
+					default: 
+					{
+						break;
+					}
+				}
                 Point pt(xminn+width/2 , yminn+height/2);
-                g_vec_points.push_back(pt);
+				if(width>height)
+				{
+					flag = 0;
+				}
+				if(flag==1)
+				{
+                    g_vec_points.push_back(pt);
+				}
 	    }
 
         }//detection_ssd result
@@ -1494,9 +1545,11 @@ cv::Mat vinssystem::inputImage(cv::Mat& image,double t,pair<double,vector<Box>> 
     }		
     if (mpFeaturetracker->img_cnt == 0) {
         std::vector<cv::Point> vec_points;
-        if(count_inputImage % detect_freq == 0)
+        if(count_inputImage % detect_freq == 0 && mpEstimator->solver_flag == VINS::NON_LINEAR)
         {
-            std::vector<vector<float> > detections_SSD =pdetector_SSD->Detect(image);
+           DLOG(INFO) << "detection start"; 
+		std::vector<vector<float> > detections_SSD =pdetector_SSD->Detect(image);
+	DLOG(INFO) << "detection end"; 
             vec_points = vec_process(image,detections_SSD);
         }
         count_inputImage++;

@@ -372,6 +372,7 @@ void HikCamera::Convert2Mat(unsigned char *pData, MV_FRAME_OUT_INFO_EX *pFrameIn
 
     mat2SlamProtocols_t mat2Slams;
     mat2Slams.matImage = matBGR;
+	mat2Slams.header = unixTime;
 
     s_pSerialReader_->slam10DatasMutex_.lock();
     DLOG(INFO) << s_pSerialReader_->slam10Datas_.size();

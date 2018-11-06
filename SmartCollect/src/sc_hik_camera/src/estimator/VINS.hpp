@@ -99,6 +99,7 @@ public:
     Vector3d Ps_retrive;
     Quaterniond Qs_retrive;
 
+
     std::vector<double> cimu_t;
     std::vector<Vector3d> cimu_angular_velocities;
     std::vector<double> Delta_t;
@@ -245,6 +246,7 @@ public:
     bool vsolve_visiononly;
     vector<pair<double, pair<Matrix3d, Vector3d>>> vpos_before_initialize;
 
+    vector<MarkerPerFrame> getptsonsecondlastframe();
     void solve_marker();
     void solve_ceres(int buf_num);
     void solve_pnp();

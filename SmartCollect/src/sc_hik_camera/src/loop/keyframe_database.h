@@ -33,6 +33,7 @@ struct DRAWFRAME_DATA
     Matrix3d R_draw;
     Matrix3d ric;
     Vector3d tic;
+    cv::Mat mP;
     bool iskeyframeflag;
     double dt;
 };

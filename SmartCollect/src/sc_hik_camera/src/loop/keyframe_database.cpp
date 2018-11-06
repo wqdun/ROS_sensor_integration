@@ -447,6 +447,21 @@ void KeyFrameDatabase::updateDrawFrames()
         frames_to_draw[i].R_draw = r_drift_it * frames_to_draw[i].Q_origin.toRotationMatrix();
         frames_to_draw[i].P_draw = r_drift_it* frames_to_draw[i].P_origin + t_drift_it;
     }
+
+	/////////////update the markers/////////////////////////////////////////
+	for(i = 0; i < frames_to_draw.size(); i++)
+	{
+		Matrix3d R_real = frames_to_draw[i].R_draw;
+		Vector3d P_real = frames_to_draw[i].P_draw;	
+		Matrix3d Rcw_real;
+    		Rcw_real = R_real.inverse();
+
+    		Vector3d tcw_real;
+    		tcw_real = -Rcw_real * P_real;
+
+    		cv::Mat cvPcw = Utility::toProjectionMatd(Rcw_real, tcw_real); 
+		frames_to_draw[i].mP = cvPcw.clone();
+	}
     m_draw.unlock();
 }
 

@@ -978,7 +978,7 @@ void VINS::processImage(const map<int, vector<pair<int, Eigen::Matrix<double, 7,
 		bool findflag = false;
 		for(int j = 0; j < vmarkerspID.size(); j++)
 		{
-			if((sqrt((vmarkerspID[j].pt_last.pt[0] - vmarkerspf[i].pt[0]) * (vmarkerspID[j].pt_last.pt[0] - vmarkerspf[i].pt[0]) + (vmarkerspID[j].pt_last.pt[1] - vmarkerspf[i].pt[1]) * (vmarkerspID[j].pt_last.pt[1] - vmarkerspf[i].pt[1])) < 300) && (vmarkerspID[j].pt_last.frame_idx < frame_count))
+			if((sqrt((vmarkerspID[j].pt_last.pt[0] - vmarkerspf[i].pt[0]) * (vmarkerspID[j].pt_last.pt[0] - vmarkerspf[i].pt[0]) + (vmarkerspID[j].pt_last.pt[1] - vmarkerspf[i].pt[1]) * (vmarkerspID[j].pt_last.pt[1] - vmarkerspf[i].pt[1])) < 100) && (vmarkerspID[j].pt_last.frame_idx < frame_count))
 			{
 				vmarkerspf[i].frame_idx = frame_count;
 				vmarkerspID[j].vmarkerspf.push_back(vmarkerspf[i]);
@@ -992,7 +992,7 @@ void VINS::processImage(const map<int, vector<pair<int, Eigen::Matrix<double, 7,
 		}
 		if(findflag == false)
 		{
-			cout << "minimum distance more than 300" << endl;
+			cout << "minimum distance more than 100" << endl;
 			MarkerPerID markerpID;
 			markerpID.ID = nmarkerID;
 			vmarkerspf[i].frame_idx = frame_count;
@@ -2871,3 +2871,19 @@ void VINS::PrepareForVisionOnlyBA()
     csolve_visiononly = true;
 }
 
+vector<MarkerPerFrame> VINS::getptsonsecondlastframe()
+{
+	vector<MarkerPerFrame> vtmpmarkerspf;
+	vector<MarkerPerID>::iterator Iter;
+	for(Iter = vmarkerspID.begin(); Iter != vmarkerspID.end(); )
+        {
+		for(int j = 0; j < (*Iter).vmarkerspf.size(); j++)
+		{
+			if((*Iter).vmarkerspf[j].frame_idx == (WINDOW_SIZE - 1))
+			{
+				vtmpmarkerspf.push_back((*Iter).vmarkerspf[j]);	
+			}
+		}
+	}
+	return vtmpmarkerspf;
+}

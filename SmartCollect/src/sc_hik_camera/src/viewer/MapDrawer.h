@@ -30,6 +30,9 @@ public:
     void SetAllFrames(std::vector<DRAWFRAME_DATA> frames_to_draw);
     void SetAllPoints(std::vector<Vector3d> points_3d);
     void SetMarkerPoints(VINS* pEstimator);
+    void SetMarkerPoints2(vector<MarkerPoints3D> vcurrentmarkers);
+    void DrawMarkerPoints2();
+    void DisableAllMarkers();
 
     float mScaleic;
 
@@ -44,6 +47,7 @@ private:
     vector<cv::Mat> cvTwcs;
     vector<cv::Mat> cvpoints_3d;
     vector<MarkerPoints3D> eimarkers_3d;
+    vector<MarkerPoints3D> eimarkers_3d2;
 
     cv::Mat mCameraPose;
 

@@ -68,6 +68,7 @@ public:
     double v_n;
     static void setstopflag();
     static bool stopflag;
+
     ~vinssystem();
     Detector* pdetector_SSD;
 
@@ -147,6 +148,7 @@ private:
     void send_imu(const ImuConstPtr &imu_msg,double header);
     void process_loop_detection();
     void process_global_loop_detection();
+    void solve_markers();
     //void solve_visiononly();
     //double deltaThetaGivendt(double dt,Quaterniond* Q);
     //void bubbleSort(double* arr, int n);
@@ -171,8 +173,13 @@ private:
     double px, py, pz, gps_yaw, gps_pitch, gps_roll;
 
     double a_n,a_w,g_n,g_w;
+    int nmarkerID;
+    bool flag_loop_justoptimized;		
 
+    vector<MarkerPerID> vmarkerspID;	
+    vector<MarkerPoints3D> mvcurrentmarkers;
 
+cv::Mat Triangulation(const std::vector<cv::Mat> vPoses, const std::vector<cv::Mat> vobs, cv::Mat P3w, cv::Mat K, int niterate, bool& which,float &norm1,float &norm2);
 
 };
 

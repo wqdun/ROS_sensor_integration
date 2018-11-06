@@ -31,6 +31,20 @@ cv::Mat Utility::toCvMatd(const Eigen::Matrix<double,3,1> &m)
     return cvMat.clone();
 }
 
+cv::Mat Utility::toProjectionMatd(const Eigen::Matrix3d &R, const Eigen::Matrix<double,3,1> &t)
+{
+	cv::Mat cvMat(3,4,CV_64F);
+        for(int i = 0; i < 3 ; i++)
+	{
+		for(int j = 0; j < 3; j++)
+		{
+			cvMat.at<double>(i, j) = R(i, j);
+		}
+		cvMat.at<double>(i, 3) = t(i, 0);
+	}
+	return cvMat.clone();
+}
+
 cv::Mat Utility::toCvMat(const Eigen::Matrix3d &m)
 {
     cv::Mat cvMat(3,3,CV_32F);

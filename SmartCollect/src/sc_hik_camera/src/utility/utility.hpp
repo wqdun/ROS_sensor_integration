@@ -160,6 +160,7 @@ class Utility
     static cv::Mat toCvMatd(const Eigen::Matrix<double,3,1> &m);
     static cv::Mat toCvMat(const Eigen::Matrix3d &m);
     static cv::Mat toCvMat(const Eigen::Matrix<double,3,1> &m);
+    static cv::Mat toProjectionMatd(const Eigen::Matrix3d &R, const Eigen::Matrix<double, 3, 1> &t);
 
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 };

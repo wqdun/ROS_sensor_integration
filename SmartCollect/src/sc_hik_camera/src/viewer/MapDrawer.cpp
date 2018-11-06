@@ -62,6 +62,63 @@ void MapDrawer::SetMarkerPoints(VINS* pEstimator)
     }	
 }
 
+void MapDrawer::DisableAllMarkers()
+{
+	std::unique_lock<std::mutex> lock(mMutexMarkers);
+	for(int i = 0; i < eimarkers_3d2.size(); i++)
+	{
+		eimarkers_3d2[i].maxobsnum = 0;
+	}
+}
+
+void MapDrawer::SetMarkerPoints2(vector<MarkerPoints3D> vcurrentmarkers)
+{
+	std::unique_lock<std::mutex> lock(mMutexMarkers);
+	//eimarkers_3d2 = vcurrentmarkers;
+	for(int i = 0; i < vcurrentmarkers.size(); i++)
+    	{
+          bool findflag = false;
+	  for(int j = 0; j < eimarkers_3d2.size(); j++)
+	  {
+               if(eimarkers_3d2[j].ID == vcurrentmarkers[i].ID)
+	       {
+			
+			if(eimarkers_3d2[j].maxobsnum < vcurrentmarkers[i].maxobsnum)
+			{
+				eimarkers_3d2[j].maxobsnum = vcurrentmarkers[i].maxobsnum;
+				eimarkers_3d2[j].pos = vcurrentmarkers[i].pos;				
+			}
+			findflag = true;
+			break;
+	       }
+	  }
+	  if(findflag == false)
+	  {
+		MarkerPoints3D newdrawmarker;
+		newdrawmarker.ID = vcurrentmarkers[i].ID;
+ 		newdrawmarker.maxobsnum = vcurrentmarkers[i].maxobsnum;
+		newdrawmarker.pos = vcurrentmarkers[i].pos;
+		eimarkers_3d2.push_back(newdrawmarker);
+	  }	
+    	}	
+}
+
+void MapDrawer::DrawMarkerPoints2()
+{
+    std::unique_lock<std::mutex> lock(mMutexMarkers);
+    glPointSize(10);
+    glBegin(GL_POINTS);
+    glColor3f(0.0,1.0,0.0);
+
+    for(int i = 0; i < eimarkers_3d2.size() ; i++)
+    {
+        Vector3d pos = eimarkers_3d2[i].pos;
+        glVertex3f(pos[0]/mScaleic,pos[1]/mScaleic,pos[2]/mScaleic);
+    }
+
+    glEnd();
+}
+
 void MapDrawer::DrawMarkerPoints()
 {
     std::unique_lock<std::mutex> lock(mMutexMarkers);
@@ -326,26 +383,34 @@ void MapDrawer::DrawKeyFrames(const bool bDrawKF, const bool bDrawGraph)
 
     if(cvTwcs.size() > 1 && bDrawGraph)
     {
-        glLineWidth(2 * mGraphLineWidth);
-        glColor4f(1.0f,0.0f,1.0f,0.6f);
-        glBegin(GL_LINES);
-
         for(size_t i = 0; i < cvTwcs.size() - 1; i++)
         {
             if(cvTwcs[i].empty() || cvTwcs[i + 1].empty())
+            {
                 continue;
+            }
+
             cv::Mat Twc1 = cvTwcs[i].clone();
             cv::Mat Ow1 = Twc1.rowRange(0,3).col(3);
             cv::Mat Twc2 = cvTwcs[i + 1].clone();
             cv::Mat Ow2 = Twc2.rowRange(0,3).col(3);
+            float tmp_z1 = Ow1.at<float>(2, 0);
+            float tmp_z2 = Ow2.at<float>(2, 0);
+            glLineWidth(2 * mGraphLineWidth);
+            if(abs(0.5 * (tmp_z1 + tmp_z2)) < 1.5)
+                glColor4f(1.0f,0.0f,1.0f,0.6f);
+            else if (abs(0.5 * (tmp_z1 + tmp_z2)) < 4.5)
+                glColor4f(0.0f,0.0f,1.0f,0.6f);
+            else if (abs(0.5 * (tmp_z1 + tmp_z2)) < 7.5)
+                glColor4f(1.0f,0.0f,0.0f,0.6f);
+            else
+                glColor4f(0.0f,0.0f,0.0f,0.6f);
+            glBegin(GL_LINES);
             Ow1 = Ow1/mScaleic;
             Ow2 = Ow2/mScaleic;
             glVertex3f(Ow1.at<float>(0),Ow1.at<float>(1),Ow1.at<float>(2));
             glVertex3f(Ow2.at<float>(0),Ow2.at<float>(1),Ow2.at<float>(2));
+            glEnd();
         }
-
-
-
-        glEnd();
     }
 }

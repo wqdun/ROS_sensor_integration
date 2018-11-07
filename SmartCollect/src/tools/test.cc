@@ -9,22 +9,9 @@
 using namespace std;
 
 int main(int argv,char *arg[]) {
-
-    const std::string allFixedIndicator("/tmp/data_fixer_progress_100%");
-    int i = remove(allFixedIndicator.c_str());
-    cout << i << "\n";
-
-    ofstream out(allFixedIndicator);
-    if(out) {
-        cout << "Success.\n";
-    }
-    else {
-        cout << "Failed.\n";
-    }
-    cout << out << " end.\n";
-
-
-
-
+#ifndef NOTEST
+    cout << __FUNCTION__ << " start.\n";
+#endif
+    cout << __FUNCTION__ << " end.\n";
     return 0;
 }

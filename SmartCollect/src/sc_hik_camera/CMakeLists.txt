@@ -181,6 +181,62 @@ target_link_libraries(${PROJECT_NAME}
         DBoW
 )
 
+add_library(${PROJECT_NAME}_nodetect SHARED
+        src/estimator/VINS.cpp
+        src/estimator/VINS.hpp
+
+        src/factor/loop_closure_factor.cpp
+        src/factor/marginalization_factor.cpp
+        src/factor/pose_local_parameterization.cpp
+        src/factor/projection_factor.cpp
+        src/factor/projection_td_factor.cpp
+        #src/factor/encoder_displacement_factor.cpp
+
+        src/feature/feature_manager.cpp
+        src/feature/feature_manager.hpp
+        src/feature/feature_tracker.cpp
+
+        src/initial/initial_sfm.cpp
+        src/initial/initial_aligment.cpp
+        src/initial/motion_estimator.cpp
+        src/initial/initial_ex_rotation.cpp
+
+        #src/loop/ThirdParty/DBoW/BowVector.cpp
+        #src/loop/ThirdParty/DBoW/FBrief.cpp
+        #src/loop/ThirdParty/DBoW/FeatureVector.cpp
+        #src/loop/ThirdParty/DBoW/QueryResults.cpp
+        #src/loop/ThirdParty/DBoW/ScoringObject.cpp
+        #src/loop/ThirdParty/DUtils/Random.cpp
+        #src/loop/ThirdParty/DUtils/Timestamp.cpp
+        #src/loop/ThirdParty/DVision/BRIEF.cpp
+        #src/loop/ThirdParty/VocabularyBinary.cpp
+        src/loop/keyframe_database.cpp
+        src/loop/keyframe.cpp
+        src/loop/loop_closure.cpp
+
+        src/utility/utility.cpp
+        #src/visualization/viewer.cpp src/visualization/viewer.h
+        #src/initial/initial_ex_rotation.cpp src/initial/initial_ex_rotation.h
+
+        src/system/system.h
+        src/system/system_nodetect.cpp  src/viewer/Viewer.cpp src/viewer/MapDrawer.cpp src/viewer/MapDrawer.h src/integration_base2.h src/factor/YawLocalParameterization.cpp src/factor/YawLocalParameterization.h)
+
+target_link_libraries(${PROJECT_NAME}_nodetect
+        ${OpenCV_LIBS}
+        ${EIGEN3_LIBS}
+        ${Pangolin_LIBRARIES}
+        ${CERES_LIBRARIES}
+        ${SUITESPARSE_LIBRARIES}
+        /home/nvidia/projects/SmartCollectorDalmer/build/detection/libdetection.a
+        /home/nvidia/projects/SmartCollectorDalmer/build/classification/libclassification.a
+        /home/nvidia/projects/SmartCollectorDalmer/build/main_project/libmain_project.a
+        /home/nvidia/projects/SmartCollectorDalmer/build/detection_cpu/libdetection_cpu.a
+        /home/nvidia/caffe/build/lib/libcaffe.so
+        DUtils
+        DVision
+        DBoW
+)
+
 ###################################################################################
 
 ########################## camera part ############################################
@@ -211,6 +267,23 @@ add_executable(system_test
 
 target_link_libraries(system_test
     ${PROJECT_NAME}
+    camera_model
+    boost_thread
+    controlcan
+    /opt/mvs/lib/arm64/libMvCameraControl.so
+    ${PROJECT_SOURCE_DIR}/../../3rd/libcontrolcan.so
+)
+
+add_executable(system_test_nodetect
+    src/hik_camera_arm_node.cpp
+    src/hik_camera_arm.cpp
+    src/serial_reader.cpp
+    src/can_parser.cpp
+    ../sc_lib_public_tools/src/tools_no_ros.cpp
+)
+
+target_link_libraries(system_test_nodetect
+    ${PROJECT_NAME}_nodetect
     camera_model
     boost_thread
     controlcan

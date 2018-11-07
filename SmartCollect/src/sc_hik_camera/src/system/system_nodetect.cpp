@@ -1547,10 +1547,10 @@ cv::Mat vinssystem::inputImage(cv::Mat& image,double t,pair<double,vector<Box>> 
         std::vector<cv::Point> vec_points;
         if(count_inputImage % detect_freq == 0 && mpEstimator->solver_flag == VINS::NON_LINEAR)
         {
-            DLOG(INFO) << "detection start";
-            std::vector<vector<float> > detections_SSD =pdetector_SSD->Detect(image);
-            DLOG(INFO) << "detection end";
-            vec_points = vec_process(image,detections_SSD);
+            // DLOG(INFO) << "detection start";
+            // std::vector<vector<float> > detections_SSD =pdetector_SSD->Detect(image);
+            // DLOG(INFO) << "detection end";
+            // vec_points = vec_process(image,detections_SSD);
         }
         count_inputImage++;
 

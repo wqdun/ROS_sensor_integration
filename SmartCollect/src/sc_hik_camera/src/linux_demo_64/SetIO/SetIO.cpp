@@ -5,12 +5,12 @@
 #include <pthread.h>
 #include "MvCameraControl.h"
 
-// µÈ´ıÓÃ»§ÊäÈëenter¼üÀ´½áÊøÈ¡Á÷»ò½áÊø³ÌĞò
+// ç­‰å¾…ç”¨æˆ·è¾“å…¥enteré”®æ¥ç»“æŸå–æµæˆ–ç»“æŸç¨‹åº
 // wait for user to input enter to stop grabbing or end the sample program
 void PressEnterToExit(void)
 {
-	int c;
-	while ( (c = getchar()) != '\n' && c != EOF );
+    int c;
+    while ( (c = getchar()) != '\n' && c != EOF );
     fprintf( stderr, "\nPress enter to exit.\n");
     while( getchar() != '\n');
 }
@@ -24,10 +24,10 @@ bool PrintDeviceInfo(MV_CC_DEVICE_INFO* pstMVDevInfo)
     }
     if (pstMVDevInfo->nTLayerType == MV_GIGE_DEVICE)
     {
-		// ´òÓ¡µ±Ç°Ïà»úipºÍÓÃ»§×Ô¶¨ÒåÃû×Ö
-		// print current ip and user defined name
-        printf("%s %x\n" , "nCurrentIp:" , pstMVDevInfo->SpecialInfo.stGigEInfo.nCurrentIp);                   //µ±Ç°IP
-        printf("%s %s\n\n" , "chUserDefinedName:" , pstMVDevInfo->SpecialInfo.stGigEInfo.chUserDefinedName);     //ÓÃ»§¶¨ÒåÃû
+        // æ‰“å°å½“å‰ç›¸æœºipå’Œç”¨æˆ·è‡ªå®šä¹‰åå­—
+        // print current ip and user defined name
+        printf("%s %x\n" , "nCurrentIp:" , pstMVDevInfo->SpecialInfo.stGigEInfo.nCurrentIp);                   //å½“å‰IP
+        printf("%s %s\n\n" , "chUserDefinedName:" , pstMVDevInfo->SpecialInfo.stGigEInfo.chUserDefinedName);     //ç”¨æˆ·å®šä¹‰å
     }
     else if (pstMVDevInfo->nTLayerType == MV_USB_DEVICE)
     {
@@ -49,8 +49,8 @@ int main()
     MV_CC_DEVICE_INFO_LIST stDeviceList;
     memset(&stDeviceList, 0, sizeof(MV_CC_DEVICE_INFO_LIST));
 
-    // Ã¶¾ÙÉè±¸
-	// enum device
+    // æšä¸¾è®¾å¤‡
+    // enum device
     nRet = MV_CC_EnumDevices(MV_GIGE_DEVICE | MV_USB_DEVICE, &stDeviceList);
     if (MV_OK != nRet)
     {
@@ -67,10 +67,10 @@ int main()
             if (NULL == pDeviceInfo)
             {
                 break;
-            } 
-            PrintDeviceInfo(pDeviceInfo);            
-        }  
-    } 
+            }
+            PrintDeviceInfo(pDeviceInfo);
+        }
+    }
     else
     {
         printf("Find No Devices!\n");
@@ -79,26 +79,26 @@ int main()
 
     scanf("%d", &nIndex);
 
-    // Ñ¡ÔñÉè±¸²¢´´½¨¾ä±ú
-	// select device and create handle
+    // é€‰æ‹©è®¾å¤‡å¹¶åˆ›å»ºå¥æŸ„
+    // select device and create handle
     nRet = MV_CC_CreateHandle(&handle, stDeviceList.pDeviceInfo[nIndex]);
     if (MV_OK != nRet)
     {
         printf("MV_CC_CreateHandle fail! nRet [%x]\n", nRet);
         return -1;
     }
-	
-    // ´ò¿ªÉè±¸
-	// open device
+
+    // æ‰“å¼€è®¾å¤‡
+    // open device
     nRet = MV_CC_OpenDevice(handle);
     if (MV_OK != nRet)
     {
         printf("MV_CC_OpenDevice fail! nRet [%x]\n", nRet);
         return -1;
     }
-	
-	// »ñÈ¡LineSelector
-	// get LineSelector
+
+    // è·å–LineSelector
+    // get LineSelector
     MVCC_ENUMVALUE stLineSelector = {0};
     nRet = MV_CC_GetEnumValue(handle, "LineSelector", &stLineSelector);
     if (MV_OK == nRet)
@@ -111,15 +111,15 @@ int main()
         {
             printf("supported stLineSelector [%d]:%d\n", i, stLineSelector.nSupportValue[i]);
         }
-		printf("\n");
+        printf("\n");
     }
     else
     {
         printf("get stLineSelector failed! nRet [%x]\n\n", nRet);
     }
-	
-    // ÉèÖÃLineSelector
-	// set LineSelector
+
+    // è®¾ç½®LineSelector
+    // set LineSelector
     unsigned int nLineSelector = 0;
     printf("please input the LineSelector to set:");
     scanf("%d", &nLineSelector);
@@ -133,9 +133,9 @@ int main()
     {
         printf("set LineSelector failed! nRet [%x]\n\n", nRet);
     }
-	
-	// »ñÈ¡LineMode
-	// get LineMode
+
+    // è·å–LineMode
+    // get LineMode
     MVCC_ENUMVALUE stLineMode = {0};
     nRet = MV_CC_GetEnumValue(handle, "LineMode", &stLineMode);
     if (MV_OK == nRet)
@@ -148,15 +148,15 @@ int main()
         {
             printf("supported stLineSelector [%d]:%d\n", i, stLineMode.nSupportValue[i]);
         }
-		printf("\n");
+        printf("\n");
     }
     else
     {
         printf("get stLineMode failed! nRet [%x]\n\n", nRet);
     }
-	
-    // ÉèÖÃLineMode
-	// set LineMode
+
+    // è®¾ç½®LineMode
+    // set LineMode
     unsigned int nLineMode = 0;
     printf("please input the LineMode to set:");
     scanf("%d", &nLineMode);
@@ -171,17 +171,17 @@ int main()
         printf("set LineMode failed! nRet [%x]\n\n", nRet);
     }
 
-	// ¹Ø±ÕÉè±¸
-	// close device
+    // å…³é—­è®¾å¤‡
+    // close device
     nRet = MV_CC_CloseDevice(handle);
     if (MV_OK != nRet)
     {
         printf("MV_CC_CloseDevice fail! nRet [%x]\n", nRet);
         return -1;
     }
-	
-    // Ïú»Ù¾ä±ú
-	// destroy handle
+
+    // é”€æ¯å¥æŸ„
+    // destroy handle
     nRet = MV_CC_DestroyHandle(handle);
     if (MV_OK != nRet)
     {
@@ -189,7 +189,7 @@ int main()
         return -1;
     }
 
-	PressEnterToExit();
-	printf("exit\n");
+    PressEnterToExit();
+    printf("exit\n");
     return 0;
 }

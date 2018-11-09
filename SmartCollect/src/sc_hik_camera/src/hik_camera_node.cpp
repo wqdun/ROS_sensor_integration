@@ -8,7 +8,8 @@ int main(int argc, char **argv) {
     // google::InitGoogleLogging(argv[0]);
     LOG(INFO) << "Got " << argc << " parameters.";
 
-    HikCamera hikCamera;
+    ros::init(argc, argv, "hik_camera_node");
+    HikCamera hikCamera(ros::NodeHandle(), ros::NodeHandle("~"));
     hikCamera.Run();
     LOG(INFO) << "Returning...";
     return 0;

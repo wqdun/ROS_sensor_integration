@@ -4,28 +4,28 @@
 
 #include "PixelType.h"
 
-// Éè±¸ÀàĞÍ¶¨Òå
-#define MV_UNKNOW_DEVICE        0x00000000          // Î´ÖªÉè±¸ÀàĞÍ£¬±£ÁôÒâÒå
-#define MV_GIGE_DEVICE          0x00000001          // GigEÉè±¸
-#define MV_1394_DEVICE          0x00000002          // 1394-a/b Éè±¸
-#define MV_USB_DEVICE           0x00000004          // USB3.0 Éè±¸
-#define MV_CAMERALINK_DEVICE    0x00000008          // CameraLinkÉè±¸
+// è®¾å¤‡ç±»å‹å®šä¹‰
+#define MV_UNKNOW_DEVICE        0x00000000          // æœªçŸ¥è®¾å¤‡ç±»å‹ï¼Œä¿ç•™æ„ä¹‰
+#define MV_GIGE_DEVICE          0x00000001          // GigEè®¾å¤‡
+#define MV_1394_DEVICE          0x00000002          // 1394-a/b è®¾å¤‡
+#define MV_USB_DEVICE           0x00000004          // USB3.0 è®¾å¤‡
+#define MV_CAMERALINK_DEVICE    0x00000008          // CameraLinkè®¾å¤‡
 
 typedef struct _MV_GIGE_DEVICE_INFO_
 {
-    unsigned int        nIpCfgOption;        
-    unsigned int        nIpCfgCurrent;       //IP configuration:bit31-static bit30-dhcp bit29-lla          
-    unsigned int        nCurrentIp;          //curtent ip          
-    unsigned int        nCurrentSubNetMask;  //curtent subnet mask             
+    unsigned int        nIpCfgOption;
+    unsigned int        nIpCfgCurrent;       //IP configuration:bit31-static bit30-dhcp bit29-lla
+    unsigned int        nCurrentIp;          //curtent ip
+    unsigned int        nCurrentSubNetMask;  //curtent subnet mask
     unsigned int        nDefultGateWay;      //current gateway
     unsigned char       chManufacturerName[32];
     unsigned char       chModelName[32];
     unsigned char       chDeviceVersion[32];
     unsigned char       chManufacturerSpecificInfo[48];
     unsigned char       chSerialNumber[16];
-    unsigned char       chUserDefinedName[16];      
+    unsigned char       chUserDefinedName[16];
 
-    unsigned int        nNetExport;         // Íø¿ÚIPµØÖ·
+    unsigned int        nNetExport;         // ç½‘å£IPåœ°å€
 
     unsigned int        nReserved[4];
 
@@ -34,133 +34,133 @@ typedef struct _MV_GIGE_DEVICE_INFO_
 #define INFO_MAX_BUFFER_SIZE 64
 typedef struct _MV_USB3_DEVICE_INFO_
 {
-    unsigned char           CrtlInEndPoint;                        //¿ØÖÆÊäÈë¶Ëµã
-    unsigned char           CrtlOutEndPoint;                       //¿ØÖÆÊä³ö¶Ëµã
-    unsigned char           StreamEndPoint;                        //Á÷¶Ëµã
-    unsigned char           EventEndPoint;                         //ÊÂ¼ş¶Ëµã
-    unsigned short          idVendor;                              //¹©Ó¦ÉÌIDºÅ
-    unsigned short          idProduct;                             //²úÆ·IDºÅ
-    unsigned int            nDeviceNumber;                         //Éè±¸ĞòÁĞºÅ 
-    unsigned char           chDeviceGUID[INFO_MAX_BUFFER_SIZE];    //Éè±¸GUIDºÅ
-    unsigned char           chVendorName[INFO_MAX_BUFFER_SIZE];    //¹©Ó¦ÉÌÃû×Ö
-    unsigned char           chModelName[INFO_MAX_BUFFER_SIZE];     //ĞÍºÅÃû×Ö
-    unsigned char           chFamilyName[INFO_MAX_BUFFER_SIZE];    //¼Ò×åÃû×Ö
-    unsigned char           chDeviceVersion[INFO_MAX_BUFFER_SIZE];  //Éè±¸°æ±¾ºÅ
-    unsigned char           chManufacturerName[INFO_MAX_BUFFER_SIZE]; //ÖÆÔìÉÌÃû×Ö
-    unsigned char           chSerialNumber[INFO_MAX_BUFFER_SIZE];      //ĞòÁĞºÅ
-    unsigned char           chUserDefinedName[INFO_MAX_BUFFER_SIZE];  //ÓÃ»§×Ô¶¨ÒåÃû×Ö
-    unsigned int            nbcdUSB;                               //Ö§³ÖµÄUSBĞ­Òé
-    unsigned int            nReserved[3];                             //±£Áô×Ö½Ú
+    unsigned char           CrtlInEndPoint;                        //æ§åˆ¶è¾“å…¥ç«¯ç‚¹
+    unsigned char           CrtlOutEndPoint;                       //æ§åˆ¶è¾“å‡ºç«¯ç‚¹
+    unsigned char           StreamEndPoint;                        //æµç«¯ç‚¹
+    unsigned char           EventEndPoint;                         //äº‹ä»¶ç«¯ç‚¹
+    unsigned short          idVendor;                              //ä¾›åº”å•†IDå·
+    unsigned short          idProduct;                             //äº§å“IDå·
+    unsigned int            nDeviceNumber;                         //è®¾å¤‡åºåˆ—å·
+    unsigned char           chDeviceGUID[INFO_MAX_BUFFER_SIZE];    //è®¾å¤‡GUIDå·
+    unsigned char           chVendorName[INFO_MAX_BUFFER_SIZE];    //ä¾›åº”å•†åå­—
+    unsigned char           chModelName[INFO_MAX_BUFFER_SIZE];     //å‹å·åå­—
+    unsigned char           chFamilyName[INFO_MAX_BUFFER_SIZE];    //å®¶æ—åå­—
+    unsigned char           chDeviceVersion[INFO_MAX_BUFFER_SIZE];  //è®¾å¤‡ç‰ˆæœ¬å·
+    unsigned char           chManufacturerName[INFO_MAX_BUFFER_SIZE]; //åˆ¶é€ å•†åå­—
+    unsigned char           chSerialNumber[INFO_MAX_BUFFER_SIZE];      //åºåˆ—å·
+    unsigned char           chUserDefinedName[INFO_MAX_BUFFER_SIZE];  //ç”¨æˆ·è‡ªå®šä¹‰åå­—
+    unsigned int            nbcdUSB;                               //æ”¯æŒçš„USBåè®®
+    unsigned int            nReserved[3];                             //ä¿ç•™å­—èŠ‚
 }MV_USB3_DEVICE_INFO;
 
-// Éè±¸ĞÅÏ¢
+// è®¾å¤‡ä¿¡æ¯
 typedef struct _MV_CC_DEVICE_INFO_
 {
-    // common info 
+    // common info
     unsigned short      nMajorVer;
     unsigned short      nMinorVer;
-    unsigned int        nMacAddrHigh;               // MAC µØÖ·
+    unsigned int        nMacAddrHigh;               // MAC åœ°å€
     unsigned int        nMacAddrLow;
 
-    unsigned int        nTLayerType;                // Éè±¸´«Êä²ãĞ­ÒéÀàĞÍ£¬e.g. MV_GIGE_DEVICE
+    unsigned int        nTLayerType;                // è®¾å¤‡ä¼ è¾“å±‚åè®®ç±»å‹ï¼Œe.g. MV_GIGE_DEVICE
 
     unsigned int        nReserved[4];
 
     union
     {
         MV_GIGE_DEVICE_INFO stGigEInfo;
-        MV_USB3_DEVICE_INFO stUsb3VInfo; 
+        MV_USB3_DEVICE_INFO stUsb3VInfo;
         // more ...
     }SpecialInfo;
 
 }MV_CC_DEVICE_INFO;
 
-// ÍøÂç´«ÊäµÄÏà¹ØĞÅÏ¢
+// ç½‘ç»œä¼ è¾“çš„ç›¸å…³ä¿¡æ¯
 typedef struct _MV_NETTRANS_INFO_
 {
-    int64_t         nReviceDataSize;    // ÒÑ½ÓÊÕÊı¾İ´óĞ¡  [Í³¼ÆStartGrabbingºÍStopGrabbingÖ®¼äµÄÊı¾İÁ¿]
-    int             nThrowFrameCount;   // ¶ªÖ¡ÊıÁ¿
+    int64_t         nReviceDataSize;    // å·²æ¥æ”¶æ•°æ®å¤§å°  [ç»Ÿè®¡StartGrabbingå’ŒStopGrabbingä¹‹é—´çš„æ•°æ®é‡]
+    int             nThrowFrameCount;   // ä¸¢å¸§æ•°é‡
     unsigned int    nReserved[5];
 
 }MV_NETTRANS_INFO;
 
 
-// ×î¶àÖ§³ÖµÄ´«Êä²ãÊµÀı¸öÊı
+// æœ€å¤šæ”¯æŒçš„ä¼ è¾“å±‚å®ä¾‹ä¸ªæ•°
 #define MV_MAX_TLS_NUM          8
-// ×î´óÖ§³ÖµÄÉè±¸¸öÊı
+// æœ€å¤§æ”¯æŒçš„è®¾å¤‡ä¸ªæ•°
 #define MV_MAX_DEVICE_NUM      256
 
-// Éè±¸ĞÅÏ¢ÁĞ±í
+// è®¾å¤‡ä¿¡æ¯åˆ—è¡¨
 typedef struct _MV_CC_DEVICE_INFO_LIST_
 {
-    unsigned int            nDeviceNum;                         // ÔÚÏßÉè±¸ÊıÁ¿
-    MV_CC_DEVICE_INFO*      pDeviceInfo[MV_MAX_DEVICE_NUM];     // Ö§³Ö×î¶à256¸öÉè±¸
+    unsigned int            nDeviceNum;                         // åœ¨çº¿è®¾å¤‡æ•°é‡
+    MV_CC_DEVICE_INFO*      pDeviceInfo[MV_MAX_DEVICE_NUM];     // æ”¯æŒæœ€å¤š256ä¸ªè®¾å¤‡
 
 }MV_CC_DEVICE_INFO_LIST;
 
 
-// Êä³öÖ¡µÄĞÅÏ¢
+// è¾“å‡ºå¸§çš„ä¿¡æ¯
 typedef struct _MV_FRAME_OUT_INFO_
 {
-    unsigned short      nWidth;             // Í¼Ïñ¿í
-    unsigned short      nHeight;            // Í¼Ïñ¸ß
-    enum MvGvspPixelType     enPixelType;        // ÏñËØ¸ñÊ½
+    unsigned short      nWidth;             // å›¾åƒå®½
+    unsigned short      nHeight;            // å›¾åƒé«˜
+    enum MvGvspPixelType     enPixelType;        // åƒç´ æ ¼å¼
 
-    /*ÒÔÏÂ×Ö¶ÎÔİ²»Ö§³Ö*/
-    unsigned int        nFrameNum;          // Ö¡ºÅ
-    unsigned int        nDevTimeStampHigh;  // Ê±¼ä´Á¸ß32Î»
-    unsigned int        nDevTimeStampLow;   // Ê±¼ä´ÁµÍ32Î»
-    unsigned int        nReserved0;         // ±£Áô£¬8×Ö½Ú¶ÔÆë
-    int64_t             nHostTimeStamp;     // Ö÷»úÉú³ÉµÄÊ±¼ä´Á
+    /*ä»¥ä¸‹å­—æ®µæš‚ä¸æ”¯æŒ*/
+    unsigned int        nFrameNum;          // å¸§å·
+    unsigned int        nDevTimeStampHigh;  // æ—¶é—´æˆ³é«˜32ä½
+    unsigned int        nDevTimeStampLow;   // æ—¶é—´æˆ³ä½32ä½
+    unsigned int        nReserved0;         // ä¿ç•™ï¼Œ8å­—èŠ‚å¯¹é½
+    int64_t             nHostTimeStamp;     // ä¸»æœºç”Ÿæˆçš„æ—¶é—´æˆ³
 
     unsigned int        nFrameLen;
 
-    unsigned int        nReserved[3];       // ±£Áô
+    unsigned int        nReserved[3];       // ä¿ç•™
 }MV_FRAME_OUT_INFO;
 
-// Êä³öÖ¡µÄĞÅÏ¢
+// è¾“å‡ºå¸§çš„ä¿¡æ¯
 typedef struct _MV_FRAME_OUT_INFO_EX_
 {
-    unsigned short      nWidth;             // Í¼Ïñ¿í
-    unsigned short      nHeight;            // Í¼Ïñ¸ß
-    enum MvGvspPixelType     enPixelType;        // ÏñËØ¸ñÊ½
+    unsigned short      nWidth;             // å›¾åƒå®½
+    unsigned short      nHeight;            // å›¾åƒé«˜
+    enum MvGvspPixelType     enPixelType;        // åƒç´ æ ¼å¼
 
-    /*ÒÔÏÂ×Ö¶ÎÔİ²»Ö§³Ö*/
-    unsigned int        nFrameNum;          // Ö¡ºÅ
-    unsigned int        nDevTimeStampHigh;  // Ê±¼ä´Á¸ß32Î»
-    unsigned int        nDevTimeStampLow;   // Ê±¼ä´ÁµÍ32Î»
-    unsigned int        nReserved0;         // ±£Áô£¬8×Ö½Ú¶ÔÆë
-    int64_t             nHostTimeStamp;     // Ö÷»úÉú³ÉµÄÊ±¼ä´Á
+    /*ä»¥ä¸‹å­—æ®µæš‚ä¸æ”¯æŒ*/
+    unsigned int        nFrameNum;          // å¸§å·
+    unsigned int        nDevTimeStampHigh;  // æ—¶é—´æˆ³é«˜32ä½
+    unsigned int        nDevTimeStampLow;   // æ—¶é—´æˆ³ä½32ä½
+    unsigned int        nReserved0;         // ä¿ç•™ï¼Œ8å­—èŠ‚å¯¹é½
+    int64_t             nHostTimeStamp;     // ä¸»æœºç”Ÿæˆçš„æ—¶é—´æˆ³
 
     unsigned int        nFrameLen;
 
-    // ÒÔÏÂÎªchunkĞÂÔöË®Ó¡ĞÅÏ¢
-    // Éè±¸Ë®Ó¡Ê±±ê
+    // ä»¥ä¸‹ä¸ºchunkæ–°å¢æ°´å°ä¿¡æ¯
+    // è®¾å¤‡æ°´å°æ—¶æ ‡
     unsigned int        nSecondCount;
     unsigned int        nCycleCount;
     unsigned int        nCycleOffset;
 
     float               fGain;
     float               fExposureTime;
-    unsigned int        nAverageBrightness;     //Æ½¾ùÁÁ¶È
+    unsigned int        nAverageBrightness;     //å¹³å‡äº®åº¦
 
-    // °×Æ½ºâÏà¹Ø
+    // ç™½å¹³è¡¡ç›¸å…³
     unsigned int        nRed;
     unsigned int        nGreen;
     unsigned int        nBlue;
 
     unsigned int        nFrameCounter;
-    unsigned int        nTriggerIndex;      //´¥·¢¼ÆÊı
+    unsigned int        nTriggerIndex;      //è§¦å‘è®¡æ•°
 
-    //Line ÊäÈë/Êä³ö
-    unsigned int        nInput;        //ÊäÈë
-    unsigned int        nOutput;       //Êä³ö
+    //Line è¾“å…¥/è¾“å‡º
+    unsigned int        nInput;        //è¾“å…¥
+    unsigned int        nOutput;       //è¾“å‡º
 
-    // ROIÇøÓò
+    // ROIåŒºåŸŸ
     unsigned short      nOffsetX;
     unsigned short      nOffsetY;
 
-    unsigned int        nReserved[41];       // ±£Áô
+    unsigned int        nReserved[41];       // ä¿ç•™
 }MV_FRAME_OUT_INFO_EX;
 
 typedef struct _MV_DISPLAY_FRAME_INFO_
@@ -168,116 +168,116 @@ typedef struct _MV_DISPLAY_FRAME_INFO_
     void*                    hWnd;
     unsigned char*           pData;
     unsigned int             nDataLen;
-    unsigned short           nWidth;             // Í¼Ïñ¿í
-    unsigned short           nHeight;            // Í¼Ïñ¸ß
-    enum MvGvspPixelType     enPixelType;        // ÏñËØ¸ñÊ½
+    unsigned short           nWidth;             // å›¾åƒå®½
+    unsigned short           nHeight;            // å›¾åƒé«˜
+    enum MvGvspPixelType     enPixelType;        // åƒç´ æ ¼å¼
     unsigned int             nRes[4];
 
 }MV_DISPLAY_FRAME_INFO;
 
-// ±£´æÍ¼Æ¬¸ñÊ½
+// ä¿å­˜å›¾ç‰‡æ ¼å¼
 enum MV_SAVE_IAMGE_TYPE
 {
     MV_Image_Undefined                 = 0,
     MV_Image_Bmp                       = 1,
     MV_Image_Jpeg                      = 2,
-    MV_Image_Png                       = 3,     //²»Ö§³Ö
-    MV_Image_Tif                       = 4,     //²»Ö§³Ö
+    MV_Image_Png                       = 3,     //ä¸æ”¯æŒ
+    MV_Image_Tif                       = 4,     //ä¸æ”¯æŒ
 };
-// ±£´æÍ¼Æ¬²ÎÊı
+// ä¿å­˜å›¾ç‰‡å‚æ•°
 typedef struct _MV_SAVE_IMAGE_PARAM_T_
 {
-    unsigned char*        pData;              // [IN]     ÊäÈëÊı¾İ»º´æ
-    unsigned int          nDataLen;           // [IN]     ÊäÈëÊı¾İ´óĞ¡
-    enum MvGvspPixelType       enPixelType;        // [IN]     ÊäÈëÊı¾İµÄÏñËØ¸ñÊ½
-    unsigned short        nWidth;             // [IN]     Í¼Ïñ¿í
-    unsigned short        nHeight;            // [IN]     Í¼Ïñ¸ß
+    unsigned char*        pData;              // [IN]     è¾“å…¥æ•°æ®ç¼“å­˜
+    unsigned int          nDataLen;           // [IN]     è¾“å…¥æ•°æ®å¤§å°
+    enum MvGvspPixelType       enPixelType;        // [IN]     è¾“å…¥æ•°æ®çš„åƒç´ æ ¼å¼
+    unsigned short        nWidth;             // [IN]     å›¾åƒå®½
+    unsigned short        nHeight;            // [IN]     å›¾åƒé«˜
 
-    unsigned char*        pImageBuffer;       // [OUT]    Êä³öÍ¼Æ¬»º´æ
-    unsigned int          nImageLen;          // [OUT]    Êä³öÍ¼Æ¬´óĞ¡
-    unsigned int          nBufferSize;        // [IN]     Ìá¹©µÄÊä³ö»º³åÇø´óĞ¡
-    enum MV_SAVE_IAMGE_TYPE    enImageType;        // [IN]     Êä³öÍ¼Æ¬¸ñÊ½
+    unsigned char*        pImageBuffer;       // [OUT]    è¾“å‡ºå›¾ç‰‡ç¼“å­˜
+    unsigned int          nImageLen;          // [OUT]    è¾“å‡ºå›¾ç‰‡å¤§å°
+    unsigned int          nBufferSize;        // [IN]     æä¾›çš„è¾“å‡ºç¼“å†²åŒºå¤§å°
+    enum MV_SAVE_IAMGE_TYPE    enImageType;        // [IN]     è¾“å‡ºå›¾ç‰‡æ ¼å¼
 
 }MV_SAVE_IMAGE_PARAM;
 
-// Í¼Æ¬±£´æ²ÎÊı
+// å›¾ç‰‡ä¿å­˜å‚æ•°
 typedef struct _MV_SAVE_IMAGE_PARAM_T_EX_
 {
-    unsigned char*      pData;              // [IN]     ÊäÈëÊı¾İ»º´æ
-    unsigned int        nDataLen;           // [IN]     ÊäÈëÊı¾İ´óĞ¡
-    enum MvGvspPixelType     enPixelType;        // [IN]     ÊäÈëÊı¾İµÄÏñËØ¸ñÊ½
-    unsigned short      nWidth;             // [IN]     Í¼Ïñ¿í
-    unsigned short      nHeight;            // [IN]     Í¼Ïñ¸ß
+    unsigned char*      pData;              // [IN]     è¾“å…¥æ•°æ®ç¼“å­˜
+    unsigned int        nDataLen;           // [IN]     è¾“å…¥æ•°æ®å¤§å°
+    enum MvGvspPixelType     enPixelType;        // [IN]     è¾“å…¥æ•°æ®çš„åƒç´ æ ¼å¼
+    unsigned short      nWidth;             // [IN]     å›¾åƒå®½
+    unsigned short      nHeight;            // [IN]     å›¾åƒé«˜
 
-    unsigned char*      pImageBuffer;       // [OUT]    Êä³öÍ¼Æ¬»º´æ
-    unsigned int        nImageLen;          // [OUT]    Êä³öÍ¼Æ¬´óĞ¡
-    unsigned int        nBufferSize;        // [IN]     Ìá¹©µÄÊä³ö»º³åÇø´óĞ¡
-    enum MV_SAVE_IAMGE_TYPE  enImageType;        // [IN]     Êä³öÍ¼Æ¬¸ñÊ½
-    unsigned int        nJpgQuality;        // [IN]     ±àÂëÖÊÁ¿, (50-99]
+    unsigned char*      pImageBuffer;       // [OUT]    è¾“å‡ºå›¾ç‰‡ç¼“å­˜
+    unsigned int        nImageLen;          // [OUT]    è¾“å‡ºå›¾ç‰‡å¤§å°
+    unsigned int        nBufferSize;        // [IN]     æä¾›çš„è¾“å‡ºç¼“å†²åŒºå¤§å°
+    enum MV_SAVE_IAMGE_TYPE  enImageType;        // [IN]     è¾“å‡ºå›¾ç‰‡æ ¼å¼
+    unsigned int        nJpgQuality;        // [IN]     ç¼–ç è´¨é‡, (50-99]
 
-    // [IN]     Bayer¸ñÊ½×ªÎªRGB24µÄ²åÖµ·½·¨  0-×î½üÁÚ 1-Ë«ÏßĞÔ 2-Hamilton
+    // [IN]     Bayeræ ¼å¼è½¬ä¸ºRGB24çš„æ’å€¼æ–¹æ³•  0-æœ€è¿‘é‚» 1-åŒçº¿æ€§ 2-Hamilton
     unsigned int        iMethodValue;
     unsigned int        nReserved[3];
 
 }MV_SAVE_IMAGE_PARAM_EX;
 
-// Í¼Ïñ×ª»»½á¹¹Ìå
+// å›¾åƒè½¬æ¢ç»“æ„ä½“
 typedef struct _MV_PIXEL_CONVERT_PARAM_T_
 {
-    unsigned short      nWidth;             // [IN]     Í¼Ïñ¿í
-    unsigned short      nHeight;            // [IN]     Í¼Ïñ¸ß
+    unsigned short      nWidth;             // [IN]     å›¾åƒå®½
+    unsigned short      nHeight;            // [IN]     å›¾åƒé«˜
 
-    enum MvGvspPixelType    enSrcPixelType;     // [IN]     Ô´ÏñËØ¸ñÊ½
-    unsigned char*      pSrcData;           // [IN]     ÊäÈëÊı¾İ»º´æ
-    unsigned int        nSrcDataLen;        // [IN]     ÊäÈëÊı¾İ´óĞ¡
+    enum MvGvspPixelType    enSrcPixelType;     // [IN]     æºåƒç´ æ ¼å¼
+    unsigned char*      pSrcData;           // [IN]     è¾“å…¥æ•°æ®ç¼“å­˜
+    unsigned int        nSrcDataLen;        // [IN]     è¾“å…¥æ•°æ®å¤§å°
 
-    enum MvGvspPixelType    enDstPixelType;     // [IN]     Ä¿±êÏñËØ¸ñÊ½
-    unsigned char*      pDstBuffer;         // [OUT]    Êä³öÊı¾İ»º´æ
-    unsigned int        nDstLen;            // [OUT]    Êä³öÊı¾İ´óĞ¡
-    unsigned int        nDstBufferSize;     // [IN]     Ìá¹©µÄÊä³ö»º³åÇø´óĞ¡
+    enum MvGvspPixelType    enDstPixelType;     // [IN]     ç›®æ ‡åƒç´ æ ¼å¼
+    unsigned char*      pDstBuffer;         // [OUT]    è¾“å‡ºæ•°æ®ç¼“å­˜
+    unsigned int        nDstLen;            // [OUT]    è¾“å‡ºæ•°æ®å¤§å°
+    unsigned int        nDstBufferSize;     // [IN]     æä¾›çš„è¾“å‡ºç¼“å†²åŒºå¤§å°
     unsigned int        nRes[4];
 }MV_CC_PIXEL_CONVERT_PARAM;
 
 
 
-// ²É¼¯Ä£Ê½
+// é‡‡é›†æ¨¡å¼
 typedef enum _MV_CAM_ACQUISITION_MODE_
 {
-    MV_ACQ_MODE_SINGLE      = 0,            // µ¥Ö¡Ä£Ê½
-    MV_ACQ_MODE_MUTLI       = 1,            // ¶àÖ¡Ä£Ê½
-    MV_ACQ_MODE_CONTINUOUS  = 2,            // ³ÖĞø²É¼¯Ä£Ê½
+    MV_ACQ_MODE_SINGLE      = 0,            // å•å¸§æ¨¡å¼
+    MV_ACQ_MODE_MUTLI       = 1,            // å¤šå¸§æ¨¡å¼
+    MV_ACQ_MODE_CONTINUOUS  = 2,            // æŒç»­é‡‡é›†æ¨¡å¼
 
 }MV_CAM_ACQUISITION_MODE;
 
-// ÔöÒæÄ£Ê½
+// å¢ç›Šæ¨¡å¼
 typedef enum _MV_CAM_GAIN_MODE_
 {
-    MV_GAIN_MODE_OFF        = 0,            // ¹Ø±Õ
-    MV_GAIN_MODE_ONCE       = 1,            // Ò»´Î
-    MV_GAIN_MODE_CONTINUOUS = 2,            // Á¬Ğø
+    MV_GAIN_MODE_OFF        = 0,            // å…³é—­
+    MV_GAIN_MODE_ONCE       = 1,            // ä¸€æ¬¡
+    MV_GAIN_MODE_CONTINUOUS = 2,            // è¿ç»­
 
 }MV_CAM_GAIN_MODE;
 
-// ÆØ¹âÄ£Ê½
+// æ›å…‰æ¨¡å¼
 typedef enum _MV_CAM_EXPOSURE_MODE_
 {
     MV_EXPOSURE_MODE_TIMED          = 0,            // Timed
     MV_EXPOSURE_MODE_TRIGGER_WIDTH  = 1,            // TriggerWidth
 }MV_CAM_EXPOSURE_MODE;
 
-// ×Ô¶¯ÆØ¹âÄ£Ê½
+// è‡ªåŠ¨æ›å…‰æ¨¡å¼
 typedef enum _MV_CAM_EXPOSURE_AUTO_MODE_
 {
-    MV_EXPOSURE_AUTO_MODE_OFF        = 0,            // ¹Ø±Õ
-    MV_EXPOSURE_AUTO_MODE_ONCE       = 1,            // Ò»´Î
-    MV_EXPOSURE_AUTO_MODE_CONTINUOUS = 2,            // Á¬Ğø
+    MV_EXPOSURE_AUTO_MODE_OFF        = 0,            // å…³é—­
+    MV_EXPOSURE_AUTO_MODE_ONCE       = 1,            // ä¸€æ¬¡
+    MV_EXPOSURE_AUTO_MODE_CONTINUOUS = 2,            // è¿ç»­
 
 }MV_CAM_EXPOSURE_AUTO_MODE;
 
 typedef enum _MV_CAM_TRIGGER_MODE_
 {
-    MV_TRIGGER_MODE_OFF         = 0,            // ¹Ø±Õ
-    MV_TRIGGER_MODE_ON          = 1,            // ´ò¿ª
+    MV_TRIGGER_MODE_OFF         = 0,            // å…³é—­
+    MV_TRIGGER_MODE_ON          = 1,            // æ‰“å¼€
 
 }MV_CAM_TRIGGER_MODE;
 
@@ -292,7 +292,7 @@ typedef enum _MV_CAM_BALANCEWHITE_AUTO_
 {
     MV_BALANCEWHITE_AUTO_OFF            = 0,
     MV_BALANCEWHITE_AUTO_ONCE           = 2,
-    MV_BALANCEWHITE_AUTO_CONTINUOUS     = 1,            // Á¬Ğø
+    MV_BALANCEWHITE_AUTO_CONTINUOUS     = 1,            // è¿ç»­
 
 }MV_CAM_BALANCEWHITE_AUTO;
 
@@ -320,61 +320,61 @@ typedef enum _MV_CAM_TRIGGER_SOURCE_
 #define MV_NET_TRANS_SOCKET     0x00000002
 
 
-// ĞÅÏ¢ÀàĞÍ
-#define MV_MATCH_TYPE_NET_DETECT             0x00000001      // ÍøÂçÁ÷Á¿ºÍ¶ª°üĞÅÏ¢
-#define MV_MATCH_TYPE_USB_DETECT             0x00000002      // host½ÓÊÕµ½À´×ÔU3VÉè±¸µÄ×Ö½Ú×ÜÊı
+// ä¿¡æ¯ç±»å‹
+#define MV_MATCH_TYPE_NET_DETECT             0x00000001      // ç½‘ç»œæµé‡å’Œä¸¢åŒ…ä¿¡æ¯
+#define MV_MATCH_TYPE_USB_DETECT             0x00000002      // hostæ¥æ”¶åˆ°æ¥è‡ªU3Vè®¾å¤‡çš„å­—èŠ‚æ€»æ•°
 
 
-// Ä³¸ö½Úµã¶ÔÓ¦µÄ×Ó½Úµã¸öÊı×î´óÖµ
+// æŸä¸ªèŠ‚ç‚¹å¯¹åº”çš„å­èŠ‚ç‚¹ä¸ªæ•°æœ€å¤§å€¼
 #define MV_MAX_XML_NODE_NUM_C       128
 
-// ½ÚµãÃû³Æ×Ö·û´®×î´ó³¤¶È
+// èŠ‚ç‚¹åç§°å­—ç¬¦ä¸²æœ€å¤§é•¿åº¦
 #define MV_MAX_XML_NODE_STRLEN_C    64
 
-//½ÚµãStringÖµ×î´ó³¤¶È
+//èŠ‚ç‚¹Stringå€¼æœ€å¤§é•¿åº¦
 #define MV_MAX_XML_STRVALUE_STRLEN_C 64
 
-// ½ÚµãÃèÊö×Ö¶Î×î´ó³¤¶È
+// èŠ‚ç‚¹æè¿°å­—æ®µæœ€å¤§é•¿åº¦
 #define MV_MAX_XML_DISC_STRLEN_C    512
 
-// ×î¶àµÄµ¥ÔªÊı
+// æœ€å¤šçš„å•å…ƒæ•°
 #define MV_MAX_XML_ENTRY_NUM        10
 
-// ¸¸½Úµã¸öÊıÉÏÏŞ
+// çˆ¶èŠ‚ç‚¹ä¸ªæ•°ä¸Šé™
 #define MV_MAX_XML_PARENTS_NUM      8
 
-//Ã¿¸öÒÑ¾­ÊµÏÖµ¥ÔªµÄÃû³Æ³¤¶È
+//æ¯ä¸ªå·²ç»å®ç°å•å…ƒçš„åç§°é•¿åº¦
 #define MV_MAX_XML_SYMBOLIC_STRLEN_C 64
 
 #define MV_MAX_XML_SYMBOLIC_NUM      64
 
-//ÖØ·¢°üÄ¬ÈÏ×î´ó°üÊıÁ¿
+//é‡å‘åŒ…é»˜è®¤æœ€å¤§åŒ…æ•°é‡
 
-// È«Æ¥ÅäµÄÒ»ÖÖĞÅÏ¢½á¹¹Ìå
+// å…¨åŒ¹é…çš„ä¸€ç§ä¿¡æ¯ç»“æ„ä½“
 typedef struct _MV_ALL_MATCH_INFO_
 {
-    unsigned int    nType;          // ĞèÒªÊä³öµÄĞÅÏ¢ÀàĞÍ£¬e.g. MV_MATCH_TYPE_NET_DETECT
-    void*           pInfo;          // Êä³öµÄĞÅÏ¢»º´æ£¬ÓÉµ÷ÓÃÕß·ÖÅä
-    unsigned int    nInfoSize;      // ĞÅÏ¢»º´æµÄ´óĞ¡
+    unsigned int    nType;          // éœ€è¦è¾“å‡ºçš„ä¿¡æ¯ç±»å‹ï¼Œe.g. MV_MATCH_TYPE_NET_DETECT
+    void*           pInfo;          // è¾“å‡ºçš„ä¿¡æ¯ç¼“å­˜ï¼Œç”±è°ƒç”¨è€…åˆ†é…
+    unsigned int    nInfoSize;      // ä¿¡æ¯ç¼“å­˜çš„å¤§å°
 
 }MV_ALL_MATCH_INFO;
 
-//  ÍøÂçÁ÷Á¿ºÍ¶ª°üĞÅÏ¢·´À¡½á¹¹Ìå£¬¶ÔÓ¦ÀàĞÍÎª MV_MATCH_TYPE_NET_DETECT
+//  ç½‘ç»œæµé‡å’Œä¸¢åŒ…ä¿¡æ¯åé¦ˆç»“æ„ä½“ï¼Œå¯¹åº”ç±»å‹ä¸º MV_MATCH_TYPE_NET_DETECT
 typedef struct _MV_MATCH_INFO_NET_DETECT_
 {
-    int64_t         nReviceDataSize;    // ÒÑ½ÓÊÕÊı¾İ´óĞ¡  [Í³¼ÆStartGrabbingºÍStopGrabbingÖ®¼äµÄÊı¾İÁ¿]
-    int64_t         nLostPacketCount;   // ¶ªÊ§µÄ°üÊıÁ¿
-    unsigned int    nLostFrameCount;    // ¶ªÖ¡ÊıÁ¿
-    unsigned int    nReserved[5];          // ±£Áô
+    int64_t         nReviceDataSize;    // å·²æ¥æ”¶æ•°æ®å¤§å°  [ç»Ÿè®¡StartGrabbingå’ŒStopGrabbingä¹‹é—´çš„æ•°æ®é‡]
+    int64_t         nLostPacketCount;   // ä¸¢å¤±çš„åŒ…æ•°é‡
+    unsigned int    nLostFrameCount;    // ä¸¢å¸§æ•°é‡
+    unsigned int    nReserved[5];          // ä¿ç•™
 }MV_MATCH_INFO_NET_DETECT;
 
-// hostÊÕµ½´Óu3vÉè±¸¶ËµÄ×Ü×Ö½ÚÊı£¬¶ÔÓ¦ÀàĞÍÎª MV_MATCH_TYPE_USB_DETECT
+// hostæ”¶åˆ°ä»u3vè®¾å¤‡ç«¯çš„æ€»å­—èŠ‚æ•°ï¼Œå¯¹åº”ç±»å‹ä¸º MV_MATCH_TYPE_USB_DETECT
 typedef struct _MV_MATCH_INFO_USB_DETECT_
 {
-    int64_t         nReviceDataSize;      // ÒÑ½ÓÊÕÊı¾İ´óĞ¡    [Í³¼ÆOpenDevicceºÍCloseDeviceÖ®¼äµÄÊı¾İÁ¿]
-    unsigned int    nRevicedFrameCount;   // ÒÑÊÕµ½µÄÖ¡Êı
-    unsigned int    nErrorFrameCount;     // ´íÎóÖ¡Êı
-    unsigned int    nReserved[2];         // ±£Áô
+    int64_t         nReviceDataSize;      // å·²æ¥æ”¶æ•°æ®å¤§å°    [ç»Ÿè®¡OpenDevicceå’ŒCloseDeviceä¹‹é—´çš„æ•°æ®é‡]
+    unsigned int    nRevicedFrameCount;   // å·²æ”¶åˆ°çš„å¸§æ•°
+    unsigned int    nErrorFrameCount;     // é”™è¯¯å¸§æ•°
+    unsigned int    nReserved[2];         // ä¿ç•™
 }MV_MATCH_INFO_USB_DETECT;
 
 typedef struct _MV_IMAGE_BASIC_INFO_
@@ -396,41 +396,41 @@ typedef struct _MV_IMAGE_BASIC_INFO_
     float               fFrameRateMin;
     float               fFrameRateMax;
 
-    // ÏñËØ¸ñÊ½
-    unsigned int        enPixelType;                // µ±Ç°µÄÏñËØ¸ñÊ½
-    unsigned int        nSupportedPixelFmtNum;      // Ö§³ÖµÄÏñËØ¸ñÊ½ÖÖÀà
+    // åƒç´ æ ¼å¼
+    unsigned int        enPixelType;                // å½“å‰çš„åƒç´ æ ¼å¼
+    unsigned int        nSupportedPixelFmtNum;      // æ”¯æŒçš„åƒç´ æ ¼å¼ç§ç±»
     unsigned int        enPixelList[MV_MAX_XML_SYMBOLIC_NUM];
     unsigned int        nReserved[8];
 
 }MV_IMAGE_BASIC_INFO;
 
-//  Òì³£ÏûÏ¢ÀàĞÍ
-#define MV_EXCEPTION_DEV_DISCONNECT     0x00008001      // Éè±¸¶Ï¿ªÁ¬½Ó
-#define MV_EXCEPTION_VERSION_CHECK      0x00008002      // SDKÓëÇı¶¯°æ±¾²»Æ¥Åä
+//  å¼‚å¸¸æ¶ˆæ¯ç±»å‹
+#define MV_EXCEPTION_DEV_DISCONNECT     0x00008001      // è®¾å¤‡æ–­å¼€è¿æ¥
+#define MV_EXCEPTION_VERSION_CHECK      0x00008002      // SDKä¸é©±åŠ¨ç‰ˆæœ¬ä¸åŒ¹é…
 
 
-// Éè±¸µÄ·ÃÎÊÄ£Ê½
-// ¶ÀÕ¼È¨ÏŞ£¬ÆäËûAPPÖ»ÔÊĞí¶ÁCCP¼Ä´æÆ÷
+// è®¾å¤‡çš„è®¿é—®æ¨¡å¼
+// ç‹¬å æƒé™ï¼Œå…¶ä»–APPåªå…è®¸è¯»CCPå¯„å­˜å™¨
 #define MV_ACCESS_Exclusive                                         1
-// ¿ÉÒÔ´Ó5Ä£Ê½ÏÂÇÀÕ¼È¨ÏŞ£¬È»ºóÒÔ¶ÀÕ¼È¨ÏŞ´ò¿ª
+// å¯ä»¥ä»5æ¨¡å¼ä¸‹æŠ¢å æƒé™ï¼Œç„¶åä»¥ç‹¬å æƒé™æ‰“å¼€
 #define MV_ACCESS_ExclusiveWithSwitch                               2
-// ¿ØÖÆÈ¨ÏŞ£¬ÆäËûAPPÔÊĞí¶ÁËùÓĞ¼Ä´æÆ÷
+// æ§åˆ¶æƒé™ï¼Œå…¶ä»–APPå…è®¸è¯»æ‰€æœ‰å¯„å­˜å™¨
 #define MV_ACCESS_Control                                           3
-// ¿ÉÒÔ´Ó5µÄÄ£Ê½ÏÂÇÀÕ¼È¨ÏŞ£¬È»ºóÒÔ¿ØÖÆÈ¨ÏŞ´ò¿ª
+// å¯ä»¥ä»5çš„æ¨¡å¼ä¸‹æŠ¢å æƒé™ï¼Œç„¶åä»¥æ§åˆ¶æƒé™æ‰“å¼€
 #define MV_ACCESS_ControlWithSwitch                                 4
-// ÒÔ¿É±»ÇÀÕ¼µÄ¿ØÖÆÈ¨ÏŞ´ò¿ª
+// ä»¥å¯è¢«æŠ¢å çš„æ§åˆ¶æƒé™æ‰“å¼€
 #define MV_ACCESS_ControlSwitchEnable                               5
-// ¿ÉÒÔ´Ó5µÄÄ£Ê½ÏÂÇÀÕ¼È¨ÏŞ£¬È»ºóÒÔ¿É±»ÇÀÕ¼µÄ¿ØÖÆÈ¨ÏŞ´ò¿ª
+// å¯ä»¥ä»5çš„æ¨¡å¼ä¸‹æŠ¢å æƒé™ï¼Œç„¶åä»¥å¯è¢«æŠ¢å çš„æ§åˆ¶æƒé™æ‰“å¼€
 #define MV_ACCESS_ControlSwitchEnableWithKey                        6
-// ¶ÁÄ£Ê½´ò¿ªÉè±¸£¬ÊÊÓÃÓÚ¿ØÖÆÈ¨ÏŞÏÂ
+// è¯»æ¨¡å¼æ‰“å¼€è®¾å¤‡ï¼Œé€‚ç”¨äºæ§åˆ¶æƒé™ä¸‹
 #define MV_ACCESS_Monitor                                           7
 
 
 /************************************************************************/
-/* ·â×°ÁËGenICamµÄC½Ó¿ÚÏà¹Ø²ÎÊı¶¨Òå                                     */
+/* å°è£…äº†GenICamçš„Cæ¥å£ç›¸å…³å‚æ•°å®šä¹‰                                     */
 /************************************************************************/
 
-// Ã¿¸ö½Úµã¶ÔÓ¦µÄ½Ó¿ÚÀàĞÍ
+// æ¯ä¸ªèŠ‚ç‚¹å¯¹åº”çš„æ¥å£ç±»å‹
 enum MV_XML_InterfaceType
 {
     IFT_IValue,         //!> IValue interface
@@ -447,7 +447,7 @@ enum MV_XML_InterfaceType
     IFT_IPort,          //!> IPort interface
 };
 
-// ½ÚµãµÄ·ÃÎÊÄ£Ê½
+// èŠ‚ç‚¹çš„è®¿é—®æ¨¡å¼
 enum MV_XML_AccessMode
 {
     AM_NI,          //!< Not implemented
@@ -471,34 +471,34 @@ enum MV_XML_Visibility
 
 typedef enum _MV_GIGE_EVENT_
 {
-    MV_EVENT_ExposureEnd                 = 1,           // Ã¿Ö¡µÄÆØ¹â½áÊø
-    MV_EVENT_FrameStartOvertrigger       = 2,           // Ö¡¿ªÊ¼´¥·¢
-    MV_EVENT_AcquisitionStartOvertrigger = 3,           // È¡Á÷¿ªÊ¼¹ı´¥·¢
-    MV_EVENT_FrameStart                  = 4,           // Ã¿Ö¡µÄ¿ªÊ¼
-    MV_EVENT_AcquisitionStart            = 5,           // ¿ªÊ¼È¡Á÷£¨Á¬Ğø»òµ¥Ö¡Ä£Ê½£©
-    MV_EVENT_EventOverrun                = 6            // ÊÂ¼ş¹ı´¥·¢
+    MV_EVENT_ExposureEnd                 = 1,           // æ¯å¸§çš„æ›å…‰ç»“æŸ
+    MV_EVENT_FrameStartOvertrigger       = 2,           // å¸§å¼€å§‹è§¦å‘
+    MV_EVENT_AcquisitionStartOvertrigger = 3,           // å–æµå¼€å§‹è¿‡è§¦å‘
+    MV_EVENT_FrameStart                  = 4,           // æ¯å¸§çš„å¼€å§‹
+    MV_EVENT_AcquisitionStart            = 5,           // å¼€å§‹å–æµï¼ˆè¿ç»­æˆ–å•å¸§æ¨¡å¼ï¼‰
+    MV_EVENT_EventOverrun                = 6            // äº‹ä»¶è¿‡è§¦å‘
 }MV_GIGE_EVENT;
 
 
 //
 
-// µ¥¸ö½Úµã»ù±¾ÊôĞÔ
+// å•ä¸ªèŠ‚ç‚¹åŸºæœ¬å±æ€§
 typedef struct _MV_XML_NODE_FEATURE_
 {
-    enum MV_XML_InterfaceType    enType;                             // ½ÚµãÀàĞÍ
-    enum MV_XML_Visibility       enVisivility;                       //ÊÇ·ñ¿É¼û
-    char                    strDescription[MV_MAX_XML_DISC_STRLEN_C];//½ÚµãÃèÊö     Ä¿Ç°Ôİ²»Ö§³Ö
-    char                    strDisplayName[MV_MAX_XML_NODE_STRLEN_C];//ÏÔÊ¾Ãû³Æ
-    char                    strName[MV_MAX_XML_NODE_STRLEN_C];  // ½ÚµãÃû
-    char                    strToolTip[MV_MAX_XML_DISC_STRLEN_C];  //ÌáÊ¾
+    enum MV_XML_InterfaceType    enType;                             // èŠ‚ç‚¹ç±»å‹
+    enum MV_XML_Visibility       enVisivility;                       //æ˜¯å¦å¯è§
+    char                    strDescription[MV_MAX_XML_DISC_STRLEN_C];//èŠ‚ç‚¹æè¿°     ç›®å‰æš‚ä¸æ”¯æŒ
+    char                    strDisplayName[MV_MAX_XML_NODE_STRLEN_C];//æ˜¾ç¤ºåç§°
+    char                    strName[MV_MAX_XML_NODE_STRLEN_C];  // èŠ‚ç‚¹å
+    char                    strToolTip[MV_MAX_XML_DISC_STRLEN_C];  //æç¤º
 
     unsigned int            nReserved[4];
 }MV_XML_NODE_FEATURE;
 
-// ½ÚµãÁĞ±í
+// èŠ‚ç‚¹åˆ—è¡¨
 typedef struct _MV_XML_NODES_LIST_
 {
-    unsigned int            nNodeNum;       // ½Úµã¸öÊı
+    unsigned int            nNodeNum;       // èŠ‚ç‚¹ä¸ªæ•°
     MV_XML_NODE_FEATURE     stNodes[MV_MAX_XML_NODE_NUM_C];
 }MV_XML_NODES_LIST;
 
@@ -506,33 +506,33 @@ typedef struct _MV_XML_NODES_LIST_
 
 typedef struct _MV_XML_FEATURE_Value_
 {
-    enum MV_XML_InterfaceType    enType;                             // ½ÚµãÀàĞÍ
-    char                    strDescription[MV_MAX_XML_DISC_STRLEN_C];//½ÚµãÃèÊö     Ä¿Ç°Ôİ²»Ö§³Ö
-    char                    strDisplayName[MV_MAX_XML_NODE_STRLEN_C];//ÏÔÊ¾Ãû³Æ
-    char                    strName[MV_MAX_XML_NODE_STRLEN_C];  // ½ÚµãÃû
-    char                    strToolTip[MV_MAX_XML_DISC_STRLEN_C];  //ÌáÊ¾
+    enum MV_XML_InterfaceType    enType;                             // èŠ‚ç‚¹ç±»å‹
+    char                    strDescription[MV_MAX_XML_DISC_STRLEN_C];//èŠ‚ç‚¹æè¿°     ç›®å‰æš‚ä¸æ”¯æŒ
+    char                    strDisplayName[MV_MAX_XML_NODE_STRLEN_C];//æ˜¾ç¤ºåç§°
+    char                    strName[MV_MAX_XML_NODE_STRLEN_C];  // èŠ‚ç‚¹å
+    char                    strToolTip[MV_MAX_XML_DISC_STRLEN_C];  //æç¤º
     unsigned int            nReserved[4];
 }MV_XML_FEATURE_Value;
 
 typedef struct _MV_XML_FEATURE_Base_
 {
-    enum MV_XML_AccessMode   enAccessMode;       // ·ÃÎÊÄ£Ê½
+    enum MV_XML_AccessMode   enAccessMode;       // è®¿é—®æ¨¡å¼
 }MV_XML_FEATURE_Base;
 
 typedef struct _MV_XML_FEATURE_Integer_
 {
     char                strName[MV_MAX_XML_NODE_STRLEN_C];
     char                strDisplayName[MV_MAX_XML_NODE_STRLEN_C];
-    char                strDescription[MV_MAX_XML_DISC_STRLEN_C];   // Ä¿Ç°Ôİ²»Ö§³Ö
+    char                strDescription[MV_MAX_XML_DISC_STRLEN_C];   // ç›®å‰æš‚ä¸æ”¯æŒ
     char                strToolTip[MV_MAX_XML_DISC_STRLEN_C];
 
-    enum MV_XML_Visibility   enVisivility;                       //ÊÇ·ñ¿É¼û
-    enum MV_XML_AccessMode   enAccessMode;       // ·ÃÎÊÄ£Ê½
-    int                 bIsLocked;          // ÊÇ·ñËø¶¨¡£0-·ñ£»1-ÊÇ    Ä¿Ç°Ôİ²»Ö§³Ö
-    int64_t             nValue;             // µ±Ç°Öµ
-    int64_t             nMinValue;          // ×îĞ¡Öµ
-    int64_t             nMaxValue;          // ×î´óÖµ
-    int64_t             nIncrement;         // ÔöÁ¿
+    enum MV_XML_Visibility   enVisivility;                       //æ˜¯å¦å¯è§
+    enum MV_XML_AccessMode   enAccessMode;       // è®¿é—®æ¨¡å¼
+    int                 bIsLocked;          // æ˜¯å¦é”å®šã€‚0-å¦ï¼›1-æ˜¯    ç›®å‰æš‚ä¸æ”¯æŒ
+    int64_t             nValue;             // å½“å‰å€¼
+    int64_t             nMinValue;          // æœ€å°å€¼
+    int64_t             nMaxValue;          // æœ€å¤§å€¼
+    int64_t             nIncrement;         // å¢é‡
 
     unsigned int        nReserved[4];
 
@@ -542,13 +542,13 @@ typedef struct _MV_XML_FEATURE_Boolean_
 {
     char                strName[MV_MAX_XML_NODE_STRLEN_C];
     char                strDisplayName[MV_MAX_XML_NODE_STRLEN_C];
-    char                strDescription[MV_MAX_XML_DISC_STRLEN_C];   // Ä¿Ç°Ôİ²»Ö§³Ö
+    char                strDescription[MV_MAX_XML_DISC_STRLEN_C];   // ç›®å‰æš‚ä¸æ”¯æŒ
     char                strToolTip[MV_MAX_XML_DISC_STRLEN_C];
 
-    enum MV_XML_Visibility   enVisivility;                       //ÊÇ·ñ¿É¼û
-    enum MV_XML_AccessMode   enAccessMode;       // ·ÃÎÊÄ£Ê½
-    int                 bIsLocked;          // ÊÇ·ñËø¶¨¡£0-·ñ£»1-ÊÇ    Ä¿Ç°Ôİ²»Ö§³Ö
-    bool                bValue;             // µ±Ç°Öµ
+    enum MV_XML_Visibility   enVisivility;                       //æ˜¯å¦å¯è§
+    enum MV_XML_AccessMode   enAccessMode;       // è®¿é—®æ¨¡å¼
+    int                 bIsLocked;          // æ˜¯å¦é”å®šã€‚0-å¦ï¼›1-æ˜¯    ç›®å‰æš‚ä¸æ”¯æŒ
+    bool                bValue;             // å½“å‰å€¼
 
     unsigned int        nReserved[4];
 }MV_XML_FEATURE_Boolean;
@@ -557,12 +557,12 @@ typedef struct _MV_XML_FEATURE_Command_
 {
     char                strName[MV_MAX_XML_NODE_STRLEN_C];
     char                strDisplayName[MV_MAX_XML_NODE_STRLEN_C];
-    char                strDescription[MV_MAX_XML_DISC_STRLEN_C];   // Ä¿Ç°Ôİ²»Ö§³Ö
+    char                strDescription[MV_MAX_XML_DISC_STRLEN_C];   // ç›®å‰æš‚ä¸æ”¯æŒ
     char                strToolTip[MV_MAX_XML_DISC_STRLEN_C];
 
-    enum MV_XML_Visibility   enVisivility;                       //ÊÇ·ñ¿É¼û
-    enum MV_XML_AccessMode   enAccessMode;       // ·ÃÎÊÄ£Ê½
-    int                 bIsLocked;          // ÊÇ·ñËø¶¨¡£0-·ñ£»1-ÊÇ    Ä¿Ç°Ôİ²»Ö§³Ö
+    enum MV_XML_Visibility   enVisivility;                       //æ˜¯å¦å¯è§
+    enum MV_XML_AccessMode   enAccessMode;       // è®¿é—®æ¨¡å¼
+    int                 bIsLocked;          // æ˜¯å¦é”å®šã€‚0-å¦ï¼›1-æ˜¯    ç›®å‰æš‚ä¸æ”¯æŒ
 
     unsigned int        nReserved[4];
 }MV_XML_FEATURE_Command;
@@ -571,16 +571,16 @@ typedef struct _MV_XML_FEATURE_Float_
 {
     char                strName[MV_MAX_XML_NODE_STRLEN_C];
     char                strDisplayName[MV_MAX_XML_NODE_STRLEN_C];
-    char                strDescription[MV_MAX_XML_DISC_STRLEN_C];   // Ä¿Ç°Ôİ²»Ö§³Ö
+    char                strDescription[MV_MAX_XML_DISC_STRLEN_C];   // ç›®å‰æš‚ä¸æ”¯æŒ
     char                strToolTip[MV_MAX_XML_DISC_STRLEN_C];
 
-    enum MV_XML_Visibility       enVisivility;                       //ÊÇ·ñ¿É¼û
-    enum MV_XML_AccessMode   enAccessMode;       // ·ÃÎÊÄ£Ê½
-    int                 bIsLocked;          // ÊÇ·ñËø¶¨¡£0-·ñ£»1-ÊÇ    Ä¿Ç°Ôİ²»Ö§³Ö
-    double              dfValue;             // µ±Ç°Öµ
-    double              dfMinValue;          // ×îĞ¡Öµ
-    double              dfMaxValue;          // ×î´óÖµ
-    double              dfIncrement;         // ÔöÁ¿
+    enum MV_XML_Visibility       enVisivility;                       //æ˜¯å¦å¯è§
+    enum MV_XML_AccessMode   enAccessMode;       // è®¿é—®æ¨¡å¼
+    int                 bIsLocked;          // æ˜¯å¦é”å®šã€‚0-å¦ï¼›1-æ˜¯    ç›®å‰æš‚ä¸æ”¯æŒ
+    double              dfValue;             // å½“å‰å€¼
+    double              dfMinValue;          // æœ€å°å€¼
+    double              dfMaxValue;          // æœ€å¤§å€¼
+    double              dfIncrement;         // å¢é‡
 
     unsigned int        nReserved[4];
 }MV_XML_FEATURE_Float;
@@ -589,13 +589,13 @@ typedef struct _MV_XML_FEATURE_String_
 {
     char                strName[MV_MAX_XML_NODE_STRLEN_C];
     char                strDisplayName[MV_MAX_XML_NODE_STRLEN_C];
-    char                strDescription[MV_MAX_XML_DISC_STRLEN_C];   // Ä¿Ç°Ôİ²»Ö§³Ö
+    char                strDescription[MV_MAX_XML_DISC_STRLEN_C];   // ç›®å‰æš‚ä¸æ”¯æŒ
     char                strToolTip[MV_MAX_XML_DISC_STRLEN_C];
 
-    enum MV_XML_Visibility       enVisivility;                       //ÊÇ·ñ¿É¼û
-    enum MV_XML_AccessMode   enAccessMode;       // ·ÃÎÊÄ£Ê½
-    int                 bIsLocked;          // ÊÇ·ñËø¶¨¡£0-·ñ£»1-ÊÇ    Ä¿Ç°Ôİ²»Ö§³Ö
-    char                strValue[MV_MAX_XML_STRVALUE_STRLEN_C];// µ±Ç°Öµ
+    enum MV_XML_Visibility       enVisivility;                       //æ˜¯å¦å¯è§
+    enum MV_XML_AccessMode   enAccessMode;       // è®¿é—®æ¨¡å¼
+    int                 bIsLocked;          // æ˜¯å¦é”å®šã€‚0-å¦ï¼›1-æ˜¯    ç›®å‰æš‚ä¸æ”¯æŒ
+    char                strValue[MV_MAX_XML_STRVALUE_STRLEN_C];// å½“å‰å€¼
 
     unsigned int        nReserved[4];
 }MV_XML_FEATURE_String;
@@ -604,25 +604,25 @@ typedef struct _MV_XML_FEATURE_Register_
 {
     char                strName[MV_MAX_XML_NODE_STRLEN_C];
     char                strDisplayName[MV_MAX_XML_NODE_STRLEN_C];
-    char                strDescription[MV_MAX_XML_DISC_STRLEN_C];   // Ä¿Ç°Ôİ²»Ö§³Ö
+    char                strDescription[MV_MAX_XML_DISC_STRLEN_C];   // ç›®å‰æš‚ä¸æ”¯æŒ
     char                strToolTip[MV_MAX_XML_DISC_STRLEN_C];
 
-    enum MV_XML_Visibility       enVisivility;                       //ÊÇ·ñ¿É¼û
-    enum MV_XML_AccessMode   enAccessMode;       // ·ÃÎÊÄ£Ê½
-    int                 bIsLocked;          // ÊÇ·ñËø¶¨¡£0-·ñ£»1-ÊÇ    Ä¿Ç°Ôİ²»Ö§³Ö
-    int64_t             nAddrValue;             // µ±Ç°Öµ
+    enum MV_XML_Visibility       enVisivility;                       //æ˜¯å¦å¯è§
+    enum MV_XML_AccessMode   enAccessMode;       // è®¿é—®æ¨¡å¼
+    int                 bIsLocked;          // æ˜¯å¦é”å®šã€‚0-å¦ï¼›1-æ˜¯    ç›®å‰æš‚ä¸æ”¯æŒ
+    int64_t             nAddrValue;             // å½“å‰å€¼
 
     unsigned int        nReserved[4];
 }MV_XML_FEATURE_Register;
 
 typedef struct _MV_XML_FEATURE_Category_
 {
-    char                    strDescription[MV_MAX_XML_DISC_STRLEN_C];//½ÚµãÃèÊö Ä¿Ç°Ôİ²»Ö§³Ö
-    char                    strDisplayName[MV_MAX_XML_NODE_STRLEN_C];//ÏÔÊ¾Ãû³Æ
-    char                    strName[MV_MAX_XML_NODE_STRLEN_C];  // ½ÚµãÃû
-    char                    strToolTip[MV_MAX_XML_DISC_STRLEN_C];  //ÌáÊ¾
+    char                    strDescription[MV_MAX_XML_DISC_STRLEN_C];//èŠ‚ç‚¹æè¿° ç›®å‰æš‚ä¸æ”¯æŒ
+    char                    strDisplayName[MV_MAX_XML_NODE_STRLEN_C];//æ˜¾ç¤ºåç§°
+    char                    strName[MV_MAX_XML_NODE_STRLEN_C];  // èŠ‚ç‚¹å
+    char                    strToolTip[MV_MAX_XML_DISC_STRLEN_C];  //æç¤º
 
-    enum MV_XML_Visibility       enVisivility;                       //ÊÇ·ñ¿É¼û
+    enum MV_XML_Visibility       enVisivility;                       //æ˜¯å¦å¯è§
 
     unsigned int            nReserved[4];
 }MV_XML_FEATURE_Category;
@@ -631,16 +631,16 @@ typedef struct _MV_XML_FEATURE_EnumEntry_
 {
     char                strName[MV_MAX_XML_NODE_STRLEN_C];
     char                strDisplayName[MV_MAX_XML_NODE_STRLEN_C];
-    char                strDescription[MV_MAX_XML_DISC_STRLEN_C];   // Ä¿Ç°Ôİ²»Ö§³Ö
+    char                strDescription[MV_MAX_XML_DISC_STRLEN_C];   // ç›®å‰æš‚ä¸æ”¯æŒ
     char                strToolTip[MV_MAX_XML_DISC_STRLEN_C];
     int                 bIsImplemented;
     int                 nParentsNum;
     MV_XML_NODE_FEATURE stParentsList[MV_MAX_XML_PARENTS_NUM];
 
-    enum MV_XML_Visibility       enVisivility;                       //ÊÇ·ñ¿É¼û
-    int64_t             nValue;             // µ±Ç°Öµ
-    enum MV_XML_AccessMode   enAccessMode;       // ·ÃÎÊÄ£Ê½
-    int                 bIsLocked;          // ÊÇ·ñËø¶¨¡£0-·ñ£»1-ÊÇ    Ä¿Ç°Ôİ²»Ö§³Ö
+    enum MV_XML_Visibility       enVisivility;                       //æ˜¯å¦å¯è§
+    int64_t             nValue;             // å½“å‰å€¼
+    enum MV_XML_AccessMode   enAccessMode;       // è®¿é—®æ¨¡å¼
+    int                 bIsLocked;          // æ˜¯å¦é”å®šã€‚0-å¦ï¼›1-æ˜¯    ç›®å‰æš‚ä¸æ”¯æŒ
     int                 nReserved[8];
 
 }MV_XML_FEATURE_EnumEntry;
@@ -648,18 +648,18 @@ typedef struct _MV_XML_FEATURE_EnumEntry_
 
 typedef struct _MV_XML_FEATURE_Enumeration_
 {
-    enum MV_XML_Visibility       enVisivility;                       //ÊÇ·ñ¿É¼û
-    char                    strDescription[MV_MAX_XML_DISC_STRLEN_C];//½ÚµãÃèÊö Ä¿Ç°Ôİ²»Ö§³Ö
-    char                    strDisplayName[MV_MAX_XML_NODE_STRLEN_C];//ÏÔÊ¾Ãû³Æ
-    char                    strName[MV_MAX_XML_NODE_STRLEN_C];  // ½ÚµãÃû
-    char                    strToolTip[MV_MAX_XML_DISC_STRLEN_C];  //ÌáÊ¾
+    enum MV_XML_Visibility       enVisivility;                       //æ˜¯å¦å¯è§
+    char                    strDescription[MV_MAX_XML_DISC_STRLEN_C];//èŠ‚ç‚¹æè¿° ç›®å‰æš‚ä¸æ”¯æŒ
+    char                    strDisplayName[MV_MAX_XML_NODE_STRLEN_C];//æ˜¾ç¤ºåç§°
+    char                    strName[MV_MAX_XML_NODE_STRLEN_C];  // èŠ‚ç‚¹å
+    char                    strToolTip[MV_MAX_XML_DISC_STRLEN_C];  //æç¤º
 
-    int                 nSymbolicNum;          // SymbolicÊı
-    char                strCurrentSymbolic[MV_MAX_XML_SYMBOLIC_STRLEN_C];          // µ±Ç°SymbolicË÷Òı
+    int                 nSymbolicNum;          // Symbolicæ•°
+    char                strCurrentSymbolic[MV_MAX_XML_SYMBOLIC_STRLEN_C];          // å½“å‰Symbolicç´¢å¼•
     char                strSymbolic[MV_MAX_XML_SYMBOLIC_NUM][MV_MAX_XML_SYMBOLIC_STRLEN_C];
-    enum MV_XML_AccessMode   enAccessMode;       // ·ÃÎÊÄ£Ê½
-    int                 bIsLocked;          // ÊÇ·ñËø¶¨¡£0-·ñ£»1-ÊÇ    Ä¿Ç°Ôİ²»Ö§³Ö
-    int64_t             nValue;             // µ±Ç°Öµ
+    enum MV_XML_AccessMode   enAccessMode;       // è®¿é—®æ¨¡å¼
+    int                 bIsLocked;          // æ˜¯å¦é”å®šã€‚0-å¦ï¼›1-æ˜¯    ç›®å‰æš‚ä¸æ”¯æŒ
+    int64_t             nValue;             // å½“å‰å€¼
 
     unsigned int        nReserved[4];
 }MV_XML_FEATURE_Enumeration;
@@ -667,14 +667,14 @@ typedef struct _MV_XML_FEATURE_Enumeration_
 
 typedef struct _MV_XML_FEATURE_Port_
 {
-    enum MV_XML_Visibility       enVisivility;                       //ÊÇ·ñ¿É¼û
-    char                    strDescription[MV_MAX_XML_DISC_STRLEN_C];//½ÚµãÃèÊö Ä¿Ç°Ôİ²»Ö§³Ö
-    char                    strDisplayName[MV_MAX_XML_NODE_STRLEN_C];//ÏÔÊ¾Ãû³Æ
-    char                    strName[MV_MAX_XML_NODE_STRLEN_C];  // ½ÚµãÃû
-    char                    strToolTip[MV_MAX_XML_DISC_STRLEN_C];  //ÌáÊ¾
+    enum MV_XML_Visibility       enVisivility;                       //æ˜¯å¦å¯è§
+    char                    strDescription[MV_MAX_XML_DISC_STRLEN_C];//èŠ‚ç‚¹æè¿° ç›®å‰æš‚ä¸æ”¯æŒ
+    char                    strDisplayName[MV_MAX_XML_NODE_STRLEN_C];//æ˜¾ç¤ºåç§°
+    char                    strName[MV_MAX_XML_NODE_STRLEN_C];  // èŠ‚ç‚¹å
+    char                    strToolTip[MV_MAX_XML_DISC_STRLEN_C];  //æç¤º
 
-    enum MV_XML_AccessMode       enAccessMode;       // ·ÃÎÊÄ£Ê½
-    int                     bIsLocked;          // ÊÇ·ñËø¶¨¡£0-·ñ£»1-ÊÇ    Ä¿Ç°Ôİ²»Ö§³Ö
+    enum MV_XML_AccessMode       enAccessMode;       // è®¿é—®æ¨¡å¼
+    int                     bIsLocked;          // æ˜¯å¦é”å®šã€‚0-å¦ï¼›1-æ˜¯    ç›®å‰æš‚ä¸æ”¯æŒ
 
     unsigned int            nReserved[4];
 }MV_XML_FEATURE_Port;
@@ -697,8 +697,8 @@ typedef struct _MV_XML_CAMERA_FEATURE_
 
 typedef struct _MVCC_ENUMVALUE_T
 {
-    unsigned int    nCurValue;      // µ±Ç°Öµ
-    unsigned int    nSupportedNum;  // Êı¾İµÄÓĞĞ§Êı¾İ¸öÊı
+    unsigned int    nCurValue;      // å½“å‰å€¼
+    unsigned int    nSupportedNum;  // æ•°æ®çš„æœ‰æ•ˆæ•°æ®ä¸ªæ•°
     unsigned int    nSupportValue[MV_MAX_XML_SYMBOLIC_NUM];
 
     unsigned int    nReserved[4];
@@ -706,7 +706,7 @@ typedef struct _MVCC_ENUMVALUE_T
 
 typedef struct _MVCC_INTVALUE_T
 {
-    unsigned int    nCurValue;      // µ±Ç°Öµ
+    unsigned int    nCurValue;      // å½“å‰å€¼
     unsigned int    nMax;
     unsigned int    nMin;
     unsigned int    nInc;
@@ -716,7 +716,7 @@ typedef struct _MVCC_INTVALUE_T
 
 typedef struct _MVCC_FLOATVALUE_T
 {
-    float           fCurValue;      // µ±Ç°Öµ
+    float           fCurValue;      // å½“å‰å€¼
     float           fMax;
     float           fMin;
 
@@ -725,7 +725,7 @@ typedef struct _MVCC_FLOATVALUE_T
 
 typedef struct _MVCC_STRINGVALUE_T
 {
-    char   chCurValue[256];      // µ±Ç°Öµ
+    char   chCurValue[256];      // å½“å‰å€¼
 
     unsigned int    nReserved[4];
 }MVCC_STRINGVALUE;

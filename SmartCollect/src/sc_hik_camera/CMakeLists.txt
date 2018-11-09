@@ -2,6 +2,9 @@ cmake_minimum_required(VERSION 2.8.3)
 project(sc_hik_camera)
 
 message("PROJECT_SOURCE_DIR: " ${PROJECT_SOURCE_DIR})
+message("OpenCV_DIR: " ${OpenCV_DIR})
+set(OpenCV_DIR /usr/local/share/OpenCV)
+message("OpenCV_DIR: " ${OpenCV_DIR})
 
 ## Compile as C++11, supported in ROS Kinetic and newer
 add_compile_options(-std=c++11)
@@ -12,8 +15,9 @@ add_compile_options(-std=c++11)
 find_package(catkin REQUIRED COMPONENTS
   roscpp
   std_msgs
+  image_transport
 )
-find_package(OpenCV REQUIRED)
+# find_package(OpenCV REQUIRED)
 
 ## System dependencies are found with CMake's conventions
 # find_package(Boost REQUIRED COMPONENTS system)
@@ -117,10 +121,13 @@ catkin_package(
 
 ## Specify additional locations of header files
 ## Your package locations should be listed before other locations
+message("catkin_INCLUDE_DIRS: " ${catkin_INCLUDE_DIRS})
+message("OpenCV_INCLUDE_DIRS: " ${OpenCV_INCLUDE_DIRS})
 include_directories(
 # include
   ${catkin_INCLUDE_DIRS}
-  ${OpenCV_INCLUDE_DIRS}
+  /usr/local/include
+  /usr/local/include/opencv
 )
 
 ## Declare a C++ library
@@ -149,9 +156,13 @@ add_executable(${PROJECT_NAME}_node src/hik_camera_node.cpp src/hik_camera.cpp)
 # add_dependencies(${PROJECT_NAME}_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
 ## Specify libraries to link a library or executable target against
+message("catkin_LIBRARIES: " ${catkin_LIBRARIES})
+message("OpenCV_LIBS: " ${OpenCV_LIBS})
 target_link_libraries(${PROJECT_NAME}_node
   ${catkin_LIBRARIES}
-  ${OpenCV_LIBS}
+  /usr/local/lib/libopencv_core.so
+  /usr/local/lib/libopencv_imgcodecs.so
+  /usr/local/lib/libopencv_imgproc.so
   glog
   /opt/MVS/bin/libMvCameraControl.so
 )

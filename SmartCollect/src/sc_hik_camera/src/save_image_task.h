@@ -5,14 +5,14 @@
 
 class SaveImageTask {
 public:
-    SaveImageTask(double _header, size_t _camera1stIP, const cv::Mat &_image);
+    SaveImageTask(double _header, const std::string &_cameraIP, const cv::Mat &_image);
     ~SaveImageTask();
     void doit();
 
 
 private:
     double time_;
-    size_t camera1stIP_;
+    std::string cameraIP_;
     cv::Mat image_;
 };
 

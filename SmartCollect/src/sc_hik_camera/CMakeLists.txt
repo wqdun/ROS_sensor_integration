@@ -16,6 +16,7 @@ find_package(catkin REQUIRED COMPONENTS
   roscpp
   std_msgs
   image_transport
+  cv_bridge
 )
 # find_package(OpenCV REQUIRED)
 
@@ -143,7 +144,12 @@ include_directories(
 ## Declare a C++ executable
 ## With catkin_make all packages are built within a single CMake context
 ## The recommended prefix ensures that target names across packages don't collide
-add_executable(${PROJECT_NAME}_node src/hik_camera_node.cpp src/hik_camera.cpp src/save_image_task.cpp)
+add_executable(${PROJECT_NAME}_node
+  src/hik_camera_node.cpp
+  src/hik_camera.cpp
+  src/save_image_task.cpp
+  src/single_camera.cpp
+)
 
 ## Rename C++ executable without prefix
 ## The above recommended prefix causes long target names, the following renames the

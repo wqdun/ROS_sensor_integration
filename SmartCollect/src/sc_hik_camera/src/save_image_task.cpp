@@ -4,10 +4,10 @@
 // #undef NDEBUG
 #include <glog/logging.h>
 
-SaveImageTask::SaveImageTask(double _header, size_t _camera1stIP, const cv::Mat &_image) {
+SaveImageTask::SaveImageTask(double _header, const std::string &_cameraIP, const cv::Mat &_image) {
     LOG(INFO) << __FUNCTION__ << " start.";
     time_ = _header;
-    camera1stIP_ = _camera1stIP;
+    cameraIP_ = _cameraIP;
     image_ = _image;
 }
 
@@ -18,7 +18,7 @@ SaveImageTask::~SaveImageTask() {
 void SaveImageTask::doit() {
     LOG(INFO) << __FUNCTION__ << " start.";
 
-    const std::string picFile = "/tmp/" + std::to_string(camera1stIP_) + "_" + std::to_string(time_) + ".jpg";
+    const std::string picFile("/tmp/" + std::to_string(time_) + "_" + cameraIP_ + ".jpg");
 
     try {
         cv::imwrite(picFile, image_);

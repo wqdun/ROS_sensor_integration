@@ -146,7 +146,7 @@ include_directories(
 ## The recommended prefix ensures that target names across packages don't collide
 add_executable(${PROJECT_NAME}_node
   src/hik_camera_node.cpp
-  src/hik_camera.cpp
+  src/hik_camera_manager.cpp
   src/save_image_task.cpp
   src/single_camera.cpp
 )

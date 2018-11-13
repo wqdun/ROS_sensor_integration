@@ -1,10 +1,10 @@
-#include "hik_camera.h"
+#include "hik_camera_manager.h"
 
 #define NDEBUG
 // #undef NDEBUG
 #include <glog/logging.h>
 
-HikCamera::HikCamera(ros::NodeHandle nh, ros::NodeHandle private_nh):
+HikCameraManager::HikCameraManager(ros::NodeHandle nh, ros::NodeHandle private_nh):
     threadPool_(10, 20)
 {
     LOG(INFO) << __FUNCTION__ << " start.";
@@ -14,14 +14,14 @@ HikCamera::HikCamera(ros::NodeHandle nh, ros::NodeHandle private_nh):
     memset(&deviceList_, 0, sizeof(MV_CC_DEVICE_INFO_LIST));
 }
 
-HikCamera::~HikCamera() {
+HikCameraManager::~HikCameraManager() {
     LOG(INFO) << __FUNCTION__ << " start.";
     (void)DoClean();
 
     LOG(INFO) << __FUNCTION__ << " end.";
 }
 
-void HikCamera::Run() {
+void HikCameraManager::Run() {
     LOG(INFO) << __FUNCTION__ << " start.";
     int err = MV_OK;
     threadPool_.start();
@@ -59,7 +59,7 @@ void HikCamera::Run() {
     }
 }
 
-void HikCamera::SetAdvertiseTopic(const std::string &advertiseName) {
+void HikCameraManager::SetAdvertiseTopic(const std::string &advertiseName) {
     LOG(INFO) << __FUNCTION__ << " start.";
     image_transport::Publisher pub;
     image_transport::ImageTransport it(nh_);
@@ -69,7 +69,7 @@ void HikCamera::SetAdvertiseTopic(const std::string &advertiseName) {
     return;
 }
 
-void HikCamera::PublishImage(size_t index, const cv::Mat &image2Pub) {
+void HikCameraManager::PublishImage(size_t index, const cv::Mat &image2Pub) {
     cv::Mat imageResized;
     cv::resize(image2Pub, imageResized, cv::Size(image2Pub.cols / 10, image2Pub.rows / 10));
     sensor_msgs::ImagePtr imgMsg = cv_bridge::CvImage(std_msgs::Header(), "rgb8", imageResized).toImageMsg();
@@ -78,7 +78,7 @@ void HikCamera::PublishImage(size_t index, const cv::Mat &image2Pub) {
     pubImages_[index].publish(imgMsg);
 }
 
-void HikCamera::PressEnterToExit() {
+void HikCameraManager::PressEnterToExit() {
     LOG(INFO) << "Wait enter to stop grabbing.";
     int c;
     while( (c = getchar()) != '\n' && c != EOF);
@@ -86,7 +86,7 @@ void HikCamera::PressEnterToExit() {
     while(getchar() != '\n');
 }
 
-void HikCamera::DoClean() {
+void HikCameraManager::DoClean() {
     LOG(INFO) << __FUNCTION__ << " start.";
     threadPool_.stop();
 }

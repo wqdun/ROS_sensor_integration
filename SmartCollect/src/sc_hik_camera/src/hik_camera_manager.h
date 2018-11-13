@@ -1,5 +1,5 @@
-#ifndef __HIK_CAMERA_H__
-#define __HIK_CAMERA_H__
+#ifndef __HIK_CAMERA_MANAGER_H__
+#define __HIK_CAMERA_MANAGER_H__
 
 #include <ros/ros.h>
 #include <image_transport/image_transport.h>
@@ -14,10 +14,10 @@
 #include "save_image_task.h"
 #include "single_camera.h"
 
-class HikCamera {
+class HikCameraManager {
 public:
-    HikCamera(ros::NodeHandle nh, ros::NodeHandle private_nh);
-    ~HikCamera();
+    HikCameraManager(ros::NodeHandle nh, ros::NodeHandle private_nh);
+    ~HikCameraManager();
     void Run();
 
 

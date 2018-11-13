@@ -95,6 +95,14 @@ void __stdcall SingleCamera::ImageCB(unsigned char *pData, MV_FRAME_OUT_INFO_EX 
         return;
     }
     LOG(INFO) << "GetOneFrame[" << pFrameInfo->nFrameNum << "]: " << pFrameInfo->nWidth << " * " << pFrameInfo->nHeight;
+    LOG(INFO) << "nHostTimeStamp: " << pFrameInfo->nHostTimeStamp;
+    LOG(INFO) << "nDevTimeStampHigh: " << pFrameInfo->nDevTimeStampHigh;
+    LOG(INFO) << "nDevTimeStampLow: " << pFrameInfo->nDevTimeStampLow;
+    LOG(INFO) << "nSecondCount: " << pFrameInfo->nSecondCount;
+    LOG(INFO) << "nCycleCount: " << pFrameInfo->nCycleCount;
+    LOG(INFO) << "nCycleOffset: " << pFrameInfo->nCycleOffset;
+    LOG(INFO) << "nFrameCounter: " << pFrameInfo->nFrameCounter;
+    LOG(INFO) << "nTriggerIndex: " << pFrameInfo->nTriggerIndex;
     int err = MV_OK;
 
     SingleCamera *pSingleCamera = static_cast<SingleCamera *>(_pSingleCamera);
@@ -166,6 +174,14 @@ void SingleCamera::ConfigDevices() {
     cv::FileStorage fs(hikConfig, cv::FileStorage::READ);
     int configValue1 = -1;
     int configValue2 = -1;
+
+    bool currentAcquisitionFrameRateEnable = {0};
+    err = MV_CC_GetBoolValue(cameraHandle_, "AcquisitionFrameRateEnable", &currentAcquisitionFrameRateEnable);
+    assert(MV_OK == err);
+    fs["AcquisitionFrameRateEnable"] >> configValue1;
+    err = MV_CC_SetBoolValue(cameraHandle_, "AcquisitionFrameRateEnable", configValue1);
+    assert(MV_OK == err);
+    LOG(INFO) << "Current AcquisitionFrameRateEnable: " << currentAcquisitionFrameRateEnable << "-->" << configValue1;
 
     fs["TriggerMode"] >> configValue1;
     err = MV_CC_SetEnumValue(cameraHandle_, "TriggerMode", configValue1);

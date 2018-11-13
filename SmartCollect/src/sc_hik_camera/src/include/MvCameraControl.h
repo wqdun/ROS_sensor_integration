@@ -6,7 +6,7 @@
 #include "CameraParams.h"
 
 /**
-*  @brief  ¶¯Ì¬¿âµ¼Èëµ¼³ö¶¨Òå
+*  @brief  åŠ¨æ€åº“å¯¼å…¥å¯¼å‡ºå®šä¹‰
 */
 #ifndef MV_CAMCTRL_API
 
@@ -38,88 +38,88 @@
 
 #ifdef __cplusplus
 extern "C" {
-#endif 
+#endif
 
 /************************************************************************/
-/* Ïà»úµÄ»ù±¾Ö¸ÁîºÍ²Ù×÷                                         */
+/* ç›¸æœºçš„åŸºæœ¬æŒ‡ä»¤å’Œæ“ä½œ                                         */
 /************************************************************************/
 /************************************************************************
  *  @fn     MV_CC_GetSDKVersion()
- *  @brief  »ñÈ¡SDK°æ±¾ºÅ
- *  @param  
- *  @return Ê¼ÖÕ·µ»Ø4×Ö½Ú°æ±¾ºÅ |Ö÷    |´Î    |ĞŞÕı  |  ²âÊÔ|
-                                 8bits  8bits  8bits  8bits 
+ *  @brief  è·å–SDKç‰ˆæœ¬å·
+ *  @param
+ *  @return å§‹ç»ˆè¿”å›4å­—èŠ‚ç‰ˆæœ¬å· |ä¸»    |æ¬¡    |ä¿®æ­£  |  æµ‹è¯•|
+                                 8bits  8bits  8bits  8bits
  ************************************************************************/
 MV_CAMCTRL_API unsigned int __stdcall MV_CC_GetSDKVersion();
 
 /************************************************************************
  *  @fn     MV_CC_EnumerateTls()
- *  @brief  »ñÈ¡Ö§³ÖµÄ´«Êä²ã
- *  @return Ö§³ÖµÄ´«Êä²ã±àºÅ 
+ *  @brief  è·å–æ”¯æŒçš„ä¼ è¾“å±‚
+ *  @return æ”¯æŒçš„ä¼ è¾“å±‚ç¼–å·
  ************************************************************************/
 MV_CAMCTRL_API int __stdcall MV_CC_EnumerateTls();
 
 /************************************************************************
  *  @fn     MV_CC_EnumDevices()
- *  @brief  Ã¶¾ÙÉè±¸
- *  @param  nTLayerType            [IN]           Ã¶¾Ù´«Êä²ã
- *  @param  pstDevList             [OUT]          Éè±¸ÁĞ±í
- *  @return ³É¹¦£¬·µ»ØMV_OK£»´íÎó£¬·µ»Ø´íÎóÂë 
+ *  @brief  æšä¸¾è®¾å¤‡
+ *  @param  nTLayerType            [IN]           æšä¸¾ä¼ è¾“å±‚
+ *  @param  pstDevList             [OUT]          è®¾å¤‡åˆ—è¡¨
+ *  @return æˆåŠŸï¼Œè¿”å›MV_OKï¼›é”™è¯¯ï¼Œè¿”å›é”™è¯¯ç 
  ************************************************************************/
 MV_CAMCTRL_API int __stdcall MV_CC_EnumDevices(IN unsigned int nTLayerType, IN OUT MV_CC_DEVICE_INFO_LIST* pstDevList);
 
 /************************************************************************
  *  @fn     MV_CC_EnumDevicesEx()
- *  @brief  ¸ù¾İ³§ÉÌÃû×ÖÃ¶¾ÙÉè±¸
- *  @param  nTLayerType            [IN]           Ã¶¾Ù´«Êä²ã
- *  @param  pstDevList             [OUT]          Éè±¸ÁĞ±í
- *  @param  pManufacturerName      [IN]           ³§ÉÌÃû×Ö
- *  @return ³É¹¦£¬·µ»ØMV_OK£»´íÎó£¬·µ»Ø´íÎóÂë 
+ *  @brief  æ ¹æ®å‚å•†åå­—æšä¸¾è®¾å¤‡
+ *  @param  nTLayerType            [IN]           æšä¸¾ä¼ è¾“å±‚
+ *  @param  pstDevList             [OUT]          è®¾å¤‡åˆ—è¡¨
+ *  @param  pManufacturerName      [IN]           å‚å•†åå­—
+ *  @return æˆåŠŸï¼Œè¿”å›MV_OKï¼›é”™è¯¯ï¼Œè¿”å›é”™è¯¯ç 
  ************************************************************************/
 MV_CAMCTRL_API int __stdcall MV_CC_EnumDevicesEx(IN unsigned int nTLayerType, IN OUT MV_CC_DEVICE_INFO_LIST* pstDevList, IN const char* pManufacturerName);
 
 /************************************************************************
  *  @fn     MV_CC_IsDeviceAccessible()
- *  @brief  Éè±¸ÊÇ·ñ¿É´ï
- *  @param  pstDevInfo             [IN]           Éè±¸ĞÅÏ¢½á¹¹Ìå
- *  @param  nAccessMode            [IN]           ·ÃÎÊÈ¨ÏŞ
- *  @return ¿É´ï£¬·µ»Øtrue£»²»¿É´ï£¬·µ»Øfalse 
+ *  @brief  è®¾å¤‡æ˜¯å¦å¯è¾¾
+ *  @param  pstDevInfo             [IN]           è®¾å¤‡ä¿¡æ¯ç»“æ„ä½“
+ *  @param  nAccessMode            [IN]           è®¿é—®æƒé™
+ *  @return å¯è¾¾ï¼Œè¿”å›trueï¼›ä¸å¯è¾¾ï¼Œè¿”å›false
  ************************************************************************/
 MV_CAMCTRL_API bool __stdcall MV_CC_IsDeviceAccessible(IN MV_CC_DEVICE_INFO* pstDevInfo, IN unsigned int nAccessMode);
 
 /************************************************************************
  *  @fn     MV_CC_CreateHandle()
- *  @brief  ´´½¨Éè±¸¾ä±ú
- *  @param  handle                 [OUT]          ¾ä±úµØÖ·
- *  @param  pstDevInfo             [IN]           Éè±¸ĞÅÏ¢½á¹¹Ìå
- *  @return ³É¹¦£¬·µ»ØMV_OK£»´íÎó£¬·µ»Ø´íÎóÂë 
+ *  @brief  åˆ›å»ºè®¾å¤‡å¥æŸ„
+ *  @param  handle                 [OUT]          å¥æŸ„åœ°å€
+ *  @param  pstDevInfo             [IN]           è®¾å¤‡ä¿¡æ¯ç»“æ„ä½“
+ *  @return æˆåŠŸï¼Œè¿”å›MV_OKï¼›é”™è¯¯ï¼Œè¿”å›é”™è¯¯ç 
  ************************************************************************/
 MV_CAMCTRL_API int __stdcall MV_CC_CreateHandle(OUT void ** handle, IN const MV_CC_DEVICE_INFO* pstDevInfo);
 
 /************************************************************************
  *  @fn     MV_CC_CreateHandleWithoutLog
- *  @brief  ´´½¨Éè±¸¾ä±ú£¬²»Éú³ÉÈÕÖ¾
- *  @param  handle                 [OUT]          ¾ä±úµØÖ·
- *  @param  pstDevInfo             [IN]           Éè±¸ĞÅÏ¢½á¹¹Ìå
- *  @return ³É¹¦£¬·µ»ØMV_OK£»´íÎó£¬·µ»Ø´íÎóÂë 
+ *  @brief  åˆ›å»ºè®¾å¤‡å¥æŸ„ï¼Œä¸ç”Ÿæˆæ—¥å¿—
+ *  @param  handle                 [OUT]          å¥æŸ„åœ°å€
+ *  @param  pstDevInfo             [IN]           è®¾å¤‡ä¿¡æ¯ç»“æ„ä½“
+ *  @return æˆåŠŸï¼Œè¿”å›MV_OKï¼›é”™è¯¯ï¼Œè¿”å›é”™è¯¯ç 
  ************************************************************************/
 MV_CAMCTRL_API int __stdcall MV_CC_CreateHandleWithoutLog(OUT void ** handle, IN const MV_CC_DEVICE_INFO* pstDevInfo);
 
 /************************************************************************
  *  @fn     MV_CC_DestroyHandle()
- *  @brief  Ïú»ÙÉè±¸¾ä±ú
- *  @param  handle                 [IN]          ¾ä±ú
- *  @return ³É¹¦£¬·µ»ØMV_OK£»´íÎó£¬·µ»Ø´íÎóÂë 
+ *  @brief  é”€æ¯è®¾å¤‡å¥æŸ„
+ *  @param  handle                 [IN]          å¥æŸ„
+ *  @return æˆåŠŸï¼Œè¿”å›MV_OKï¼›é”™è¯¯ï¼Œè¿”å›é”™è¯¯ç 
  ************************************************************************/
 MV_CAMCTRL_API int __stdcall MV_CC_DestroyHandle(IN void * handle);
 
 /************************************************************************
  *  @fn     MV_CC_OpenDevice()
- *  @brief  ´ò¿ªÉè±¸
- *  @param  handle                 [IN]          ¾ä±ú
- *  @param  nAccessMode            [IN]          ·ÃÎÊÈ¨ÏŞ
- *  @param  nSwitchoverKey         [IN]          ÇĞ»»·ÃÎÊÈ¨ÏŞÊ±µÄÃÜÔ¿
- *  @return ³É¹¦£¬·µ»ØMV_OK£»´íÎó£¬·µ»Ø´íÎóÂë 
+ *  @brief  æ‰“å¼€è®¾å¤‡
+ *  @param  handle                 [IN]          å¥æŸ„
+ *  @param  nAccessMode            [IN]          è®¿é—®æƒé™
+ *  @param  nSwitchoverKey         [IN]          åˆ‡æ¢è®¿é—®æƒé™æ—¶çš„å¯†é’¥
+ *  @return æˆåŠŸï¼Œè¿”å›MV_OKï¼›é”™è¯¯ï¼Œè¿”å›é”™è¯¯ç 
  ************************************************************************/
 #ifdef __APPLE__
 MV_CAMCTRL_API int __stdcall MV_CC_OpenDevice(IN void* handle, IN unsigned int nAccessMode, IN unsigned short nSwitchoverKey);
@@ -130,151 +130,151 @@ MV_CAMCTRL_API int __stdcall MV_CC_OpenDevice(IN void* handle, IN unsigned int n
 
 /***********************************************************************
  *  @fn         MV_CC_CloseDevice
- *  @brief      ¹Ø±ÕÏà»ú
- *  @param       handle                 [IN]          ¾ä±ú
- *  @return ³É¹¦£¬·µ»ØMV_OK£»´íÎó£¬·µ»Ø´íÎóÂë
+ *  @brief      å…³é—­ç›¸æœº
+ *  @param       handle                 [IN]          å¥æŸ„
+ *  @return æˆåŠŸï¼Œè¿”å›MV_OKï¼›é”™è¯¯ï¼Œè¿”å›é”™è¯¯ç 
  ***********************************************************************/
 MV_CAMCTRL_API int __stdcall MV_CC_CloseDevice(IN void* handle);
 
 /***********************************************************************
  *  @fn         MV_CC_RegisterImageCallBackEx
- *  @brief      ×¢²áÍ¼ÏñÊı¾İ»Øµ÷£¬chunk
- *  @param       handle                 [IN]          ¾ä±ú
- *  @param       cbOutput               [IN]          »Øµ÷º¯ÊıÖ¸Õë
- *  @param       pUser                  [IN]          ÓÃ»§×Ô¶¨Òå±äÁ¿
- *  @return ³É¹¦£¬·µ»ØMV_OK£»´íÎó£¬·µ»Ø´íÎóÂë
+ *  @brief      æ³¨å†Œå›¾åƒæ•°æ®å›è°ƒï¼Œchunk
+ *  @param       handle                 [IN]          å¥æŸ„
+ *  @param       cbOutput               [IN]          å›è°ƒå‡½æ•°æŒ‡é’ˆ
+ *  @param       pUser                  [IN]          ç”¨æˆ·è‡ªå®šä¹‰å˜é‡
+ *  @return æˆåŠŸï¼Œè¿”å›MV_OKï¼›é”™è¯¯ï¼Œè¿”å›é”™è¯¯ç 
  ***********************************************************************/
-MV_CAMCTRL_API int __stdcall MV_CC_RegisterImageCallBackEx(void* handle, 
+MV_CAMCTRL_API int __stdcall MV_CC_RegisterImageCallBackEx(void* handle,
                                                          void(__stdcall* cbOutput)(unsigned char * pData, MV_FRAME_OUT_INFO_EX* pFrameInfo, void* pUser),
                                                          void* pUser);
 
 /***********************************************************************
  *  @fn         MV_CC_RegisterImageCallbackForRGB
- *  @brief      ×¢²áÍ¼ÏñÊı¾İ»Øµ÷£¬RGB
- *  @param       handle                 [IN]          ¾ä±ú
- *  @param       cbOutput               [IN]          »Øµ÷º¯ÊıÖ¸Õë
- *  @param       pUser                  [IN]          ÓÃ»§×Ô¶¨Òå±äÁ¿
- *  @return ³É¹¦£¬·µ»ØMV_OK£»´íÎó£¬·µ»Ø´íÎóÂë
+ *  @brief      æ³¨å†Œå›¾åƒæ•°æ®å›è°ƒï¼ŒRGB
+ *  @param       handle                 [IN]          å¥æŸ„
+ *  @param       cbOutput               [IN]          å›è°ƒå‡½æ•°æŒ‡é’ˆ
+ *  @param       pUser                  [IN]          ç”¨æˆ·è‡ªå®šä¹‰å˜é‡
+ *  @return æˆåŠŸï¼Œè¿”å›MV_OKï¼›é”™è¯¯ï¼Œè¿”å›é”™è¯¯ç 
  ***********************************************************************/
-MV_CAMCTRL_API int __stdcall MV_CC_RegisterImageCallBackForRGB(void* handle, 
+MV_CAMCTRL_API int __stdcall MV_CC_RegisterImageCallBackForRGB(void* handle,
                                                          void(__stdcall* cbOutput)(unsigned char * pData, MV_FRAME_OUT_INFO_EX* pFrameInfo, void* pUser),
                                                          void* pUser);
 
 /***********************************************************************
  *  @fn         MV_CC_RegisterImageCallbackForBGR
- *  @brief      ×¢²áÍ¼ÏñÊı¾İ»Øµ÷£¬BGR
- *  @param       handle                 [IN]          ¾ä±ú
- *  @param       cbOutput               [IN]          »Øµ÷º¯ÊıÖ¸Õë
- *  @param       pUser                  [IN]          ÓÃ»§×Ô¶¨Òå±äÁ¿
- *  @return ³É¹¦£¬·µ»ØMV_OK£»´íÎó£¬·µ»Ø´íÎóÂë
+ *  @brief      æ³¨å†Œå›¾åƒæ•°æ®å›è°ƒï¼ŒBGR
+ *  @param       handle                 [IN]          å¥æŸ„
+ *  @param       cbOutput               [IN]          å›è°ƒå‡½æ•°æŒ‡é’ˆ
+ *  @param       pUser                  [IN]          ç”¨æˆ·è‡ªå®šä¹‰å˜é‡
+ *  @return æˆåŠŸï¼Œè¿”å›MV_OKï¼›é”™è¯¯ï¼Œè¿”å›é”™è¯¯ç 
  ***********************************************************************/
-MV_CAMCTRL_API int __stdcall MV_CC_RegisterImageCallBackForBGR(void* handle, 
+MV_CAMCTRL_API int __stdcall MV_CC_RegisterImageCallBackForBGR(void* handle,
                                                          void(__stdcall* cbOutput)(unsigned char * pData, MV_FRAME_OUT_INFO_EX* pFrameInfo, void* pUser),
                                                          void* pUser);
 
 /***********************************************************************
  *  @fn         MV_CC_StartGrabbing
- *  @brief      ¿ªÊ¼È¡Á÷
- *  @param       handle                 [IN]          ¾ä±ú
- *  @return ³É¹¦£¬·µ»ØMV_OK£»´íÎó£¬·µ»Ø´íÎóÂë
+ *  @brief      å¼€å§‹å–æµ
+ *  @param       handle                 [IN]          å¥æŸ„
+ *  @return æˆåŠŸï¼Œè¿”å›MV_OKï¼›é”™è¯¯ï¼Œè¿”å›é”™è¯¯ç 
  ***********************************************************************/
 MV_CAMCTRL_API int __stdcall MV_CC_StartGrabbing(IN void* handle);
 
 /***********************************************************************
  *  @fn         MV_CC_StopGrabbing
- *  @brief      Í£Ö¹È¡Á÷
- *  @param       handle                 [IN]          ¾ä±ú
- *  @return ³É¹¦£¬·µ»ØMV_OK£»´íÎó£¬·µ»Ø´íÎóÂë
+ *  @brief      åœæ­¢å–æµ
+ *  @param       handle                 [IN]          å¥æŸ„
+ *  @return æˆåŠŸï¼Œè¿”å›MV_OKï¼›é”™è¯¯ï¼Œè¿”å›é”™è¯¯ç 
  ***********************************************************************/
 MV_CAMCTRL_API int __stdcall MV_CC_StopGrabbing(IN void* handle);
 
 /***********************************************************************
  *  @fn         MV_CC_GetImageForRGB
- *  @brief      »ñÈ¡Ò»Ö¡RGBÊı¾İ£¬´Ëº¯ÊıÎª²éÑ¯Ê½»ñÈ¡£¬Ã¿´Îµ÷ÓÃ²éÑ¯ÄÚ²¿
-                »º´æÓĞÎŞÊı¾İ£¬ÓĞÊı¾İÔò·¶Î§Êı¾İ£¬ÎŞÊı¾İ·µ»Ø´íÎóÂë
- *  @param       handle                 [IN]          ¾ä±ú
- *  @param       pData                  [OUT]         Í¼ÏñÊı¾İ½ÓÊÕÖ¸Õë
- *  @param       nDataSize              [IN]          ½ÓÊÕ»º´æ´óĞ¡
- *  @param       pFrameInfo             [OUT]         Í¼ÏñĞÅÏ¢½á¹¹Ìå
- *  @param       nMsec                  [IN]          µÈ´ı³¬Ê±Ê±¼ä
- *  @return ³É¹¦£¬·µ»ØMV_OK£»´íÎó£¬·µ»Ø´íÎóÂë
+ *  @brief      è·å–ä¸€å¸§RGBæ•°æ®ï¼Œæ­¤å‡½æ•°ä¸ºæŸ¥è¯¢å¼è·å–ï¼Œæ¯æ¬¡è°ƒç”¨æŸ¥è¯¢å†…éƒ¨
+                ç¼“å­˜æœ‰æ— æ•°æ®ï¼Œæœ‰æ•°æ®åˆ™èŒƒå›´æ•°æ®ï¼Œæ— æ•°æ®è¿”å›é”™è¯¯ç 
+ *  @param       handle                 [IN]          å¥æŸ„
+ *  @param       pData                  [OUT]         å›¾åƒæ•°æ®æ¥æ”¶æŒ‡é’ˆ
+ *  @param       nDataSize              [IN]          æ¥æ”¶ç¼“å­˜å¤§å°
+ *  @param       pFrameInfo             [OUT]         å›¾åƒä¿¡æ¯ç»“æ„ä½“
+ *  @param       nMsec                  [IN]          ç­‰å¾…è¶…æ—¶æ—¶é—´
+ *  @return æˆåŠŸï¼Œè¿”å›MV_OKï¼›é”™è¯¯ï¼Œè¿”å›é”™è¯¯ç 
  ***********************************************************************/
 MV_CAMCTRL_API int __stdcall MV_CC_GetImageForRGB(IN void* handle, IN OUT unsigned char * pData , IN unsigned int nDataSize, IN OUT MV_FRAME_OUT_INFO_EX* pFrameInfo, int nMsec);
 
 /***********************************************************************
  *  @fn         MV_CC_GetImageForBGR
- *  @brief      »ñÈ¡Ò»Ö¡BGRÊı¾İ£¬´Ëº¯ÊıÎª²éÑ¯Ê½»ñÈ¡£¬Ã¿´Îµ÷ÓÃ²éÑ¯ÄÚ²¿
-                »º´æÓĞÎŞÊı¾İ£¬ÓĞÊı¾İÔò·¶Î§Êı¾İ£¬ÎŞÊı¾İ·µ»Ø´íÎóÂë
- *  @param       handle                 [IN]          ¾ä±ú
- *  @param       pData                  [OUT]         Í¼ÏñÊı¾İ½ÓÊÕÖ¸Õë
- *  @param       nDataSize              [IN]          ½ÓÊÕ»º´æ´óĞ¡
- *  @param       pFrameInfo             [OUT]         Í¼ÏñĞÅÏ¢½á¹¹Ìå
- *  @param       nMsec                  [IN]          µÈ´ı³¬Ê±Ê±¼ä
- *  @return ³É¹¦£¬·µ»ØMV_OK£»´íÎó£¬·µ»Ø´íÎóÂë
+ *  @brief      è·å–ä¸€å¸§BGRæ•°æ®ï¼Œæ­¤å‡½æ•°ä¸ºæŸ¥è¯¢å¼è·å–ï¼Œæ¯æ¬¡è°ƒç”¨æŸ¥è¯¢å†…éƒ¨
+                ç¼“å­˜æœ‰æ— æ•°æ®ï¼Œæœ‰æ•°æ®åˆ™èŒƒå›´æ•°æ®ï¼Œæ— æ•°æ®è¿”å›é”™è¯¯ç 
+ *  @param       handle                 [IN]          å¥æŸ„
+ *  @param       pData                  [OUT]         å›¾åƒæ•°æ®æ¥æ”¶æŒ‡é’ˆ
+ *  @param       nDataSize              [IN]          æ¥æ”¶ç¼“å­˜å¤§å°
+ *  @param       pFrameInfo             [OUT]         å›¾åƒä¿¡æ¯ç»“æ„ä½“
+ *  @param       nMsec                  [IN]          ç­‰å¾…è¶…æ—¶æ—¶é—´
+ *  @return æˆåŠŸï¼Œè¿”å›MV_OKï¼›é”™è¯¯ï¼Œè¿”å›é”™è¯¯ç 
  ***********************************************************************/
 MV_CAMCTRL_API int __stdcall MV_CC_GetImageForBGR(IN void* handle, IN OUT unsigned char * pData , IN unsigned int nDataSize, IN OUT MV_FRAME_OUT_INFO_EX* pFrameInfo, int nMsec);
 
 /***********************************************************************
  *  @fn         MV_CC_GetOneFrameTimeout
- *  @brief      ²ÉÓÃ³¬Ê±»úÖÆ»ñÈ¡Ò»Ö¡Í¼Æ¬£¬SDKÄÚ²¿µÈ´ıÖ±µ½ÓĞÊı¾İÊ±·µ»Ø£¬
-                ´Ë½Ó¿Ú¿ÉÒÔÔö¼ÓÈ¡Á÷Æ½ÎÈĞÔ£¬ÊÊºÏÓÃÓÚ¶ÔÆ½ÎÈĞÔÒªÇó½Ï¸ßµÄ³¡ºÏ
- *  @param       handle                 [IN]          ¾ä±ú
- *  @param       pData                  [OUT]         Í¼ÏñÊı¾İ½ÓÊÕÖ¸Õë
- *  @param       nDataSize              [IN]          ½ÓÊÕ»º´æ´óĞ¡
- *  @param       pFrameInfo             [OUT]         Í¼ÏñĞÅÏ¢½á¹¹Ìå
- *  @param       nMsec                  [IN]          µÈ´ı³¬Ê±Ê±¼ä
- *  @return ³É¹¦£¬·µ»ØMV_OK£»´íÎó£¬·µ»Ø´íÎóÂë
+ *  @brief      é‡‡ç”¨è¶…æ—¶æœºåˆ¶è·å–ä¸€å¸§å›¾ç‰‡ï¼ŒSDKå†…éƒ¨ç­‰å¾…ç›´åˆ°æœ‰æ•°æ®æ—¶è¿”å›ï¼Œ
+                æ­¤æ¥å£å¯ä»¥å¢åŠ å–æµå¹³ç¨³æ€§ï¼Œé€‚åˆç”¨äºå¯¹å¹³ç¨³æ€§è¦æ±‚è¾ƒé«˜çš„åœºåˆ
+ *  @param       handle                 [IN]          å¥æŸ„
+ *  @param       pData                  [OUT]         å›¾åƒæ•°æ®æ¥æ”¶æŒ‡é’ˆ
+ *  @param       nDataSize              [IN]          æ¥æ”¶ç¼“å­˜å¤§å°
+ *  @param       pFrameInfo             [OUT]         å›¾åƒä¿¡æ¯ç»“æ„ä½“
+ *  @param       nMsec                  [IN]          ç­‰å¾…è¶…æ—¶æ—¶é—´
+ *  @return æˆåŠŸï¼Œè¿”å›MV_OKï¼›é”™è¯¯ï¼Œè¿”å›é”™è¯¯ç 
  ***********************************************************************/
 MV_CAMCTRL_API int __stdcall MV_CC_GetOneFrameTimeout(IN void* handle, IN OUT unsigned char * pData , IN unsigned int nDataSize, IN OUT MV_FRAME_OUT_INFO_EX* pFrameInfo, unsigned int nMsec);
 
 /***********************************************************************
  *  @fn         MV_CC_Display
- *  @brief      ÏÔÊ¾Ò»Ö¡Í¼Ïñ£¬×¢²áÏÔÊ¾´°¿Ú£¬ÄÚ²¿×Ô¶¯ÏÔÊ¾
- *  @param       handle                 [IN]          ¾ä±ú
- *  @param       hWnd                   [IN]          ÏÔÊ¾´°¿Ú¾ä±ú
- *  @return ³É¹¦£¬·µ»ØMV_OK£»´íÎó£¬·µ»Ø´íÎóÂë
+ *  @brief      æ˜¾ç¤ºä¸€å¸§å›¾åƒï¼Œæ³¨å†Œæ˜¾ç¤ºçª—å£ï¼Œå†…éƒ¨è‡ªåŠ¨æ˜¾ç¤º
+ *  @param       handle                 [IN]          å¥æŸ„
+ *  @param       hWnd                   [IN]          æ˜¾ç¤ºçª—å£å¥æŸ„
+ *  @return æˆåŠŸï¼Œè¿”å›MV_OKï¼›é”™è¯¯ï¼Œè¿”å›é”™è¯¯ç 
  ***********************************************************************/
 MV_CAMCTRL_API int __stdcall MV_CC_Display(IN void* handle, void* hWnd);
 
 /***********************************************************************
  *  @fn         MV_CC_SetImageNodeNum
- *  @brief      ÉèÖÃSDKÄÚ²¿Í¼Ïñ»º´æ½Úµã¸öÊı£¬·¶Î§[1, 30]£¬ÔÚ×¥Í¼Ç°µ÷ÓÃ
- *  @param       handle                 [IN]          ¾ä±ú
- *  @param       nNum                   [IN]          »º´æ½Úµã¸öÊı
- *  @return ³É¹¦£¬·µ»ØMV_OK£»´íÎó£¬·µ»Ø´íÎóÂë
+ *  @brief      è®¾ç½®SDKå†…éƒ¨å›¾åƒç¼“å­˜èŠ‚ç‚¹ä¸ªæ•°ï¼ŒèŒƒå›´[1, 30]ï¼Œåœ¨æŠ“å›¾å‰è°ƒç”¨
+ *  @param       handle                 [IN]          å¥æŸ„
+ *  @param       nNum                   [IN]          ç¼“å­˜èŠ‚ç‚¹ä¸ªæ•°
+ *  @return æˆåŠŸï¼Œè¿”å›MV_OKï¼›é”™è¯¯ï¼Œè¿”å›é”™è¯¯ç 
  ***********************************************************************/
 MV_CAMCTRL_API int __stdcall MV_CC_SetImageNodeNum(IN void* handle, unsigned int nNum);
 
 /************************************************************************
  *  @fn     MV_CAMCTRL_API int __stdcall MV_CC_GetImageInfo(IN void* handle, IN OUT MV_IMAGE_BASIC_INFO* pstInfo);
- *  @brief  »ñÈ¡Í¼Ïñ»ù±¾ĞÅÏ¢
- *  @param  void* handle                     [IN]        Ïà»ú¾ä±ú
- *  @param  MV_IMAGE_BASIC_INFO* pstInfo     [IN][OUT]   ·µ»Ø¸øµ÷ÓÃÕßÓĞ¹ØÏà»úÍ¼Ïñ»ù±¾ĞÅÏ¢½á¹¹ÌåÖ¸Õë
- *  @return ³É¹¦,·µ»ØMV_OK,Ê§°Ü,·µ»Ø´íÎóÂë
- *  
- *          ²Î¿¼ CameraParam.h ÖĞµÄ MV_IMAGE_BASIC_INFO ¶¨Òå
+ *  @brief  è·å–å›¾åƒåŸºæœ¬ä¿¡æ¯
+ *  @param  void* handle                     [IN]        ç›¸æœºå¥æŸ„
+ *  @param  MV_IMAGE_BASIC_INFO* pstInfo     [IN][OUT]   è¿”å›ç»™è°ƒç”¨è€…æœ‰å…³ç›¸æœºå›¾åƒåŸºæœ¬ä¿¡æ¯ç»“æ„ä½“æŒ‡é’ˆ
+ *  @return æˆåŠŸ,è¿”å›MV_OK,å¤±è´¥,è¿”å›é”™è¯¯ç 
+ *
+ *          å‚è€ƒ CameraParam.h ä¸­çš„ MV_IMAGE_BASIC_INFO å®šä¹‰
  ************************************************************************/
 MV_CAMCTRL_API int __stdcall MV_CC_GetImageInfo(IN void* handle, IN OUT MV_IMAGE_BASIC_INFO* pstInfo);
 
 /************************************************************************
  *  @fn     MV_CAMCTRL_API int __stdcall MV_CC_GetDeviceInfo(IN void* handle, IN OUT MV_CC_DEVICE_INFO* pstDevInfo);
- *  @brief  »ñÈ¡Éè±¸ĞÅÏ¢
- *  @param  void* handle                     [IN]        Ïà»ú¾ä±ú
- *  @param  MV_CC_DEVICE_INFO* pstDevInfo    [IN][OUT]   ·µ»Ø¸øµ÷ÓÃÕßÓĞ¹ØÏà»úÉè±¸ĞÅÏ¢½á¹¹ÌåÖ¸Õë
- *  @return ³É¹¦,·µ»ØMV_OK,Ê§°Ü,·µ»Ø´íÎóÂë
- *  
- *          ²Î¿¼ CameraParam.h ÖĞµÄ MV_CC_DEVICE_INFO ¶¨Òå
+ *  @brief  è·å–è®¾å¤‡ä¿¡æ¯
+ *  @param  void* handle                     [IN]        ç›¸æœºå¥æŸ„
+ *  @param  MV_CC_DEVICE_INFO* pstDevInfo    [IN][OUT]   è¿”å›ç»™è°ƒç”¨è€…æœ‰å…³ç›¸æœºè®¾å¤‡ä¿¡æ¯ç»“æ„ä½“æŒ‡é’ˆ
+ *  @return æˆåŠŸ,è¿”å›MV_OK,å¤±è´¥,è¿”å›é”™è¯¯ç 
+ *
+ *          å‚è€ƒ CameraParam.h ä¸­çš„ MV_CC_DEVICE_INFO å®šä¹‰
  ************************************************************************/
 MV_CAMCTRL_API int __stdcall MV_CC_GetDeviceInfo(IN void * handle, IN OUT MV_CC_DEVICE_INFO* pstDevInfo);
 
 /************************************************************************
  *  @fn     MV_CAMCTRL_API int __stdcall MV_CC_GetAllMatchInfo(IN void* handle, IN OUT MV_ALL_MATCH_INFO* pstInfo);
- *  @brief  »ñÈ¡¸÷ÖÖÀàĞÍµÄĞÅÏ¢
- *  @param  void* handle                     [IN]        Ïà»ú¾ä±ú
- *  @param  MV_ALL_MATCH_INFO* pstInfo       [IN][OUT]   ·µ»Ø¸øµ÷ÓÃÕßÓĞ¹ØÏà»ú¸÷ÖÖÀàĞÍµÄĞÅÏ¢½á¹¹ÌåÖ¸Õë
- *  @return ³É¹¦,·µ»ØMV_OK,Ê§°Ü,·µ»Ø´íÎóÂë
- *  
- *          ²Î¿¼ CameraParam.h ÖĞµÄ MV_ALL_MATCH_INFO ¶¨Òå
+ *  @brief  è·å–å„ç§ç±»å‹çš„ä¿¡æ¯
+ *  @param  void* handle                     [IN]        ç›¸æœºå¥æŸ„
+ *  @param  MV_ALL_MATCH_INFO* pstInfo       [IN][OUT]   è¿”å›ç»™è°ƒç”¨è€…æœ‰å…³ç›¸æœºå„ç§ç±»å‹çš„ä¿¡æ¯ç»“æ„ä½“æŒ‡é’ˆ
+ *  @return æˆåŠŸ,è¿”å›MV_OK,å¤±è´¥,è¿”å›é”™è¯¯ç 
+ *
+ *          å‚è€ƒ CameraParam.h ä¸­çš„ MV_ALL_MATCH_INFO å®šä¹‰
  ************************************************************************/
 MV_CAMCTRL_API int __stdcall MV_CC_GetAllMatchInfo(IN void* handle, IN OUT MV_ALL_MATCH_INFO* pstInfo);
 
@@ -282,17 +282,17 @@ MV_CAMCTRL_API int __stdcall MV_CC_GetAllMatchInfo(IN void* handle, IN OUT MV_AL
 
 
 /************************************************************************/
-/* ÉèÖÃºÍ»ñÈ¡Ïà»ú²ÎÊıµÄÍòÄÜ½Ó¿Ú                                 */
+/* è®¾ç½®å’Œè·å–ç›¸æœºå‚æ•°çš„ä¸‡èƒ½æ¥å£                                 */
 /************************************************************************/
 /************************************************************************
  *  @fn     MV_CAMCTRL_API int __stdcall MV_CC_GetIntValue(IN void* handle,
                                                            IN const char* strKey,
                                                            OUT MVCC_INTVALUE *pIntValue);
- *  @brief  »ñÈ¡IntegerÊôĞÔÖµ
- *  @param  void* handle                [IN]        Ïà»ú¾ä±ú
- *  @param  char* strKey                [IN]        ÊôĞÔ¼üÖµ£¬Èç»ñÈ¡¿í¶ÈĞÅÏ¢ÔòÎª"Width"
- *  @param  MVCC_INTVALUE* pstValue     [IN][OUT]   ·µ»Ø¸øµ÷ÓÃÕßÓĞ¹ØÏà»úÊôĞÔ½á¹¹ÌåÖ¸Õë
- *  @return ³É¹¦,·µ»ØMV_OK,Ê§°Ü,·µ»Ø´íÎóÂë
+ *  @brief  è·å–Integerå±æ€§å€¼
+ *  @param  void* handle                [IN]        ç›¸æœºå¥æŸ„
+ *  @param  char* strKey                [IN]        å±æ€§é”®å€¼ï¼Œå¦‚è·å–å®½åº¦ä¿¡æ¯åˆ™ä¸º"Width"
+ *  @param  MVCC_INTVALUE* pstValue     [IN][OUT]   è¿”å›ç»™è°ƒç”¨è€…æœ‰å…³ç›¸æœºå±æ€§ç»“æ„ä½“æŒ‡é’ˆ
+ *  @return æˆåŠŸ,è¿”å›MV_OK,å¤±è´¥,è¿”å›é”™è¯¯ç 
  ************************************************************************/
 MV_CAMCTRL_API int __stdcall MV_CC_GetIntValue(IN void* handle,IN const char* strKey,OUT MVCC_INTVALUE *pIntValue);
 
@@ -300,11 +300,11 @@ MV_CAMCTRL_API int __stdcall MV_CC_GetIntValue(IN void* handle,IN const char* st
  *  @fn     MV_CAMCTRL_API int __stdcall MV_CC_SetIntValue(IN void* handle,
                                                            IN const char* strKey,
                                                            IN unsigned int nValue);
- *  @brief  ÉèÖÃIntegerĞÍÊôĞÔÖµ
- *  @param  void* handle                [IN]        Ïà»ú¾ä±ú
- *  @param  char* strKey                [IN]        ÊôĞÔ¼üÖµ£¬Èç»ñÈ¡¿í¶ÈĞÅÏ¢ÔòÎª"Width"
- *          const unsigned int nValue   [IN]        ÏëÒªÉèÖÃµÄÏà»úµÄÊôĞÔÖµ
- *  @return ³É¹¦,·µ»ØMV_OK,Ê§°Ü,·µ»Ø´íÎóÂë
+ *  @brief  è®¾ç½®Integerå‹å±æ€§å€¼
+ *  @param  void* handle                [IN]        ç›¸æœºå¥æŸ„
+ *  @param  char* strKey                [IN]        å±æ€§é”®å€¼ï¼Œå¦‚è·å–å®½åº¦ä¿¡æ¯åˆ™ä¸º"Width"
+ *          const unsigned int nValue   [IN]        æƒ³è¦è®¾ç½®çš„ç›¸æœºçš„å±æ€§å€¼
+ *  @return æˆåŠŸ,è¿”å›MV_OK,å¤±è´¥,è¿”å›é”™è¯¯ç 
  ************************************************************************/
 MV_CAMCTRL_API int __stdcall MV_CC_SetIntValue(IN void* handle,IN const char* strKey,IN unsigned int nValue);
 
@@ -312,11 +312,11 @@ MV_CAMCTRL_API int __stdcall MV_CC_SetIntValue(IN void* handle,IN const char* st
  *  @fn     MV_CAMCTRL_API int __stdcall MV_CC_GetEnumValue(IN void* handle,
                                                             IN const char* strKey,
                                                             OUT MVCC_ENUMVALUE *pEnumValue);
- *  @brief  »ñÈ¡EnumÊôĞÔÖµ
- *  @param  void* handle                   [IN]        Ïà»ú¾ä±ú
- *  @param  char* strKey                   [IN]        ÊôĞÔ¼üÖµ£¬Èç»ñÈ¡ÏñËØ¸ñÊ½ĞÅÏ¢ÔòÎª"PixelFormat"
- *  @param  MVCC_ENUMVALUE* pEnumValue     [IN][OUT]   ·µ»Ø¸øµ÷ÓÃÕßÓĞ¹ØÏà»úÊôĞÔ½á¹¹ÌåÖ¸Õë
- *  @return ³É¹¦,·µ»ØMV_OK,Ê§°Ü,·µ»Ø´íÎóÂë
+ *  @brief  è·å–Enumå±æ€§å€¼
+ *  @param  void* handle                   [IN]        ç›¸æœºå¥æŸ„
+ *  @param  char* strKey                   [IN]        å±æ€§é”®å€¼ï¼Œå¦‚è·å–åƒç´ æ ¼å¼ä¿¡æ¯åˆ™ä¸º"PixelFormat"
+ *  @param  MVCC_ENUMVALUE* pEnumValue     [IN][OUT]   è¿”å›ç»™è°ƒç”¨è€…æœ‰å…³ç›¸æœºå±æ€§ç»“æ„ä½“æŒ‡é’ˆ
+ *  @return æˆåŠŸ,è¿”å›MV_OK,å¤±è´¥,è¿”å›é”™è¯¯ç 
  ************************************************************************/
 MV_CAMCTRL_API int __stdcall MV_CC_GetEnumValue(IN void* handle,IN const char* strKey,OUT MVCC_ENUMVALUE *pEnumValue);
 
@@ -324,11 +324,11 @@ MV_CAMCTRL_API int __stdcall MV_CC_GetEnumValue(IN void* handle,IN const char* s
  *  @fn     MV_CAMCTRL_API int __stdcall MV_CC_SetEnumValue(IN void* handle,
                                                             IN const char* strKey,
                                                             IN unsigned int nValue);
- *  @brief  ÉèÖÃEnumĞÍÊôĞÔÖµ
- *  @param  void* handle                [IN]        Ïà»ú¾ä±ú
- *  @param  char* strKey                [IN]        ÊôĞÔ¼üÖµ£¬Èç»ñÈ¡ÏñËØ¸ñÊ½ĞÅÏ¢ÔòÎª"PixelFormat"
- *          const unsigned int nValue   [IN]        ÏëÒªÉèÖÃµÄÏà»úµÄÊôĞÔÖµ
- *  @return ³É¹¦,·µ»ØMV_OK,Ê§°Ü,·µ»Ø´íÎóÂë
+ *  @brief  è®¾ç½®Enumå‹å±æ€§å€¼
+ *  @param  void* handle                [IN]        ç›¸æœºå¥æŸ„
+ *  @param  char* strKey                [IN]        å±æ€§é”®å€¼ï¼Œå¦‚è·å–åƒç´ æ ¼å¼ä¿¡æ¯åˆ™ä¸º"PixelFormat"
+ *          const unsigned int nValue   [IN]        æƒ³è¦è®¾ç½®çš„ç›¸æœºçš„å±æ€§å€¼
+ *  @return æˆåŠŸ,è¿”å›MV_OK,å¤±è´¥,è¿”å›é”™è¯¯ç 
  ************************************************************************/
 MV_CAMCTRL_API int __stdcall MV_CC_SetEnumValue(IN void* handle,IN const char* strKey,IN unsigned int nValue);
 
@@ -336,11 +336,11 @@ MV_CAMCTRL_API int __stdcall MV_CC_SetEnumValue(IN void* handle,IN const char* s
  *  @fn     MV_CAMCTRL_API int __stdcall MV_CC_GetFloatValue(IN void* handle,
                                                              IN const char* strKey,
                                                              OUT MVCC_FLOATVALUE *pFloatValue);
- *  @brief  »ñÈ¡FloatÊôĞÔÖµ
- *  @param  void* handle                     [IN]        Ïà»ú¾ä±ú
- *  @param  char* strKey                     [IN]        ÊôĞÔ¼üÖµ
- *  @param  MVCC_FLOATVALUE *pFloatValue     [IN][OUT]   ·µ»Ø¸øµ÷ÓÃÕßÓĞ¹ØÏà»úÊôĞÔ½á¹¹ÌåÖ¸Õë
- *  @return ³É¹¦,·µ»ØMV_OK,Ê§°Ü,·µ»Ø´íÎóÂë
+ *  @brief  è·å–Floatå±æ€§å€¼
+ *  @param  void* handle                     [IN]        ç›¸æœºå¥æŸ„
+ *  @param  char* strKey                     [IN]        å±æ€§é”®å€¼
+ *  @param  MVCC_FLOATVALUE *pFloatValue     [IN][OUT]   è¿”å›ç»™è°ƒç”¨è€…æœ‰å…³ç›¸æœºå±æ€§ç»“æ„ä½“æŒ‡é’ˆ
+ *  @return æˆåŠŸ,è¿”å›MV_OK,å¤±è´¥,è¿”å›é”™è¯¯ç 
  ************************************************************************/
 MV_CAMCTRL_API int __stdcall MV_CC_GetFloatValue(IN void* handle,IN const char* strKey,OUT MVCC_FLOATVALUE *pFloatValue);
 
@@ -348,23 +348,23 @@ MV_CAMCTRL_API int __stdcall MV_CC_GetFloatValue(IN void* handle,IN const char* 
  *  @fn     MV_CAMCTRL_API int __stdcall MV_CC_SetFloatValue(IN void* handle,
                                                              IN const char* strKey,
                                                              IN float fValue);
- *  @brief  ÉèÖÃEnumĞÍÊôĞÔÖµ
- *  @param  void* handle                [IN]        Ïà»ú¾ä±ú
- *  @param  char* strKey                [IN]        ÊôĞÔ¼üÖµ
- *          float fValue                [IN]        ÏëÒªÉèÖÃµÄÏà»úµÄÊôĞÔÖµ
- *  @return ³É¹¦,·µ»ØMV_OK,Ê§°Ü,·µ»Ø´íÎóÂë
+ *  @brief  è®¾ç½®Enumå‹å±æ€§å€¼
+ *  @param  void* handle                [IN]        ç›¸æœºå¥æŸ„
+ *  @param  char* strKey                [IN]        å±æ€§é”®å€¼
+ *          float fValue                [IN]        æƒ³è¦è®¾ç½®çš„ç›¸æœºçš„å±æ€§å€¼
+ *  @return æˆåŠŸ,è¿”å›MV_OK,å¤±è´¥,è¿”å›é”™è¯¯ç 
  ************************************************************************/
 MV_CAMCTRL_API int __stdcall MV_CC_SetFloatValue(IN void* handle,IN const char* strKey,IN float fValue);
-	
+
 /************************************************************************
  *  @fn     MV_CAMCTRL_API int __stdcall MV_CC_GetBoolValue(IN void* handle,
                                                             IN const char* strKey,
                                                             OUT bool *pBoolValue);
- *  @brief  »ñÈ¡BooleanÊôĞÔÖµ
- *  @param  void* handle                     [IN]        Ïà»ú¾ä±ú
- *  @param  char* strKey                     [IN]        ÊôĞÔ¼üÖµ
- *  @param  bool *pBoolValue                 [IN][OUT]   ·µ»Ø¸øµ÷ÓÃÕßÓĞ¹ØÏà»úÊôĞÔÖµ
- *  @return ³É¹¦,·µ»ØMV_OK,Ê§°Ü,·µ»Ø´íÎóÂë
+ *  @brief  è·å–Booleanå±æ€§å€¼
+ *  @param  void* handle                     [IN]        ç›¸æœºå¥æŸ„
+ *  @param  char* strKey                     [IN]        å±æ€§é”®å€¼
+ *  @param  bool *pBoolValue                 [IN][OUT]   è¿”å›ç»™è°ƒç”¨è€…æœ‰å…³ç›¸æœºå±æ€§å€¼
+ *  @return æˆåŠŸ,è¿”å›MV_OK,å¤±è´¥,è¿”å›é”™è¯¯ç 
  ************************************************************************/
 MV_CAMCTRL_API int __stdcall MV_CC_GetBoolValue(IN void* handle,IN const char* strKey,OUT bool *pBoolValue);
 
@@ -372,11 +372,11 @@ MV_CAMCTRL_API int __stdcall MV_CC_GetBoolValue(IN void* handle,IN const char* s
  *  @fn     MV_CAMCTRL_API int __stdcall MV_CC_SetBoolValue(IN void* handle,
                                                             IN const char* strKey,
                                                             IN bool bValue);
- *  @brief  ÉèÖÃBooleanĞÍÊôĞÔÖµ
- *  @param  void* handle                [IN]        Ïà»ú¾ä±ú
- *  @param  char* strKey                [IN]        ÊôĞÔ¼üÖµ
- *          bool bValue                 [IN]        ÏëÒªÉèÖÃµÄÏà»úµÄÊôĞÔÖµ
- *  @return ³É¹¦,·µ»ØMV_OK,Ê§°Ü,·µ»Ø´íÎóÂë
+ *  @brief  è®¾ç½®Booleanå‹å±æ€§å€¼
+ *  @param  void* handle                [IN]        ç›¸æœºå¥æŸ„
+ *  @param  char* strKey                [IN]        å±æ€§é”®å€¼
+ *          bool bValue                 [IN]        æƒ³è¦è®¾ç½®çš„ç›¸æœºçš„å±æ€§å€¼
+ *  @return æˆåŠŸ,è¿”å›MV_OK,å¤±è´¥,è¿”å›é”™è¯¯ç 
  ************************************************************************/
 MV_CAMCTRL_API int __stdcall MV_CC_SetBoolValue(IN void* handle,IN const char* strKey,IN bool bValue);
 
@@ -384,11 +384,11 @@ MV_CAMCTRL_API int __stdcall MV_CC_SetBoolValue(IN void* handle,IN const char* s
  *  @fn     MV_CAMCTRL_API int __stdcall MV_CC_GetStringValue(IN void* handle,
                                                               IN const char* strKey,
                                                               OUT MVCC_STRINGVALUE *pStringValue);
- *  @brief  »ñÈ¡StringÊôĞÔÖµ
- *  @param  void* handle                       [IN]        Ïà»ú¾ä±ú
- *  @param  char* strKey                       [IN]        ÊôĞÔ¼üÖµ
- *  @param  MVCC_STRINGVALUE *pStringValue     [IN][OUT]   ·µ»Ø¸øµ÷ÓÃÕßÓĞ¹ØÏà»úÊôĞÔ½á¹¹ÌåÖ¸Õë
- *  @return ³É¹¦,·µ»ØMV_OK,Ê§°Ü,·µ»Ø´íÎóÂë
+ *  @brief  è·å–Stringå±æ€§å€¼
+ *  @param  void* handle                       [IN]        ç›¸æœºå¥æŸ„
+ *  @param  char* strKey                       [IN]        å±æ€§é”®å€¼
+ *  @param  MVCC_STRINGVALUE *pStringValue     [IN][OUT]   è¿”å›ç»™è°ƒç”¨è€…æœ‰å…³ç›¸æœºå±æ€§ç»“æ„ä½“æŒ‡é’ˆ
+ *  @return æˆåŠŸ,è¿”å›MV_OK,å¤±è´¥,è¿”å›é”™è¯¯ç 
  ************************************************************************/
 MV_CAMCTRL_API int __stdcall MV_CC_GetStringValue(IN void* handle,IN const char* strKey,OUT MVCC_STRINGVALUE *pStringValue);
 
@@ -396,21 +396,21 @@ MV_CAMCTRL_API int __stdcall MV_CC_GetStringValue(IN void* handle,IN const char*
  *  @fn     MV_CAMCTRL_API int __stdcall MV_CC_SetStringValue(IN void* handle,
                                                               IN const char* strKey,
                                                               IN const char * sValue);
- *  @brief  ÉèÖÃStringĞÍÊôĞÔÖµ
- *  @param  void* handle                  [IN]        Ïà»ú¾ä±ú
- *  @param  char* strKey                  [IN]        ÊôĞÔ¼üÖµ
- *          char * sValue                 [IN]        ÏëÒªÉèÖÃµÄÏà»úµÄÊôĞÔÖµ
- *  @return ³É¹¦,·µ»ØMV_OK,Ê§°Ü,·µ»Ø´íÎóÂë
+ *  @brief  è®¾ç½®Stringå‹å±æ€§å€¼
+ *  @param  void* handle                  [IN]        ç›¸æœºå¥æŸ„
+ *  @param  char* strKey                  [IN]        å±æ€§é”®å€¼
+ *          char * sValue                 [IN]        æƒ³è¦è®¾ç½®çš„ç›¸æœºçš„å±æ€§å€¼
+ *  @return æˆåŠŸ,è¿”å›MV_OK,å¤±è´¥,è¿”å›é”™è¯¯ç 
  ************************************************************************/
 MV_CAMCTRL_API int __stdcall MV_CC_SetStringValue(IN void* handle,IN const char* strKey,IN const char * sValue);
 
 /************************************************************************
  *  @fn     MV_CAMCTRL_API int __stdcall MV_CC_SetCommandValue(IN void* handle,
                                                                IN const char* strKey);
- *  @brief  ÉèÖÃCommandĞÍÊôĞÔÖµ
- *  @param  void* handle                  [IN]        Ïà»ú¾ä±ú
- *  @param  char* strKey                  [IN]        ÊôĞÔ¼üÖµ
- *  @return ³É¹¦,·µ»ØMV_OK,Ê§°Ü,·µ»Ø´íÎóÂë
+ *  @brief  è®¾ç½®Commandå‹å±æ€§å€¼
+ *  @param  void* handle                  [IN]        ç›¸æœºå¥æŸ„
+ *  @param  char* strKey                  [IN]        å±æ€§é”®å€¼
+ *  @return æˆåŠŸ,è¿”å›MV_OK,å¤±è´¥,è¿”å›é”™è¯¯ç 
  ************************************************************************/
 MV_CAMCTRL_API int __stdcall MV_CC_SetCommandValue(IN void* handle,IN const char* strKey);
 
@@ -418,654 +418,654 @@ MV_CAMCTRL_API int __stdcall MV_CC_SetCommandValue(IN void* handle,IN const char
 
 
 /************************************************************************/
-/* Ïà»ú²ÎÊı»ñÈ¡ºÍÉèÖÃ£¬´ËÄ£¿éµÄËùÓĞ½Ó¿Ú£¬½«Öğ²½·ÏÆú£¬½¨ÒéÓÃÉÏÃæµÄÍòÄÜ½Ó¿Ú´úÌæ   */
+/* ç›¸æœºå‚æ•°è·å–å’Œè®¾ç½®ï¼Œæ­¤æ¨¡å—çš„æ‰€æœ‰æ¥å£ï¼Œå°†é€æ­¥åºŸå¼ƒï¼Œå»ºè®®ç”¨ä¸Šé¢çš„ä¸‡èƒ½æ¥å£ä»£æ›¿   */
 /************************************************************************/
 /************************************************************************
  *  @fn     MV_CAMCTRL_API int __stdcall MV_CC_GetWidth(IN void* handle, IN OUT MVCC_INTVALUE* pstValue);
- *  @brief  »ñÈ¡Í¼Ïñ¿í¶È
- *  @param  void* handle                [IN]        Ïà»ú¾ä±ú
- *  @param  MVCC_INTVALUE* pstValue     [IN][OUT]   ·µ»Ø¸øµ÷ÓÃÕßÓĞ¹ØÏà»ú¿í¶ÈµÄĞÅÏ¢½á¹¹ÌåÖ¸Õë
- *          ·µ»ØµÄpstValue½á¹¹ÌåµÄÒâÒå
- *                  unsigned int    nCurValue;      // ´ú±íÏà»úµ±Ç°µÄ¿í¶ÈÖµ
- *                  unsigned int    nMax;           // ±íÊ¾Ïà»úÔÊĞíµÄ×î´ó¿ÉÉèÖÃµÄ¿í¶ÈÖµ
- *                  unsigned int    nMin;           // ±íÊ¾Ïà»úÔÊĞíµÄ×îĞ¡¿ÉÉèÖÃµÄ¿í¶ÈÖµ
- *                  unsigned int    nInc;           // ±íÊ¾Ïà»úÉèÖÃµÄ¿í¶ÈÔöÁ¿±ØĞëÊÇnIncµÄ±¶Êı£¬·ñÔòÎŞĞ§
- *  @return ³É¹¦,·µ»ØMV_OK,²¢»ñµÃÏàÓ¦²ÎÊıĞÅÏ¢µÄ½á¹¹Ìå, Ê§°Ü, ·µ»Ø´íÎóÂë
- *  
- *          ÆäËûÕûĞÍ½á¹¹Ìå²ÎÊıµÄ½Ó¿Ú¿É²ÎÕÕ´Ë½Ó¿Ú
+ *  @brief  è·å–å›¾åƒå®½åº¦
+ *  @param  void* handle                [IN]        ç›¸æœºå¥æŸ„
+ *  @param  MVCC_INTVALUE* pstValue     [IN][OUT]   è¿”å›ç»™è°ƒç”¨è€…æœ‰å…³ç›¸æœºå®½åº¦çš„ä¿¡æ¯ç»“æ„ä½“æŒ‡é’ˆ
+ *          è¿”å›çš„pstValueç»“æ„ä½“çš„æ„ä¹‰
+ *                  unsigned int    nCurValue;      // ä»£è¡¨ç›¸æœºå½“å‰çš„å®½åº¦å€¼
+ *                  unsigned int    nMax;           // è¡¨ç¤ºç›¸æœºå…è®¸çš„æœ€å¤§å¯è®¾ç½®çš„å®½åº¦å€¼
+ *                  unsigned int    nMin;           // è¡¨ç¤ºç›¸æœºå…è®¸çš„æœ€å°å¯è®¾ç½®çš„å®½åº¦å€¼
+ *                  unsigned int    nInc;           // è¡¨ç¤ºç›¸æœºè®¾ç½®çš„å®½åº¦å¢é‡å¿…é¡»æ˜¯nIncçš„å€æ•°ï¼Œå¦åˆ™æ— æ•ˆ
+ *  @return æˆåŠŸ,è¿”å›MV_OK,å¹¶è·å¾—ç›¸åº”å‚æ•°ä¿¡æ¯çš„ç»“æ„ä½“, å¤±è´¥, è¿”å›é”™è¯¯ç 
+ *
+ *          å…¶ä»–æ•´å‹ç»“æ„ä½“å‚æ•°çš„æ¥å£å¯å‚ç…§æ­¤æ¥å£
  ************************************************************************/
 MV_CAMCTRL_API int __stdcall MV_CC_GetWidth(IN void* handle, IN OUT MVCC_INTVALUE* pstValue);
 
 /************************************************************************
 *  @fn     MV_CAMCTRL_API int __stdcall MV_CC_SetWidth(IN void* handle, IN const unsigned int nValue);
-*  @brief  ÉèÖÃÍ¼Ïñ¿í¶È
-*  @param  void* handle                [IN]        Ïà»ú¾ä±ú
-*          const unsigned int nValue   [IN]        ÏëÒªÉèÖÃµÄÏà»ú¿í¶ÈµÄÖµ,×¢Òâ´Ë¿í¶ÈÖµ±ØĞëÊÇMV_CC_GetWidth½Ó¿Ú·µ»ØµÄpstValueÖĞµÄnIncµÄ±¶Êı²ÅÄÜÉèÖÃ³É¹¦
-*  @return ³É¹¦,·µ»ØMV_OK,²¢ÇÒÏà»ú¿í¶È½«»á¸ü¸ÄÎªÏàÓ¦Öµ£¬Ê§°Ü,·µ»Ø´íÎóÂë
+*  @brief  è®¾ç½®å›¾åƒå®½åº¦
+*  @param  void* handle                [IN]        ç›¸æœºå¥æŸ„
+*          const unsigned int nValue   [IN]        æƒ³è¦è®¾ç½®çš„ç›¸æœºå®½åº¦çš„å€¼,æ³¨æ„æ­¤å®½åº¦å€¼å¿…é¡»æ˜¯MV_CC_GetWidthæ¥å£è¿”å›çš„pstValueä¸­çš„nIncçš„å€æ•°æ‰èƒ½è®¾ç½®æˆåŠŸ
+*  @return æˆåŠŸ,è¿”å›MV_OK,å¹¶ä¸”ç›¸æœºå®½åº¦å°†ä¼šæ›´æ”¹ä¸ºç›¸åº”å€¼ï¼Œå¤±è´¥,è¿”å›é”™è¯¯ç 
 ************************************************************************/
 MV_CAMCTRL_API int __stdcall MV_CC_SetWidth(IN void* handle, IN const unsigned int nValue);
 
 /************************************************************************
  *  @fn     MV_CAMCTRL_API int __stdcall MV_CC_GetHeight(IN void* handle, IN OUT MVCC_INTVALUE* pstValue);
- *  @brief  »ñÈ¡Í¼Ïñ¸ß¶È
- *  @param  void* handle                [IN]        Ïà»ú¾ä±ú
- *  @param  MVCC_INTVALUE* pstValue     [IN][OUT]   ·µ»Ø¸øµ÷ÓÃÕßÓĞ¹ØÏà»ú¸ß¶ÈµÄĞÅÏ¢½á¹¹ÌåÖ¸Õë
- *  @return ³É¹¦,·µ»ØMV_OK,²¢½«¸ß¶ÈĞÅÏ¢·µ»Øµ½½á¹¹ÌåÖĞ£¬Ê§°Ü,·µ»Ø´íÎóÂë
- *  
- *          ¿É²ÎÕÕ½Ó¿ÚMV_CC_GetWidth
+ *  @brief  è·å–å›¾åƒé«˜åº¦
+ *  @param  void* handle                [IN]        ç›¸æœºå¥æŸ„
+ *  @param  MVCC_INTVALUE* pstValue     [IN][OUT]   è¿”å›ç»™è°ƒç”¨è€…æœ‰å…³ç›¸æœºé«˜åº¦çš„ä¿¡æ¯ç»“æ„ä½“æŒ‡é’ˆ
+ *  @return æˆåŠŸ,è¿”å›MV_OK,å¹¶å°†é«˜åº¦ä¿¡æ¯è¿”å›åˆ°ç»“æ„ä½“ä¸­ï¼Œå¤±è´¥,è¿”å›é”™è¯¯ç 
+ *
+ *          å¯å‚ç…§æ¥å£MV_CC_GetWidth
  ************************************************************************/
 MV_CAMCTRL_API int __stdcall MV_CC_GetHeight(IN void* handle, IN OUT MVCC_INTVALUE* pstValue);
 
 /************************************************************************
  *  @fn     MV_CAMCTRL_API int __stdcall MV_CC_SetHeight(IN void* handle, IN const unsigned int nValue);
- *  @brief  ÉèÖÃÍ¼Ïñ¸ß¶È
- *  @param  void* handle                [IN]        Ïà»ú¾ä±ú
- *          const unsigned int nValue   [IN]        ÏëÒªÉèÖÃµÄÏà»ú¿í¶ÈµÄÖµ,×¢Òâ´Ë¿í¶ÈÖµ±ØĞëÊÇMV_CC_GetWidth½Ó¿Ú·µ»ØµÄpstValueÖĞµÄnIncµÄ±¶Êı²ÅÄÜÉèÖÃ³É¹¦
- *  @return ³É¹¦,·µ»ØMV_OK,²¢ÇÒÏà»ú¸ß¶È½«»á¸ü¸ÄÎªÏàÓ¦Öµ£¬Ê§°Ü,·µ»Ø´íÎóÂë
+ *  @brief  è®¾ç½®å›¾åƒé«˜åº¦
+ *  @param  void* handle                [IN]        ç›¸æœºå¥æŸ„
+ *          const unsigned int nValue   [IN]        æƒ³è¦è®¾ç½®çš„ç›¸æœºå®½åº¦çš„å€¼,æ³¨æ„æ­¤å®½åº¦å€¼å¿…é¡»æ˜¯MV_CC_GetWidthæ¥å£è¿”å›çš„pstValueä¸­çš„nIncçš„å€æ•°æ‰èƒ½è®¾ç½®æˆåŠŸ
+ *  @return æˆåŠŸ,è¿”å›MV_OK,å¹¶ä¸”ç›¸æœºé«˜åº¦å°†ä¼šæ›´æ”¹ä¸ºç›¸åº”å€¼ï¼Œå¤±è´¥,è¿”å›é”™è¯¯ç 
  ************************************************************************/
 MV_CAMCTRL_API int __stdcall MV_CC_SetHeight(IN void* handle, IN const unsigned int nValue);
 
 /************************************************************************
  *  @fn     MV_CAMCTRL_API int __stdcall MV_CC_GetAOIoffsetX(IN void* handle, IN OUT MVCC_INTVALUE* pstValue);
- *  @brief  »ñÈ¡Í¼ÏñXÆ«ÒÆ
- *  @param  void* handle                [IN]        Ïà»ú¾ä±ú
- *  @param  MVCC_INTVALUE* pstValue     [IN][OUT]   ·µ»Ø¸øµ÷ÓÃÕßÓĞ¹ØÏà»úXÆ«ÒÆµÄĞÅÏ¢½á¹¹ÌåÖ¸Õë
- *  @return ³É¹¦,·µ»ØMV_OK,Ê§°Ü,·µ»Ø´íÎóÂë
- *  
- *          ¿É²ÎÕÕ½Ó¿ÚMV_CC_GetWidth
+ *  @brief  è·å–å›¾åƒXåç§»
+ *  @param  void* handle                [IN]        ç›¸æœºå¥æŸ„
+ *  @param  MVCC_INTVALUE* pstValue     [IN][OUT]   è¿”å›ç»™è°ƒç”¨è€…æœ‰å…³ç›¸æœºXåç§»çš„ä¿¡æ¯ç»“æ„ä½“æŒ‡é’ˆ
+ *  @return æˆåŠŸ,è¿”å›MV_OK,å¤±è´¥,è¿”å›é”™è¯¯ç 
+ *
+ *          å¯å‚ç…§æ¥å£MV_CC_GetWidth
  ************************************************************************/
 MV_CAMCTRL_API int __stdcall MV_CC_GetAOIoffsetX(IN void* handle, IN OUT MVCC_INTVALUE* pstValue);
 
 /************************************************************************
  *  @fn     MV_CAMCTRL_API int __stdcall MV_CC_SetAOIoffsetX(IN void* handle, IN const unsigned int nValue);
- *  @brief  ÉèÖÃÍ¼ÏñAOIÆ«ÒÆ
- *  @param  void* handle                [IN]        Ïà»ú¾ä±ú
- *          const unsigned int nValue   [IN]        ÏëÒªÉèÖÃµÄÏà»úAOIµÄÖµ
- *  @return ³É¹¦,·µ»ØMV_OK,²¢ÇÒÏà»úAOIÆ«ÒÆ½«»á¸ü¸ÄÎªÏàÓ¦Öµ£¬Ê§°Ü,·µ»Ø´íÎóÂë
+ *  @brief  è®¾ç½®å›¾åƒAOIåç§»
+ *  @param  void* handle                [IN]        ç›¸æœºå¥æŸ„
+ *          const unsigned int nValue   [IN]        æƒ³è¦è®¾ç½®çš„ç›¸æœºAOIçš„å€¼
+ *  @return æˆåŠŸ,è¿”å›MV_OK,å¹¶ä¸”ç›¸æœºAOIåç§»å°†ä¼šæ›´æ”¹ä¸ºç›¸åº”å€¼ï¼Œå¤±è´¥,è¿”å›é”™è¯¯ç 
  ************************************************************************/
 MV_CAMCTRL_API int __stdcall MV_CC_SetAOIoffsetX(IN void* handle, IN const unsigned int nValue);
 
 /************************************************************************
  *  @fn     MV_CAMCTRL_API int __stdcall MV_CC_GetAOIoffsetY(IN void* handle, IN OUT MVCC_INTVALUE* pstValue);
- *  @brief  »ñÈ¡Í¼ÏñYÆ«ÒÆ
- *  @param  void* handle                [IN]        Ïà»ú¾ä±ú
- *  @param  MVCC_INTVALUE* pstValue     [IN][OUT]   ·µ»Ø¸øµ÷ÓÃÕßÓĞ¹ØÏà»úYÆ«ÒÆµÄĞÅÏ¢½á¹¹ÌåÖ¸Õë
- *  @return ³É¹¦,·µ»ØMV_OK,Ê§°Ü,·µ»Ø´íÎóÂë
- *  
- *          ¿É²ÎÕÕ½Ó¿ÚMV_CC_GetWidth
+ *  @brief  è·å–å›¾åƒYåç§»
+ *  @param  void* handle                [IN]        ç›¸æœºå¥æŸ„
+ *  @param  MVCC_INTVALUE* pstValue     [IN][OUT]   è¿”å›ç»™è°ƒç”¨è€…æœ‰å…³ç›¸æœºYåç§»çš„ä¿¡æ¯ç»“æ„ä½“æŒ‡é’ˆ
+ *  @return æˆåŠŸ,è¿”å›MV_OK,å¤±è´¥,è¿”å›é”™è¯¯ç 
+ *
+ *          å¯å‚ç…§æ¥å£MV_CC_GetWidth
  ************************************************************************/
 MV_CAMCTRL_API int __stdcall MV_CC_GetAOIoffsetY(IN void* handle, IN OUT MVCC_INTVALUE* pstValue);
 
 /************************************************************************
  *  @fn     MV_CAMCTRL_API int __stdcall MV_CC_SetAOIoffsetX(IN void* handle, IN const unsigned int nValue);
- *  @brief  ÉèÖÃÍ¼ÏñAOIÆ«ÒÆ
- *  @param  void* handle                [IN]        Ïà»ú¾ä±ú
- *          const unsigned int nValue   [IN]        ÏëÒªÉèÖÃµÄÏà»úAOIµÄÖµ
- *  @return ³É¹¦,·µ»ØMV_OK,²¢ÇÒÏà»úAOIÆ«ÒÆ½«»á¸ü¸ÄÎªÏàÓ¦Öµ£¬Ê§°Ü,·µ»Ø´íÎóÂë
+ *  @brief  è®¾ç½®å›¾åƒAOIåç§»
+ *  @param  void* handle                [IN]        ç›¸æœºå¥æŸ„
+ *          const unsigned int nValue   [IN]        æƒ³è¦è®¾ç½®çš„ç›¸æœºAOIçš„å€¼
+ *  @return æˆåŠŸ,è¿”å›MV_OK,å¹¶ä¸”ç›¸æœºAOIåç§»å°†ä¼šæ›´æ”¹ä¸ºç›¸åº”å€¼ï¼Œå¤±è´¥,è¿”å›é”™è¯¯ç 
  ************************************************************************/
 MV_CAMCTRL_API int __stdcall MV_CC_SetAOIoffsetY(IN void* handle, IN const unsigned int nValue);
 
 /************************************************************************
  *  @fn     MV_CAMCTRL_API int __stdcall MV_CC_GetAutoExposureTimeLower(IN void* handle, IN OUT MVCC_INTVALUE* pstValue);
- *  @brief  »ñÈ¡ÆØ¹âÏÂÏŞ
- *  @param  void* handle                [IN]        Ïà»ú¾ä±ú
- *  @param  MVCC_INTVALUE* pstValue     [IN][OUT]   ·µ»Ø¸øµ÷ÓÃÕßÓĞ¹ØÏà»úÆØ¹âÖµÏÂÏŞ½á¹¹ÌåÖ¸Õë
- *  @return ³É¹¦,·µ»ØMV_OK,Ê§°Ü,·µ»Ø´íÎóÂë
- *  
- *          ¿É²ÎÕÕ½Ó¿ÚMV_CC_GetWidth
+ *  @brief  è·å–æ›å…‰ä¸‹é™
+ *  @param  void* handle                [IN]        ç›¸æœºå¥æŸ„
+ *  @param  MVCC_INTVALUE* pstValue     [IN][OUT]   è¿”å›ç»™è°ƒç”¨è€…æœ‰å…³ç›¸æœºæ›å…‰å€¼ä¸‹é™ç»“æ„ä½“æŒ‡é’ˆ
+ *  @return æˆåŠŸ,è¿”å›MV_OK,å¤±è´¥,è¿”å›é”™è¯¯ç 
+ *
+ *          å¯å‚ç…§æ¥å£MV_CC_GetWidth
  ************************************************************************/
 MV_CAMCTRL_API int __stdcall MV_CC_GetAutoExposureTimeLower(IN void* handle, IN OUT MVCC_INTVALUE* pstValue);
 
 /************************************************************************
  *  @fn     MV_CAMCTRL_API int __stdcall MV_CC_SetAutoExposureTimeLower(IN void* handle, IN const unsigned int nValue);
- *  @brief  ÉèÖÃÆØ¹âÖµÏÂÏŞ
- *  @param  void* handle                [IN]        Ïà»ú¾ä±ú
- *          const unsigned int nValue   [IN]        ÏëÒªÉèÖÃµÄÆØ¹âÖµÏÂÏŞ
- *  @return ³É¹¦,·µ»ØMV_OK,²¢ÇÒÏà»úÆØ¹âÏÂÏŞ½«»á¸ü¸ÄÎªÏàÓ¦Öµ£¬Ê§°Ü,·µ»Ø´íÎóÂë
+ *  @brief  è®¾ç½®æ›å…‰å€¼ä¸‹é™
+ *  @param  void* handle                [IN]        ç›¸æœºå¥æŸ„
+ *          const unsigned int nValue   [IN]        æƒ³è¦è®¾ç½®çš„æ›å…‰å€¼ä¸‹é™
+ *  @return æˆåŠŸ,è¿”å›MV_OK,å¹¶ä¸”ç›¸æœºæ›å…‰ä¸‹é™å°†ä¼šæ›´æ”¹ä¸ºç›¸åº”å€¼ï¼Œå¤±è´¥,è¿”å›é”™è¯¯ç 
  ************************************************************************/
 MV_CAMCTRL_API int __stdcall MV_CC_SetAutoExposureTimeLower(IN void* handle, IN const unsigned int nValue);
 
 /************************************************************************
  *  @fn     MV_CAMCTRL_API int __stdcall MV_CC_GetAutoExposureTimeUpper(IN void* handle, IN OUT MVCC_INTVALUE* pstValue);
- *  @brief  »ñÈ¡ÆØ¹âÉÏÏŞ
- *  @param  void* handle                [IN]        Ïà»ú¾ä±ú
- *  @param  MVCC_INTVALUE* pstValue     [IN][OUT]   ·µ»Ø¸øµ÷ÓÃÕßÓĞ¹ØÏà»úÆØ¹âÖµÉÏÏŞ½á¹¹ÌåÖ¸Õë
- *  @return ³É¹¦,·µ»ØMV_OK,Ê§°Ü,·µ»Ø´íÎóÂë
- *  
- *          ¿É²ÎÕÕ½Ó¿ÚMV_CC_GetWidth
+ *  @brief  è·å–æ›å…‰ä¸Šé™
+ *  @param  void* handle                [IN]        ç›¸æœºå¥æŸ„
+ *  @param  MVCC_INTVALUE* pstValue     [IN][OUT]   è¿”å›ç»™è°ƒç”¨è€…æœ‰å…³ç›¸æœºæ›å…‰å€¼ä¸Šé™ç»“æ„ä½“æŒ‡é’ˆ
+ *  @return æˆåŠŸ,è¿”å›MV_OK,å¤±è´¥,è¿”å›é”™è¯¯ç 
+ *
+ *          å¯å‚ç…§æ¥å£MV_CC_GetWidth
  ************************************************************************/
 MV_CAMCTRL_API int __stdcall MV_CC_GetAutoExposureTimeUpper(IN void* handle, IN OUT MVCC_INTVALUE* pstValue);
 
 /************************************************************************
  *  @fn     MV_CAMCTRL_API int __stdcall MV_CC_SetAutoExposureTimeUpper(IN void* handle, IN const unsigned int nValue);
- *  @brief  ÉèÖÃÆØ¹âÖµÉÏÏŞ
- *  @param  void* handle                [IN]        Ïà»ú¾ä±ú
- *          const unsigned int nValue   [IN]        ÏëÒªÉèÖÃµÄÆØ¹âÖµÉÏÏŞ
- *  @return ³É¹¦,·µ»ØMV_OK,²¢ÇÒÏà»úÆØ¹âÉÏÏŞ½«»á¸ü¸ÄÎªÏàÓ¦Öµ£¬Ê§°Ü,·µ»Ø´íÎóÂë
+ *  @brief  è®¾ç½®æ›å…‰å€¼ä¸Šé™
+ *  @param  void* handle                [IN]        ç›¸æœºå¥æŸ„
+ *          const unsigned int nValue   [IN]        æƒ³è¦è®¾ç½®çš„æ›å…‰å€¼ä¸Šé™
+ *  @return æˆåŠŸ,è¿”å›MV_OK,å¹¶ä¸”ç›¸æœºæ›å…‰ä¸Šé™å°†ä¼šæ›´æ”¹ä¸ºç›¸åº”å€¼ï¼Œå¤±è´¥,è¿”å›é”™è¯¯ç 
  ************************************************************************/
 MV_CAMCTRL_API int __stdcall MV_CC_SetAutoExposureTimeUpper(IN void* handle, IN const unsigned int nValue);
 
 /************************************************************************
  *  @fn     MV_CAMCTRL_API int __stdcall MV_CC_GetBrightness(IN void* handle, IN OUT MVCC_INTVALUE* pstValue);
- *  @brief  »ñÈ¡ÁÁ¶ÈÖµ
- *  @param  void* handle                [IN]        Ïà»ú¾ä±ú
- *  @param  MVCC_INTVALUE* pstValue     [IN][OUT]   ·µ»Ø¸øµ÷ÓÃÕßÓĞ¹ØÏà»úÁÁ¶È½á¹¹ÌåÖ¸Õë
- *  @return ³É¹¦,·µ»ØMV_OK,Ê§°Ü,·µ»Ø´íÎóÂë
- *  
- *          ¿É²ÎÕÕ½Ó¿ÚMV_CC_GetWidth
+ *  @brief  è·å–äº®åº¦å€¼
+ *  @param  void* handle                [IN]        ç›¸æœºå¥æŸ„
+ *  @param  MVCC_INTVALUE* pstValue     [IN][OUT]   è¿”å›ç»™è°ƒç”¨è€…æœ‰å…³ç›¸æœºäº®åº¦ç»“æ„ä½“æŒ‡é’ˆ
+ *  @return æˆåŠŸ,è¿”å›MV_OK,å¤±è´¥,è¿”å›é”™è¯¯ç 
+ *
+ *          å¯å‚ç…§æ¥å£MV_CC_GetWidth
  ************************************************************************/
 MV_CAMCTRL_API int __stdcall MV_CC_GetBrightness(IN void* handle, IN OUT MVCC_INTVALUE* pstValue);
 
 /************************************************************************
  *  @fn     MV_CAMCTRL_API int __stdcall MV_CC_SetBrightness(IN void* handle, IN const unsigned int nValue);
- *  @brief  ÉèÖÃÁÁ¶ÈÖµ
- *  @param  void* handle                [IN]        Ïà»ú¾ä±ú
- *          const unsigned int nValue   [IN]        ÏëÒªÉèÖÃµÄÁÁ¶ÈÖµ
- *  @return ³É¹¦,·µ»ØMV_OK,²¢ÇÒÏà»úÁÁ¶È½«»á¸ü¸ÄÎªÏàÓ¦Öµ£¬Ê§°Ü,·µ»Ø´íÎóÂë
+ *  @brief  è®¾ç½®äº®åº¦å€¼
+ *  @param  void* handle                [IN]        ç›¸æœºå¥æŸ„
+ *          const unsigned int nValue   [IN]        æƒ³è¦è®¾ç½®çš„äº®åº¦å€¼
+ *  @return æˆåŠŸ,è¿”å›MV_OK,å¹¶ä¸”ç›¸æœºäº®åº¦å°†ä¼šæ›´æ”¹ä¸ºç›¸åº”å€¼ï¼Œå¤±è´¥,è¿”å›é”™è¯¯ç 
  ************************************************************************/
 MV_CAMCTRL_API int __stdcall MV_CC_SetBrightness(IN void* handle, IN const unsigned int nValue);
 
 /************************************************************************
  *  @fn     MV_CAMCTRL_API int __stdcall MV_CC_GetFrameRate(IN void* handle, IN OUT MVCC_FLOATVALUE* pstValue);
- *  @brief  »ñÈ¡Ö¡ÂÊ
- *  @param  void* handle                [IN]        Ïà»ú¾ä±ú
- *          MVCC_FLOATVALUE* pstValue   [IN][OUT]   ·µ»Ø¸øµ÷ÓÃÕßÓĞ¹ØÏà»úÖ¡ÂÊµÄĞÅÏ¢½á¹¹ÌåÖ¸Õë
- *          ·µ»ØµÄpstValue½á¹¹ÌåµÄÒâÒå
- *                                      float           fCurValue;      // ±íÊ¾Ïà»úµ±Ç°µÄÖ¡ÂÊ
- *                                      float           fMax;           // ±íÊ¾Ïà»úÔÊĞíÉèÖÃµÄ×î´óÖ¡ÂÊ
- *                                      float           fMin;           // ±íÊ¾Ïà»úÔÊĞíÉèÖÃµÄ×îĞ¡Ö¡ÂÊ
- *  @return ³É¹¦,·µ»ØMV_OK,²¢»ñµÃÏàÓ¦²ÎÊıĞÅÏ¢µÄ½á¹¹Ìå, Ê§°Ü, ·µ»Ø´íÎóÂë
- *  
- *          ÆäËû¸¡µãĞÍ½á¹¹Ìå²ÎÊıµÄ½Ó¿Ú¿É²ÎÕÕ´Ë½Ó¿Ú
+ *  @brief  è·å–å¸§ç‡
+ *  @param  void* handle                [IN]        ç›¸æœºå¥æŸ„
+ *          MVCC_FLOATVALUE* pstValue   [IN][OUT]   è¿”å›ç»™è°ƒç”¨è€…æœ‰å…³ç›¸æœºå¸§ç‡çš„ä¿¡æ¯ç»“æ„ä½“æŒ‡é’ˆ
+ *          è¿”å›çš„pstValueç»“æ„ä½“çš„æ„ä¹‰
+ *                                      float           fCurValue;      // è¡¨ç¤ºç›¸æœºå½“å‰çš„å¸§ç‡
+ *                                      float           fMax;           // è¡¨ç¤ºç›¸æœºå…è®¸è®¾ç½®çš„æœ€å¤§å¸§ç‡
+ *                                      float           fMin;           // è¡¨ç¤ºç›¸æœºå…è®¸è®¾ç½®çš„æœ€å°å¸§ç‡
+ *  @return æˆåŠŸ,è¿”å›MV_OK,å¹¶è·å¾—ç›¸åº”å‚æ•°ä¿¡æ¯çš„ç»“æ„ä½“, å¤±è´¥, è¿”å›é”™è¯¯ç 
+ *
+ *          å…¶ä»–æµ®ç‚¹å‹ç»“æ„ä½“å‚æ•°çš„æ¥å£å¯å‚ç…§æ­¤æ¥å£
  ************************************************************************/
 MV_CAMCTRL_API int __stdcall MV_CC_GetFrameRate(IN void* handle, IN OUT MVCC_FLOATVALUE* pstValue);
 
 /************************************************************************
  *  @fn     MV_CAMCTRL_API int __stdcall MV_CC_SetFrameRate(IN void* handle, IN const float fValue);
- *  @brief  ÉèÖÃÖ¡ÂÊ
- *  @param  void* handle                [IN]        Ïà»ú¾ä±ú
- *          const float fValue          [IN]        ÏëÒªÉèÖÃµÄÏà»úÖ¡ÂÊ
- *  @return ³É¹¦,·µ»ØMV_OK,²¢ÇÒÏà»úÖ¡ÂÊ½«»á¸ü¸ÄÎªÏàÓ¦Öµ£¬Ê§°Ü,·µ»Ø´íÎóÂë
+ *  @brief  è®¾ç½®å¸§ç‡
+ *  @param  void* handle                [IN]        ç›¸æœºå¥æŸ„
+ *          const float fValue          [IN]        æƒ³è¦è®¾ç½®çš„ç›¸æœºå¸§ç‡
+ *  @return æˆåŠŸ,è¿”å›MV_OK,å¹¶ä¸”ç›¸æœºå¸§ç‡å°†ä¼šæ›´æ”¹ä¸ºç›¸åº”å€¼ï¼Œå¤±è´¥,è¿”å›é”™è¯¯ç 
  ************************************************************************/
 MV_CAMCTRL_API int __stdcall MV_CC_SetFrameRate(IN void* handle, IN const float fValue);
 
 /************************************************************************
  *  @fn     MV_CAMCTRL_API int __stdcall MV_CC_GetGain(IN void* handle, IN OUT MVCC_FLOATVALUE* pstValue);
- *  @brief  »ñÈ¡ÔöÒæ
- *  @param  void* handle                [IN]        Ïà»ú¾ä±ú
- *          MVCC_FLOATVALUE* pstValue   [IN][OUT]   ·µ»Ø¸øµ÷ÓÃÕßÓĞ¹ØÏà»úÔöÒæµÄĞÅÏ¢½á¹¹ÌåÖ¸Õë
- *          ·µ»ØµÄpstValue½á¹¹ÌåµÄÒâÒå
- *                                      float           fCurValue;      // ±íÊ¾Ïà»úµ±Ç°µÄÖ¡ÂÊ
- *                                      float           fMax;           // ±íÊ¾Ïà»úÔÊĞíÉèÖÃµÄ×î´óÖ¡ÂÊ
- *                                      float           fMin;           // ±íÊ¾Ïà»úÔÊĞíÉèÖÃµÄ×îĞ¡Ö¡ÂÊ
- *  @return ³É¹¦,·µ»ØMV_OK,²¢»ñµÃÏàÓ¦²ÎÊıĞÅÏ¢µÄ½á¹¹Ìå, Ê§°Ü, ·µ»Ø´íÎóÂë
- *  
- *          ÆäËû¸¡µãĞÍ½á¹¹Ìå²ÎÊıµÄ½Ó¿Ú¿É²ÎÕÕ´Ë½Ó¿Ú
+ *  @brief  è·å–å¢ç›Š
+ *  @param  void* handle                [IN]        ç›¸æœºå¥æŸ„
+ *          MVCC_FLOATVALUE* pstValue   [IN][OUT]   è¿”å›ç»™è°ƒç”¨è€…æœ‰å…³ç›¸æœºå¢ç›Šçš„ä¿¡æ¯ç»“æ„ä½“æŒ‡é’ˆ
+ *          è¿”å›çš„pstValueç»“æ„ä½“çš„æ„ä¹‰
+ *                                      float           fCurValue;      // è¡¨ç¤ºç›¸æœºå½“å‰çš„å¸§ç‡
+ *                                      float           fMax;           // è¡¨ç¤ºç›¸æœºå…è®¸è®¾ç½®çš„æœ€å¤§å¸§ç‡
+ *                                      float           fMin;           // è¡¨ç¤ºç›¸æœºå…è®¸è®¾ç½®çš„æœ€å°å¸§ç‡
+ *  @return æˆåŠŸ,è¿”å›MV_OK,å¹¶è·å¾—ç›¸åº”å‚æ•°ä¿¡æ¯çš„ç»“æ„ä½“, å¤±è´¥, è¿”å›é”™è¯¯ç 
+ *
+ *          å…¶ä»–æµ®ç‚¹å‹ç»“æ„ä½“å‚æ•°çš„æ¥å£å¯å‚ç…§æ­¤æ¥å£
  ************************************************************************/
 MV_CAMCTRL_API int __stdcall MV_CC_GetGain(IN void* handle, IN OUT MVCC_FLOATVALUE* pstValue);
 
 /************************************************************************
  *  @fn     MV_CAMCTRL_API int __stdcall MV_CC_SetGain(IN void* handle, IN const float fValue);
- *  @brief  ÉèÖÃÖ¡ÂÊ
- *  @param  void* handle                [IN]        Ïà»ú¾ä±ú
- *          const float fValue          [IN]        ÏëÒªÉèÖÃµÄÏà»úÖ¡ÂÊ
- *  @return ³É¹¦,·µ»ØMV_OK,²¢ÇÒÏà»úÖ¡ÂÊ½«»á¸ü¸ÄÎªÏàÓ¦Öµ£¬Ê§°Ü,·µ»Ø´íÎóÂë
+ *  @brief  è®¾ç½®å¸§ç‡
+ *  @param  void* handle                [IN]        ç›¸æœºå¥æŸ„
+ *          const float fValue          [IN]        æƒ³è¦è®¾ç½®çš„ç›¸æœºå¸§ç‡
+ *  @return æˆåŠŸ,è¿”å›MV_OK,å¹¶ä¸”ç›¸æœºå¸§ç‡å°†ä¼šæ›´æ”¹ä¸ºç›¸åº”å€¼ï¼Œå¤±è´¥,è¿”å›é”™è¯¯ç 
  ************************************************************************/
 MV_CAMCTRL_API int __stdcall MV_CC_SetGain(IN void* handle, IN const float fValue);
 
 /************************************************************************
  *  @fn     MV_CAMCTRL_API int __stdcall MV_CC_GetExposureTime(IN void* handle, IN OUT MVCC_FLOATVALUE* pstValue);
- *  @brief  »ñÈ¡ÆØ¹âÊ±¼ä
- *  @param  void* handle                [IN]        Ïà»ú¾ä±ú
- *          MVCC_FLOATVALUE* pstValue   [IN][OUT]   ·µ»Ø¸øµ÷ÓÃÕßÓĞ¹ØÏà»úÆØ¹âÊ±¼äµÄĞÅÏ¢½á¹¹ÌåÖ¸Õë
- *          ·µ»ØµÄpstValue½á¹¹ÌåµÄÒâÒå
- *                                      float           fCurValue;      // ±íÊ¾Ïà»úµ±Ç°µÄÖ¡ÂÊ
- *                                      float           fMax;           // ±íÊ¾Ïà»úÔÊĞíÉèÖÃµÄ×î´óÖ¡ÂÊ
- *                                      float           fMin;           // ±íÊ¾Ïà»úÔÊĞíÉèÖÃµÄ×îĞ¡Ö¡ÂÊ
- *  @return ³É¹¦,·µ»ØMV_OK,²¢»ñµÃÏàÓ¦²ÎÊıĞÅÏ¢µÄ½á¹¹Ìå, Ê§°Ü, ·µ»Ø´íÎóÂë
- *  
- *          ÆäËû¸¡µãĞÍ½á¹¹Ìå²ÎÊıµÄ½Ó¿Ú¿É²ÎÕÕ´Ë½Ó¿Ú
+ *  @brief  è·å–æ›å…‰æ—¶é—´
+ *  @param  void* handle                [IN]        ç›¸æœºå¥æŸ„
+ *          MVCC_FLOATVALUE* pstValue   [IN][OUT]   è¿”å›ç»™è°ƒç”¨è€…æœ‰å…³ç›¸æœºæ›å…‰æ—¶é—´çš„ä¿¡æ¯ç»“æ„ä½“æŒ‡é’ˆ
+ *          è¿”å›çš„pstValueç»“æ„ä½“çš„æ„ä¹‰
+ *                                      float           fCurValue;      // è¡¨ç¤ºç›¸æœºå½“å‰çš„å¸§ç‡
+ *                                      float           fMax;           // è¡¨ç¤ºç›¸æœºå…è®¸è®¾ç½®çš„æœ€å¤§å¸§ç‡
+ *                                      float           fMin;           // è¡¨ç¤ºç›¸æœºå…è®¸è®¾ç½®çš„æœ€å°å¸§ç‡
+ *  @return æˆåŠŸ,è¿”å›MV_OK,å¹¶è·å¾—ç›¸åº”å‚æ•°ä¿¡æ¯çš„ç»“æ„ä½“, å¤±è´¥, è¿”å›é”™è¯¯ç 
+ *
+ *          å…¶ä»–æµ®ç‚¹å‹ç»“æ„ä½“å‚æ•°çš„æ¥å£å¯å‚ç…§æ­¤æ¥å£
  ************************************************************************/
 MV_CAMCTRL_API int __stdcall MV_CC_GetExposureTime(IN void* handle, IN OUT MVCC_FLOATVALUE* pstValue);
 
 /************************************************************************
  *  @fn     MV_CAMCTRL_API int __stdcall MV_CC_SetExposureTime(IN void* handle, IN const float fValue);
- *  @brief  ÉèÖÃÆØ¹âÊ±¼ä
- *  @param  void* handle                [IN]        Ïà»ú¾ä±ú
- *          const float fValue          [IN]        ÏëÒªÉèÖÃµÄÏà»úÖ¡ÂÊ
- *  @return ³É¹¦,·µ»ØMV_OK,²¢ÇÒÏà»úÖ¡ÂÊ½«»á¸ü¸ÄÎªÏàÓ¦Öµ£¬Ê§°Ü,·µ»Ø´íÎóÂë
+ *  @brief  è®¾ç½®æ›å…‰æ—¶é—´
+ *  @param  void* handle                [IN]        ç›¸æœºå¥æŸ„
+ *          const float fValue          [IN]        æƒ³è¦è®¾ç½®çš„ç›¸æœºå¸§ç‡
+ *  @return æˆåŠŸ,è¿”å›MV_OK,å¹¶ä¸”ç›¸æœºå¸§ç‡å°†ä¼šæ›´æ”¹ä¸ºç›¸åº”å€¼ï¼Œå¤±è´¥,è¿”å›é”™è¯¯ç 
  ************************************************************************/
 MV_CAMCTRL_API int __stdcall MV_CC_SetExposureTime(IN void* handle, IN const float fValue);
 
 /************************************************************************
  *  @fn     MV_CAMCTRL_API int __stdcall MV_CC_GetPixelFormat(IN void* handle, IN OUT MVCC_ENUMVALUE* pstValue);
- *  @brief  »ñÈ¡ÏñËØ¸ñÊ½
- *  @param  void* handle                [IN]        Ïà»ú¾ä±ú
- *          MVCC_ENUMVALUE* pstValue    [IN][OUT]   ·µ»Ø¸øµ÷ÓÃÕßµÄÓĞ¹ØÏñËØ¸ñÊ½µÄĞÅÏ¢½á¹¹ÌåÖ¸Õë
- *          ·µ»ØµÄpstValue½á¹¹ÌåµÄÒâÒå
- *          unsigned int    nCurValue;                              //  Ïà»úµ±Ç°µÄÏñËØ¸ñÊ½£¬ÊÇÃ¶¾ÙÀàĞÍ,±ÈÈçËµPixelType_Gvsp_Mono8, ÕâÀï»ñµÃµÄÊÇÆäÕûĞÍÖµ,¾ßÌåÊıÖµ²ÎÕÕPixelType.hµÄMvGvspPixelTypeÃ¶¾ÙÀàĞÍ
- *          unsigned int    nSupportedNum;                          //  Ïà»úÖ§³ÖµÄÏñËØ¸ñÊ½µÄ¸öÊı
- *          unsigned int    nSupportValue[MV_MAX_XML_SYMBOLIC_NUM]; //  Ïà»úËùÓĞÖ§³ÖµÄÏñËØ¸ñÊ½¶ÔÓ¦µÄÕûĞÍÖµÁĞ±í£¬ºóÃæÒªÉèÖÃÏñËØ¸ñÊ½Ê±£¬²ÎÊı±ØĞëÊÇÕâ¸öÊı×éÖĞµÄÒ»ÖÖ£¬·ñÔòÎŞĞ§
- *  @return ³É¹¦,·µ»ØMV_OK,²¢»ñµÃÏàÓ¦²ÎÊıĞÅÏ¢µÄ½á¹¹Ìå, Ê§°Ü, ·µ»Ø´íÎóÂë
- *  
-            ÆäËûÃ¶¾ÙÀàĞÍ²ÎÊı½Ó¿Ú¿É²ÎÕÕ´Ë½Ó¿Ú£¬ÓĞ¹ØÏàÓ¦²ÎÊıµÄÃ¶¾ÙÀàĞÍ¶ÔÓ¦µÄÕûĞÍÖµÇë²éÕÒPixelType.h ºÍ CameraParams.hÖĞÏàÓ¦µÄ¶¨Òå
+ *  @brief  è·å–åƒç´ æ ¼å¼
+ *  @param  void* handle                [IN]        ç›¸æœºå¥æŸ„
+ *          MVCC_ENUMVALUE* pstValue    [IN][OUT]   è¿”å›ç»™è°ƒç”¨è€…çš„æœ‰å…³åƒç´ æ ¼å¼çš„ä¿¡æ¯ç»“æ„ä½“æŒ‡é’ˆ
+ *          è¿”å›çš„pstValueç»“æ„ä½“çš„æ„ä¹‰
+ *          unsigned int    nCurValue;                              //  ç›¸æœºå½“å‰çš„åƒç´ æ ¼å¼ï¼Œæ˜¯æšä¸¾ç±»å‹,æ¯”å¦‚è¯´PixelType_Gvsp_Mono8, è¿™é‡Œè·å¾—çš„æ˜¯å…¶æ•´å‹å€¼,å…·ä½“æ•°å€¼å‚ç…§PixelType.hçš„MvGvspPixelTypeæšä¸¾ç±»å‹
+ *          unsigned int    nSupportedNum;                          //  ç›¸æœºæ”¯æŒçš„åƒç´ æ ¼å¼çš„ä¸ªæ•°
+ *          unsigned int    nSupportValue[MV_MAX_XML_SYMBOLIC_NUM]; //  ç›¸æœºæ‰€æœ‰æ”¯æŒçš„åƒç´ æ ¼å¼å¯¹åº”çš„æ•´å‹å€¼åˆ—è¡¨ï¼Œåé¢è¦è®¾ç½®åƒç´ æ ¼å¼æ—¶ï¼Œå‚æ•°å¿…é¡»æ˜¯è¿™ä¸ªæ•°ç»„ä¸­çš„ä¸€ç§ï¼Œå¦åˆ™æ— æ•ˆ
+ *  @return æˆåŠŸ,è¿”å›MV_OK,å¹¶è·å¾—ç›¸åº”å‚æ•°ä¿¡æ¯çš„ç»“æ„ä½“, å¤±è´¥, è¿”å›é”™è¯¯ç 
+ *
+            å…¶ä»–æšä¸¾ç±»å‹å‚æ•°æ¥å£å¯å‚ç…§æ­¤æ¥å£ï¼Œæœ‰å…³ç›¸åº”å‚æ•°çš„æšä¸¾ç±»å‹å¯¹åº”çš„æ•´å‹å€¼è¯·æŸ¥æ‰¾PixelType.h å’Œ CameraParams.hä¸­ç›¸åº”çš„å®šä¹‰
  ************************************************************************/
 MV_CAMCTRL_API int __stdcall MV_CC_GetPixelFormat(IN void* handle, IN OUT MVCC_ENUMVALUE* pstValue);
 
 /************************************************************************
  *  @fn     MV_CAMCTRL_API int __stdcall MV_CC_SetPixelFormat(IN void* handle, IN const unsigned int nValue);
- *  @brief  ÉèÖÃÏñËØ¸ñÊ½
- *  @param  void* handle                [IN]        Ïà»ú¾ä±ú
- *          const unsigned int nValue   [IN]        ÒªÉèÖÃµÄÏñËØ¸ñÊ½¶ÔÓ¦µÄÕûĞÍÖµ£¬µ÷ÓÃ´Ë½Ó¿ÚÊ±¿ÉÒÔÖ±½ÓÌîĞ´Ã¶¾ÙÖµ£¬ÈçMV_CC_SetPixelFormat(m_handle, PixelType_Gvsp_RGB8_Packed);
- *  @return ³É¹¦,·µ»ØMV_OK,²¢ÇÒÏà»úÏñËØ¸ñÊ½½«»á¸ü¸ÄÎªÏàÓ¦Öµ£¬Ê§°Ü,·µ»Ø´íÎóÂë
- *  
- *          ÒªÉèÖÃµÄÃ¶¾ÙÀàĞÍ±ØĞëÊÇGet½Ó¿Ú·µ»ØµÄnSupportValue[MV_MAX_XML_SYMBOLIC_NUM]ÖĞµÄÒ»ÖÖ£¬·ñÔò»áÊ§°Ü
+ *  @brief  è®¾ç½®åƒç´ æ ¼å¼
+ *  @param  void* handle                [IN]        ç›¸æœºå¥æŸ„
+ *          const unsigned int nValue   [IN]        è¦è®¾ç½®çš„åƒç´ æ ¼å¼å¯¹åº”çš„æ•´å‹å€¼ï¼Œè°ƒç”¨æ­¤æ¥å£æ—¶å¯ä»¥ç›´æ¥å¡«å†™æšä¸¾å€¼ï¼Œå¦‚MV_CC_SetPixelFormat(m_handle, PixelType_Gvsp_RGB8_Packed);
+ *  @return æˆåŠŸ,è¿”å›MV_OK,å¹¶ä¸”ç›¸æœºåƒç´ æ ¼å¼å°†ä¼šæ›´æ”¹ä¸ºç›¸åº”å€¼ï¼Œå¤±è´¥,è¿”å›é”™è¯¯ç 
+ *
+ *          è¦è®¾ç½®çš„æšä¸¾ç±»å‹å¿…é¡»æ˜¯Getæ¥å£è¿”å›çš„nSupportValue[MV_MAX_XML_SYMBOLIC_NUM]ä¸­çš„ä¸€ç§ï¼Œå¦åˆ™ä¼šå¤±è´¥
  ************************************************************************/
 MV_CAMCTRL_API int __stdcall MV_CC_SetPixelFormat(IN void* handle, IN const unsigned int nValue);
 
 /************************************************************************
  *  @fn     MV_CAMCTRL_API int __stdcall MV_CC_GetAcquisitionMode(IN void* handle, IN OUT MVCC_ENUMVALUE* pstValue);
- *  @brief  »ñÈ¡²É¼¯Ä£Ê½
- *  @param  void* handle                [IN]        Ïà»ú¾ä±ú
- *          MVCC_ENUMVALUE* pstValue    [IN][OUT]   ·µ»Ø¸øµ÷ÓÃÕßµÄÓĞ¹Ø²É¼¯Ä£Ê½µÄĞÅÏ¢½á¹¹ÌåÖ¸Õë
- *  @return ³É¹¦,·µ»ØMV_OK,²¢»ñµÃÏàÓ¦²ÎÊıĞÅÏ¢µÄ½á¹¹Ìå, Ê§°Ü, ·µ»Ø´íÎóÂë
- *  
-            ¿É²ÎÕÕ½Ó¿ÚMV_CC_GetPixelFormat£¬²Î¿¼ CameraParam.h ÖĞµÄ MV_CAM_ACQUISITION_MODE ¶¨Òå
+ *  @brief  è·å–é‡‡é›†æ¨¡å¼
+ *  @param  void* handle                [IN]        ç›¸æœºå¥æŸ„
+ *          MVCC_ENUMVALUE* pstValue    [IN][OUT]   è¿”å›ç»™è°ƒç”¨è€…çš„æœ‰å…³é‡‡é›†æ¨¡å¼çš„ä¿¡æ¯ç»“æ„ä½“æŒ‡é’ˆ
+ *  @return æˆåŠŸ,è¿”å›MV_OK,å¹¶è·å¾—ç›¸åº”å‚æ•°ä¿¡æ¯çš„ç»“æ„ä½“, å¤±è´¥, è¿”å›é”™è¯¯ç 
+ *
+            å¯å‚ç…§æ¥å£MV_CC_GetPixelFormatï¼Œå‚è€ƒ CameraParam.h ä¸­çš„ MV_CAM_ACQUISITION_MODE å®šä¹‰
  ************************************************************************/
 MV_CAMCTRL_API int __stdcall MV_CC_GetAcquisitionMode(IN void* handle, IN OUT MVCC_ENUMVALUE* pstValue);
 
 /************************************************************************
  *  @fn     MV_CAMCTRL_API int __stdcall MV_CC_SetAcquisitionMode(IN void* handle, IN const unsigned int nValue);
- *  @brief  ÉèÖÃÏñËØ¸ñÊ½
- *  @param  void* handle                [IN]        Ïà»ú¾ä±ú
- *          const unsigned int nValue   [IN]        ÒªÉèÖÃµÄ²É¼¯Ä£Ê½¶ÔÓ¦µÄÕûĞÍÖµ
- *  @return ³É¹¦,·µ»ØMV_OK,²¢ÇÒÏà»ú²É¼¯Ä£Ê½½«»á¸ü¸ÄÎªÏàÓ¦Öµ£¬Ê§°Ü,·µ»Ø´íÎóÂë
+ *  @brief  è®¾ç½®åƒç´ æ ¼å¼
+ *  @param  void* handle                [IN]        ç›¸æœºå¥æŸ„
+ *          const unsigned int nValue   [IN]        è¦è®¾ç½®çš„é‡‡é›†æ¨¡å¼å¯¹åº”çš„æ•´å‹å€¼
+ *  @return æˆåŠŸ,è¿”å›MV_OK,å¹¶ä¸”ç›¸æœºé‡‡é›†æ¨¡å¼å°†ä¼šæ›´æ”¹ä¸ºç›¸åº”å€¼ï¼Œå¤±è´¥,è¿”å›é”™è¯¯ç 
  ************************************************************************/
 MV_CAMCTRL_API int __stdcall MV_CC_SetAcquisitionMode(IN void* handle, IN const unsigned int nValue);
 
 /************************************************************************
  *  @fn     MV_CAMCTRL_API int __stdcall MV_CC_GetGainMode(IN void* handle, IN OUT MVCC_ENUMVALUE* pstValue);
- *  @brief  »ñÈ¡ÔöÒæÄ£Ê½
- *  @param  void* handle                [IN]        Ïà»ú¾ä±ú
- *          MVCC_ENUMVALUE* pstValue    [IN][OUT]   ·µ»Ø¸øµ÷ÓÃÕßµÄÓĞ¹ØÔöÒæÄ£Ê½µÄĞÅÏ¢½á¹¹ÌåÖ¸Õë
- *  @return ³É¹¦,·µ»ØMV_OK,²¢»ñµÃÏàÓ¦²ÎÊıĞÅÏ¢µÄ½á¹¹Ìå, Ê§°Ü, ·µ»Ø´íÎóÂë
- *  
-            ¿É²ÎÕÕ½Ó¿ÚMV_CC_GetPixelFormat£¬²Î¿¼ CameraParam.h ÖĞµÄ MV_CAM_GAIN_MODE ¶¨Òå
+ *  @brief  è·å–å¢ç›Šæ¨¡å¼
+ *  @param  void* handle                [IN]        ç›¸æœºå¥æŸ„
+ *          MVCC_ENUMVALUE* pstValue    [IN][OUT]   è¿”å›ç»™è°ƒç”¨è€…çš„æœ‰å…³å¢ç›Šæ¨¡å¼çš„ä¿¡æ¯ç»“æ„ä½“æŒ‡é’ˆ
+ *  @return æˆåŠŸ,è¿”å›MV_OK,å¹¶è·å¾—ç›¸åº”å‚æ•°ä¿¡æ¯çš„ç»“æ„ä½“, å¤±è´¥, è¿”å›é”™è¯¯ç 
+ *
+            å¯å‚ç…§æ¥å£MV_CC_GetPixelFormatï¼Œå‚è€ƒ CameraParam.h ä¸­çš„ MV_CAM_GAIN_MODE å®šä¹‰
  ************************************************************************/
 MV_CAMCTRL_API int __stdcall MV_CC_GetGainMode(IN void* handle, IN OUT MVCC_ENUMVALUE* pstValue);
 
 /************************************************************************
  *  @fn     MV_CAMCTRL_API int __stdcall MV_CC_SetGainMode(IN void* handle, IN const unsigned int nValue);
- *  @brief  ÉèÖÃÔöÒæÄ£Ê½
- *  @param  void* handle                [IN]        Ïà»ú¾ä±ú
- *          const unsigned int nValue   [IN]        ÒªÉèÖÃµÄÔöÒæÄ£Ê½¶ÔÓ¦µÄÕûĞÍÖµ
- *  @return ³É¹¦,·µ»ØMV_OK,²¢ÇÒÏà»úÔöÒæÄ£Ê½½«»á¸ü¸ÄÎªÏàÓ¦Öµ£¬Ê§°Ü,·µ»Ø´íÎóÂë
+ *  @brief  è®¾ç½®å¢ç›Šæ¨¡å¼
+ *  @param  void* handle                [IN]        ç›¸æœºå¥æŸ„
+ *          const unsigned int nValue   [IN]        è¦è®¾ç½®çš„å¢ç›Šæ¨¡å¼å¯¹åº”çš„æ•´å‹å€¼
+ *  @return æˆåŠŸ,è¿”å›MV_OK,å¹¶ä¸”ç›¸æœºå¢ç›Šæ¨¡å¼å°†ä¼šæ›´æ”¹ä¸ºç›¸åº”å€¼ï¼Œå¤±è´¥,è¿”å›é”™è¯¯ç 
  ************************************************************************/
 MV_CAMCTRL_API int __stdcall MV_CC_SetGainMode(IN void* handle, IN const unsigned int nValue);
 
 /************************************************************************
  *  @fn     MV_CAMCTRL_API int __stdcall MV_CC_GetExposureAutoMode(IN void* handle, IN OUT MVCC_ENUMVALUE* pstValue);
- *  @brief  »ñÈ¡×Ô¶¯ÆØ¹âÄ£Ê½
- *  @param  void* handle                [IN]        Ïà»ú¾ä±ú
- *          MVCC_ENUMVALUE* pstValue    [IN][OUT]   ·µ»Ø¸øµ÷ÓÃÕßµÄÓĞ¹Ø×Ô¶¯ÆØ¹âÄ£Ê½µÄĞÅÏ¢½á¹¹ÌåÖ¸Õë
- *  @return ³É¹¦,·µ»ØMV_OK,²¢»ñµÃÏàÓ¦²ÎÊıĞÅÏ¢µÄ½á¹¹Ìå, Ê§°Ü, ·µ»Ø´íÎóÂë
- *  
-            ¿É²ÎÕÕ½Ó¿ÚMV_CC_GetPixelFormat£¬²Î¿¼ CameraParam.h ÖĞµÄ MV_CAM_EXPOSURE_AUTO_MODE ¶¨Òå
+ *  @brief  è·å–è‡ªåŠ¨æ›å…‰æ¨¡å¼
+ *  @param  void* handle                [IN]        ç›¸æœºå¥æŸ„
+ *          MVCC_ENUMVALUE* pstValue    [IN][OUT]   è¿”å›ç»™è°ƒç”¨è€…çš„æœ‰å…³è‡ªåŠ¨æ›å…‰æ¨¡å¼çš„ä¿¡æ¯ç»“æ„ä½“æŒ‡é’ˆ
+ *  @return æˆåŠŸ,è¿”å›MV_OK,å¹¶è·å¾—ç›¸åº”å‚æ•°ä¿¡æ¯çš„ç»“æ„ä½“, å¤±è´¥, è¿”å›é”™è¯¯ç 
+ *
+            å¯å‚ç…§æ¥å£MV_CC_GetPixelFormatï¼Œå‚è€ƒ CameraParam.h ä¸­çš„ MV_CAM_EXPOSURE_AUTO_MODE å®šä¹‰
  ************************************************************************/
 MV_CAMCTRL_API int __stdcall MV_CC_GetExposureAutoMode(IN void* handle, IN OUT MVCC_ENUMVALUE* pstValue);
 
 /************************************************************************
  *  @fn     MV_CAMCTRL_API int __stdcall MV_CC_SetExposureAutoMode(IN void* handle, IN const unsigned int nValue);
- *  @brief  ÉèÖÃ×Ô¶¯ÆØ¹âÄ£Ê½
- *  @param  void* handle                [IN]        Ïà»ú¾ä±ú
- *          const unsigned int nValue   [IN]        ÒªÉèÖÃµÄ×Ô¶¯ÆØ¹âÄ£Ê½¶ÔÓ¦µÄÕûĞÍÖµ
- *  @return ³É¹¦,·µ»ØMV_OK,²¢ÇÒÏà»ú×Ô¶¯ÆØ¹âÄ£Ê½½«»á¸ü¸ÄÎªÏàÓ¦Öµ£¬Ê§°Ü,·µ»Ø´íÎóÂë
+ *  @brief  è®¾ç½®è‡ªåŠ¨æ›å…‰æ¨¡å¼
+ *  @param  void* handle                [IN]        ç›¸æœºå¥æŸ„
+ *          const unsigned int nValue   [IN]        è¦è®¾ç½®çš„è‡ªåŠ¨æ›å…‰æ¨¡å¼å¯¹åº”çš„æ•´å‹å€¼
+ *  @return æˆåŠŸ,è¿”å›MV_OK,å¹¶ä¸”ç›¸æœºè‡ªåŠ¨æ›å…‰æ¨¡å¼å°†ä¼šæ›´æ”¹ä¸ºç›¸åº”å€¼ï¼Œå¤±è´¥,è¿”å›é”™è¯¯ç 
  ************************************************************************/
 MV_CAMCTRL_API int __stdcall MV_CC_SetExposureAutoMode(IN void* handle, IN const unsigned int nValue);
 
 /************************************************************************
  *  @fn     MV_CAMCTRL_API int __stdcall MV_CC_GetTriggerMode(IN void* handle, IN OUT MVCC_ENUMVALUE* pstValue);
- *  @brief  »ñÈ¡´¥·¢Ä£Ê½
- *  @param  void* handle                [IN]        Ïà»ú¾ä±ú
- *          MVCC_ENUMVALUE* pstValue    [IN][OUT]   ·µ»Ø¸øµ÷ÓÃÕßµÄÓĞ¹Ø´¥·¢Ä£Ê½µÄĞÅÏ¢½á¹¹ÌåÖ¸Õë
- *  @return ³É¹¦,·µ»ØMV_OK,²¢»ñµÃÏàÓ¦²ÎÊıĞÅÏ¢µÄ½á¹¹Ìå, Ê§°Ü, ·µ»Ø´íÎóÂë
- *  
-            ¿É²ÎÕÕ½Ó¿ÚMV_CC_GetPixelFormat£¬²Î¿¼ CameraParam.h ÖĞµÄ MV_CAM_TRIGGER_MODE ¶¨Òå
+ *  @brief  è·å–è§¦å‘æ¨¡å¼
+ *  @param  void* handle                [IN]        ç›¸æœºå¥æŸ„
+ *          MVCC_ENUMVALUE* pstValue    [IN][OUT]   è¿”å›ç»™è°ƒç”¨è€…çš„æœ‰å…³è§¦å‘æ¨¡å¼çš„ä¿¡æ¯ç»“æ„ä½“æŒ‡é’ˆ
+ *  @return æˆåŠŸ,è¿”å›MV_OK,å¹¶è·å¾—ç›¸åº”å‚æ•°ä¿¡æ¯çš„ç»“æ„ä½“, å¤±è´¥, è¿”å›é”™è¯¯ç 
+ *
+            å¯å‚ç…§æ¥å£MV_CC_GetPixelFormatï¼Œå‚è€ƒ CameraParam.h ä¸­çš„ MV_CAM_TRIGGER_MODE å®šä¹‰
  ************************************************************************/
 MV_CAMCTRL_API int __stdcall MV_CC_GetTriggerMode(IN void* handle, IN OUT MVCC_ENUMVALUE* pstValue);
 
 /************************************************************************
  *  @fn     MV_CAMCTRL_API int __stdcall MV_CC_SetTriggerMode(IN void* handle, IN const unsigned int nValue);
- *  @brief  ÉèÖÃ´¥·¢Ä£Ê½
- *  @param  void* handle                [IN]        Ïà»ú¾ä±ú
- *          const unsigned int nValue   [IN]        ÒªÉèÖÃµÄ´¥·¢Ä£Ê½¶ÔÓ¦µÄÕûĞÍÖµ
- *  @return ³É¹¦,·µ»ØMV_OK,²¢ÇÒÏà»ú´¥·¢Ä£Ê½½«»á¸ü¸ÄÎªÏàÓ¦Öµ£¬Ê§°Ü,·µ»Ø´íÎóÂë
+ *  @brief  è®¾ç½®è§¦å‘æ¨¡å¼
+ *  @param  void* handle                [IN]        ç›¸æœºå¥æŸ„
+ *          const unsigned int nValue   [IN]        è¦è®¾ç½®çš„è§¦å‘æ¨¡å¼å¯¹åº”çš„æ•´å‹å€¼
+ *  @return æˆåŠŸ,è¿”å›MV_OK,å¹¶ä¸”ç›¸æœºè§¦å‘æ¨¡å¼å°†ä¼šæ›´æ”¹ä¸ºç›¸åº”å€¼ï¼Œå¤±è´¥,è¿”å›é”™è¯¯ç 
  ************************************************************************/
 MV_CAMCTRL_API int __stdcall MV_CC_SetTriggerMode(IN void* handle, IN const unsigned int nValue);
 
 /************************************************************************
  *  @fn     MV_CAMCTRL_API int __stdcall MV_CC_GetTriggerDelay(IN void* handle, IN OUT MVCC_FLOATVALUE* pstValue);
- *  @brief  »ñÈ¡´¥·¢ÑÓÊ±
- *  @param  void* handle                [IN]        Ïà»ú¾ä±ú
- *          MVCC_FLOATVALUE* pstValue   [IN][OUT]   ·µ»Ø¸øµ÷ÓÃÕßÓĞ¹ØÏà»ú´¥·¢ÑÓÊ±µÄĞÅÏ¢½á¹¹ÌåÖ¸Õë
- *  @return ³É¹¦,·µ»ØMV_OK,²¢»ñµÃÏàÓ¦²ÎÊıĞÅÏ¢µÄ½á¹¹Ìå, Ê§°Ü, ·µ»Ø´íÎóÂë
- *  
- *          ¿É²ÎÕÕ½Ó¿ÚMV_CC_GetFrameRate
+ *  @brief  è·å–è§¦å‘å»¶æ—¶
+ *  @param  void* handle                [IN]        ç›¸æœºå¥æŸ„
+ *          MVCC_FLOATVALUE* pstValue   [IN][OUT]   è¿”å›ç»™è°ƒç”¨è€…æœ‰å…³ç›¸æœºè§¦å‘å»¶æ—¶çš„ä¿¡æ¯ç»“æ„ä½“æŒ‡é’ˆ
+ *  @return æˆåŠŸ,è¿”å›MV_OK,å¹¶è·å¾—ç›¸åº”å‚æ•°ä¿¡æ¯çš„ç»“æ„ä½“, å¤±è´¥, è¿”å›é”™è¯¯ç 
+ *
+ *          å¯å‚ç…§æ¥å£MV_CC_GetFrameRate
  ************************************************************************/
 MV_CAMCTRL_API int __stdcall MV_CC_GetTriggerDelay(IN void* handle, IN OUT MVCC_FLOATVALUE* pstValue);
 
 /************************************************************************
  *  @fn     MV_CAMCTRL_API int __stdcall MV_CC_SetTriggerDelay(IN void* handle, IN const float fValue);
- *  @brief  ÉèÖÃ´¥·¢ÑÓÊ±
- *  @param  void* handle                [IN]        Ïà»ú¾ä±ú
- *          const float fValue          [IN]        ÏëÒªÉèÖÃµÄÏà»ú´¥·¢ÑÓÊ±
- *  @return ³É¹¦,·µ»ØMV_OK,²¢ÇÒÏà»ú´¥·¢ÑÓÊ±½«»á¸ü¸ÄÎªÏàÓ¦Öµ£¬Ê§°Ü,·µ»Ø´íÎóÂë
+ *  @brief  è®¾ç½®è§¦å‘å»¶æ—¶
+ *  @param  void* handle                [IN]        ç›¸æœºå¥æŸ„
+ *          const float fValue          [IN]        æƒ³è¦è®¾ç½®çš„ç›¸æœºè§¦å‘å»¶æ—¶
+ *  @return æˆåŠŸ,è¿”å›MV_OK,å¹¶ä¸”ç›¸æœºè§¦å‘å»¶æ—¶å°†ä¼šæ›´æ”¹ä¸ºç›¸åº”å€¼ï¼Œå¤±è´¥,è¿”å›é”™è¯¯ç 
  ************************************************************************/
 MV_CAMCTRL_API int __stdcall MV_CC_SetTriggerDelay(IN void* handle, IN const float fValue);
 
 /************************************************************************
  *  @fn     MV_CAMCTRL_API int __stdcall MV_CC_GetTriggerSource(IN void* handle, IN OUT MVCC_ENUMVALUE* pstValue);
- *  @brief  »ñÈ¡´¥·¢Ô´
- *  @param  void* handle                [IN]        Ïà»ú¾ä±ú
- *          MVCC_ENUMVALUE* pstValue    [IN][OUT]   ·µ»Ø¸øµ÷ÓÃÕßµÄÓĞ¹Ø´¥·¢Ô´µÄĞÅÏ¢½á¹¹ÌåÖ¸Õë
- *  @return ³É¹¦,·µ»ØMV_OK,²¢»ñµÃÏàÓ¦²ÎÊıĞÅÏ¢µÄ½á¹¹Ìå, Ê§°Ü, ·µ»Ø´íÎóÂë
- *  
-            ¿É²ÎÕÕ½Ó¿ÚMV_CC_GetPixelFormat£¬²Î¿¼ CameraParam.h ÖĞµÄ MV_CAM_TRIGGER_SOURCE ¶¨Òå
+ *  @brief  è·å–è§¦å‘æº
+ *  @param  void* handle                [IN]        ç›¸æœºå¥æŸ„
+ *          MVCC_ENUMVALUE* pstValue    [IN][OUT]   è¿”å›ç»™è°ƒç”¨è€…çš„æœ‰å…³è§¦å‘æºçš„ä¿¡æ¯ç»“æ„ä½“æŒ‡é’ˆ
+ *  @return æˆåŠŸ,è¿”å›MV_OK,å¹¶è·å¾—ç›¸åº”å‚æ•°ä¿¡æ¯çš„ç»“æ„ä½“, å¤±è´¥, è¿”å›é”™è¯¯ç 
+ *
+            å¯å‚ç…§æ¥å£MV_CC_GetPixelFormatï¼Œå‚è€ƒ CameraParam.h ä¸­çš„ MV_CAM_TRIGGER_SOURCE å®šä¹‰
  ************************************************************************/
 MV_CAMCTRL_API int __stdcall MV_CC_GetTriggerSource(IN void* handle, IN OUT MVCC_ENUMVALUE* pstValue);
 
 /************************************************************************
  *  @fn     MV_CAMCTRL_API int __stdcall MV_CC_SetTriggerSource(IN void* handle, IN const unsigned int nValue);
- *  @brief  ÉèÖÃ´¥·¢Ô´
- *  @param  void* handle                [IN]        Ïà»ú¾ä±ú
- *          const unsigned int nValue   [IN]        ÒªÉèÖÃµÄ´¥·¢Ô´¶ÔÓ¦µÄÕûĞÍÖµ
- *  @return ³É¹¦,·µ»ØMV_OK,²¢ÇÒÏà»ú´¥·¢Ô´½«»á¸ü¸ÄÎªÏàÓ¦Öµ£¬Ê§°Ü,·µ»Ø´íÎóÂë
+ *  @brief  è®¾ç½®è§¦å‘æº
+ *  @param  void* handle                [IN]        ç›¸æœºå¥æŸ„
+ *          const unsigned int nValue   [IN]        è¦è®¾ç½®çš„è§¦å‘æºå¯¹åº”çš„æ•´å‹å€¼
+ *  @return æˆåŠŸ,è¿”å›MV_OK,å¹¶ä¸”ç›¸æœºè§¦å‘æºå°†ä¼šæ›´æ”¹ä¸ºç›¸åº”å€¼ï¼Œå¤±è´¥,è¿”å›é”™è¯¯ç 
  ************************************************************************/
 MV_CAMCTRL_API int __stdcall MV_CC_SetTriggerSource(IN void* handle, IN const unsigned int nValue);
 
 /************************************************************************
  *  @fn     MV_CAMCTRL_API int __stdcall MV_CC_TriggerSoftwareExecute(IN void* handle);
- *  @brief  Èí´¥·¢Ò»´Î£¨½Ó¿Ú½öÔÚÒÑÑ¡ÔñµÄ´¥·¢Ô´ÎªÈí¼ş´¥·¢Ê±ÓĞĞ§£©
- *  @param  void* handle                [IN]        Ïà»ú¾ä±ú
- *  @return ³É¹¦,·µ»ØMV_OK, Ê§°Ü,·µ»Ø´íÎóÂë
+ *  @brief  è½¯è§¦å‘ä¸€æ¬¡ï¼ˆæ¥å£ä»…åœ¨å·²é€‰æ‹©çš„è§¦å‘æºä¸ºè½¯ä»¶è§¦å‘æ—¶æœ‰æ•ˆï¼‰
+ *  @param  void* handle                [IN]        ç›¸æœºå¥æŸ„
+ *  @return æˆåŠŸ,è¿”å›MV_OK, å¤±è´¥,è¿”å›é”™è¯¯ç 
  ************************************************************************/
 MV_CAMCTRL_API int __stdcall MV_CC_TriggerSoftwareExecute(IN void* handle);
 
 /************************************************************************
  *  @fn     MV_CAMCTRL_API int __stdcall MV_CC_GetGammaSelector(IN void* handle, IN OUT MVCC_ENUMVALUE* pstValue);
- *  @brief  »ñÈ¡GammaÀàĞÍ
- *  @param  void* handle                [IN]        Ïà»ú¾ä±ú
- *          MVCC_ENUMVALUE* pstValue    [IN][OUT]   ·µ»Ø¸øµ÷ÓÃÕßµÄÓĞ¹ØGammaÀàĞÍµÄĞÅÏ¢½á¹¹ÌåÖ¸Õë
- *  @return ³É¹¦,·µ»ØMV_OK,²¢»ñµÃÏàÓ¦²ÎÊıĞÅÏ¢µÄ½á¹¹Ìå, Ê§°Ü, ·µ»Ø´íÎóÂë
- *  
-            ¿É²ÎÕÕ½Ó¿ÚMV_CC_GetPixelFormat£¬²Î¿¼ CameraParam.h ÖĞµÄ MV_CAM_GAMMA_SELECTOR ¶¨Òå
+ *  @brief  è·å–Gammaç±»å‹
+ *  @param  void* handle                [IN]        ç›¸æœºå¥æŸ„
+ *          MVCC_ENUMVALUE* pstValue    [IN][OUT]   è¿”å›ç»™è°ƒç”¨è€…çš„æœ‰å…³Gammaç±»å‹çš„ä¿¡æ¯ç»“æ„ä½“æŒ‡é’ˆ
+ *  @return æˆåŠŸ,è¿”å›MV_OK,å¹¶è·å¾—ç›¸åº”å‚æ•°ä¿¡æ¯çš„ç»“æ„ä½“, å¤±è´¥, è¿”å›é”™è¯¯ç 
+ *
+            å¯å‚ç…§æ¥å£MV_CC_GetPixelFormatï¼Œå‚è€ƒ CameraParam.h ä¸­çš„ MV_CAM_GAMMA_SELECTOR å®šä¹‰
  ************************************************************************/
 MV_CAMCTRL_API int __stdcall MV_CC_GetGammaSelector(IN void* handle, IN OUT MVCC_ENUMVALUE* pstValue);
 
 /************************************************************************
  *  @fn     MV_CAMCTRL_API int __stdcall MV_CC_SetGammaSelector(IN void* handle, IN const unsigned int nValue);
- *  @brief  ÉèÖÃGammaÀàĞÍ
- *  @param  void* handle                [IN]        Ïà»ú¾ä±ú
- *          const unsigned int nValue   [IN]        ÒªÉèÖÃµÄGammaÀàĞÍ¶ÔÓ¦µÄÕûĞÍÖµ
- *  @return ³É¹¦,·µ»ØMV_OK,²¢ÇÒÏà»úGammaÀàĞÍ½«»á¸ü¸ÄÎªÏàÓ¦Öµ£¬Ê§°Ü,·µ»Ø´íÎóÂë
+ *  @brief  è®¾ç½®Gammaç±»å‹
+ *  @param  void* handle                [IN]        ç›¸æœºå¥æŸ„
+ *          const unsigned int nValue   [IN]        è¦è®¾ç½®çš„Gammaç±»å‹å¯¹åº”çš„æ•´å‹å€¼
+ *  @return æˆåŠŸ,è¿”å›MV_OK,å¹¶ä¸”ç›¸æœºGammaç±»å‹å°†ä¼šæ›´æ”¹ä¸ºç›¸åº”å€¼ï¼Œå¤±è´¥,è¿”å›é”™è¯¯ç 
  ************************************************************************/
 MV_CAMCTRL_API int __stdcall MV_CC_SetGammaSelector(IN void* handle, IN const unsigned int nValue);
 
 /************************************************************************
  *  @fn     MV_CAMCTRL_API int __stdcall MV_CC_GetGamma(IN void* handle, IN OUT MVCC_FLOATVALUE* pstValue);
- *  @brief  »ñÈ¡GammaÖµ
- *  @param  void* handle                [IN]        Ïà»ú¾ä±ú
- *          MVCC_FLOATVALUE* pstValue   [IN][OUT]   ·µ»Ø¸øµ÷ÓÃÕßÓĞ¹ØÏà»úGammaÖµµÄĞÅÏ¢½á¹¹ÌåÖ¸Õë
- *  @return ³É¹¦,·µ»ØMV_OK,²¢»ñµÃÏàÓ¦²ÎÊıĞÅÏ¢µÄ½á¹¹Ìå, Ê§°Ü, ·µ»Ø´íÎóÂë
- *  
- *          ¿É²ÎÕÕ½Ó¿ÚMV_CC_GetFrameRate
+ *  @brief  è·å–Gammaå€¼
+ *  @param  void* handle                [IN]        ç›¸æœºå¥æŸ„
+ *          MVCC_FLOATVALUE* pstValue   [IN][OUT]   è¿”å›ç»™è°ƒç”¨è€…æœ‰å…³ç›¸æœºGammaå€¼çš„ä¿¡æ¯ç»“æ„ä½“æŒ‡é’ˆ
+ *  @return æˆåŠŸ,è¿”å›MV_OK,å¹¶è·å¾—ç›¸åº”å‚æ•°ä¿¡æ¯çš„ç»“æ„ä½“, å¤±è´¥, è¿”å›é”™è¯¯ç 
+ *
+ *          å¯å‚ç…§æ¥å£MV_CC_GetFrameRate
  ************************************************************************/
 MV_CAMCTRL_API int __stdcall MV_CC_GetGamma(IN void* handle, IN OUT MVCC_FLOATVALUE* pstValue);
 
 /************************************************************************
  *  @fn     MV_CAMCTRL_API int __stdcall MV_CC_SetGamma(IN void* handle, IN const float fValue);
- *  @brief  ÉèÖÃGammaÖµ
- *  @param  void* handle                [IN]        Ïà»ú¾ä±ú
- *          const float fValue          [IN]        ÏëÒªÉèÖÃµÄÏà»úGammaÖµ
- *  @return ³É¹¦,·µ»ØMV_OK,²¢ÇÒÏà»úGammaÖµ½«»á¸ü¸ÄÎªÏàÓ¦Öµ£¬Ê§°Ü,·µ»Ø´íÎóÂë
+ *  @brief  è®¾ç½®Gammaå€¼
+ *  @param  void* handle                [IN]        ç›¸æœºå¥æŸ„
+ *          const float fValue          [IN]        æƒ³è¦è®¾ç½®çš„ç›¸æœºGammaå€¼
+ *  @return æˆåŠŸ,è¿”å›MV_OK,å¹¶ä¸”ç›¸æœºGammaå€¼å°†ä¼šæ›´æ”¹ä¸ºç›¸åº”å€¼ï¼Œå¤±è´¥,è¿”å›é”™è¯¯ç 
  ************************************************************************/
 MV_CAMCTRL_API int __stdcall MV_CC_SetGamma(IN void* handle, IN const float fValue);
 
 /************************************************************************
  *  @fn     MV_CAMCTRL_API int __stdcall MV_CC_GetSharpness(IN void* handle, IN OUT MVCC_INTVALUE* pstValue);
- *  @brief  »ñÈ¡Èñ¶È
- *  @param  void* handle                [IN]        Ïà»ú¾ä±ú
- *  @param  MVCC_INTVALUE* pstValue     [IN][OUT]   ·µ»Ø¸øµ÷ÓÃÕßÓĞ¹ØÏà»úÈñ¶È½á¹¹ÌåÖ¸Õë
- *  @return ³É¹¦,·µ»ØMV_OK,Ê§°Ü,·µ»Ø´íÎóÂë
- *  
- *          ¿É²ÎÕÕ½Ó¿ÚMV_CC_GetWidth
+ *  @brief  è·å–é”åº¦
+ *  @param  void* handle                [IN]        ç›¸æœºå¥æŸ„
+ *  @param  MVCC_INTVALUE* pstValue     [IN][OUT]   è¿”å›ç»™è°ƒç”¨è€…æœ‰å…³ç›¸æœºé”åº¦ç»“æ„ä½“æŒ‡é’ˆ
+ *  @return æˆåŠŸ,è¿”å›MV_OK,å¤±è´¥,è¿”å›é”™è¯¯ç 
+ *
+ *          å¯å‚ç…§æ¥å£MV_CC_GetWidth
  ************************************************************************/
 MV_CAMCTRL_API int __stdcall MV_CC_GetSharpness(IN void* handle, IN OUT MVCC_INTVALUE* pstValue);
 
 /************************************************************************
  *  @fn     MV_CAMCTRL_API int __stdcall MV_CC_SetSharpness(IN void* handle, IN const unsigned int nValue);
- *  @brief  ÉèÖÃÈñ¶È
- *  @param  void* handle                [IN]        Ïà»ú¾ä±ú
- *          const unsigned int nValue   [IN]        ÏëÒªÉèÖÃµÄÈñ¶È
- *  @return ³É¹¦,·µ»ØMV_OK,²¢ÇÒÏà»úÈñ¶È½«»á¸ü¸ÄÎªÏàÓ¦Öµ£¬Ê§°Ü,·µ»Ø´íÎóÂë
+ *  @brief  è®¾ç½®é”åº¦
+ *  @param  void* handle                [IN]        ç›¸æœºå¥æŸ„
+ *          const unsigned int nValue   [IN]        æƒ³è¦è®¾ç½®çš„é”åº¦
+ *  @return æˆåŠŸ,è¿”å›MV_OK,å¹¶ä¸”ç›¸æœºé”åº¦å°†ä¼šæ›´æ”¹ä¸ºç›¸åº”å€¼ï¼Œå¤±è´¥,è¿”å›é”™è¯¯ç 
  ************************************************************************/
 MV_CAMCTRL_API int __stdcall MV_CC_SetSharpness(IN void* handle, IN const unsigned int nValue);
 
 /************************************************************************
  *  @fn     MV_CAMCTRL_API int __stdcall MV_CC_GetHue(IN void* handle, IN OUT MVCC_INTVALUE* pstValue);
- *  @brief  »ñÈ¡»Ò¶È
- *  @param  void* handle                [IN]        Ïà»ú¾ä±ú
- *  @param  MVCC_INTVALUE* pstValue     [IN][OUT]   ·µ»Ø¸øµ÷ÓÃÕßÓĞ¹ØÏà»ú»Ò¶È½á¹¹ÌåÖ¸Õë
- *  @return ³É¹¦,·µ»ØMV_OK,Ê§°Ü,·µ»Ø´íÎóÂë
- *  
- *          ¿É²ÎÕÕ½Ó¿ÚMV_CC_GetWidth
+ *  @brief  è·å–ç°åº¦
+ *  @param  void* handle                [IN]        ç›¸æœºå¥æŸ„
+ *  @param  MVCC_INTVALUE* pstValue     [IN][OUT]   è¿”å›ç»™è°ƒç”¨è€…æœ‰å…³ç›¸æœºç°åº¦ç»“æ„ä½“æŒ‡é’ˆ
+ *  @return æˆåŠŸ,è¿”å›MV_OK,å¤±è´¥,è¿”å›é”™è¯¯ç 
+ *
+ *          å¯å‚ç…§æ¥å£MV_CC_GetWidth
  ************************************************************************/
 MV_CAMCTRL_API int __stdcall MV_CC_GetHue(IN void* handle, IN OUT MVCC_INTVALUE* pstValue);
 
 /************************************************************************
  *  @fn     MV_CAMCTRL_API int __stdcall MV_CC_SetHue(IN void* handle, IN const unsigned int nValue);
- *  @brief  ÉèÖÃ»Ò¶È
- *  @param  void* handle                [IN]        Ïà»ú¾ä±ú
- *          const unsigned int nValue   [IN]        ÏëÒªÉèÖÃµÄ»Ò¶È
- *  @return ³É¹¦,·µ»ØMV_OK,²¢ÇÒÏà»ú»Ò¶È½«»á¸ü¸ÄÎªÏàÓ¦Öµ£¬Ê§°Ü,·µ»Ø´íÎóÂë
+ *  @brief  è®¾ç½®ç°åº¦
+ *  @param  void* handle                [IN]        ç›¸æœºå¥æŸ„
+ *          const unsigned int nValue   [IN]        æƒ³è¦è®¾ç½®çš„ç°åº¦
+ *  @return æˆåŠŸ,è¿”å›MV_OK,å¹¶ä¸”ç›¸æœºç°åº¦å°†ä¼šæ›´æ”¹ä¸ºç›¸åº”å€¼ï¼Œå¤±è´¥,è¿”å›é”™è¯¯ç 
  ************************************************************************/
 MV_CAMCTRL_API int __stdcall MV_CC_SetHue(IN void* handle, IN const unsigned int nValue);
 
 /************************************************************************
  *  @fn     MV_CAMCTRL_API int __stdcall MV_CC_GetSaturation(IN void* handle, IN OUT MVCC_INTVALUE* pstValue);
- *  @brief  »ñÈ¡±¥ºÍ¶È
- *  @param  void* handle                [IN]        Ïà»ú¾ä±ú
- *  @param  MVCC_INTVALUE* pstValue     [IN][OUT]   ·µ»Ø¸øµ÷ÓÃÕßÓĞ¹ØÏà»ú±¥ºÍ¶È½á¹¹ÌåÖ¸Õë
- *  @return ³É¹¦,·µ»ØMV_OK,Ê§°Ü,·µ»Ø´íÎóÂë
- *  
- *          ¿É²ÎÕÕ½Ó¿ÚMV_CC_GetWidth
+ *  @brief  è·å–é¥±å’Œåº¦
+ *  @param  void* handle                [IN]        ç›¸æœºå¥æŸ„
+ *  @param  MVCC_INTVALUE* pstValue     [IN][OUT]   è¿”å›ç»™è°ƒç”¨è€…æœ‰å…³ç›¸æœºé¥±å’Œåº¦ç»“æ„ä½“æŒ‡é’ˆ
+ *  @return æˆåŠŸ,è¿”å›MV_OK,å¤±è´¥,è¿”å›é”™è¯¯ç 
+ *
+ *          å¯å‚ç…§æ¥å£MV_CC_GetWidth
  ************************************************************************/
 MV_CAMCTRL_API int __stdcall MV_CC_GetSaturation(IN void* handle, IN OUT MVCC_INTVALUE* pstValue);
 
 /************************************************************************
  *  @fn     MV_CAMCTRL_API int __stdcall MV_CC_SetSaturation(IN void* handle, IN const unsigned int nValue);
- *  @brief  ÉèÖÃ±¥ºÍ¶È
- *  @param  void* handle                [IN]        Ïà»ú¾ä±ú
- *          const unsigned int nValue   [IN]        ÏëÒªÉèÖÃµÄ±¥ºÍ¶È
- *  @return ³É¹¦,·µ»ØMV_OK,²¢ÇÒÏà»ú±¥ºÍ¶È½«»á¸ü¸ÄÎªÏàÓ¦Öµ£¬Ê§°Ü,·µ»Ø´íÎóÂë
+ *  @brief  è®¾ç½®é¥±å’Œåº¦
+ *  @param  void* handle                [IN]        ç›¸æœºå¥æŸ„
+ *          const unsigned int nValue   [IN]        æƒ³è¦è®¾ç½®çš„é¥±å’Œåº¦
+ *  @return æˆåŠŸ,è¿”å›MV_OK,å¹¶ä¸”ç›¸æœºé¥±å’Œåº¦å°†ä¼šæ›´æ”¹ä¸ºç›¸åº”å€¼ï¼Œå¤±è´¥,è¿”å›é”™è¯¯ç 
  ************************************************************************/
 MV_CAMCTRL_API int __stdcall MV_CC_SetSaturation(IN void* handle, IN const unsigned int nValue);
 
 /************************************************************************
  *  @fn     MV_CAMCTRL_API int __stdcall MV_CC_GetBalanceWhiteAuto(IN void* handle, IN OUT MVCC_ENUMVALUE* pstValue);
- *  @brief  »ñÈ¡×Ô¶¯°×Æ½ºâ
- *  @param  void* handle                [IN]        Ïà»ú¾ä±ú
- *          MVCC_ENUMVALUE* pstValue    [IN][OUT]   ·µ»Ø¸øµ÷ÓÃÕßµÄÓĞ¹Ø×Ô¶¯°×Æ½ºâµÄĞÅÏ¢½á¹¹ÌåÖ¸Õë
- *  @return ³É¹¦,·µ»ØMV_OK,²¢»ñµÃÏàÓ¦²ÎÊıĞÅÏ¢µÄ½á¹¹Ìå, Ê§°Ü, ·µ»Ø´íÎóÂë
- *  
-            ¿É²ÎÕÕ½Ó¿ÚMV_CC_GetPixelFormat£¬²Î¿¼ CameraParam.h ÖĞµÄ MV_CAM_BALANCEWHITE_AUTO ¶¨Òå
+ *  @brief  è·å–è‡ªåŠ¨ç™½å¹³è¡¡
+ *  @param  void* handle                [IN]        ç›¸æœºå¥æŸ„
+ *          MVCC_ENUMVALUE* pstValue    [IN][OUT]   è¿”å›ç»™è°ƒç”¨è€…çš„æœ‰å…³è‡ªåŠ¨ç™½å¹³è¡¡çš„ä¿¡æ¯ç»“æ„ä½“æŒ‡é’ˆ
+ *  @return æˆåŠŸ,è¿”å›MV_OK,å¹¶è·å¾—ç›¸åº”å‚æ•°ä¿¡æ¯çš„ç»“æ„ä½“, å¤±è´¥, è¿”å›é”™è¯¯ç 
+ *
+            å¯å‚ç…§æ¥å£MV_CC_GetPixelFormatï¼Œå‚è€ƒ CameraParam.h ä¸­çš„ MV_CAM_BALANCEWHITE_AUTO å®šä¹‰
  ************************************************************************/
 MV_CAMCTRL_API int __stdcall MV_CC_GetBalanceWhiteAuto(IN void* handle, IN OUT MVCC_ENUMVALUE* pstValue);
 
 /************************************************************************
  *  @fn     MV_CAMCTRL_API int __stdcall MV_CC_SetBalanceWhiteAuto(IN void* handle, IN const unsigned int nValue);
- *  @brief  ÉèÖÃ×Ô¶¯°×Æ½ºâ
- *  @param  void* handle                [IN]        Ïà»ú¾ä±ú
- *          const unsigned int nValue   [IN]        ÒªÉèÖÃµÄ×Ô¶¯°×Æ½ºâ¶ÔÓ¦µÄÕûĞÍÖµ
- *  @return ³É¹¦,·µ»ØMV_OK,²¢ÇÒÏà»ú×Ô¶¯°×Æ½ºâ½«»á¸ü¸ÄÎªÏàÓ¦Öµ£¬Ê§°Ü,·µ»Ø´íÎóÂë
+ *  @brief  è®¾ç½®è‡ªåŠ¨ç™½å¹³è¡¡
+ *  @param  void* handle                [IN]        ç›¸æœºå¥æŸ„
+ *          const unsigned int nValue   [IN]        è¦è®¾ç½®çš„è‡ªåŠ¨ç™½å¹³è¡¡å¯¹åº”çš„æ•´å‹å€¼
+ *  @return æˆåŠŸ,è¿”å›MV_OK,å¹¶ä¸”ç›¸æœºè‡ªåŠ¨ç™½å¹³è¡¡å°†ä¼šæ›´æ”¹ä¸ºç›¸åº”å€¼ï¼Œå¤±è´¥,è¿”å›é”™è¯¯ç 
  ************************************************************************/
 MV_CAMCTRL_API int __stdcall MV_CC_SetBalanceWhiteAuto(IN void* handle, IN const unsigned int nValue);
 
 /************************************************************************
  *  @fn     MV_CAMCTRL_API int __stdcall MV_CC_GetBalanceRatioRed(IN void* handle, IN OUT MVCC_INTVALUE* pstValue);
- *  @brief  »ñÈ¡°×Æ½ºâ ºì
- *  @param  void* handle                [IN]        Ïà»ú¾ä±ú
- *  @param  MVCC_INTVALUE* pstValue     [IN][OUT]   ·µ»Ø¸øµ÷ÓÃÕßÓĞ¹ØÏà»ú°×Æ½ºâ ºì½á¹¹ÌåÖ¸Õë
- *  @return ³É¹¦,·µ»ØMV_OK,Ê§°Ü,·µ»Ø´íÎóÂë
- *  
- *          ¿É²ÎÕÕ½Ó¿ÚMV_CC_GetWidth
+ *  @brief  è·å–ç™½å¹³è¡¡ çº¢
+ *  @param  void* handle                [IN]        ç›¸æœºå¥æŸ„
+ *  @param  MVCC_INTVALUE* pstValue     [IN][OUT]   è¿”å›ç»™è°ƒç”¨è€…æœ‰å…³ç›¸æœºç™½å¹³è¡¡ çº¢ç»“æ„ä½“æŒ‡é’ˆ
+ *  @return æˆåŠŸ,è¿”å›MV_OK,å¤±è´¥,è¿”å›é”™è¯¯ç 
+ *
+ *          å¯å‚ç…§æ¥å£MV_CC_GetWidth
  ************************************************************************/
 MV_CAMCTRL_API int __stdcall MV_CC_GetBalanceRatioRed(IN void* handle, IN OUT MVCC_INTVALUE* pstValue);
 
 /************************************************************************
  *  @fn     MV_CAMCTRL_API int __stdcall MV_CC_SetBalanceRatioRed(IN void* handle, IN const unsigned int nValue);
- *  @brief  ÉèÖÃ°×Æ½ºâ ºì
- *  @param  void* handle                [IN]        Ïà»ú¾ä±ú
- *          const unsigned int nValue   [IN]        ÏëÒªÉèÖÃµÄ°×Æ½ºâ ºì
- *  @return ³É¹¦,·µ»ØMV_OK,²¢ÇÒÏà»ú°×Æ½ºâ ºì½«»á¸ü¸ÄÎªÏàÓ¦Öµ£¬Ê§°Ü,·µ»Ø´íÎóÂë
+ *  @brief  è®¾ç½®ç™½å¹³è¡¡ çº¢
+ *  @param  void* handle                [IN]        ç›¸æœºå¥æŸ„
+ *          const unsigned int nValue   [IN]        æƒ³è¦è®¾ç½®çš„ç™½å¹³è¡¡ çº¢
+ *  @return æˆåŠŸ,è¿”å›MV_OK,å¹¶ä¸”ç›¸æœºç™½å¹³è¡¡ çº¢å°†ä¼šæ›´æ”¹ä¸ºç›¸åº”å€¼ï¼Œå¤±è´¥,è¿”å›é”™è¯¯ç 
  ************************************************************************/
 MV_CAMCTRL_API int __stdcall MV_CC_SetBalanceRatioRed(IN void* handle, IN const unsigned int nValue);
 
 /************************************************************************
  *  @fn     MV_CAMCTRL_API int __stdcall MV_CC_GetBalanceRatioGreen(IN void* handle, IN OUT MVCC_INTVALUE* pstValue);
- *  @brief  »ñÈ¡°×Æ½ºâ ÂÌ
- *  @param  void* handle                [IN]        Ïà»ú¾ä±ú
- *  @param  MVCC_INTVALUE* pstValue     [IN][OUT]   ·µ»Ø¸øµ÷ÓÃÕßÓĞ¹ØÏà»ú°×Æ½ºâ ÂÌ½á¹¹ÌåÖ¸Õë
- *  @return ³É¹¦,·µ»ØMV_OK,Ê§°Ü,·µ»Ø´íÎóÂë
- *  
- *          ¿É²ÎÕÕ½Ó¿ÚMV_CC_GetWidth
+ *  @brief  è·å–ç™½å¹³è¡¡ ç»¿
+ *  @param  void* handle                [IN]        ç›¸æœºå¥æŸ„
+ *  @param  MVCC_INTVALUE* pstValue     [IN][OUT]   è¿”å›ç»™è°ƒç”¨è€…æœ‰å…³ç›¸æœºç™½å¹³è¡¡ ç»¿ç»“æ„ä½“æŒ‡é’ˆ
+ *  @return æˆåŠŸ,è¿”å›MV_OK,å¤±è´¥,è¿”å›é”™è¯¯ç 
+ *
+ *          å¯å‚ç…§æ¥å£MV_CC_GetWidth
  ************************************************************************/
 MV_CAMCTRL_API int __stdcall MV_CC_GetBalanceRatioGreen(IN void* handle, IN OUT MVCC_INTVALUE* pstValue);
 
 /************************************************************************
  *  @fn     MV_CAMCTRL_API int __stdcall MV_CC_SetBalanceRatioGreen(IN void* handle, IN const unsigned int nValue);
- *  @brief  ÉèÖÃ°×Æ½ºâ ÂÌ
- *  @param  void* handle                [IN]        Ïà»ú¾ä±ú
- *          const unsigned int nValue   [IN]        ÏëÒªÉèÖÃµÄ°×Æ½ºâ ÂÌ
- *  @return ³É¹¦,·µ»ØMV_OK,²¢ÇÒÏà»ú°×Æ½ºâ ÂÌ½«»á¸ü¸ÄÎªÏàÓ¦Öµ£¬Ê§°Ü,·µ»Ø´íÎóÂë
+ *  @brief  è®¾ç½®ç™½å¹³è¡¡ ç»¿
+ *  @param  void* handle                [IN]        ç›¸æœºå¥æŸ„
+ *          const unsigned int nValue   [IN]        æƒ³è¦è®¾ç½®çš„ç™½å¹³è¡¡ ç»¿
+ *  @return æˆåŠŸ,è¿”å›MV_OK,å¹¶ä¸”ç›¸æœºç™½å¹³è¡¡ ç»¿å°†ä¼šæ›´æ”¹ä¸ºç›¸åº”å€¼ï¼Œå¤±è´¥,è¿”å›é”™è¯¯ç 
  ************************************************************************/
 MV_CAMCTRL_API int __stdcall MV_CC_SetBalanceRatioGreen(IN void* handle, IN const unsigned int nValue);
 
 /************************************************************************
  *  @fn     MV_CAMCTRL_API int __stdcall MV_CC_GetBalanceRatioBlue(IN void* handle, IN OUT MVCC_INTVALUE* pstValue);
- *  @brief  »ñÈ¡°×Æ½ºâ À¶
- *  @param  void* handle                [IN]        Ïà»ú¾ä±ú
- *  @param  MVCC_INTVALUE* pstValue     [IN][OUT]   ·µ»Ø¸øµ÷ÓÃÕßÓĞ¹ØÏà»ú°×Æ½ºâ À¶½á¹¹ÌåÖ¸Õë
- *  @return ³É¹¦,·µ»ØMV_OK,Ê§°Ü,·µ»Ø´íÎóÂë
- *  
- *          ¿É²ÎÕÕ½Ó¿ÚMV_CC_GetWidth
+ *  @brief  è·å–ç™½å¹³è¡¡ è“
+ *  @param  void* handle                [IN]        ç›¸æœºå¥æŸ„
+ *  @param  MVCC_INTVALUE* pstValue     [IN][OUT]   è¿”å›ç»™è°ƒç”¨è€…æœ‰å…³ç›¸æœºç™½å¹³è¡¡ è“ç»“æ„ä½“æŒ‡é’ˆ
+ *  @return æˆåŠŸ,è¿”å›MV_OK,å¤±è´¥,è¿”å›é”™è¯¯ç 
+ *
+ *          å¯å‚ç…§æ¥å£MV_CC_GetWidth
  ************************************************************************/
 MV_CAMCTRL_API int __stdcall MV_CC_GetBalanceRatioBlue(IN void* handle, IN OUT MVCC_INTVALUE* pstValue);
 
 /************************************************************************
  *  @fn     MV_CAMCTRL_API int __stdcall MV_CC_SetBalanceRatioBlue(IN void* handle, IN const unsigned int nValue);
- *  @brief  ÉèÖÃ°×Æ½ºâ À¶
- *  @param  void* handle                [IN]        Ïà»ú¾ä±ú
- *          const unsigned int nValue   [IN]        ÏëÒªÉèÖÃµÄ°×Æ½ºâ À¶
- *  @return ³É¹¦,·µ»ØMV_OK,²¢ÇÒÏà»ú°×Æ½ºâ À¶½«»á¸ü¸ÄÎªÏàÓ¦Öµ£¬Ê§°Ü,·µ»Ø´íÎóÂë
+ *  @brief  è®¾ç½®ç™½å¹³è¡¡ è“
+ *  @param  void* handle                [IN]        ç›¸æœºå¥æŸ„
+ *          const unsigned int nValue   [IN]        æƒ³è¦è®¾ç½®çš„ç™½å¹³è¡¡ è“
+ *  @return æˆåŠŸ,è¿”å›MV_OK,å¹¶ä¸”ç›¸æœºç™½å¹³è¡¡ è“å°†ä¼šæ›´æ”¹ä¸ºç›¸åº”å€¼ï¼Œå¤±è´¥,è¿”å›é”™è¯¯ç 
  ************************************************************************/
 MV_CAMCTRL_API int __stdcall MV_CC_SetBalanceRatioBlue(IN void* handle, IN const unsigned int nValue);
 
 /************************************************************************
  *  @fn     MV_CAMCTRL_API int __stdcall MV_CC_GetFrameSpecInfoAbility(IN void* handle, IN OUT MVCC_INTVALUE* pstValue);
- *  @brief  »ñÈ¡Ë®Ó¡ĞÅÏ¢ÄÚ°üº¬µÄĞÅÏ¢ÀàĞÍ
- *  @param  void* handle                [IN]        Ïà»ú¾ä±ú
- *  @param  MVCC_INTVALUE* pstValue     [IN][OUT]   ·µ»Ø¸øµ÷ÓÃÕßÓĞ¹ØÏà»úË®Ó¡ĞÅÏ¢ÄÚ°üº¬µÄĞÅÏ¢ÀàĞÍ½á¹¹ÌåÖ¸Õë
- *  @return ³É¹¦,·µ»ØMV_OK,Ê§°Ü,·µ»Ø´íÎóÂë
- *  
- *          ¿É²ÎÕÕ½Ó¿ÚMV_CC_GetWidth
+ *  @brief  è·å–æ°´å°ä¿¡æ¯å†…åŒ…å«çš„ä¿¡æ¯ç±»å‹
+ *  @param  void* handle                [IN]        ç›¸æœºå¥æŸ„
+ *  @param  MVCC_INTVALUE* pstValue     [IN][OUT]   è¿”å›ç»™è°ƒç”¨è€…æœ‰å…³ç›¸æœºæ°´å°ä¿¡æ¯å†…åŒ…å«çš„ä¿¡æ¯ç±»å‹ç»“æ„ä½“æŒ‡é’ˆ
+ *  @return æˆåŠŸ,è¿”å›MV_OK,å¤±è´¥,è¿”å›é”™è¯¯ç 
+ *
+ *          å¯å‚ç…§æ¥å£MV_CC_GetWidth
  ************************************************************************/
 MV_CAMCTRL_API int __stdcall MV_CC_GetFrameSpecInfoAbility(IN void* handle, IN OUT MVCC_INTVALUE* pstValue);
 
 /************************************************************************
  *  @fn     MV_CAMCTRL_API int __stdcall MV_CC_SetFrameSpecInfoAbility(IN void* handle, IN const unsigned int nValue);
- *  @brief  ÉèÖÃË®Ó¡ĞÅÏ¢ÄÚ°üº¬µÄĞÅÏ¢ÀàĞÍ
- *  @param  void* handle                [IN]        Ïà»ú¾ä±ú
- *          const unsigned int nValue   [IN]        ÏëÒªÉèÖÃµÄË®Ó¡ĞÅÏ¢ÄÚ°üº¬µÄĞÅÏ¢ÀàĞÍ
- *  @return ³É¹¦,·µ»ØMV_OK,²¢ÇÒÏà»úË®Ó¡ĞÅÏ¢ÄÚ°üº¬µÄĞÅÏ¢ÀàĞÍ»á¸ü¸ÄÎªÏàÓ¦Öµ£¬Ê§°Ü,·µ»Ø´íÎóÂë
+ *  @brief  è®¾ç½®æ°´å°ä¿¡æ¯å†…åŒ…å«çš„ä¿¡æ¯ç±»å‹
+ *  @param  void* handle                [IN]        ç›¸æœºå¥æŸ„
+ *          const unsigned int nValue   [IN]        æƒ³è¦è®¾ç½®çš„æ°´å°ä¿¡æ¯å†…åŒ…å«çš„ä¿¡æ¯ç±»å‹
+ *  @return æˆåŠŸ,è¿”å›MV_OK,å¹¶ä¸”ç›¸æœºæ°´å°ä¿¡æ¯å†…åŒ…å«çš„ä¿¡æ¯ç±»å‹ä¼šæ›´æ”¹ä¸ºç›¸åº”å€¼ï¼Œå¤±è´¥,è¿”å›é”™è¯¯ç 
  ************************************************************************/
 MV_CAMCTRL_API int __stdcall MV_CC_SetFrameSpecInfoAbility(IN void* handle, IN const unsigned int nValue);
 
 /************************************************************************
  *  @fn     MV_CAMCTRL_API int __stdcall MV_CC_GetDeviceUserID(IN void* handle, IN OUT MVCC_STRINGVALUE* pstValue);
- *  @brief  »ñÈ¡Éè±¸×Ô¶¨ÒåÃû×Ö
- *  @param  void* handle                [IN]        Ïà»ú¾ä±ú
- *          MVCC_STRINGVALUE* pstValue  [IN OUT]    ·µ»Ø¸øµ÷ÓÃÕßÓĞ¹ØÏà»úÃû×Ö½á¹¹ÌåÖ¸Õë
- *  @return ³É¹¦,·µ»ØMV_OK,²¢ÇÒ»ñÈ¡µ½Ïà»úµÄ×Ô¶¨ÒåÃû×Ö£¬Ê§°Ü,·µ»Ø´íÎóÂë
+ *  @brief  è·å–è®¾å¤‡è‡ªå®šä¹‰åå­—
+ *  @param  void* handle                [IN]        ç›¸æœºå¥æŸ„
+ *          MVCC_STRINGVALUE* pstValue  [IN OUT]    è¿”å›ç»™è°ƒç”¨è€…æœ‰å…³ç›¸æœºåå­—ç»“æ„ä½“æŒ‡é’ˆ
+ *  @return æˆåŠŸ,è¿”å›MV_OK,å¹¶ä¸”è·å–åˆ°ç›¸æœºçš„è‡ªå®šä¹‰åå­—ï¼Œå¤±è´¥,è¿”å›é”™è¯¯ç 
  ************************************************************************/
 MV_CAMCTRL_API int __stdcall MV_CC_GetDeviceUserID(IN void* handle, IN OUT MVCC_STRINGVALUE* pstValue);
 
 /************************************************************************
  *  @fn     MV_CAMCTRL_API int __stdcall MV_CC_SetDeviceUserID(IN void* handle, IN const char* chValue);
- *  @brief  ÉèÖÃÉè±¸×Ô¶¨ÒåÃû×Ö
- *  @param  void* handle                [IN]        Ïà»ú¾ä±ú
- *          IN const char* chValue      [IN]        Éè±¸Ãû×Ö
- *  @return ³É¹¦,·µ»ØMV_OK,²¢ÇÒÉèÖÃÉè±¸×Ô¶¨ÒåÃû×Ö£¬Ê§°Ü,·µ»Ø´íÎóÂë
+ *  @brief  è®¾ç½®è®¾å¤‡è‡ªå®šä¹‰åå­—
+ *  @param  void* handle                [IN]        ç›¸æœºå¥æŸ„
+ *          IN const char* chValue      [IN]        è®¾å¤‡åå­—
+ *  @return æˆåŠŸ,è¿”å›MV_OK,å¹¶ä¸”è®¾ç½®è®¾å¤‡è‡ªå®šä¹‰åå­—ï¼Œå¤±è´¥,è¿”å›é”™è¯¯ç 
  ************************************************************************/
 MV_CAMCTRL_API int __stdcall MV_CC_SetDeviceUserID(IN void* handle, IN const char* chValue);
 
 /************************************************************************
  *  @fn     MV_CAMCTRL_API int __stdcall MV_CC_GetBurstFrameCount(IN void* handle, IN OUT MVCC_INTVALUE* pstValue);
- *  @brief  »ñÈ¡Ò»´Î´¥·¢µÄÖ¡Êı
- *  @param  void* handle                [IN]        Ïà»ú¾ä±ú
- *  @param  MVCC_INTVALUE* pstValue     [IN][OUT]   ·µ»Ø¸øµ÷ÓÃÕßÓĞ¹ØÏà»úÒ»´Î´¥·¢µÄÖ¡Êı½á¹¹ÌåÖ¸Õë
- *  @return ³É¹¦,·µ»ØMV_OK,Ê§°Ü,·µ»Ø´íÎóÂë
- *  
- *          ¿É²ÎÕÕ½Ó¿ÚMV_CC_GetWidth
+ *  @brief  è·å–ä¸€æ¬¡è§¦å‘çš„å¸§æ•°
+ *  @param  void* handle                [IN]        ç›¸æœºå¥æŸ„
+ *  @param  MVCC_INTVALUE* pstValue     [IN][OUT]   è¿”å›ç»™è°ƒç”¨è€…æœ‰å…³ç›¸æœºä¸€æ¬¡è§¦å‘çš„å¸§æ•°ç»“æ„ä½“æŒ‡é’ˆ
+ *  @return æˆåŠŸ,è¿”å›MV_OK,å¤±è´¥,è¿”å›é”™è¯¯ç 
+ *
+ *          å¯å‚ç…§æ¥å£MV_CC_GetWidth
  ************************************************************************/
 MV_CAMCTRL_API int __stdcall MV_CC_GetBurstFrameCount(IN void* handle, IN OUT MVCC_INTVALUE* pstValue);
 
 /************************************************************************
  *  @fn     MV_CAMCTRL_API int __stdcall MV_CC_SetBurstFrameCount(IN void* handle, IN const unsigned int nValue);
- *  @brief  ÉèÖÃÒ»´Î´¥·¢µÄÖ¡Êı
- *  @param  void* handle                [IN]        Ïà»ú¾ä±ú
- *          const unsigned int nValue   [IN]        ÏëÒªÉèÖÃµÄÒ»´Î´¥·¢µÄÖ¡Êı
- *  @return ³É¹¦,·µ»ØMV_OK,²¢ÇÒÏà»úÒ»´Î´¥·¢µÄÖ¡Êı»á¸ü¸ÄÎªÏàÓ¦Öµ£¬Ê§°Ü,·µ»Ø´íÎóÂë
+ *  @brief  è®¾ç½®ä¸€æ¬¡è§¦å‘çš„å¸§æ•°
+ *  @param  void* handle                [IN]        ç›¸æœºå¥æŸ„
+ *          const unsigned int nValue   [IN]        æƒ³è¦è®¾ç½®çš„ä¸€æ¬¡è§¦å‘çš„å¸§æ•°
+ *  @return æˆåŠŸ,è¿”å›MV_OK,å¹¶ä¸”ç›¸æœºä¸€æ¬¡è§¦å‘çš„å¸§æ•°ä¼šæ›´æ”¹ä¸ºç›¸åº”å€¼ï¼Œå¤±è´¥,è¿”å›é”™è¯¯ç 
  ************************************************************************/
 MV_CAMCTRL_API int __stdcall MV_CC_SetBurstFrameCount(IN void* handle, IN const unsigned int nValue);
 
 /************************************************************************
  *  @fn     MV_CAMCTRL_API int __stdcall MV_CC_GetAcquisitionLineRate(IN void* handle, IN OUT MVCC_INTVALUE* pstValue);
- *  @brief  »ñÈ¡ĞĞÆµ
- *  @param  void* handle                [IN]        Ïà»ú¾ä±ú
- *  @param  MVCC_INTVALUE* pstValue     [IN][OUT]   ·µ»Ø¸øµ÷ÓÃÕßÓĞ¹ØÏà»úĞĞÆµ½á¹¹ÌåÖ¸Õë
- *  @return ³É¹¦,·µ»ØMV_OK,Ê§°Ü,·µ»Ø´íÎóÂë
- *  
- *          ¿É²ÎÕÕ½Ó¿ÚMV_CC_GetWidth
+ *  @brief  è·å–è¡Œé¢‘
+ *  @param  void* handle                [IN]        ç›¸æœºå¥æŸ„
+ *  @param  MVCC_INTVALUE* pstValue     [IN][OUT]   è¿”å›ç»™è°ƒç”¨è€…æœ‰å…³ç›¸æœºè¡Œé¢‘ç»“æ„ä½“æŒ‡é’ˆ
+ *  @return æˆåŠŸ,è¿”å›MV_OK,å¤±è´¥,è¿”å›é”™è¯¯ç 
+ *
+ *          å¯å‚ç…§æ¥å£MV_CC_GetWidth
  ************************************************************************/
 MV_CAMCTRL_API int __stdcall MV_CC_GetAcquisitionLineRate(IN void* handle, IN OUT MVCC_INTVALUE* pstValue);
 
 /************************************************************************
  *  @fn     MV_CAMCTRL_API int __stdcall MV_CC_SetAcquisitionLineRate(IN void* handle, IN const unsigned int nValue);
- *  @brief  ÉèÖÃĞĞÆµ
- *  @param  void* handle                [IN]        Ïà»ú¾ä±ú
- *          const unsigned int nValue   [IN]        ÏëÒªÉèÖÃµÄĞĞÆµ
- *  @return ³É¹¦,·µ»ØMV_OK,²¢ÇÒÏà»úĞĞÆµ»á¸ü¸ÄÎªÏàÓ¦Öµ£¬Ê§°Ü,·µ»Ø´íÎóÂë
+ *  @brief  è®¾ç½®è¡Œé¢‘
+ *  @param  void* handle                [IN]        ç›¸æœºå¥æŸ„
+ *          const unsigned int nValue   [IN]        æƒ³è¦è®¾ç½®çš„è¡Œé¢‘
+ *  @return æˆåŠŸ,è¿”å›MV_OK,å¹¶ä¸”ç›¸æœºè¡Œé¢‘ä¼šæ›´æ”¹ä¸ºç›¸åº”å€¼ï¼Œå¤±è´¥,è¿”å›é”™è¯¯ç 
  ************************************************************************/
 MV_CAMCTRL_API int __stdcall MV_CC_SetAcquisitionLineRate(IN void* handle, IN const unsigned int nValue);
 
 /************************************************************************
  *  @fn     MV_CAMCTRL_API int __stdcall MV_CC_GetHeartBeatTimeout(IN void* handle, IN OUT MVCC_INTVALUE* pstValue);
- *  @brief  »ñÈ¡ĞÄÌøĞÅÏ¢
- *  @param  void* handle                [IN]        Ïà»ú¾ä±ú
- *  @param  MVCC_INTVALUE* pstValue     [IN][OUT]   ·µ»Ø¸øµ÷ÓÃÕßÓĞ¹ØÏà»úĞÄÌøĞÅÏ¢½á¹¹ÌåÖ¸Õë
- *  @return ³É¹¦,·µ»ØMV_OK,Ê§°Ü,·µ»Ø´íÎóÂë
- *  
- *          ¿É²ÎÕÕ½Ó¿ÚMV_CC_GetWidth
+ *  @brief  è·å–å¿ƒè·³ä¿¡æ¯
+ *  @param  void* handle                [IN]        ç›¸æœºå¥æŸ„
+ *  @param  MVCC_INTVALUE* pstValue     [IN][OUT]   è¿”å›ç»™è°ƒç”¨è€…æœ‰å…³ç›¸æœºå¿ƒè·³ä¿¡æ¯ç»“æ„ä½“æŒ‡é’ˆ
+ *  @return æˆåŠŸ,è¿”å›MV_OK,å¤±è´¥,è¿”å›é”™è¯¯ç 
+ *
+ *          å¯å‚ç…§æ¥å£MV_CC_GetWidth
  ************************************************************************/
 MV_CAMCTRL_API int __stdcall MV_CC_GetHeartBeatTimeout(IN void* handle, IN OUT MVCC_INTVALUE* pstValue);
 
 /************************************************************************
  *  @fn     MV_CAMCTRL_API int __stdcall MV_CC_SetHeartBeatTimeout(IN void* handle, IN const unsigned int nValue);
- *  @brief  ÉèÖÃĞÄÌøĞÅÏ¢
- *  @param  void* handle                [IN]        Ïà»ú¾ä±ú
- *          const unsigned int nValue   [IN]        ÏëÒªÉèÖÃµÄĞÄÌøĞÅÏ¢
- *  @return ³É¹¦,·µ»ØMV_OK,²¢ÇÒÏà»úĞÄÌøĞÅÏ¢»á¸ü¸ÄÎªÏàÓ¦Öµ£¬Ê§°Ü,·µ»Ø´íÎóÂë
+ *  @brief  è®¾ç½®å¿ƒè·³ä¿¡æ¯
+ *  @param  void* handle                [IN]        ç›¸æœºå¥æŸ„
+ *          const unsigned int nValue   [IN]        æƒ³è¦è®¾ç½®çš„å¿ƒè·³ä¿¡æ¯
+ *  @return æˆåŠŸ,è¿”å›MV_OK,å¹¶ä¸”ç›¸æœºå¿ƒè·³ä¿¡æ¯ä¼šæ›´æ”¹ä¸ºç›¸åº”å€¼ï¼Œå¤±è´¥,è¿”å›é”™è¯¯ç 
  ************************************************************************/
 MV_CAMCTRL_API int __stdcall MV_CC_SetHeartBeatTimeout(IN void* handle, IN const unsigned int nValue);
 
@@ -1073,83 +1073,83 @@ MV_CAMCTRL_API int __stdcall MV_CC_SetHeartBeatTimeout(IN void* handle, IN const
 
 
 /************************************************************************/
-/* Éè±¸Éı¼¶ ºÍ ¼Ä´æÆ÷¶ÁĞ´ ºÍÒì³£¡¢ÊÂ¼ş»Øµ÷                            */
+/* è®¾å¤‡å‡çº§ å’Œ å¯„å­˜å™¨è¯»å†™ å’Œå¼‚å¸¸ã€äº‹ä»¶å›è°ƒ                            */
 /************************************************************************/
-// Éè±¸±¾µØÉı¼¶
+// è®¾å¤‡æœ¬åœ°å‡çº§
 /************************************************************************
- *  @fn     MV_CAMCTRL_API int __stdcall MV_CC_LocalUpgrade(IN void* handle, 
+ *  @fn     MV_CAMCTRL_API int __stdcall MV_CC_LocalUpgrade(IN void* handle,
                                                             const void *pFilePathName);
- *  @brief  Éè±¸±¾µØÉı¼¶
- *  @param  void* handle                  [IN]        Ïà»ú¾ä±ú
- *  @param  void *pFilePathName           [IN]        ÎÄ¼şÃû
- *  @return ³É¹¦,·µ»ØMV_OK,Ê§°Ü,·µ»Ø´íÎóÂë
+ *  @brief  è®¾å¤‡æœ¬åœ°å‡çº§
+ *  @param  void* handle                  [IN]        ç›¸æœºå¥æŸ„
+ *  @param  void *pFilePathName           [IN]        æ–‡ä»¶å
+ *  @return æˆåŠŸ,è¿”å›MV_OK,å¤±è´¥,è¿”å›é”™è¯¯ç 
  ************************************************************************/
 MV_CAMCTRL_API int __stdcall MV_CC_LocalUpgrade(IN void* handle, const void *pFilePathName);
 
 /************************************************************************
  *  @fn     MV_CAMCTRL_API int __stdcall MV_CC_GetUpgradeProcess(IN void* handle,
                                                                  unsigned int* pnProcess);
- *  @brief  »ñÈ¡Éı¼¶½ø¶È
- *  @param  void* handle                  [IN]        Ïà»ú¾ä±ú
- *  @param  unsigned int* pnProcess       [OUT]       ½ø¶È½ÓÊÕµØÖ·
- *  @return ³É¹¦,·µ»ØMV_OK,Ê§°Ü,·µ»Ø´íÎóÂë
+ *  @brief  è·å–å‡çº§è¿›åº¦
+ *  @param  void* handle                  [IN]        ç›¸æœºå¥æŸ„
+ *  @param  unsigned int* pnProcess       [OUT]       è¿›åº¦æ¥æ”¶åœ°å€
+ *  @return æˆåŠŸ,è¿”å›MV_OK,å¤±è´¥,è¿”å›é”™è¯¯ç 
  ************************************************************************/
 MV_CAMCTRL_API int __stdcall MV_CC_GetUpgradeProcess(IN void* handle, unsigned int* pnProcess);
 
 /************************************************************************
  *  @fn     MV_CAMCTRL_API int __stdcall MV_CC_GetOptimalPacketSize(IN void* handle);
- *  @brief  »ñÈ¡×î¼ÑµÄpacket size£¬¶ÔÓ¦GigEVisionÉè±¸ÊÇ SCPS£¬¶ÔÓ¦U3VÉè±¸ÊÇÃ¿´Î´ÓÇı¶¯¶ÁÈ¡µÄ°ü´óĞ¡
- *  @param  void* handle                  [IN]        Ïà»ú¾ä±ú
- *  @return ×î¼Ñpacketsize
+ *  @brief  è·å–æœ€ä½³çš„packet sizeï¼Œå¯¹åº”GigEVisionè®¾å¤‡æ˜¯ SCPSï¼Œå¯¹åº”U3Vè®¾å¤‡æ˜¯æ¯æ¬¡ä»é©±åŠ¨è¯»å–çš„åŒ…å¤§å°
+ *  @param  void* handle                  [IN]        ç›¸æœºå¥æŸ„
+ *  @return æœ€ä½³packetsize
  ************************************************************************/
 MV_CAMCTRL_API int __stdcall MV_CC_GetOptimalPacketSize(IN void* handle);
 
 /************************************************************************
  *  @fn     MV_CC_ReadMemory
- *  @brief  ¶ÁÄÚ´æ
- *  @param  handle£ºÉè±¸¾ä±ú
- *  @param  pBuffer£º×÷Îª·µ»ØÖµÊ¹ÓÃ£¬±£´æ¶Áµ½µÄÄÚ´æÖµ£¨ÄÚ´æÖµÊÇ°´ÕÕ´ó¶ËÄ£Ê½´æ´¢µÄ£©
- *  @param  nAddress£º´ı¶ÁÈ¡µÄÄÚ´æµØÖ·£¬¸ÃµØÖ·¿ÉÒÔ´ÓÉè±¸µÄCamera.xmlÎÄ¼şÖĞ»ñÈ¡£¬ĞÎÈçxxx_RegAddrµÄxml½ÚµãÖµ
-                  £¨Éè±¸µÄCamera.xmlÎÄ¼ş»áÔÚÉè±¸´ò¿ªÖ®ºó×Ô¶¯Éú³ÉÔÚÓ¦ÓÃ³ÌĞòµÄµ±Ç°Ä¿Â¼ÖĞ£©
- *  @param  nLength£º´ı¶ÁÈ¡µÄÄÚ´æ³¤¶È
- *  @return ¼û·µ»Ø´íÎóÂë
+ *  @brief  è¯»å†…å­˜
+ *  @param  handleï¼šè®¾å¤‡å¥æŸ„
+ *  @param  pBufferï¼šä½œä¸ºè¿”å›å€¼ä½¿ç”¨ï¼Œä¿å­˜è¯»åˆ°çš„å†…å­˜å€¼ï¼ˆå†…å­˜å€¼æ˜¯æŒ‰ç…§å¤§ç«¯æ¨¡å¼å­˜å‚¨çš„ï¼‰
+ *  @param  nAddressï¼šå¾…è¯»å–çš„å†…å­˜åœ°å€ï¼Œè¯¥åœ°å€å¯ä»¥ä»è®¾å¤‡çš„Camera.xmlæ–‡ä»¶ä¸­è·å–ï¼Œå½¢å¦‚xxx_RegAddrçš„xmlèŠ‚ç‚¹å€¼
+                  ï¼ˆè®¾å¤‡çš„Camera.xmlæ–‡ä»¶ä¼šåœ¨è®¾å¤‡æ‰“å¼€ä¹‹åè‡ªåŠ¨ç”Ÿæˆåœ¨åº”ç”¨ç¨‹åºçš„å½“å‰ç›®å½•ä¸­ï¼‰
+ *  @param  nLengthï¼šå¾…è¯»å–çš„å†…å­˜é•¿åº¦
+ *  @return è§è¿”å›é”™è¯¯ç 
 *************************************************************************/
 MV_CAMCTRL_API int __stdcall MV_CC_ReadMemory(IN void* handle , void *pBuffer, int64_t nAddress, int64_t nLength);
 
 /************************************************************************
  *  @fn     MV_CC_WriteMemory
- *  @brief  Ğ´ÄÚ´æ
- *  @param  handle£ºÉè±¸¾ä±ú
- *  @param  pBuffer£º´ıĞ´ÈëµÄÄÚ´æÖµ£¨×¢ÒâÄÚ´æÖµÒª°´ÕÕ´ó¶ËÄ£Ê½´æ´¢£©
- *  @param  nAddress£º´ıĞ´ÈëµÄÄÚ´æµØÖ·£¬¸ÃµØÖ·¿ÉÒÔ´ÓÉè±¸µÄCamera.xmlÎÄ¼şÖĞ»ñÈ¡£¬ĞÎÈçxxx_RegAddrµÄxml½ÚµãÖµ
-                  £¨Éè±¸µÄCamera.xmlÎÄ¼ş»áÔÚÉè±¸´ò¿ªÖ®ºó×Ô¶¯Éú³ÉÔÚÓ¦ÓÃ³ÌĞòµÄµ±Ç°Ä¿Â¼ÖĞ£©
- *  @param  nLength£º´ıĞ´ÈëµÄÄÚ´æ³¤¶È
- *  @return ¼û·µ»Ø´íÎóÂë
+ *  @brief  å†™å†…å­˜
+ *  @param  handleï¼šè®¾å¤‡å¥æŸ„
+ *  @param  pBufferï¼šå¾…å†™å…¥çš„å†…å­˜å€¼ï¼ˆæ³¨æ„å†…å­˜å€¼è¦æŒ‰ç…§å¤§ç«¯æ¨¡å¼å­˜å‚¨ï¼‰
+ *  @param  nAddressï¼šå¾…å†™å…¥çš„å†…å­˜åœ°å€ï¼Œè¯¥åœ°å€å¯ä»¥ä»è®¾å¤‡çš„Camera.xmlæ–‡ä»¶ä¸­è·å–ï¼Œå½¢å¦‚xxx_RegAddrçš„xmlèŠ‚ç‚¹å€¼
+                  ï¼ˆè®¾å¤‡çš„Camera.xmlæ–‡ä»¶ä¼šåœ¨è®¾å¤‡æ‰“å¼€ä¹‹åè‡ªåŠ¨ç”Ÿæˆåœ¨åº”ç”¨ç¨‹åºçš„å½“å‰ç›®å½•ä¸­ï¼‰
+ *  @param  nLengthï¼šå¾…å†™å…¥çš„å†…å­˜é•¿åº¦
+ *  @return è§è¿”å›é”™è¯¯ç 
 ************************************************************************/
 MV_CAMCTRL_API int __stdcall MV_CC_WriteMemory(IN void* handle , const void *pBuffer, int64_t nAddress, int64_t nLength);
 
-// ×¢²áÒì³£ÏûÏ¢»Øµ÷£¬ÔÚ´ò¿ªÉè±¸Ö®ºóµ÷ÓÃ
+// æ³¨å†Œå¼‚å¸¸æ¶ˆæ¯å›è°ƒï¼Œåœ¨æ‰“å¼€è®¾å¤‡ä¹‹åè°ƒç”¨
 /************************************************************************
  *  @fn     MV_CC_RegisterExceptionCallBack
- *  @brief  ×¢²áÒì³£ÏûÏ¢»Øµ÷£¬ÔÚ´ò¿ªÉè±¸Ö®ºóµ÷ÓÃ
- *  @param  handle£ºÉè±¸¾ä±ú
- *  @param  cbException       [IN]      Òì³£»Øµ÷º¯ÊıÖ¸Õë
- *  @param  pUser             [IN]      ÓÃ»§×Ô¶¨Òå±äÁ¿
- *  @return ¼û·µ»Ø´íÎóÂë
+ *  @brief  æ³¨å†Œå¼‚å¸¸æ¶ˆæ¯å›è°ƒï¼Œåœ¨æ‰“å¼€è®¾å¤‡ä¹‹åè°ƒç”¨
+ *  @param  handleï¼šè®¾å¤‡å¥æŸ„
+ *  @param  cbException       [IN]      å¼‚å¸¸å›è°ƒå‡½æ•°æŒ‡é’ˆ
+ *  @param  pUser             [IN]      ç”¨æˆ·è‡ªå®šä¹‰å˜é‡
+ *  @return è§è¿”å›é”™è¯¯ç 
 ************************************************************************/
-MV_CAMCTRL_API int __stdcall MV_CC_RegisterExceptionCallBack(IN void* handle, 
+MV_CAMCTRL_API int __stdcall MV_CC_RegisterExceptionCallBack(IN void* handle,
                                                              void(__stdcall* cbException)(unsigned int nMsgType, void* pUser),
                                                              void* pUser);
 
 /************************************************************************
  *  @fn     MV_CC_RegisterEventCallBack
- *  @brief  ×¢²áÊÂ¼ş»Øµ÷£¬ÔÚ´ò¿ªÉè±¸Ö®ºóµ÷ÓÃ,Ö»Ö§³ÖGIGE
- *  @param  handle£ºÉè±¸¾ä±ú
- *  @param  cbEvent           [IN]      Òì³£»Øµ÷º¯ÊıÖ¸Õë
- *  @param  pUser             [IN]      ÓÃ»§×Ô¶¨Òå±äÁ¿
- *  @return ¼û·µ»Ø´íÎóÂë
+ *  @brief  æ³¨å†Œäº‹ä»¶å›è°ƒï¼Œåœ¨æ‰“å¼€è®¾å¤‡ä¹‹åè°ƒç”¨,åªæ”¯æŒGIGE
+ *  @param  handleï¼šè®¾å¤‡å¥æŸ„
+ *  @param  cbEvent           [IN]      å¼‚å¸¸å›è°ƒå‡½æ•°æŒ‡é’ˆ
+ *  @param  pUser             [IN]      ç”¨æˆ·è‡ªå®šä¹‰å˜é‡
+ *  @return è§è¿”å›é”™è¯¯ç 
 ************************************************************************/
-MV_CAMCTRL_API int __stdcall MV_CC_RegisterEventCallBack(void* handle, 
+MV_CAMCTRL_API int __stdcall MV_CC_RegisterEventCallBack(void* handle,
                                                          void(__stdcall* cbEvent)(unsigned int nExternalEventId, void* pUser),
                                                          void* pUser);
 
@@ -1157,139 +1157,139 @@ MV_CAMCTRL_API int __stdcall MV_CC_RegisterEventCallBack(void* handle,
 
 
 /************************************************************************/
-/* GigEVision Éè±¸¶ÀÓĞµÄ½Ó¿Ú                                     */
+/* GigEVision è®¾å¤‡ç‹¬æœ‰çš„æ¥å£                                     */
 /************************************************************************/
 /************************************************************************
  *  @fn     MV_GIGE_ForceIpEx
- *  @brief  Ç¿ÖÆIP
- *  @param  handle£ºÉè±¸¾ä±ú
- *  @param  nIP               [IN]      ÉèÖÃµÄIP
- *  @param  nSubNetMask       [IN]      ×ÓÍøÑÚÂë
- *  @param  nDefaultGateWay   [IN]      Ä¬ÈÏÍø¹Ø
- *  @return ¼û·µ»Ø´íÎóÂë
+ *  @brief  å¼ºåˆ¶IP
+ *  @param  handleï¼šè®¾å¤‡å¥æŸ„
+ *  @param  nIP               [IN]      è®¾ç½®çš„IP
+ *  @param  nSubNetMask       [IN]      å­ç½‘æ©ç 
+ *  @param  nDefaultGateWay   [IN]      é»˜è®¤ç½‘å…³
+ *  @return è§è¿”å›é”™è¯¯ç 
 ************************************************************************/
 MV_CAMCTRL_API int __stdcall MV_GIGE_ForceIpEx(IN void* handle, unsigned int nIP, unsigned int nSubNetMask, unsigned int nDefaultGateWay);
 
 /************************************************************************
  *  @fn     MV_GIGE_SetIpConfig
- *  @brief  ÅäÖÃIP·½Ê½
- *  @param  handle£ºÉè±¸¾ä±ú
- *  @param  nType               [IN]      IPÀàĞÍ£¬¼ûMV_IP_CFG_x
- *  @return ¼û·µ»Ø´íÎóÂë
+ *  @brief  é…ç½®IPæ–¹å¼
+ *  @param  handleï¼šè®¾å¤‡å¥æŸ„
+ *  @param  nType               [IN]      IPç±»å‹ï¼Œè§MV_IP_CFG_x
+ *  @return è§è¿”å›é”™è¯¯ç 
 ************************************************************************/
 MV_CAMCTRL_API int __stdcall MV_GIGE_SetIpConfig(IN void* handle, unsigned int nType);
 
 /************************************************************************
  *  @fn     MV_GIGE_SetNetTransMode
- *  @brief  ÉèÖÃ½öÊ¹ÓÃÄ³ÖÖÄ£Ê½,type: MV_NET_TRANS_x£¬²»ÉèÖÃÊ±£¬Ä¬ÈÏÓÅÏÈÊ¹ÓÃdriver
- *  @param  handle£ºÉè±¸¾ä±ú
- *  @param  nType               [IN]      ÍøÂç´«ÊäÄ£Ê½£¬¼ûMV_NET_TRANS_x
- *  @return ¼û·µ»Ø´íÎóÂë
+ *  @brief  è®¾ç½®ä»…ä½¿ç”¨æŸç§æ¨¡å¼,type: MV_NET_TRANS_xï¼Œä¸è®¾ç½®æ—¶ï¼Œé»˜è®¤ä¼˜å…ˆä½¿ç”¨driver
+ *  @param  handleï¼šè®¾å¤‡å¥æŸ„
+ *  @param  nType               [IN]      ç½‘ç»œä¼ è¾“æ¨¡å¼ï¼Œè§MV_NET_TRANS_x
+ *  @return è§è¿”å›é”™è¯¯ç 
 ************************************************************************/
 MV_CAMCTRL_API int __stdcall MV_GIGE_SetNetTransMode(IN void* handle, unsigned int nType);
 
 /************************************************************************
  *  @fn     MV_GIGE_GetNetTransInfo
- *  @brief  »ñÈ¡ÍøÂç´«ÊäĞÅÏ¢
- *  @param  handle£ºÉè±¸¾ä±ú
- *  @param  pstInfo             [OUT]      ĞÅÏ¢½á¹¹Ìå
- *  @return ¼û·µ»Ø´íÎóÂë
+ *  @brief  è·å–ç½‘ç»œä¼ è¾“ä¿¡æ¯
+ *  @param  handleï¼šè®¾å¤‡å¥æŸ„
+ *  @param  pstInfo             [OUT]      ä¿¡æ¯ç»“æ„ä½“
+ *  @return è§è¿”å›é”™è¯¯ç 
 ************************************************************************/
 MV_CAMCTRL_API int __stdcall MV_GIGE_GetNetTransInfo(IN void* handle, MV_NETTRANS_INFO* pstInfo);
 
 /************************************************************************
  *  @fn     MV_GIGE_SetGvcpTimeout
- *  @brief  ÉèÖÃGVCPÃüÁî³¬Ê±Ê±¼ä
- *  @param  handle                 [IN]           ¾ä±úµØÖ·
- *  @param  nMillisec              [IN]           ³¬Ê±Ê±¼ä£¬ÒÔºÁÃëÎ»µ¥Î»£¬·¶Î§£º0-10000
- *  @return ³É¹¦£¬·µ»ØMV_OK£»´íÎó£¬·µ»Ø´íÎóÂë 
+ *  @brief  è®¾ç½®GVCPå‘½ä»¤è¶…æ—¶æ—¶é—´
+ *  @param  handle                 [IN]           å¥æŸ„åœ°å€
+ *  @param  nMillisec              [IN]           è¶…æ—¶æ—¶é—´ï¼Œä»¥æ¯«ç§’ä½å•ä½ï¼ŒèŒƒå›´ï¼š0-10000
+ *  @return æˆåŠŸï¼Œè¿”å›MV_OKï¼›é”™è¯¯ï¼Œè¿”å›é”™è¯¯ç 
  ************************************************************************/
 MV_CAMCTRL_API int __stdcall MV_GIGE_SetGvcpTimeout(void* handle, unsigned int nMillisec);
 
 /************************************************************************
  *  @fn     MV_GIGE_SetResend
- *  @brief  ÉèÖÃÊÇ·ñ´ò¿ªÖØ·¢°üÖ§³Ö£¬¼°ÖØ·¢°üÉèÖÃ
- *  @param  handle                 [IN]           ¾ä±úµØÖ·
- *  @param  bEnable                [IN]           ÊÇ·ñÖ§³ÖÖØ·¢°ü
- *  @param  nMaxResendPercent      [IN]           ×î´óÖØ·¢±È
- *  @param  nResendTimeout         [IN]           ÖØ·¢³¬Ê±Ê±¼ä
- *  @return ³É¹¦£¬·µ»ØMV_OK£»´íÎó£¬·µ»Ø´íÎóÂë 
+ *  @brief  è®¾ç½®æ˜¯å¦æ‰“å¼€é‡å‘åŒ…æ”¯æŒï¼ŒåŠé‡å‘åŒ…è®¾ç½®
+ *  @param  handle                 [IN]           å¥æŸ„åœ°å€
+ *  @param  bEnable                [IN]           æ˜¯å¦æ”¯æŒé‡å‘åŒ…
+ *  @param  nMaxResendPercent      [IN]           æœ€å¤§é‡å‘æ¯”
+ *  @param  nResendTimeout         [IN]           é‡å‘è¶…æ—¶æ—¶é—´
+ *  @return æˆåŠŸï¼Œè¿”å›MV_OKï¼›é”™è¯¯ï¼Œè¿”å›é”™è¯¯ç 
  ************************************************************************/
 MV_CAMCTRL_API int __stdcall MV_GIGE_SetResend(void* handle, unsigned int bEnable, unsigned int nMaxResendPercent = 10, unsigned int nResendTimeout = 50);
 
 /************************************************************************
  *  @fn     MV_CAMCTRL_API int __stdcall MV_GIGE_GetGevSCPSPacketSize(IN void* handle, IN OUT MVCC_INTVALUE* pstValue);
- *  @brief  »ñÈ¡ÍøÂç°ü´óĞ¡
- *  @param  void* handle                [IN]        Ïà»ú¾ä±ú
- *  @param  MVCC_INTVALUE* pstValue     [IN][OUT]   ·µ»Ø¸øµ÷ÓÃÕßÓĞ¹ØÏà»úÍøÂç°ü´óĞ¡½á¹¹ÌåÖ¸Õë
- *  @return ³É¹¦,·µ»ØMV_OK,Ê§°Ü,·µ»Ø´íÎóÂë
- *  
- *          ¿É²ÎÕÕ½Ó¿ÚMV_CC_GetWidth
+ *  @brief  è·å–ç½‘ç»œåŒ…å¤§å°
+ *  @param  void* handle                [IN]        ç›¸æœºå¥æŸ„
+ *  @param  MVCC_INTVALUE* pstValue     [IN][OUT]   è¿”å›ç»™è°ƒç”¨è€…æœ‰å…³ç›¸æœºç½‘ç»œåŒ…å¤§å°ç»“æ„ä½“æŒ‡é’ˆ
+ *  @return æˆåŠŸ,è¿”å›MV_OK,å¤±è´¥,è¿”å›é”™è¯¯ç 
+ *
+ *          å¯å‚ç…§æ¥å£MV_CC_GetWidth
  ************************************************************************/
 MV_CAMCTRL_API int __stdcall MV_GIGE_GetGevSCPSPacketSize(IN void* handle, IN OUT MVCC_INTVALUE* pstValue);
 
 /************************************************************************
  *  @fn     MV_CAMCTRL_API int __stdcall MV_GIGE_SetGevSCPSPacketSize(IN void* handle, IN const unsigned int nValue);
- *  @brief  ÉèÖÃÍøÂç°ü´óĞ¡
- *  @param  void* handle                [IN]        Ïà»ú¾ä±ú
- *          const unsigned int nValue   [IN]        ÏëÒªÉèÖÃµÄÍøÂç°ü´óĞ¡
- *  @return ³É¹¦,·µ»ØMV_OK,²¢ÇÒÏà»úÍøÂç°ü´óĞ¡»á¸ü¸ÄÎªÏàÓ¦Öµ£¬Ê§°Ü,·µ»Ø´íÎóÂë
+ *  @brief  è®¾ç½®ç½‘ç»œåŒ…å¤§å°
+ *  @param  void* handle                [IN]        ç›¸æœºå¥æŸ„
+ *          const unsigned int nValue   [IN]        æƒ³è¦è®¾ç½®çš„ç½‘ç»œåŒ…å¤§å°
+ *  @return æˆåŠŸ,è¿”å›MV_OK,å¹¶ä¸”ç›¸æœºç½‘ç»œåŒ…å¤§å°ä¼šæ›´æ”¹ä¸ºç›¸åº”å€¼ï¼Œå¤±è´¥,è¿”å›é”™è¯¯ç 
  ************************************************************************/
 MV_CAMCTRL_API int __stdcall MV_GIGE_SetGevSCPSPacketSize(IN void* handle, IN const unsigned int nValue);
 
 /************************************************************************
  *  @fn     MV_CAMCTRL_API int __stdcall MV_GIGE_GetGevSCPD(IN void* handle, IN OUT MVCC_INTVALUE* pstValue);
- *  @brief  »ñÈ¡ÍøÂç°ü·¢ËÍ¼ä¸ô
- *  @param  void* handle                [IN]        Ïà»ú¾ä±ú
- *  @param  MVCC_INTVALUE* pstValue     [IN][OUT]   ·µ»Ø¸øµ÷ÓÃÕßÓĞ¹ØÏà»úÍøÂç°ü·¢ËÍ¼ä¸ô½á¹¹ÌåÖ¸Õë
- *  @return ³É¹¦,·µ»ØMV_OK,Ê§°Ü,·µ»Ø´íÎóÂë
- *  
- *          ¿É²ÎÕÕ½Ó¿ÚMV_CC_GetWidth
+ *  @brief  è·å–ç½‘ç»œåŒ…å‘é€é—´éš”
+ *  @param  void* handle                [IN]        ç›¸æœºå¥æŸ„
+ *  @param  MVCC_INTVALUE* pstValue     [IN][OUT]   è¿”å›ç»™è°ƒç”¨è€…æœ‰å…³ç›¸æœºç½‘ç»œåŒ…å‘é€é—´éš”ç»“æ„ä½“æŒ‡é’ˆ
+ *  @return æˆåŠŸ,è¿”å›MV_OK,å¤±è´¥,è¿”å›é”™è¯¯ç 
+ *
+ *          å¯å‚ç…§æ¥å£MV_CC_GetWidth
  ************************************************************************/
 MV_CAMCTRL_API int __stdcall MV_GIGE_GetGevSCPD(IN void* handle, IN OUT MVCC_INTVALUE* pstValue);
 
 /************************************************************************
  *  @fn     MV_CAMCTRL_API int __stdcall MV_GIGE_SetGevSCPD(IN void* handle, IN const unsigned int nValue);
- *  @brief  ÉèÖÃÍøÂç°ü·¢ËÍ¼ä¸ô
- *  @param  void* handle                [IN]        Ïà»ú¾ä±ú
- *          const unsigned int nValue   [IN]        ÏëÒªÉèÖÃµÄÍøÂç°ü·¢ËÍ¼ä¸ô
- *  @return ³É¹¦,·µ»ØMV_OK,²¢ÇÒÏà»úÍøÂç°ü·¢ËÍ¼ä¸ô»á¸ü¸ÄÎªÏàÓ¦Öµ£¬Ê§°Ü,·µ»Ø´íÎóÂë
+ *  @brief  è®¾ç½®ç½‘ç»œåŒ…å‘é€é—´éš”
+ *  @param  void* handle                [IN]        ç›¸æœºå¥æŸ„
+ *          const unsigned int nValue   [IN]        æƒ³è¦è®¾ç½®çš„ç½‘ç»œåŒ…å‘é€é—´éš”
+ *  @return æˆåŠŸ,è¿”å›MV_OK,å¹¶ä¸”ç›¸æœºç½‘ç»œåŒ…å‘é€é—´éš”ä¼šæ›´æ”¹ä¸ºç›¸åº”å€¼ï¼Œå¤±è´¥,è¿”å›é”™è¯¯ç 
  ************************************************************************/
 MV_CAMCTRL_API int __stdcall MV_GIGE_SetGevSCPD(IN void* handle, IN const unsigned int nValue);
 
 /************************************************************************
  *  @fn     MV_CAMCTRL_API int __stdcall MV_GIGE_GetGevSCDA(IN void* handle, unsigned int* pnIP);
- *  @brief  »ñÈ¡½ÓÊÕ¶ËIPµØÖ·£¬0xa9fe0102 ±íÊ¾ 169.254.1.2
- *  @param  void* handle                [IN]        Ïà»ú¾ä±ú
- *  @param  unsigned int* pnIP          [IN][OUT]   ·µ»Ø¸øµ÷ÓÃÕß½ÓÊÕ¶ËIPµØÖ·
- *  @return ³É¹¦,·µ»ØMV_OK,Ê§°Ü,·µ»Ø´íÎóÂë
+ *  @brief  è·å–æ¥æ”¶ç«¯IPåœ°å€ï¼Œ0xa9fe0102 è¡¨ç¤º 169.254.1.2
+ *  @param  void* handle                [IN]        ç›¸æœºå¥æŸ„
+ *  @param  unsigned int* pnIP          [IN][OUT]   è¿”å›ç»™è°ƒç”¨è€…æ¥æ”¶ç«¯IPåœ°å€
+ *  @return æˆåŠŸ,è¿”å›MV_OK,å¤±è´¥,è¿”å›é”™è¯¯ç 
  ************************************************************************/
 MV_CAMCTRL_API int __stdcall MV_GIGE_GetGevSCDA(IN void* handle, unsigned int* pnIP);
 
 /************************************************************************
  *  @fn     MV_CAMCTRL_API int __stdcall MV_GIGE_SetGevSCDA(IN void* handle, unsigned int nIP);
- *  @brief  ÉèÖÃ½ÓÊÕ¶ËIPµØÖ·
- *  @param  void* handle                [IN]        Ïà»ú¾ä±ú
- *          unsigned int nIP            [IN]        ÏëÒªÉèÖÃµÄ½ÓÊÕ¶ËIPµØÖ·
- *  @return ³É¹¦,·µ»ØMV_OK,²¢ÇÒÏà»ú½ÓÊÕ¶ËIPµØÖ·»á¸ü¸ÄÎªÏàÓ¦Öµ£¬Ê§°Ü,·µ»Ø´íÎóÂë
+ *  @brief  è®¾ç½®æ¥æ”¶ç«¯IPåœ°å€
+ *  @param  void* handle                [IN]        ç›¸æœºå¥æŸ„
+ *          unsigned int nIP            [IN]        æƒ³è¦è®¾ç½®çš„æ¥æ”¶ç«¯IPåœ°å€
+ *  @return æˆåŠŸ,è¿”å›MV_OK,å¹¶ä¸”ç›¸æœºæ¥æ”¶ç«¯IPåœ°å€ä¼šæ›´æ”¹ä¸ºç›¸åº”å€¼ï¼Œå¤±è´¥,è¿”å›é”™è¯¯ç 
  ************************************************************************/
 MV_CAMCTRL_API int __stdcall MV_GIGE_SetGevSCDA(IN void* handle, unsigned int nIP);
 
 /************************************************************************
  *  @fn     MV_CAMCTRL_API int __stdcall MV_GIGE_GetGevSCSP(IN void* handle, unsigned int* pnPort);
- *  @brief  »ñÈ¡·¢ËÍ¶ËµÄ¶Ë¿ÚºÅ
- *  @param  void* handle                [IN]        Ïà»ú¾ä±ú
- *  @param  unsigned int* pnPort        [IN][OUT]   ·µ»Ø¸øµ÷ÓÃÕß·¢ËÍ¶ËµÄ¶Ë¿ÚºÅ
- *  @return ³É¹¦,·µ»ØMV_OK,Ê§°Ü,·µ»Ø´íÎóÂë
+ *  @brief  è·å–å‘é€ç«¯çš„ç«¯å£å·
+ *  @param  void* handle                [IN]        ç›¸æœºå¥æŸ„
+ *  @param  unsigned int* pnPort        [IN][OUT]   è¿”å›ç»™è°ƒç”¨è€…å‘é€ç«¯çš„ç«¯å£å·
+ *  @return æˆåŠŸ,è¿”å›MV_OK,å¤±è´¥,è¿”å›é”™è¯¯ç 
  ************************************************************************/
 MV_CAMCTRL_API int __stdcall MV_GIGE_GetGevSCSP(IN void* handle, unsigned int* pnPort);
 
 /************************************************************************
  *  @fn     MV_CAMCTRL_API int __stdcall MV_GIGE_SetGevSCSP(IN void* handle, unsigned int nPort);
- *  @brief  ÉèÖÃ·¢ËÍ¶ËµÄ¶Ë¿ÚºÅ
- *  @param  void* handle                [IN]        Ïà»ú¾ä±ú
- *          unsigned int nPort          [IN]        ÏëÒªÉèÖÃµÄ·¢ËÍ¶ËµÄ¶Ë¿ÚºÅ
- *  @return ³É¹¦,·µ»ØMV_OK,²¢ÇÒÏà»ú·¢ËÍ¶ËµÄ¶Ë¿ÚºÅ»á¸ü¸ÄÎªÏàÓ¦Öµ£¬Ê§°Ü,·µ»Ø´íÎóÂë
+ *  @brief  è®¾ç½®å‘é€ç«¯çš„ç«¯å£å·
+ *  @param  void* handle                [IN]        ç›¸æœºå¥æŸ„
+ *          unsigned int nPort          [IN]        æƒ³è¦è®¾ç½®çš„å‘é€ç«¯çš„ç«¯å£å·
+ *  @return æˆåŠŸ,è¿”å›MV_OK,å¹¶ä¸”ç›¸æœºå‘é€ç«¯çš„ç«¯å£å·ä¼šæ›´æ”¹ä¸ºç›¸åº”å€¼ï¼Œå¤±è´¥,è¿”å›é”™è¯¯ç 
  ************************************************************************/
 MV_CAMCTRL_API int __stdcall MV_GIGE_SetGevSCSP(IN void* handle, unsigned int nPort);
 
@@ -1297,70 +1297,70 @@ MV_CAMCTRL_API int __stdcall MV_GIGE_SetGevSCSP(IN void* handle, unsigned int nP
 
 
 /************************************************************************/
-/* XML½âÎöÊ÷µÄÉú³É                                                         */
+/* XMLè§£ææ ‘çš„ç”Ÿæˆ                                                         */
 /************************************************************************/
 /***********************************************************************
  *  @fn         MV_XML_GetGenICamXML
- *  @brief      »ñÈ¡Ïà»úÊôĞÔÊ÷XML
- *  @param       handle                 [IN]          ¾ä±ú
- *  @param       pData                  [OUT]         Í¼ÏñÊı¾İ½ÓÊÕÖ¸Õë
- *  @param       nDataSize              [IN]          ½ÓÊÕ»º´æ´óĞ¡
- *  @param       pnDataLen              [OUT]         Êµ¼ÊÊı¾İ´óĞ¡
- *  @return ³É¹¦£¬·µ»ØMV_OK£»´íÎó£¬·µ»Ø´íÎóÂë
+ *  @brief      è·å–ç›¸æœºå±æ€§æ ‘XML
+ *  @param       handle                 [IN]          å¥æŸ„
+ *  @param       pData                  [OUT]         å›¾åƒæ•°æ®æ¥æ”¶æŒ‡é’ˆ
+ *  @param       nDataSize              [IN]          æ¥æ”¶ç¼“å­˜å¤§å°
+ *  @param       pnDataLen              [OUT]         å®é™…æ•°æ®å¤§å°
+ *  @return æˆåŠŸï¼Œè¿”å›MV_OKï¼›é”™è¯¯ï¼Œè¿”å›é”™è¯¯ç 
  ***********************************************************************/
 MV_CAMCTRL_API int __stdcall MV_XML_GetGenICamXML(IN void* handle, IN OUT unsigned char* pData, IN unsigned int nDataSize, OUT unsigned int* pnDataLen);
 
 /***********************************************************************
  *  @fn         MV_XML_GetRootNode
- *  @brief      »ñÈ¡¸ù½Úµã
- *  @param       handle                 [IN]          ¾ä±ú
- *  @param       pstNode                [OUT]         ¸ù½ÚµãĞÅÏ¢½á¹¹Ìå
- *  @return ³É¹¦£¬·µ»ØMV_OK£»´íÎó£¬·µ»Ø´íÎóÂë
+ *  @brief      è·å–æ ¹èŠ‚ç‚¹
+ *  @param       handle                 [IN]          å¥æŸ„
+ *  @param       pstNode                [OUT]         æ ¹èŠ‚ç‚¹ä¿¡æ¯ç»“æ„ä½“
+ *  @return æˆåŠŸï¼Œè¿”å›MV_OKï¼›é”™è¯¯ï¼Œè¿”å›é”™è¯¯ç 
  ***********************************************************************/
 MV_CAMCTRL_API int __stdcall MV_XML_GetRootNode(IN void* handle, IN OUT MV_XML_NODE_FEATURE* pstNode);
 
 /***********************************************************************
  *  @fn         MV_XML_GetChildren
- *  @brief      ´ÓxmlÖĞ»ñÈ¡Ö¸¶¨½ÚµãµÄËùÓĞ×Ó½Úµã£¬¸ù½ÚµãÎªRoot
- *  @param       handle                 [IN]          ¾ä±ú
- *  @param       pstNode                [IN]          ¸ù½ÚµãĞÅÏ¢½á¹¹Ìå
- *  @param       pstNodesList           [OUT]         ½ÚµãÁĞ±í½á¹¹Ìå
- *  @return ³É¹¦£¬·µ»ØMV_OK£»´íÎó£¬·µ»Ø´íÎóÂë
+ *  @brief      ä»xmlä¸­è·å–æŒ‡å®šèŠ‚ç‚¹çš„æ‰€æœ‰å­èŠ‚ç‚¹ï¼Œæ ¹èŠ‚ç‚¹ä¸ºRoot
+ *  @param       handle                 [IN]          å¥æŸ„
+ *  @param       pstNode                [IN]          æ ¹èŠ‚ç‚¹ä¿¡æ¯ç»“æ„ä½“
+ *  @param       pstNodesList           [OUT]         èŠ‚ç‚¹åˆ—è¡¨ç»“æ„ä½“
+ *  @return æˆåŠŸï¼Œè¿”å›MV_OKï¼›é”™è¯¯ï¼Œè¿”å›é”™è¯¯ç 
  ***********************************************************************/
 MV_CAMCTRL_API int __stdcall MV_XML_GetChildren(IN void* handle, IN MV_XML_NODE_FEATURE* pstNode, IN OUT MV_XML_NODES_LIST* pstNodesList);
 
 /***********************************************************************
  *  @fn         MV_XML_GetNodeFeature
- *  @brief      »ñµÃµ±Ç°½ÚµãµÄÊôĞÔ
- *  @param       handle                 [IN]          ¾ä±ú
- *  @param       pstNode                [IN]          ¸ù½ÚµãĞÅÏ¢½á¹¹Ìå
- *  @param       pstFeature             [OUT]         µ±Ç°½ÚµãÊôĞÔ½á¹¹Ìå£¬
-                           pstFeature ¾ßÌå½á¹¹ÌåÄÚÈİ²Î¿¼ MV_XML_FEATURE_x
- *  @return ³É¹¦£¬·µ»ØMV_OK£»´íÎó£¬·µ»Ø´íÎóÂë
+ *  @brief      è·å¾—å½“å‰èŠ‚ç‚¹çš„å±æ€§
+ *  @param       handle                 [IN]          å¥æŸ„
+ *  @param       pstNode                [IN]          æ ¹èŠ‚ç‚¹ä¿¡æ¯ç»“æ„ä½“
+ *  @param       pstFeature             [OUT]         å½“å‰èŠ‚ç‚¹å±æ€§ç»“æ„ä½“ï¼Œ
+                           pstFeature å…·ä½“ç»“æ„ä½“å†…å®¹å‚è€ƒ MV_XML_FEATURE_x
+ *  @return æˆåŠŸï¼Œè¿”å›MV_OKï¼›é”™è¯¯ï¼Œè¿”å›é”™è¯¯ç 
  ***********************************************************************/
 MV_CAMCTRL_API int __stdcall MV_XML_GetNodeFeature(IN void* handle, IN MV_XML_NODE_FEATURE* pstNode, IN OUT void* pstFeature);
 
 /***********************************************************************
  *  @fn         MV_XML_UpdateNodeFeature
- *  @brief      ¸üĞÂ½Úµã
- *  @param       handle                 [IN]          ¾ä±ú
- *  @param       enType                 [IN]          ½ÚµãÀàĞÍ
- *  @param       pstFeature             [OUT]         µ±Ç°½ÚµãÊôĞÔ½á¹¹Ìå
- *  @return ³É¹¦£¬·µ»ØMV_OK£»´íÎó£¬·µ»Ø´íÎóÂë
+ *  @brief      æ›´æ–°èŠ‚ç‚¹
+ *  @param       handle                 [IN]          å¥æŸ„
+ *  @param       enType                 [IN]          èŠ‚ç‚¹ç±»å‹
+ *  @param       pstFeature             [OUT]         å½“å‰èŠ‚ç‚¹å±æ€§ç»“æ„ä½“
+ *  @return æˆåŠŸï¼Œè¿”å›MV_OKï¼›é”™è¯¯ï¼Œè¿”å›é”™è¯¯ç 
  ***********************************************************************/
 MV_CAMCTRL_API int __stdcall MV_XML_UpdateNodeFeature(IN void* handle, IN enum MV_XML_InterfaceType enType, IN void* pstFeature);
 
-// ÓĞ½ÚµãĞèÒª¸üĞÂÊ±µÄ»Øµ÷º¯Êı
-// µ±µ÷ÓÃMV_XML_UpdateNodeFeature½Ó¿Ú¸üĞÂ½ÚµãÊôĞÔÊ±£¬×¢²áµÄ»Øµ÷º¯ÊıcbUpdate»áÔÚpstNodesListÖĞ·µ»ØÓëÖ®Ïà¹ØÁªµÄ½Úµã
+// æœ‰èŠ‚ç‚¹éœ€è¦æ›´æ–°æ—¶çš„å›è°ƒå‡½æ•°
+// å½“è°ƒç”¨MV_XML_UpdateNodeFeatureæ¥å£æ›´æ–°èŠ‚ç‚¹å±æ€§æ—¶ï¼Œæ³¨å†Œçš„å›è°ƒå‡½æ•°cbUpdateä¼šåœ¨pstNodesListä¸­è¿”å›ä¸ä¹‹ç›¸å…³è”çš„èŠ‚ç‚¹
 /***********************************************************************
  *  @fn         MV_XML_RegisterUpdateCallBack
- *  @brief      ×¢²á¸üĞÂ»Øµ÷
- *  @param       handle                 [IN]          ¾ä±ú
- *  @param       cbUpdate               [IN]          »Øµ÷º¯ÊıÖ¸Õë
- *  @param       pUser                  [IN]          ÓÃ»§×Ô¶¨Òå±äÁ¿
- *  @return ³É¹¦£¬·µ»ØMV_OK£»´íÎó£¬·µ»Ø´íÎóÂë
+ *  @brief      æ³¨å†Œæ›´æ–°å›è°ƒ
+ *  @param       handle                 [IN]          å¥æŸ„
+ *  @param       cbUpdate               [IN]          å›è°ƒå‡½æ•°æŒ‡é’ˆ
+ *  @param       pUser                  [IN]          ç”¨æˆ·è‡ªå®šä¹‰å˜é‡
+ *  @return æˆåŠŸï¼Œè¿”å›MV_OKï¼›é”™è¯¯ï¼Œè¿”å›é”™è¯¯ç 
  ***********************************************************************/
-MV_CAMCTRL_API int __stdcall MV_XML_RegisterUpdateCallBack(IN void* handle, 
+MV_CAMCTRL_API int __stdcall MV_XML_RegisterUpdateCallBack(IN void* handle,
                                                            IN void(__stdcall* cbUpdate)(enum MV_XML_InterfaceType enType, void* pstFeature, MV_XML_NODES_LIST* pstNodesList, void* pUser),
                                                            IN void* pUser);
 
@@ -1368,57 +1368,57 @@ MV_CAMCTRL_API int __stdcall MV_XML_RegisterUpdateCallBack(IN void* handle,
 
 
 /************************************************************************/
-/* ¸½¼Ó½Ó¿Ú                                   */
+/* é™„åŠ æ¥å£                                   */
 /************************************************************************/
 /************************************************************************
  *  @fn     MV_CC_SaveImageEx
- *  @brief  ±£´æÍ¼Æ¬£¬Ö§³ÖBmpºÍJpeg.±àÂëÖÊÁ¿ÔÚ50-99Ö®Ç°
- *  @param  pSaveParam             [IN][OUT]          ±£´æÍ¼Æ¬²ÎÊı½á¹¹Ìå
-                       pData;              // [IN]     ÊäÈëÊı¾İ»º´æ
-                       nDataLen;           // [IN]     ÊäÈëÊı¾İ´óĞ¡
-                       enPixelType;        // [IN]     ÊäÈëÊı¾İµÄÏñËØ¸ñÊ½
-                       nWidth;             // [IN]     Í¼Ïñ¿í
-                       nHeight;            // [IN]     Í¼Ïñ¸ß
-                       pImageBuffer;       // [OUT]    Êä³öÍ¼Æ¬»º´æ
-                       nImageLen;          // [OUT]    Êä³öÍ¼Æ¬´óĞ¡
-                       nBufferSize;        // [IN]     Ìá¹©µÄÊä³ö»º³åÇø´óĞ¡
-                       enImageType;        // [IN]     Êä³öÍ¼Æ¬¸ñÊ½
-                       nJpgQuality;        // [IN]     ±àÂëÖÊÁ¿, (50-99]
+ *  @brief  ä¿å­˜å›¾ç‰‡ï¼Œæ”¯æŒBmpå’ŒJpeg.ç¼–ç è´¨é‡åœ¨50-99ä¹‹å‰
+ *  @param  pSaveParam             [IN][OUT]          ä¿å­˜å›¾ç‰‡å‚æ•°ç»“æ„ä½“
+                       pData;              // [IN]     è¾“å…¥æ•°æ®ç¼“å­˜
+                       nDataLen;           // [IN]     è¾“å…¥æ•°æ®å¤§å°
+                       enPixelType;        // [IN]     è¾“å…¥æ•°æ®çš„åƒç´ æ ¼å¼
+                       nWidth;             // [IN]     å›¾åƒå®½
+                       nHeight;            // [IN]     å›¾åƒé«˜
+                       pImageBuffer;       // [OUT]    è¾“å‡ºå›¾ç‰‡ç¼“å­˜
+                       nImageLen;          // [OUT]    è¾“å‡ºå›¾ç‰‡å¤§å°
+                       nBufferSize;        // [IN]     æä¾›çš„è¾“å‡ºç¼“å†²åŒºå¤§å°
+                       enImageType;        // [IN]     è¾“å‡ºå›¾ç‰‡æ ¼å¼
+                       nJpgQuality;        // [IN]     ç¼–ç è´¨é‡, (50-99]
                        nReserved[4];
- *  @return ³É¹¦£¬·µ»ØMV_OK£»´íÎó£¬·µ»Ø´íÎóÂë 
+ *  @return æˆåŠŸï¼Œè¿”å›MV_OKï¼›é”™è¯¯ï¼Œè¿”å›é”™è¯¯ç 
  ************************************************************************/
 MV_CAMCTRL_API int __stdcall MV_CC_SaveImageEx(IN OUT MV_SAVE_IMAGE_PARAM_EX* pSaveParam);
 
 /************************************************************************
  *  @fn     MV_CC_ConvertPixelType
- *  @brief  ÏñËØ¸ñÊ½×ª»»
- *  @param  pstCvtParam             [IN][OUT]          ±£´æÍ¼Æ¬²ÎÊı½á¹¹Ìå
-                     unsigned short         nWidth;             // [IN]     Í¼Ïñ¿í
-                     unsigned short         nHeight;            // [IN]     Í¼Ïñ¸ß
-                     enum MvGvspPixelType   enSrcPixelType;     // [IN]     Ô´ÏñËØ¸ñÊ½
-                     unsigned char*         pSrcData;           // [IN]     ÊäÈëÊı¾İ»º´æ
-                     unsigned int           nSrcDataLen;        // [IN]     ÊäÈëÊı¾İ´óĞ¡
-                     enum MvGvspPixelType   enDstPixelType;     // [IN]     Ä¿±êÏñËØ¸ñÊ½
-                     unsigned char*         pDstBuffer;         // [OUT]    Êä³öÊı¾İ»º´æ
-                     unsigned int           nDstLen;            // [OUT]    Êä³öÊı¾İ´óĞ¡
-                     unsigned int           nDstBufferSize;     // [IN]     Ìá¹©µÄÊä³ö»º³åÇø´óĞ¡
- *  @return ³É¹¦£¬·µ»ØMV_OK£»´íÎó£¬·µ»Ø´íÎóÂë 
+ *  @brief  åƒç´ æ ¼å¼è½¬æ¢
+ *  @param  pstCvtParam             [IN][OUT]          ä¿å­˜å›¾ç‰‡å‚æ•°ç»“æ„ä½“
+                     unsigned short         nWidth;             // [IN]     å›¾åƒå®½
+                     unsigned short         nHeight;            // [IN]     å›¾åƒé«˜
+                     enum MvGvspPixelType   enSrcPixelType;     // [IN]     æºåƒç´ æ ¼å¼
+                     unsigned char*         pSrcData;           // [IN]     è¾“å…¥æ•°æ®ç¼“å­˜
+                     unsigned int           nSrcDataLen;        // [IN]     è¾“å…¥æ•°æ®å¤§å°
+                     enum MvGvspPixelType   enDstPixelType;     // [IN]     ç›®æ ‡åƒç´ æ ¼å¼
+                     unsigned char*         pDstBuffer;         // [OUT]    è¾“å‡ºæ•°æ®ç¼“å­˜
+                     unsigned int           nDstLen;            // [OUT]    è¾“å‡ºæ•°æ®å¤§å°
+                     unsigned int           nDstBufferSize;     // [IN]     æä¾›çš„è¾“å‡ºç¼“å†²åŒºå¤§å°
+ *  @return æˆåŠŸï¼Œè¿”å›MV_OKï¼›é”™è¯¯ï¼Œè¿”å›é”™è¯¯ç 
  ************************************************************************/
 MV_CAMCTRL_API int __stdcall MV_CC_ConvertPixelType(IN void* handle, IN OUT MV_CC_PIXEL_CONVERT_PARAM* pstCvtParam);
 
 /************************************************************************
  *  @fn     MV_CC_SetBayerCvtQuality
- *  @brief  ²åÖµËã·¨ÀàĞÍÉèÖÃ
- *  @param  BayerCvtQuality             [IN]          BayerµÄ²åÖµ·½·¨  0-×î½üÁÚ 1-Ë«ÏßĞÔ 2-Hamilton
- *  @return ³É¹¦£¬·µ»ØMV_OK£»´íÎó£¬·µ»Ø´íÎóÂë 
+ *  @brief  æ’å€¼ç®—æ³•ç±»å‹è®¾ç½®
+ *  @param  BayerCvtQuality             [IN]          Bayerçš„æ’å€¼æ–¹æ³•  0-æœ€è¿‘é‚» 1-åŒçº¿æ€§ 2-Hamilton
+ *  @return æˆåŠŸï¼Œè¿”å›MV_OKï¼›é”™è¯¯ï¼Œè¿”å›é”™è¯¯ç 
  ************************************************************************/
 MV_CAMCTRL_API int __stdcall MV_CC_SetBayerCvtQuality(IN void* handle, IN unsigned int BayerCvtQuality);
 
 /************************************************************************
  *  @fn     MV_CC_GetTlProxy
- *  @brief  »ñÈ¡GenICam´úÀí
- *  @param  handle                 [IN]           ¾ä±úµØÖ·
- *  @return GenICam´úÀíÀàÖ¸Õë £¬Õı³£·µ»ØÖµ·ÇNULL£»Òì³£·µ»ØNULL
+ *  @brief  è·å–GenICamä»£ç†
+ *  @param  handle                 [IN]           å¥æŸ„åœ°å€
+ *  @return GenICamä»£ç†ç±»æŒ‡é’ˆ ï¼Œæ­£å¸¸è¿”å›å€¼éNULLï¼›å¼‚å¸¸è¿”å›NULL
  ************************************************************************/
 MV_CAMCTRL_API void* __stdcall MV_CC_GetTlProxy(IN void* handle);
 
@@ -1426,23 +1426,23 @@ MV_CAMCTRL_API void* __stdcall MV_CC_GetTlProxy(IN void* handle);
 
 
 /************************************************************************/
-/* Ïà»úÔİ²»Ö§³ÖµÄ½Ó¿Ú                                 */
+/* ç›¸æœºæš‚ä¸æ”¯æŒçš„æ¥å£                                 */
 /************************************************************************/
 /************************************************************************
  *  @fn     MV_CC_FeatureSave
- *  @brief  ±£´æÏà»úÊôĞÔ
- *  @param  handle                [IN]           ¾ä±úµØÖ·
- *  @param  pFileName             [IN]          ÊôĞÔÎÄ¼şÃû
- *  @return ³É¹¦£¬·µ»ØMV_OK£»´íÎó£¬·µ»Ø´íÎóÂë 
+ *  @brief  ä¿å­˜ç›¸æœºå±æ€§
+ *  @param  handle                [IN]           å¥æŸ„åœ°å€
+ *  @param  pFileName             [IN]          å±æ€§æ–‡ä»¶å
+ *  @return æˆåŠŸï¼Œè¿”å›MV_OKï¼›é”™è¯¯ï¼Œè¿”å›é”™è¯¯ç 
  ************************************************************************/
 MV_CAMCTRL_API int __stdcall MV_CC_FeatureSave(IN void* handle, IN const char* pFileName);
 
 /************************************************************************
  *  @fn     MV_CC_FeatureLoad
- *  @brief  µ¼ÈëÏà»úÊôĞÔ
- *  @param  handle                [IN]           ¾ä±úµØÖ·
- *  @param  pFileName             [IN]          ÊôĞÔÎÄ¼şÃû
- *  @return ³É¹¦£¬·µ»ØMV_OK£»´íÎó£¬·µ»Ø´íÎóÂë 
+ *  @brief  å¯¼å…¥ç›¸æœºå±æ€§
+ *  @param  handle                [IN]           å¥æŸ„åœ°å€
+ *  @param  pFileName             [IN]          å±æ€§æ–‡ä»¶å
+ *  @return æˆåŠŸï¼Œè¿”å›MV_OKï¼›é”™è¯¯ï¼Œè¿”å›é”™è¯¯ç 
  ************************************************************************/
 MV_CAMCTRL_API int __stdcall MV_CC_FeatureLoad(IN void* handle, IN const char* pFileName);
 
@@ -1450,75 +1450,75 @@ MV_CAMCTRL_API int __stdcall MV_CC_FeatureLoad(IN void* handle, IN const char* p
 
 
 /************************************************************************/
-/* ÆúÓÃµÄ½Ó¿Ú                                 */
+/* å¼ƒç”¨çš„æ¥å£                                 */
 /************************************************************************/
 /***********************************************************************
  *  @fn         MV_CC_GetOneFrame
- *  @brief      »ñÈ¡Ò»Ö¡Í¼Ïñ£¬´Ëº¯ÊıÎª²éÑ¯Ê½»ñÈ¡£¬Ã¿´Îµ÷ÓÃ²éÑ¯ÄÚ²¿»º´æÓĞ
-                ÎŞÊı¾İ£¬ÓĞÊı¾İÔò·¶Î§Êı¾İ£¬ÎŞÊı¾İ·µ»Ø´íÎóÂë
-                £¨¸Ã½Ó¿ÚÒÑÆúÓÃ£¬½¨Òé¸ÄÓÃ MV_CC_GetOneFrameTimeOut½Ó¿Ú£©
- *  @param       handle                 [IN]          ¾ä±ú
- *  @param       pData                  [OUT]         Í¼ÏñÊı¾İ½ÓÊÕÖ¸Õë
- *  @param       nDataSize              [IN]          ½ÓÊÕ»º´æ´óĞ¡
- *  @param       pFrameInfo             [OUT]         Í¼ÏñĞÅÏ¢½á¹¹Ìå
- *  @return ³É¹¦£¬·µ»ØMV_OK£»´íÎó£¬·µ»Ø´íÎóÂë
+ *  @brief      è·å–ä¸€å¸§å›¾åƒï¼Œæ­¤å‡½æ•°ä¸ºæŸ¥è¯¢å¼è·å–ï¼Œæ¯æ¬¡è°ƒç”¨æŸ¥è¯¢å†…éƒ¨ç¼“å­˜æœ‰
+                æ— æ•°æ®ï¼Œæœ‰æ•°æ®åˆ™èŒƒå›´æ•°æ®ï¼Œæ— æ•°æ®è¿”å›é”™è¯¯ç 
+                ï¼ˆè¯¥æ¥å£å·²å¼ƒç”¨ï¼Œå»ºè®®æ”¹ç”¨ MV_CC_GetOneFrameTimeOutæ¥å£ï¼‰
+ *  @param       handle                 [IN]          å¥æŸ„
+ *  @param       pData                  [OUT]         å›¾åƒæ•°æ®æ¥æ”¶æŒ‡é’ˆ
+ *  @param       nDataSize              [IN]          æ¥æ”¶ç¼“å­˜å¤§å°
+ *  @param       pFrameInfo             [OUT]         å›¾åƒä¿¡æ¯ç»“æ„ä½“
+ *  @return æˆåŠŸï¼Œè¿”å›MV_OKï¼›é”™è¯¯ï¼Œè¿”å›é”™è¯¯ç 
  ***********************************************************************/
 MV_CAMCTRL_API int __stdcall MV_CC_GetOneFrame(IN void* handle, IN OUT unsigned char * pData , IN unsigned int nDataSize, IN OUT MV_FRAME_OUT_INFO* pFrameInfo);
 
 /***********************************************************************
  *  @fn         MV_CC_GetOneFrameEx
- *  @brief      »ñÈ¡Ò»Ö¡trunckÊı¾İ£¬´Ëº¯ÊıÎª²éÑ¯Ê½»ñÈ¡£¬Ã¿´Îµ÷ÓÃ²éÑ¯ÄÚ²¿
-                »º´æÓĞÎŞÊı¾İ£¬ÓĞÊı¾İÔò·¶Î§Êı¾İ£¬ÎŞÊı¾İ·µ»Ø´íÎóÂë
-                £¨¸Ã½Ó¿ÚÒÑÆúÓÃ£¬½¨Òé¸ÄÓÃ MV_CC_GetOneFrameTimeOut½Ó¿Ú£©
- *  @param       handle                 [IN]          ¾ä±ú
- *  @param       pData                  [OUT]         Í¼ÏñÊı¾İ½ÓÊÕÖ¸Õë
- *  @param       nDataSize              [IN]          ½ÓÊÕ»º´æ´óĞ¡
- *  @param       pFrameInfo             [OUT]         Í¼ÏñĞÅÏ¢½á¹¹Ìå
- *  @return ³É¹¦£¬·µ»ØMV_OK£»´íÎó£¬·µ»Ø´íÎóÂë
+ *  @brief      è·å–ä¸€å¸§trunckæ•°æ®ï¼Œæ­¤å‡½æ•°ä¸ºæŸ¥è¯¢å¼è·å–ï¼Œæ¯æ¬¡è°ƒç”¨æŸ¥è¯¢å†…éƒ¨
+                ç¼“å­˜æœ‰æ— æ•°æ®ï¼Œæœ‰æ•°æ®åˆ™èŒƒå›´æ•°æ®ï¼Œæ— æ•°æ®è¿”å›é”™è¯¯ç 
+                ï¼ˆè¯¥æ¥å£å·²å¼ƒç”¨ï¼Œå»ºè®®æ”¹ç”¨ MV_CC_GetOneFrameTimeOutæ¥å£ï¼‰
+ *  @param       handle                 [IN]          å¥æŸ„
+ *  @param       pData                  [OUT]         å›¾åƒæ•°æ®æ¥æ”¶æŒ‡é’ˆ
+ *  @param       nDataSize              [IN]          æ¥æ”¶ç¼“å­˜å¤§å°
+ *  @param       pFrameInfo             [OUT]         å›¾åƒä¿¡æ¯ç»“æ„ä½“
+ *  @return æˆåŠŸï¼Œè¿”å›MV_OKï¼›é”™è¯¯ï¼Œè¿”å›é”™è¯¯ç 
  ***********************************************************************/
 MV_CAMCTRL_API int __stdcall MV_CC_GetOneFrameEx(IN void* handle, IN OUT unsigned char * pData , IN unsigned int nDataSize, IN OUT MV_FRAME_OUT_INFO_EX* pFrameInfo);
 
 /***********************************************************************
  *  @fn         MV_CC_RegisterImageCallBack
- *  @brief      ×¢²áÍ¼ÏñÊı¾İ»Øµ÷£¨¸Ã½Ó¿ÚÒÑÆúÓÃ£¬½¨Òé¸ÄÓÃ MV_CC_RegisterImageCallBackEx½Ó¿Ú£©
- *  @param       handle                 [IN]          ¾ä±ú
- *  @param       cbOutput               [IN]          »Øµ÷º¯ÊıÖ¸Õë
- *  @param       pUser                  [IN]          ÓÃ»§×Ô¶¨Òå±äÁ¿
- *  @return ³É¹¦£¬·µ»ØMV_OK£»´íÎó£¬·µ»Ø´íÎóÂë
+ *  @brief      æ³¨å†Œå›¾åƒæ•°æ®å›è°ƒï¼ˆè¯¥æ¥å£å·²å¼ƒç”¨ï¼Œå»ºè®®æ”¹ç”¨ MV_CC_RegisterImageCallBackExæ¥å£ï¼‰
+ *  @param       handle                 [IN]          å¥æŸ„
+ *  @param       cbOutput               [IN]          å›è°ƒå‡½æ•°æŒ‡é’ˆ
+ *  @param       pUser                  [IN]          ç”¨æˆ·è‡ªå®šä¹‰å˜é‡
+ *  @return æˆåŠŸï¼Œè¿”å›MV_OKï¼›é”™è¯¯ï¼Œè¿”å›é”™è¯¯ç 
  ***********************************************************************/
-MV_CAMCTRL_API int __stdcall MV_CC_RegisterImageCallBack(void* handle, 
+MV_CAMCTRL_API int __stdcall MV_CC_RegisterImageCallBack(void* handle,
                                                          void(__stdcall* cbOutput)(unsigned char * pData, MV_FRAME_OUT_INFO* pFrameInfo, void* pUser),
                                                          void* pUser);
 
 /************************************************************************
  *  @fn     MV_CC_SaveImage
- *  @brief  ±£´æÍ¼Æ¬£¨¸Ã½Ó¿ÚÒÑÆúÓÃ£¬½¨Òé¸ÄÓÃ MV_CC_SaveImageEx½Ó¿Ú£©
- *  @param  pSaveParam             [IN][OUT]          ±£´æÍ¼Æ¬²ÎÊı½á¹¹Ìå
-                       pData;              // [IN]     ÊäÈëÊı¾İ»º´æ
-                       nDataLen;           // [IN]     ÊäÈëÊı¾İ´óĞ¡
-                       enPixelType;        // [IN]     ÊäÈëÊı¾İµÄÏñËØ¸ñÊ½
-                       nWidth;             // [IN]     Í¼Ïñ¿í
-                       nHeight;            // [IN]     Í¼Ïñ¸ß
-                       pImageBuffer;       // [OUT]    Êä³öÍ¼Æ¬»º´æ
-                       nImageLen;          // [OUT]    Êä³öÍ¼Æ¬´óĞ¡
-                       nBufferSize;        // [IN]     Ìá¹©µÄÊä³ö»º³åÇø´óĞ¡
-                       enImageType;        // [IN]     Êä³öÍ¼Æ¬¸ñÊ½
- *  @return ³É¹¦£¬·µ»ØMV_OK£»´íÎó£¬·µ»Ø´íÎóÂë 
+ *  @brief  ä¿å­˜å›¾ç‰‡ï¼ˆè¯¥æ¥å£å·²å¼ƒç”¨ï¼Œå»ºè®®æ”¹ç”¨ MV_CC_SaveImageExæ¥å£ï¼‰
+ *  @param  pSaveParam             [IN][OUT]          ä¿å­˜å›¾ç‰‡å‚æ•°ç»“æ„ä½“
+                       pData;              // [IN]     è¾“å…¥æ•°æ®ç¼“å­˜
+                       nDataLen;           // [IN]     è¾“å…¥æ•°æ®å¤§å°
+                       enPixelType;        // [IN]     è¾“å…¥æ•°æ®çš„åƒç´ æ ¼å¼
+                       nWidth;             // [IN]     å›¾åƒå®½
+                       nHeight;            // [IN]     å›¾åƒé«˜
+                       pImageBuffer;       // [OUT]    è¾“å‡ºå›¾ç‰‡ç¼“å­˜
+                       nImageLen;          // [OUT]    è¾“å‡ºå›¾ç‰‡å¤§å°
+                       nBufferSize;        // [IN]     æä¾›çš„è¾“å‡ºç¼“å†²åŒºå¤§å°
+                       enImageType;        // [IN]     è¾“å‡ºå›¾ç‰‡æ ¼å¼
+ *  @return æˆåŠŸï¼Œè¿”å›MV_OKï¼›é”™è¯¯ï¼Œè¿”å›é”™è¯¯ç 
  ************************************************************************/
 MV_CAMCTRL_API int __stdcall MV_CC_SaveImage(IN OUT MV_SAVE_IMAGE_PARAM* pSaveParam);
 
 /************************************************************************
  *  @fn     MV_GIGE_ForceIp
- *  @brief  Ç¿ÖÆIP£¨¸Ã½Ó¿ÚÒÑÆúÓÃ£¬½¨Òé¸ÄÓÃ MV_GIGE_ForceIpEx½Ó¿Ú£©
- *  @param  handle£ºÉè±¸¾ä±ú
- *  @param  nIP               [IN]      ÉèÖÃµÄIP
- *  @return ¼û·µ»Ø´íÎóÂë
+ *  @brief  å¼ºåˆ¶IPï¼ˆè¯¥æ¥å£å·²å¼ƒç”¨ï¼Œå»ºè®®æ”¹ç”¨ MV_GIGE_ForceIpExæ¥å£ï¼‰
+ *  @param  handleï¼šè®¾å¤‡å¥æŸ„
+ *  @param  nIP               [IN]      è®¾ç½®çš„IP
+ *  @return è§è¿”å›é”™è¯¯ç 
 ************************************************************************/
 MV_CAMCTRL_API int __stdcall MV_GIGE_ForceIp(IN void* handle, unsigned int nIP);
 
 
 #ifdef __cplusplus
 }
-#endif 
+#endif
 
 #endif //_MV_CAMERA_CTRL_H_

@@ -3,6 +3,9 @@
 
 # 0:Off
 # 1:On
+AcquisitionFrameRateEnable: 0
+# 0:Off
+# 1:On
 TriggerMode: 1
 # 0:Line0
 # 1:Line1

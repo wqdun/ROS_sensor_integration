@@ -1,8 +1,8 @@
-#include "single_camera.h"
-
 #define NDEBUG
 // #undef NDEBUG
 #include <glog/logging.h>
+
+#include "single_camera.h"
 
 std::deque<time2Mat_t> SingleCamera::s_time2Mat_;
 std::mutex SingleCamera::s_matImageMutex_;
@@ -94,68 +94,68 @@ void __stdcall SingleCamera::ImageCB(unsigned char *pData, MV_FRAME_OUT_INFO_EX 
         LOG(ERROR) << "pFrameInfo is NULL.";
         return;
     }
-    LOG(INFO) << "GetOneFrame[" << pFrameInfo->nFrameNum << "]: " << pFrameInfo->nWidth << " * " << pFrameInfo->nHeight;
+    SingleCamera *pSingleCamera = static_cast<SingleCamera *>(_pSingleCamera);
+    const std::string _cameraIP(pSingleCamera->GetCameraIP());
+    LOG_EVERY_N(INFO, 20) << "GetOneFrame[" << pFrameInfo->nFrameNum << "]: " << pFrameInfo->nWidth << " * " << pFrameInfo->nHeight << " from " << _cameraIP;
     int err = MV_OK;
 
-    SingleCamera *pSingleCamera = static_cast<SingleCamera *>(_pSingleCamera);
-    void *handle = pSingleCamera->GetHandle();
+    // void *handle = pSingleCamera->GetHandle();
 
-    unsigned char *pDataForRGB = (unsigned char*)malloc(pFrameInfo->nWidth * pFrameInfo->nHeight * 4 + 2048);
-    assert(pDataForRGB);
-    MV_CC_PIXEL_CONVERT_PARAM convertParam = {0};
-    convertParam.nWidth = pFrameInfo->nWidth;
-    convertParam.nHeight = pFrameInfo->nHeight;
-    convertParam.pSrcData = pData;
-    convertParam.nSrcDataLen = pFrameInfo->nFrameLen;
-    convertParam.enSrcPixelType = pFrameInfo->enPixelType;
-    convertParam.enDstPixelType = PixelType_Gvsp_BGR8_Packed;
-    convertParam.pDstBuffer = pDataForRGB;
-    convertParam.nDstBufferSize = pFrameInfo->nWidth * pFrameInfo->nHeight * 4 + 2048;
-    err = MV_CC_ConvertPixelType(handle, &convertParam);
-    if(MV_OK != err) {
-        LOG(ERROR) << "Failed to MV_CC_ConvertPixelType; err: " << err;
-        return;
-    }
-    LOG_FIRST_N(INFO, 1) << "ConvertPixelType " << pFrameInfo->enPixelType << " --> " << PixelType_Gvsp_BGR8_Packed;
+    // unsigned char *pDataForRGB = (unsigned char*)malloc(pFrameInfo->nWidth * pFrameInfo->nHeight * 4 + 2048);
+    // assert(pDataForRGB);
+    // MV_CC_PIXEL_CONVERT_PARAM convertParam = {0};
+    // convertParam.nWidth = pFrameInfo->nWidth;
+    // convertParam.nHeight = pFrameInfo->nHeight;
+    // convertParam.pSrcData = pData;
+    // convertParam.nSrcDataLen = pFrameInfo->nFrameLen;
+    // convertParam.enSrcPixelType = pFrameInfo->enPixelType;
+    // convertParam.enDstPixelType = PixelType_Gvsp_BGR8_Packed;
+    // convertParam.pDstBuffer = pDataForRGB;
+    // convertParam.nDstBufferSize = pFrameInfo->nWidth * pFrameInfo->nHeight * 4 + 2048;
+    // err = MV_CC_ConvertPixelType(handle, &convertParam);
+    // if(MV_OK != err) {
+    //     LOG(ERROR) << "Failed to MV_CC_ConvertPixelType; err: " << err;
+    //     return;
+    // }
 
-    cv::Mat matBGR(pFrameInfo->nHeight, pFrameInfo->nWidth, CV_8UC3);
-    memcpy(matBGR.data, pDataForRGB, pFrameInfo->nWidth * pFrameInfo->nHeight * 3);
-    if(pDataForRGB) {
-        free(pDataForRGB);
-        pDataForRGB = NULL;
-    }
+    // cv::Mat matBGR(pFrameInfo->nHeight, pFrameInfo->nWidth, CV_8UC3);
+    // memcpy(matBGR.data, pDataForRGB, pFrameInfo->nWidth * pFrameInfo->nHeight * 3);
+    // if(pDataForRGB) {
+    //     free(pDataForRGB);
+    //     pDataForRGB = NULL;
+    // }
 
-    const std::string _cameraIP = pSingleCamera->GetCameraIP();
-    const size_t _cameraIndex = pSingleCamera->GetCameraIndex();
-    LOG_FIRST_N(INFO, 20) << "_cameraIP: " << _cameraIP << "; _cameraIndex: " << _cameraIndex;
+    // const size_t _cameraIndex = pSingleCamera->GetCameraIndex();
 
-    time2Mat_t time2Mat;
-    time2Mat.header = unixTime;
-    time2Mat.cameraIP = _cameraIP;
-    time2Mat.cameraIndex = _cameraIndex;
-    time2Mat.frameNum = pFrameInfo->nFrameNum;
-    time2Mat.matImage = matBGR;
+    // time2Mat_t time2Mat;
+    // time2Mat.header = unixTime;
+    // time2Mat.cameraIP = _cameraIP;
+    // time2Mat.cameraIndex = _cameraIndex;
+    // time2Mat.frameNum = pFrameInfo->nFrameNum;
+    // time2Mat.matImage = matBGR;
+    // time2Mat.pDataImage = pDataForRGB;
 
-    s_matImageMutex_.lock();
-    s_time2Mat_.emplace_back(time2Mat);
-    LOG(INFO) << s_time2Mat_.size() << " s_time2Mat_";
-    s_matImageMutex_.unlock();
 
-    LOG(INFO) << __FUNCTION__ << " end.";
+    // s_matImageMutex_.lock();
+    // s_time2Mat_.emplace_back(time2Mat);
+    // LOG_EVERY_N(INFO, 20) << s_time2Mat_.size() << " s_time2Mat_";
+    // s_matImageMutex_.unlock();
+
+    LOG_EVERY_N(INFO, 20) << __FUNCTION__ << " end.";
 }
 
 std::string SingleCamera::GetCameraIP() {
-    LOG(INFO) << __FUNCTION__ << " start.";
+    DLOG(INFO) << __FUNCTION__ << " start.";
     return cameraIP_;
 }
 
 size_t SingleCamera::GetCameraIndex() {
-    LOG(INFO) << __FUNCTION__ << " start.";
+    DLOG(INFO) << __FUNCTION__ << " start.";
     return cameraIndex_;
 }
 
 void *SingleCamera::GetHandle() {
-    LOG(INFO) << __FUNCTION__ << " start.";
+    DLOG(INFO) << __FUNCTION__ << " start.";
     return cameraHandle_;
 }
 

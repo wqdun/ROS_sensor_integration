@@ -1,8 +1,8 @@
-#include "hik_camera_manager.h"
-
 #define NDEBUG
 // #undef NDEBUG
 #include <glog/logging.h>
+
+#include "hik_camera_manager.h"
 
 HikCameraManager::HikCameraManager(ros::NodeHandle nh, ros::NodeHandle private_nh):
     threadPool_(20, 20)
@@ -38,14 +38,11 @@ void HikCameraManager::Run() {
         LOG(INFO) << i << ":" << _cameraIP;
         (void)SetAdvertiseTopic(_cameraIP);
     }
-
-    // ros::Rate rate(20);
+    PressEnterToExit();
     while(ros::ok()) {
-        // ros::spinOnce();
-        // rate.sleep();
         SingleCamera::s_matImageMutex_.lock();
         if(SingleCamera::s_time2Mat_.empty()) {
-            LOG_EVERY_N(INFO, 500000) << "SingleCamera::s_time2Mat_.empty()";
+            DLOG_EVERY_N(INFO, 500000) << "SingleCamera::s_time2Mat_.empty()";
             SingleCamera::s_matImageMutex_.unlock();
             continue;
         }
@@ -53,10 +50,10 @@ void HikCameraManager::Run() {
         SingleCamera::s_time2Mat_.pop_front();
         SingleCamera::s_matImageMutex_.unlock();
 
-        SaveImageTask *pSaveImageTask = new SaveImageTask(_time2Mat.header, _time2Mat.cameraIP, _time2Mat.frameNum, _time2Mat.matImage);
-        threadPool_.append_task(pSaveImageTask);
+        // SaveImageTask *pSaveImageTask = new SaveImageTask(_time2Mat.header, _time2Mat.cameraIP, _time2Mat.frameNum, _time2Mat.matImage, _time2Mat.pDataImage);
+        // threadPool_.append_task(pSaveImageTask);
 
-        PublishImage(_time2Mat.cameraIndex, _time2Mat.matImage);
+        // PublishImage(_time2Mat.cameraIndex, _time2Mat.matImage);
     }
 }
 
@@ -75,7 +72,6 @@ void HikCameraManager::PublishImage(size_t index, const cv::Mat &image2Pub) {
     cv::resize(image2Pub, imageResized, cv::Size(image2Pub.cols / 10, image2Pub.rows / 10));
     sensor_msgs::ImagePtr imgMsg = cv_bridge::CvImage(std_msgs::Header(), "bgr8", imageResized).toImageMsg();
 
-    DLOG(INFO) << "pubImages_[index].getTopic(), e.g., /camera/image6666; " << pubImages_[index].getTopic();
     pubImages_[index].publish(imgMsg);
 }
 

@@ -1,6 +1,8 @@
 #ifndef _PTHREAD_POOL_
 #define _PTHREAD_POOL_
 
+#include <glog/logging.h>
+
 #include <list>
 #include <stdio.h>
 #include <exception>
@@ -22,7 +24,6 @@ private:
     mutex_locker queue_mutex_locker;
     sem_locker queue_sem_locker;
     bool is_stop;
-    int busyWorker_;
 public:
     threadpool(int thread_num = 20, int max_task_num = 30);
     ~threadpool();
@@ -40,12 +41,11 @@ template <class T>
 threadpool<T>::threadpool(int thread_num, int max_task_num):
     thread_number(thread_num),
     max_task_number(max_task_num),
-    is_stop(false),
-    busyWorker_(0)
+    is_stop(false)
 {
     all_threads.clear();
     if((thread_num <= 0) || max_task_num <= 0) {
-        std::cout << "thread pool can't init because thread_number = 0 or max_task_number = 0.\n";
+        LOG(ERROR) << "thread pool can't initial because thread_number = 0 or max_task_number = 0.";
         exit(-1);
     }
 
@@ -54,7 +54,7 @@ threadpool<T>::threadpool(int thread_num, int max_task_num):
         all_threads.push_back(_thread);
     }
     if(all_threads.empty()) {
-        std::cout << "Can't initial thread pool because thread array can't new.";
+        LOG(ERROR) << "Can't initial thread pool because thread array can't new.";
         exit(-1);
     }
 }
@@ -62,7 +62,7 @@ threadpool<T>::threadpool(int thread_num, int max_task_num):
 template <class T>
 threadpool<T>::~threadpool()
 {
-    std::cout << __FUNCTION__ << " start.\n";
+    LOG(INFO) << __FUNCTION__ << " start.";
     all_threads.clear();
     is_stop = true;
 }
@@ -76,9 +76,9 @@ void threadpool<T>::stop()
 
 template <class T>
 void threadpool<T>::start() {
-    std::cout << __FUNCTION__ << " start.\n";
+    LOG(INFO) << __FUNCTION__ << " start.";
     for(int i = 0; i < thread_number; ++i) {
-        std::cout << "create the " << i << "th thread.\n";
+        LOG(INFO) << "Create the " << i << "th thread.";
         if(pthread_create(&(all_threads[i]), NULL, worker, this) != 0) {
             all_threads.clear();
             throw std::exception();
@@ -93,11 +93,10 @@ void threadpool<T>::start() {
 
 template <class T>
 bool threadpool<T>::append_task(T *task) {
-    std::cout << __FUNCTION__ << " start.\n";
-    ++busyWorker_;
     queue_mutex_locker.mutex_lock();
-    std::cout << "task_queue.size(): " << task_queue.size() << "\n";
+    LOG_EVERY_N(INFO, 100) << "task_queue.size(): " << task_queue.size();
     if(task_queue.size() >= max_task_number) {
+        LOG(WARNING) << "Need more worker, task_queue too big: " << task_queue.size();
         queue_mutex_locker.mutex_unlock();
         return false;
     }
@@ -105,14 +104,12 @@ bool threadpool<T>::append_task(T *task) {
     queue_mutex_locker.mutex_unlock();
 
     queue_sem_locker.add();
-    std::cout << "queue_sem_locker.add()\n";
-
     return true;
 }
 
 template <class T>
 void *threadpool<T>::worker(void *arg) {
-    std::cout << __FUNCTION__ << " start, pthreadId: " << (unsigned long)pthread_self() << ".\n";
+    LOG(INFO) << __FUNCTION__ << " start, pthreadId: " << (unsigned long)pthread_self();
     threadpool *pool = (threadpool *)arg;
     pool->run();
     return pool;
@@ -120,13 +117,11 @@ void *threadpool<T>::worker(void *arg) {
 
 template <class T>
 void threadpool<T>::run() {
-    std::cout << __FUNCTION__ << " start.\n";
+    LOG(INFO) << __FUNCTION__ << " start.";
     while(!is_stop) {
-        std::cout << "Waiting 4 semaphore.\n";
         queue_sem_locker.wait();
-        std::cout << "Got a semaphore.\n";
         if(errno == EINTR) {
-            std::cout << "error.\n";
+            LOG(ERROR) << "errno == EINTR";
             continue;
         }
 
@@ -141,15 +136,12 @@ void threadpool<T>::run() {
         if(!task) {
             continue;
         }
-        std::cout << "pthreadId = " << (unsigned long)pthread_self() << "\n";
         task->doit();
         delete task;
         task = NULL;
-        --busyWorker_;
-        std::cout << busyWorker_ << " busyWorker_.\n";
     }
 
-    std::cout << "Close " << (unsigned long)pthread_self() << "\n";
+    LOG(INFO) << "Close " << (unsigned long)pthread_self();
 }
 
 #endif

@@ -171,6 +171,7 @@ target_link_libraries(${PROJECT_NAME}_node
   /usr/local/lib/libopencv_imgproc.so
   glog
   /opt/MVS/bin/libMvCameraControl.so
+  /usr/lib/x86_64-linux-gnu/libturbojpeg.a
 )
 
 #############

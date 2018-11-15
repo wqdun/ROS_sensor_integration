@@ -14,6 +14,7 @@ typedef struct {
     std::string cameraIP;
     size_t frameNum;
     cv::Mat matImage;
+    unsigned char *pDataImage;
 } time2Mat_t;
 
 class SingleCamera {

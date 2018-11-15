@@ -5,7 +5,7 @@
 #include <glog/logging.h>
 
 HikCameraManager::HikCameraManager(ros::NodeHandle nh, ros::NodeHandle private_nh):
-    threadPool_(10, 20)
+    threadPool_(20, 20)
 {
     LOG(INFO) << __FUNCTION__ << " start.";
     nh_ = nh;
@@ -39,20 +39,21 @@ void HikCameraManager::Run() {
         (void)SetAdvertiseTopic(_cameraIP);
     }
 
+    // ros::Rate rate(20);
     while(ros::ok()) {
+        // ros::spinOnce();
+        // rate.sleep();
         SingleCamera::s_matImageMutex_.lock();
-        LOG(INFO) << "SingleCamera::s_time2Mat_.size(): " << SingleCamera::s_time2Mat_.size();
         if(SingleCamera::s_time2Mat_.empty()) {
-            LOG_EVERY_N(INFO, 20) << "SingleCamera::s_time2Mat_.empty()";
+            LOG_EVERY_N(INFO, 500000) << "SingleCamera::s_time2Mat_.empty()";
             SingleCamera::s_matImageMutex_.unlock();
-            usleep(200000);
             continue;
         }
         time2Mat_t _time2Mat = SingleCamera::s_time2Mat_.front();
         SingleCamera::s_time2Mat_.pop_front();
         SingleCamera::s_matImageMutex_.unlock();
 
-        SaveImageTask *pSaveImageTask = new SaveImageTask(_time2Mat.header, _time2Mat.cameraIP, _time2Mat.matImage);
+        SaveImageTask *pSaveImageTask = new SaveImageTask(_time2Mat.header, _time2Mat.cameraIP, _time2Mat.frameNum, _time2Mat.matImage);
         threadPool_.append_task(pSaveImageTask);
 
         PublishImage(_time2Mat.cameraIndex, _time2Mat.matImage);
@@ -60,7 +61,7 @@ void HikCameraManager::Run() {
 }
 
 void HikCameraManager::SetAdvertiseTopic(const std::string &advertiseName) {
-    LOG(INFO) << __FUNCTION__ << " start.";
+    LOG(INFO) << __FUNCTION__ << " start; topic name: " << advertiseName;
     image_transport::Publisher pub;
     image_transport::ImageTransport it(nh_);
     pub = it.advertise("camera/image" + advertiseName, 0);
@@ -72,7 +73,7 @@ void HikCameraManager::SetAdvertiseTopic(const std::string &advertiseName) {
 void HikCameraManager::PublishImage(size_t index, const cv::Mat &image2Pub) {
     cv::Mat imageResized;
     cv::resize(image2Pub, imageResized, cv::Size(image2Pub.cols / 10, image2Pub.rows / 10));
-    sensor_msgs::ImagePtr imgMsg = cv_bridge::CvImage(std_msgs::Header(), "rgb8", imageResized).toImageMsg();
+    sensor_msgs::ImagePtr imgMsg = cv_bridge::CvImage(std_msgs::Header(), "bgr8", imageResized).toImageMsg();
 
     DLOG(INFO) << "pubImages_[index].getTopic(), e.g., /camera/image6666; " << pubImages_[index].getTopic();
     pubImages_[index].publish(imgMsg);

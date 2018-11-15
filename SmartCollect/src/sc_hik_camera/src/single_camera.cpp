@@ -95,14 +95,6 @@ void __stdcall SingleCamera::ImageCB(unsigned char *pData, MV_FRAME_OUT_INFO_EX 
         return;
     }
     LOG(INFO) << "GetOneFrame[" << pFrameInfo->nFrameNum << "]: " << pFrameInfo->nWidth << " * " << pFrameInfo->nHeight;
-    LOG(INFO) << "nHostTimeStamp: " << pFrameInfo->nHostTimeStamp;
-    LOG(INFO) << "nDevTimeStampHigh: " << pFrameInfo->nDevTimeStampHigh;
-    LOG(INFO) << "nDevTimeStampLow: " << pFrameInfo->nDevTimeStampLow;
-    LOG(INFO) << "nSecondCount: " << pFrameInfo->nSecondCount;
-    LOG(INFO) << "nCycleCount: " << pFrameInfo->nCycleCount;
-    LOG(INFO) << "nCycleOffset: " << pFrameInfo->nCycleOffset;
-    LOG(INFO) << "nFrameCounter: " << pFrameInfo->nFrameCounter;
-    LOG(INFO) << "nTriggerIndex: " << pFrameInfo->nTriggerIndex;
     int err = MV_OK;
 
     SingleCamera *pSingleCamera = static_cast<SingleCamera *>(_pSingleCamera);
@@ -116,7 +108,7 @@ void __stdcall SingleCamera::ImageCB(unsigned char *pData, MV_FRAME_OUT_INFO_EX 
     convertParam.pSrcData = pData;
     convertParam.nSrcDataLen = pFrameInfo->nFrameLen;
     convertParam.enSrcPixelType = pFrameInfo->enPixelType;
-    convertParam.enDstPixelType = PixelType_Gvsp_RGB8_Packed;
+    convertParam.enDstPixelType = PixelType_Gvsp_BGR8_Packed;
     convertParam.pDstBuffer = pDataForRGB;
     convertParam.nDstBufferSize = pFrameInfo->nWidth * pFrameInfo->nHeight * 4 + 2048;
     err = MV_CC_ConvertPixelType(handle, &convertParam);
@@ -124,10 +116,10 @@ void __stdcall SingleCamera::ImageCB(unsigned char *pData, MV_FRAME_OUT_INFO_EX 
         LOG(ERROR) << "Failed to MV_CC_ConvertPixelType; err: " << err;
         return;
     }
-    LOG_FIRST_N(INFO, 1) << "ConvertPixelType " << pFrameInfo->enPixelType << " --> " << PixelType_Gvsp_RGB8_Packed;
+    LOG_FIRST_N(INFO, 1) << "ConvertPixelType " << pFrameInfo->enPixelType << " --> " << PixelType_Gvsp_BGR8_Packed;
 
-    cv::Mat matRGB(pFrameInfo->nHeight, pFrameInfo->nWidth, CV_8UC3);
-    memcpy(matRGB.data, pDataForRGB, pFrameInfo->nWidth * pFrameInfo->nHeight * 3);
+    cv::Mat matBGR(pFrameInfo->nHeight, pFrameInfo->nWidth, CV_8UC3);
+    memcpy(matBGR.data, pDataForRGB, pFrameInfo->nWidth * pFrameInfo->nHeight * 3);
     if(pDataForRGB) {
         free(pDataForRGB);
         pDataForRGB = NULL;
@@ -141,7 +133,8 @@ void __stdcall SingleCamera::ImageCB(unsigned char *pData, MV_FRAME_OUT_INFO_EX 
     time2Mat.header = unixTime;
     time2Mat.cameraIP = _cameraIP;
     time2Mat.cameraIndex = _cameraIndex;
-    time2Mat.matImage = matRGB;
+    time2Mat.frameNum = pFrameInfo->nFrameNum;
+    time2Mat.matImage = matBGR;
 
     s_matImageMutex_.lock();
     s_time2Mat_.emplace_back(time2Mat);

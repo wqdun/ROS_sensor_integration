@@ -12,6 +12,7 @@ typedef struct {
     double header;
     size_t cameraIndex;
     std::string cameraIP;
+    size_t frameNum;
     cv::Mat matImage;
 } time2Mat_t;
 

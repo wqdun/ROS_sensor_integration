@@ -4,13 +4,12 @@
 
 #include "save_image_task.h"
 
-SaveImageTask::SaveImageTask(double _header, const std::string &_cameraIP, size_t _frameNum, const cv::Mat &_image, unsigned char *_pData) {
+SaveImageTask::SaveImageTask(SingleCamera *_pSingleCamera, MV_FRAME_OUT_INFO_EX _frameInfo, double _header, unsigned char *_pData) {
     DLOG(INFO) << __FUNCTION__ << " start.";
     time_ = _header;
-    cameraIP_ = _cameraIP;
-    frameNum_ =_frameNum;
-    image_ = _image;
     pData_ = _pData;
+    pSingleCamera_ = _pSingleCamera;
+    frameInfo_ = _frameInfo;
 }
 
 SaveImageTask::~SaveImageTask() {
@@ -20,55 +19,45 @@ SaveImageTask::~SaveImageTask() {
 void SaveImageTask::doit() {
     LOG(INFO) << __FUNCTION__ << " start.";
 
-    const std::string picFile("/tmp/" + std::to_string(time_) + "_" + cameraIP_ + "_" + std::to_string(frameNum_) + ".jpg");
+    const std::string picFile("/tmp/" + std::to_string(time_) + "_" + pSingleCamera_->GetCameraIP() + "_" + std::to_string(frameInfo_.nFrameNum) + ".jpg");
 
-    std::vector<int> jpgQuality{40};
-    try {
-        // cv::imwrite(picFile, image_, jpgQuality);
-        // SaveImageUsingTurboJpeg(picFile);
-        LOG(INFO) << "Save " << picFile;
-    }
-    catch(cv::Exception &ex) {
-        LOG(ERROR) << ex.what();
-    }
-}
-
-void SaveImageTask::SaveImageUsingTurboJpeg(const std::string &picFile) {
-    // Output image format is JPEG; Compress the uncompressed image
-    tjhandle tjInstance = tjInitCompress();
-    if(NULL == tjInstance) {
-        LOG(ERROR) << "initializing compressor.";
-        exit(-1);
-    }
-    unsigned char *jpegBuf = NULL;
-    unsigned long jpegSize = 0;
-    const int outQual = 80;
-    const int pixelFormat = TJPF_RGB;
-    const int outSubsamp = TJSAMP_444;
-    const int flags = 0;
-    if(tjCompress2(tjInstance, pData_, 4096, 0, 2160, pixelFormat, &jpegBuf, &jpegSize, outSubsamp, outQual, flags) < 0) {
-        LOG(ERROR) << "compressing image.";
-        exit(-1);
-    }
+    int err = MV_OK;
+    const std::string cameraIP(pSingleCamera_->GetCameraIP());
+    void *handle = pSingleCamera_->GetHandle();
+    LOG(INFO) << __FUNCTION__ << " start.";
+    unsigned char *pDataForRGB = (unsigned char*)malloc(frameInfo_.nWidth * frameInfo_.nHeight * 4 + 2048);
+    assert(pDataForRGB);
+    MV_CC_PIXEL_CONVERT_PARAM convertParam = {0};
+    convertParam.nWidth = frameInfo_.nWidth;
+    convertParam.nHeight = frameInfo_.nHeight;
+    convertParam.pSrcData = pData_;
+    convertParam.nSrcDataLen = frameInfo_.nFrameLen;
+    convertParam.enSrcPixelType = frameInfo_.enPixelType;
+    convertParam.enDstPixelType = PixelType_Gvsp_BGR8_Packed;
+    convertParam.pDstBuffer = pDataForRGB;
+    convertParam.nDstBufferSize = frameInfo_.nWidth * frameInfo_.nHeight * 4 + 2048;
+    err = MV_CC_ConvertPixelType(handle, &convertParam);
     if(pData_) {
         free(pData_);
         pData_ = NULL;
     }
-    tjDestroy(tjInstance);
-    tjInstance = NULL;
+    if(MV_OK != err) {
+        LOG(ERROR) << "Failed to MV_CC_ConvertPixelType; err: " << err;
+        return;
+    }
 
-    FILE *jpegFile = fopen(picFile.c_str(), "wb");
-    if(!jpegFile) {
-        LOG(ERROR) << "Opening output file.";
-        exit(-1);
+    cv::Mat matBGR(frameInfo_.nHeight, frameInfo_.nWidth, CV_8UC3);
+    memcpy(matBGR.data, pDataForRGB, frameInfo_.nWidth * frameInfo_.nHeight * 3);
+    if(pDataForRGB) {
+        free(pDataForRGB);
+        pDataForRGB = NULL;
     }
-    if(fwrite(jpegBuf, jpegSize, 1, jpegFile) < 1) {
-        LOG(ERROR) << "Writing output file.";
-        exit(-1);
-    }
-    fclose(jpegFile);
-    jpegFile = NULL;
-    tjFree(jpegBuf);
-    jpegBuf = NULL;
+
+    cv::imwrite(picFile, matBGR);
+    LOG(INFO) << "Save " << picFile;
+
+
+    LOG(INFO) << __FUNCTION__ << " end.";
+
 }
 

@@ -3,11 +3,17 @@
 #include <glog/logging.h>
 
 #include "single_camera.h"
+#include "hik_camera_manager.h"
+
+// #include "../../sc_lib_public_tools/src/thread_pool.h"
 
 std::deque<time2Mat_t> SingleCamera::s_time2Mat_;
 std::mutex SingleCamera::s_matImageMutex_;
-SingleCamera::SingleCamera() {
+HikCameraManager* SingleCamera::s_pManager_;
+
+SingleCamera::SingleCamera(HikCameraManager *pManager) {
     LOG(INFO) << __FUNCTION__ << " start.";
+    s_pManager_ = pManager;
 }
 
 SingleCamera::~SingleCamera() {
@@ -94,10 +100,22 @@ void __stdcall SingleCamera::ImageCB(unsigned char *pData, MV_FRAME_OUT_INFO_EX 
         LOG(ERROR) << "pFrameInfo is NULL.";
         return;
     }
+
+    unsigned char *pRG8 = (unsigned char*)malloc(pFrameInfo->nFrameLen);
+    memcpy(pRG8, pData, pFrameInfo->nFrameLen);
+
     SingleCamera *pSingleCamera = static_cast<SingleCamera *>(_pSingleCamera);
     const std::string _cameraIP(pSingleCamera->GetCameraIP());
+    SaveImageTask *pSaveImageTask = new SaveImageTask(pSingleCamera, *pFrameInfo, unixTime, pRG8);
+    s_pManager_->threadPool_.append_task(pSaveImageTask);
+
+
+
+
+    //
+
     LOG_EVERY_N(INFO, 20) << "GetOneFrame[" << pFrameInfo->nFrameNum << "]: " << pFrameInfo->nWidth << " * " << pFrameInfo->nHeight << " from " << _cameraIP;
-    int err = MV_OK;
+    // int err = MV_OK;
 
     // void *handle = pSingleCamera->GetHandle();
 

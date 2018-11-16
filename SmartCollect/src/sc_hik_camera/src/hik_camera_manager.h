@@ -20,9 +20,11 @@ public:
     ~HikCameraManager();
     void Run();
 
+    threadpool<SaveImageTask> threadPool_;
+
+
 
 private:
-    threadpool<SaveImageTask> threadPool_;
     ros::NodeHandle nh_;
     std::vector<image_transport::Publisher> pubImages_;
     std::vector<boost::shared_ptr<SingleCamera>> pSingleCameras_;

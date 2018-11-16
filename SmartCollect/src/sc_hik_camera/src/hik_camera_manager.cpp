@@ -5,7 +5,7 @@
 #include "hik_camera_manager.h"
 
 HikCameraManager::HikCameraManager(ros::NodeHandle nh, ros::NodeHandle private_nh):
-    threadPool_(20, 20)
+    threadPool_(30, 30)
 {
     LOG(INFO) << __FUNCTION__ << " start.";
     nh_ = nh;
@@ -30,7 +30,7 @@ void HikCameraManager::Run() {
     LOG(INFO) << "Find " << deviceList_.nDeviceNum << " Devices.";
 
     for(size_t i = 0; i < deviceList_.nDeviceNum; ++i) {
-        boost::shared_ptr<SingleCamera> pSingleCamera(new SingleCamera);
+        boost::shared_ptr<SingleCamera> pSingleCamera(new SingleCamera(this));
         pSingleCamera->SetCamera(deviceList_, i);
         pSingleCameras_.push_back(pSingleCamera);
 
@@ -38,17 +38,17 @@ void HikCameraManager::Run() {
         LOG(INFO) << i << ":" << _cameraIP;
         (void)SetAdvertiseTopic(_cameraIP);
     }
-    PressEnterToExit();
     while(ros::ok()) {
-        SingleCamera::s_matImageMutex_.lock();
-        if(SingleCamera::s_time2Mat_.empty()) {
-            DLOG_EVERY_N(INFO, 500000) << "SingleCamera::s_time2Mat_.empty()";
-            SingleCamera::s_matImageMutex_.unlock();
-            continue;
-        }
-        time2Mat_t _time2Mat = SingleCamera::s_time2Mat_.front();
-        SingleCamera::s_time2Mat_.pop_front();
-        SingleCamera::s_matImageMutex_.unlock();
+        ros::spin();
+        // SingleCamera::s_matImageMutex_.lock();
+        // if(SingleCamera::s_time2Mat_.empty()) {
+        //     DLOG_EVERY_N(INFO, 500000) << "SingleCamera::s_time2Mat_.empty()";
+        //     SingleCamera::s_matImageMutex_.unlock();
+        //     continue;
+        // }
+        // time2Mat_t _time2Mat = SingleCamera::s_time2Mat_.front();
+        // SingleCamera::s_time2Mat_.pop_front();
+        // SingleCamera::s_matImageMutex_.unlock();
 
         // SaveImageTask *pSaveImageTask = new SaveImageTask(_time2Mat.header, _time2Mat.cameraIP, _time2Mat.frameNum, _time2Mat.matImage, _time2Mat.pDataImage);
         // threadPool_.append_task(pSaveImageTask);

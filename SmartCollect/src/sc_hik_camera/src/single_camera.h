@@ -8,6 +8,7 @@
 #include <sys/time.h>
 #include "include/MvCameraControl.h"
 
+
 typedef struct {
     double header;
     size_t cameraIndex;
@@ -17,12 +18,14 @@ typedef struct {
     unsigned char *pDataImage;
 } time2Mat_t;
 
+
+class HikCameraManager;
 class SingleCamera {
 public:
     static std::mutex s_matImageMutex_;
     static std::deque<time2Mat_t> s_time2Mat_;
 
-    SingleCamera();
+    SingleCamera(HikCameraManager *pManager);
     ~SingleCamera();
 
     void SetCamera(const MV_CC_DEVICE_INFO_LIST &deviceInfoList, size_t index);
@@ -32,6 +35,7 @@ public:
 
 private:
     static void __stdcall ImageCB(unsigned char * pData, MV_FRAME_OUT_INFO_EX* pFrameInfo, void* pUser);
+    static HikCameraManager *s_pManager_;
 
     void SetHandle(const MV_CC_DEVICE_INFO_LIST &deviceInfoList, size_t index);
     void SetIndex_Ip(const MV_CC_DEVICE_INFO_LIST &deviceInfoList, size_t index);

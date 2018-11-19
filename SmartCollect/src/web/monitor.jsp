@@ -173,8 +173,8 @@
                             </tr>
                             </thead>
                         </table>
-                        <img src="http://<%=ip%>:8080/stream?topic=/camera/image" height="100%" width="100%"
-                             alt="http://<%=ip%>:8080/stream?topic=/camera/image">
+                        <img src="http://<%=ip%>:8080/stream?topic=/camera/image6666" height="100%" width="100%"
+                             alt="http://<%=ip%>:8080/stream?topic=/camera/image6666">
 
                     </div>
                 </div>

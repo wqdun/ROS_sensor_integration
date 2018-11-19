@@ -1,6 +1,7 @@
 #ifndef __SERVER_DAEMON_H
 #define __SERVER_DAEMON_H
 
+#include <glog/logging.h>
 #include <ros/ros.h>
 #include <std_msgs/Float64.h>
 #include "sc_msgs/ClientCmd.h"

@@ -1,7 +1,3 @@
-#define NDEBUG
-// #undef NDEBUG
-#include <glog/logging.h>
-
 #include "hik_camera_manager.h"
 
 int main(int argc, char **argv) {
@@ -9,7 +5,7 @@ int main(int argc, char **argv) {
     LOG(INFO) << "Got " << argc << " parameters.";
 
     ros::init(argc, argv, "hik_camera_node");
-    HikCameraManager hikCameraBoss(ros::NodeHandle(), ros::NodeHandle("~"));
+    HikCameraManager hikCameraBoss;
     hikCameraBoss.Run();
     LOG(INFO) << "Returning...";
     return 0;

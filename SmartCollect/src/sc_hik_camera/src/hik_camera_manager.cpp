@@ -4,12 +4,10 @@
 
 #include "hik_camera_manager.h"
 
-HikCameraManager::HikCameraManager(ros::NodeHandle nh, ros::NodeHandle private_nh):
-    threadPool_(30, 30)
+HikCameraManager::HikCameraManager():
+    threadPool_(10, 30)
 {
     LOG(INFO) << __FUNCTION__ << " start.";
-    nh_ = nh;
-    pubImages_.clear();
     pSingleCameras_.clear();
     memset(&deviceList_, 0, sizeof(MV_CC_DEVICE_INFO_LIST));
 }
@@ -34,10 +32,6 @@ void HikCameraManager::Run() {
         boost::shared_ptr<SingleCamera> pSingleCamera(new SingleCamera(this));
         pSingleCamera->SetCamera(deviceList_, i);
         pSingleCameras_.push_back(pSingleCamera);
-
-        const std::string _cameraIP(pSingleCamera->GetCameraIP());
-        LOG(INFO) << i << ":" << _cameraIP;
-        (void)SetAdvertiseTopic(_cameraIP);
     }
 
     int i = -1;
@@ -47,29 +41,8 @@ void HikCameraManager::Run() {
         rate.sleep();
         ++i;
         i %= camNum;
-
-        PublishImage(i);
+        pSingleCameras_[i]->PublishImageAndFreq();
     }
-}
-
-void HikCameraManager::SetAdvertiseTopic(const std::string &advertiseName) {
-    LOG(INFO) << __FUNCTION__ << " start; topic name: " << advertiseName;
-    image_transport::Publisher pub;
-    image_transport::ImageTransport it(nh_);
-    pub = it.advertise("camera/image" + advertiseName, 0);
-
-    pubImages_.push_back(pub);
-    return;
-}
-
-void HikCameraManager::PublishImage(size_t index) {
-    cv::Mat imageResized;
-    // pSingleCamera->mat2PubMutex_.lock();
-    cv::resize(pSingleCameras_[index]->mat2Pub_, imageResized, cv::Size(pSingleCameras_[index]->mat2Pub_.cols / 10, pSingleCameras_[index]->mat2Pub_.rows / 10));
-    // pSingleCamera->mat2PubMutex_.unlock();
-
-    sensor_msgs::ImagePtr imgMsg = cv_bridge::CvImage(std_msgs::Header(), "bgr8", imageResized).toImageMsg();
-    pubImages_[index].publish(imgMsg);
 }
 
 void HikCameraManager::PressEnterToExit() {

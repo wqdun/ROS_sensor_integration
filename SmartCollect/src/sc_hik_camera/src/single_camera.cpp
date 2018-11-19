@@ -1,7 +1,3 @@
-#define NDEBUG
-// #undef NDEBUG
-#include <glog/logging.h>
-
 #include "single_camera.h"
 #include "hik_camera_manager.h"
 
@@ -40,8 +36,39 @@ void SingleCamera::SetCamera(const MV_CC_DEVICE_INFO_LIST &deviceInfoList, size_
 
     SetIndex_Ip(deviceInfoList, index);
     SetHandle(deviceInfoList, index);
+    SetAdvertiseTopic();
+
     StartCamera();
 }
+
+
+void SingleCamera::SetAdvertiseTopic() {
+    LOG(INFO) << __FUNCTION__ << " start.";
+    pubCamSpeed_ = nh_.advertise<std_msgs::Float64>("cam_speed" + cameraIP_, 10);
+
+    image_transport::ImageTransport it(nh_);
+    pubImage_ = it.advertise("camera/image" + cameraIP_, 10);
+
+    return;
+}
+
+void SingleCamera::PublishImageAndFreq() {
+    DLOG(INFO) << __FUNCTION__ << " start.";
+
+    cv::Mat imageResized;
+    // mat2PubMutex_.lock();
+    cv::resize(mat2Pub_, imageResized, cv::Size(mat2Pub_.cols / 10, mat2Pub_.rows / 10));
+    // mat2PubMutex_.unlock();
+    sensor_msgs::ImagePtr imgMsg = cv_bridge::CvImage(std_msgs::Header(), "bgr8", imageResized).toImageMsg();
+    pubImage_.publish(imgMsg);
+
+    std_msgs::Float64 msgImageFreq;
+    msgImageFreq.data = imageFreq_;
+    pubCamSpeed_.publish(msgImageFreq);
+
+    return;
+}
+
 
 void SingleCamera::SetIndex_Ip(const MV_CC_DEVICE_INFO_LIST &deviceInfoList, size_t index) {
     LOG(INFO) << __FUNCTION__ << " start.";
@@ -128,7 +155,11 @@ void __stdcall SingleCamera::ImageCB(unsigned char *pData, MV_FRAME_OUT_INFO_EX 
         pDataForRGB = NULL;
     }
 
-    const std::string picFileName("/tmp/" + std::to_string(unixTime) + "_" + _cameraIP + "_" + std::to_string(pFrameInfo->nFrameNum) + ".jpg");
+    const double deviceTimeStamp = pFrameInfo->nDevTimeStampHigh + pFrameInfo->nDevTimeStampLow / 100000000.;
+    pSingleCamera->imageFreq_ = 1 / (deviceTimeStamp - pSingleCamera->lastDeviceTimeStamp_);
+    pSingleCamera->lastDeviceTimeStamp_ = deviceTimeStamp;
+    LOG_EVERY_N(INFO, 20) << "pSingleCamera->imageFreq_: " << pSingleCamera->imageFreq_;
+    const std::string picFileName("/tmp/" + std::to_string(unixTime) + "_" + _cameraIP + "_" + std::to_string(pFrameInfo->nFrameNum) + "_" + std::to_string(deviceTimeStamp) + ".jpg");
     // pSingleCamera->mat2PubMutex_.lock();
     SaveImageTask *pSaveImageTask = new SaveImageTask(pSingleCamera->mat2Pub_, *pFrameInfo, picFileName);
     // pSingleCamera->mat2PubMutex_.unlock();

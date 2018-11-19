@@ -1,7 +1,4 @@
 #include "server_daemon.h"
-#define NDEBUG
-// #undef NDEBUG
-#include <glog/logging.h>
 
 ServerDaemon::ServerDaemon(ros::NodeHandle nh, ros::NodeHandle private_nh) {
     // below for SC control
@@ -14,7 +11,7 @@ ServerDaemon::ServerDaemon(ros::NodeHandle nh, ros::NodeHandle private_nh) {
     sub232_ = nh.subscribe("imu_string", 0, &ServerDaemon::gpsCB, this);
     subVelodyne_ = nh.subscribe("velodyne_pps_status", 0, &ServerDaemon::velodyneCB, this);
     sub422_ = nh.subscribe("imu422_hdop", 0, &ServerDaemon::rawImuCB, this);
-    subCameraImg_ = nh.subscribe("cam_speed", 0, &ServerDaemon::cameraImgCB, this);
+    subCameraImg_ = nh.subscribe("cam_speed5555", 0, &ServerDaemon::cameraImgCB, this);
     subProjectMonitor_ = nh.subscribe("sc_disk_info", 0, &ServerDaemon::projectMonitorCB, this);
     subDataFixer_ = nh.subscribe("sc_data_fixer_progress", 0, &ServerDaemon::dataFixerCB, this);
 

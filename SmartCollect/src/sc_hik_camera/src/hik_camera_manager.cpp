@@ -27,9 +27,10 @@ void HikCameraManager::Run() {
     threadPool_.start();
     err = MV_CC_EnumDevices(MV_GIGE_DEVICE, &deviceList_);
     assert(MV_OK == err);
-    LOG(INFO) << "Find " << deviceList_.nDeviceNum << " Devices.";
+    const size_t camNum = deviceList_.nDeviceNum;
+    LOG(INFO) << "Find " << camNum << " Devices.";
 
-    for(size_t i = 0; i < deviceList_.nDeviceNum; ++i) {
+    for(size_t i = 0; i < camNum; ++i) {
         boost::shared_ptr<SingleCamera> pSingleCamera(new SingleCamera(this));
         pSingleCamera->SetCamera(deviceList_, i);
         pSingleCameras_.push_back(pSingleCamera);
@@ -38,22 +39,16 @@ void HikCameraManager::Run() {
         LOG(INFO) << i << ":" << _cameraIP;
         (void)SetAdvertiseTopic(_cameraIP);
     }
+
+    int i = -1;
+    ros::Rate rate(10);
     while(ros::ok()) {
-        ros::spin();
-        // SingleCamera::s_matImageMutex_.lock();
-        // if(SingleCamera::s_time2Mat_.empty()) {
-        //     DLOG_EVERY_N(INFO, 500000) << "SingleCamera::s_time2Mat_.empty()";
-        //     SingleCamera::s_matImageMutex_.unlock();
-        //     continue;
-        // }
-        // time2Mat_t _time2Mat = SingleCamera::s_time2Mat_.front();
-        // SingleCamera::s_time2Mat_.pop_front();
-        // SingleCamera::s_matImageMutex_.unlock();
+        ros::spinOnce();
+        rate.sleep();
+        ++i;
+        i %= camNum;
 
-        // SaveImageTask *pSaveImageTask = new SaveImageTask(_time2Mat.header, _time2Mat.cameraIP, _time2Mat.frameNum, _time2Mat.matImage, _time2Mat.pDataImage);
-        // threadPool_.append_task(pSaveImageTask);
-
-        // PublishImage(_time2Mat.cameraIndex, _time2Mat.matImage);
+        PublishImage(i);
     }
 }
 
@@ -67,11 +62,13 @@ void HikCameraManager::SetAdvertiseTopic(const std::string &advertiseName) {
     return;
 }
 
-void HikCameraManager::PublishImage(size_t index, const cv::Mat &image2Pub) {
+void HikCameraManager::PublishImage(size_t index) {
     cv::Mat imageResized;
-    cv::resize(image2Pub, imageResized, cv::Size(image2Pub.cols / 10, image2Pub.rows / 10));
-    sensor_msgs::ImagePtr imgMsg = cv_bridge::CvImage(std_msgs::Header(), "bgr8", imageResized).toImageMsg();
+    // pSingleCamera->mat2PubMutex_.lock();
+    cv::resize(pSingleCameras_[index]->mat2Pub_, imageResized, cv::Size(pSingleCameras_[index]->mat2Pub_.cols / 10, pSingleCameras_[index]->mat2Pub_.rows / 10));
+    // pSingleCamera->mat2PubMutex_.unlock();
 
+    sensor_msgs::ImagePtr imgMsg = cv_bridge::CvImage(std_msgs::Header(), "bgr8", imageResized).toImageMsg();
     pubImages_[index].publish(imgMsg);
 }
 

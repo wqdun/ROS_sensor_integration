@@ -33,7 +33,7 @@ private:
     void SetAdvertiseTopic(const std::string &advertiseName);
     void DoClean();
     void PressEnterToExit();
-    void PublishImage(size_t index, const cv::Mat &image2Pub);
+    void PublishImage(size_t index);
 };
 
 #endif

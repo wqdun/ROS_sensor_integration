@@ -22,12 +22,10 @@ typedef struct {
 class HikCameraManager;
 class SingleCamera {
 public:
-    static std::mutex s_matImageMutex_;
-    static std::deque<time2Mat_t> s_time2Mat_;
+    cv::Mat mat2Pub_;
 
     SingleCamera(HikCameraManager *pManager);
     ~SingleCamera();
-
     void SetCamera(const MV_CC_DEVICE_INFO_LIST &deviceInfoList, size_t index);
     std::string GetCameraIP();
     void *GetHandle();
@@ -47,6 +45,7 @@ private:
     // e.g., "6666"
     std::string cameraIP_;
     size_t cameraIndex_;
+    std::mutex mat2PubMutex_;
 };
 
 #endif

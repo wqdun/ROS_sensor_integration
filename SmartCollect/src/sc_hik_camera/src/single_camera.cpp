@@ -5,10 +5,6 @@
 #include "single_camera.h"
 #include "hik_camera_manager.h"
 
-// #include "../../sc_lib_public_tools/src/thread_pool.h"
-
-std::deque<time2Mat_t> SingleCamera::s_time2Mat_;
-std::mutex SingleCamera::s_matImageMutex_;
 HikCameraManager* SingleCamera::s_pManager_;
 
 SingleCamera::SingleCamera(HikCameraManager *pManager) {
@@ -101,63 +97,42 @@ void __stdcall SingleCamera::ImageCB(unsigned char *pData, MV_FRAME_OUT_INFO_EX 
         return;
     }
 
-    unsigned char *pRG8 = (unsigned char*)malloc(pFrameInfo->nFrameLen);
-    memcpy(pRG8, pData, pFrameInfo->nFrameLen);
-
     SingleCamera *pSingleCamera = static_cast<SingleCamera *>(_pSingleCamera);
     const std::string _cameraIP(pSingleCamera->GetCameraIP());
-    SaveImageTask *pSaveImageTask = new SaveImageTask(pSingleCamera, *pFrameInfo, unixTime, pRG8);
-    s_pManager_->threadPool_.append_task(pSaveImageTask);
-
-
-
-
-    //
-
     LOG_EVERY_N(INFO, 20) << "GetOneFrame[" << pFrameInfo->nFrameNum << "]: " << pFrameInfo->nWidth << " * " << pFrameInfo->nHeight << " from " << _cameraIP;
-    // int err = MV_OK;
 
-    // void *handle = pSingleCamera->GetHandle();
+    void *handle = pSingleCamera->GetHandle();
+    unsigned char *pDataForRGB = (unsigned char*)malloc(pFrameInfo->nWidth * pFrameInfo->nHeight * 4 + 2048);
+    assert(pDataForRGB);
+    MV_CC_PIXEL_CONVERT_PARAM convertParam = {0};
+    convertParam.nWidth = pFrameInfo->nWidth;
+    convertParam.nHeight = pFrameInfo->nHeight;
+    convertParam.pSrcData = pData;
+    convertParam.nSrcDataLen = pFrameInfo->nFrameLen;
+    convertParam.enSrcPixelType = pFrameInfo->enPixelType;
+    convertParam.enDstPixelType = PixelType_Gvsp_BGR8_Packed;
+    convertParam.pDstBuffer = pDataForRGB;
+    convertParam.nDstBufferSize = pFrameInfo->nWidth * pFrameInfo->nHeight * 4 + 2048;
+    int err = MV_CC_ConvertPixelType(handle, &convertParam);
+    if(MV_OK != err) {
+        LOG(ERROR) << "Failed to MV_CC_ConvertPixelType; err: " << err;
+        return;
+    }
 
-    // unsigned char *pDataForRGB = (unsigned char*)malloc(pFrameInfo->nWidth * pFrameInfo->nHeight * 4 + 2048);
-    // assert(pDataForRGB);
-    // MV_CC_PIXEL_CONVERT_PARAM convertParam = {0};
-    // convertParam.nWidth = pFrameInfo->nWidth;
-    // convertParam.nHeight = pFrameInfo->nHeight;
-    // convertParam.pSrcData = pData;
-    // convertParam.nSrcDataLen = pFrameInfo->nFrameLen;
-    // convertParam.enSrcPixelType = pFrameInfo->enPixelType;
-    // convertParam.enDstPixelType = PixelType_Gvsp_BGR8_Packed;
-    // convertParam.pDstBuffer = pDataForRGB;
-    // convertParam.nDstBufferSize = pFrameInfo->nWidth * pFrameInfo->nHeight * 4 + 2048;
-    // err = MV_CC_ConvertPixelType(handle, &convertParam);
-    // if(MV_OK != err) {
-    //     LOG(ERROR) << "Failed to MV_CC_ConvertPixelType; err: " << err;
-    //     return;
-    // }
+    // pSingleCamera->mat2PubMutex_.lock();
+    pSingleCamera->mat2Pub_.create(pFrameInfo->nHeight, pFrameInfo->nWidth, CV_8UC3);
+    memcpy(pSingleCamera->mat2Pub_.data, pDataForRGB, pFrameInfo->nWidth * pFrameInfo->nHeight * 3);
+    // pSingleCamera->mat2PubMutex_.unlock();
+    if(pDataForRGB) {
+        free(pDataForRGB);
+        pDataForRGB = NULL;
+    }
 
-    // cv::Mat matBGR(pFrameInfo->nHeight, pFrameInfo->nWidth, CV_8UC3);
-    // memcpy(matBGR.data, pDataForRGB, pFrameInfo->nWidth * pFrameInfo->nHeight * 3);
-    // if(pDataForRGB) {
-    //     free(pDataForRGB);
-    //     pDataForRGB = NULL;
-    // }
-
-    // const size_t _cameraIndex = pSingleCamera->GetCameraIndex();
-
-    // time2Mat_t time2Mat;
-    // time2Mat.header = unixTime;
-    // time2Mat.cameraIP = _cameraIP;
-    // time2Mat.cameraIndex = _cameraIndex;
-    // time2Mat.frameNum = pFrameInfo->nFrameNum;
-    // time2Mat.matImage = matBGR;
-    // time2Mat.pDataImage = pDataForRGB;
-
-
-    // s_matImageMutex_.lock();
-    // s_time2Mat_.emplace_back(time2Mat);
-    // LOG_EVERY_N(INFO, 20) << s_time2Mat_.size() << " s_time2Mat_";
-    // s_matImageMutex_.unlock();
+    const std::string picFileName("/tmp/" + std::to_string(unixTime) + "_" + _cameraIP + "_" + std::to_string(pFrameInfo->nFrameNum) + ".jpg");
+    // pSingleCamera->mat2PubMutex_.lock();
+    SaveImageTask *pSaveImageTask = new SaveImageTask(pSingleCamera->mat2Pub_, *pFrameInfo, picFileName);
+    // pSingleCamera->mat2PubMutex_.unlock();
+    s_pManager_->threadPool_.append_task(pSaveImageTask);
 
     LOG_EVERY_N(INFO, 20) << __FUNCTION__ << " end.";
 }

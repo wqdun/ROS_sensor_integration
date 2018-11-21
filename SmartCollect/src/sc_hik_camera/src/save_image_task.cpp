@@ -1,7 +1,3 @@
-#define NDEBUG
-// #undef NDEBUG
-#include <glog/logging.h>
-
 #include "save_image_task.h"
 
 SaveImageTask::SaveImageTask(const cv::Mat &_image, const MV_FRAME_OUT_INFO_EX &_frameInfo, const std::string &_picFile) {

@@ -4,6 +4,11 @@
 #include <glog/logging.h>
 #include <ros/ros.h>
 #include <std_msgs/Float64.h>
+#include <boost/thread/thread.hpp>
+#include <boost/bind.hpp>
+#include <netinet/in.h>
+#include <fcntl.h>
+#include <poll.h>
 #include "sc_msgs/ClientCmd.h"
 #include "sc_msgs/ServerMsg.h"
 #include "sc_msgs/MonitorMsg.h"
@@ -14,8 +19,6 @@
 #include "sc_msgs/scIntegrateImu.h"
 #include "sc_msgs/DataFixerProgress.h"
 #include "../../sc_lib_public_tools/src/public_tools.h"
-#include <boost/thread/thread.hpp>
-#include <boost/bind.hpp>
 #include "disk_monitor.h"
 
 class ServerDaemon {
@@ -56,6 +59,9 @@ private:
     void cameraImgCB(const std_msgs::Float64::ConstPtr& pCameraImgMsg);
     void projectMonitorCB(const sc_msgs::DiskInfo::ConstPtr& pDiskInfoMsg);
     void dataFixerCB(const sc_msgs::DataFixerProgress::ConstPtr& pDataFixerProgressMsg);
+    void CheckHardware();
+    void CheckLidar();
+    void ParsePositionPkt(const char *pkt);
 
     void updateProjectInfo(const std::string &projectInfo);
 };

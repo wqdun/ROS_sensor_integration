@@ -1,6 +1,7 @@
 #ifndef __SAVE_IMAGE_TASK_H__
 #define __SAVE_IMAGE_TASK_H__
 
+#include <glog/logging.h>
 #include <opencv2/opencv.hpp>
 #include <turbojpeg.h>
 #include "single_camera.h"

@@ -40,3 +40,16 @@ int32 lidar_size
 int8 is_record
 int8 cam_gain
 
+# below for hardware check
+# -1: unchecked
+# -2: IP not set or cable not connected
+int8 pps_HWcheck
+#  0: "No PPS"
+#  1: "Synchronizing PPS"
+#  2: "PPS locked"
+#  3: "PPS Error"
+int8 gprmc_HWcheck
+#  'A'(65): OK
+#  'V'(86): Unavailable
+
+

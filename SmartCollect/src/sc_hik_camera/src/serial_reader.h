@@ -1,6 +1,7 @@
 #ifndef __SERIAL_READER_H__
 #define __SERIAL_READER_H__
 
+#include <glog/logging.h>
 #include <deque>
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -11,8 +12,8 @@
 #include <boost/algorithm/string/split.hpp>
 #include <boost/thread/thread.hpp>
 #include <mutex>
-#include "can_parser.h"
 #include "../../sc_lib_public_tools/src/tools_no_ros.h"
+#include "sc_msgs/Novatel.h"
 
 typedef struct {
     double unixTime;
@@ -39,6 +40,22 @@ typedef struct {
     double roll;
 } slamProtocol_t;
 
+typedef union {
+   unsigned char uCharData[2];
+   unsigned short uShortData;
+} uchar2Ushort_t;
+
+typedef union {
+   unsigned char uCharData[4];
+   float floatData;
+} uchar2Float_t;
+
+typedef union {
+   unsigned char uCharData[8];
+   double doubleData;
+} uchar2Double_t;
+
+
 class SerialReader {
 public:
     SerialReader();
@@ -48,18 +65,29 @@ public:
     bool isSerialRunning_;
     slamProtocol_t slamData_;
     std::deque<slamProtocol_t> slam10Datas_;
-    boost::shared_ptr<CanParser> pCanParser_;
+    // boost::shared_ptr<CanParser> pCanParser_;
     std::mutex slam10DatasMutex_;
 
 
 private:
     int fd_;
-    boost::shared_ptr<boost::thread> pCanParserThread_;
+    sc_msgs::Novatel novatelMsg_;
+    // boost::shared_ptr<boost::thread> pCanParserThread_;
 
     void GetPositionFromGpfpd(const std::string &gpfpd, std::string &position);
     void WriteSerial();
     void ReadSerial();
     void Parse2SlamData(const std::string &_slamProtocol);
+    void ParseFrame(const std::string &_frame, size_t _headerLength);
+    void ParsePsrdop(const std::string &psrdopFrame, size_t _headerLength);
+    void ParseBestgnsspos(const std::string &bestgnssposFrame, size_t _headerLength);
+    void ParseInspvax(const std::string &inspvaxFrame, size_t _headerLength);
+    void ParseRawimu(const std::string &inspvaxFrame, size_t _headerLength);
+
+    void CheckSum(const std::string &__frame);
+    unsigned long CRC32Value(int i);
+    unsigned long CalculateBlockCRC32(const std::string &___frame);
+    bool IsCheckSumWrong(const std::string &__frame);
 };
 
 

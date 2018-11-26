@@ -17,6 +17,7 @@ find_package(catkin REQUIRED COMPONENTS
   std_msgs
   image_transport
   cv_bridge
+  sc_msgs
 )
 # find_package(OpenCV REQUIRED)
 
@@ -172,6 +173,18 @@ target_link_libraries(${PROJECT_NAME}_node
   glog
   /opt/MVS/bin/libMvCameraControl.so
   /usr/lib/x86_64-linux-gnu/libturbojpeg.a
+)
+
+# Below for test serial reader
+add_executable(serial_reader_test
+  src/serial_reader.cpp
+  src/serial_reader_test.cpp
+)
+target_link_libraries(serial_reader_test
+  ${catkin_LIBRARIES}
+  glog
+  sc_lib_public_tools
+  boost_system
 )
 
 #############

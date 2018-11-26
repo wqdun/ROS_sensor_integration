@@ -1,7 +1,4 @@
 #include "public_tools.h"
-#define NDEBUG
-// #undef NDEBUG
-#include <glog/logging.h>
 
 namespace public_tools
 {

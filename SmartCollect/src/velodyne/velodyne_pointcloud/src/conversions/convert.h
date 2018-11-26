@@ -17,6 +17,7 @@
 #ifndef _VELODYNE_POINTCLOUD_CONVERT_H_
 #define _VELODYNE_POINTCLOUD_CONVERT_H_ 1
 
+#include <glog/logging.h>
 #include <ros/ros.h>
 
 #include <sensor_msgs/PointCloud2.h>

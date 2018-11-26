@@ -60,6 +60,7 @@ add_message_files(
   DiskInfo.msg
   scIntegrateImu.msg
   imu5651.msg
+  Novatel.msg
 )
 
 ## Generate services in the 'srv' folder

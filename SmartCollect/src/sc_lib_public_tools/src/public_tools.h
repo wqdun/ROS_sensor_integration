@@ -1,6 +1,7 @@
 #ifndef PUBLIC_TOOLS_H
 #define PUBLIC_TOOLS_H
 
+#include <glog/logging.h>
 #include <ros/ros.h>
 #include <iostream>
 #include <sstream>

@@ -12,8 +12,8 @@ add_compile_options(-std=c++11)
 add_library(driver_nodelet nodelet.cc driver.cc center_subscriber.cpp)
 add_dependencies(driver_nodelet velodyne_driver_gencfg)
 target_link_libraries(driver_nodelet
-  velodyne_input
   ${catkin_LIBRARIES}
+  velodyne_input
   ${libpcap_LIBRARIES}
   sc_lib_public_tools
 )

@@ -15,31 +15,6 @@
 #include "../../sc_lib_public_tools/src/tools_no_ros.h"
 #include "sc_msgs/Novatel.h"
 
-typedef struct {
-    double unixTime;
-    double gpsTime;
-
-    double gyroX;
-    double gyroY;
-    double gyroZ;
-
-    double accX;
-    double accY;
-    double accZ;
-
-    double lat;
-    double lon;
-    double hei;
-
-    double east;
-    double north;
-
-    double encoder_v;
-    double yaw;
-    double pitch;
-    double roll;
-} slamProtocol_t;
-
 typedef union {
    unsigned char uCharData[2];
    unsigned short uShortData;
@@ -58,26 +33,19 @@ typedef union {
 
 class SerialReader {
 public:
-    SerialReader();
+    SerialReader(const std::string &_serialName);
     ~SerialReader();
-    int Run();
-
-    bool isSerialRunning_;
-    slamProtocol_t slamData_;
-    std::deque<slamProtocol_t> slam10Datas_;
-    // boost::shared_ptr<CanParser> pCanParser_;
-    std::mutex slam10DatasMutex_;
+    int Read();
+    int Write();
 
 
 private:
     int fd_;
+    std::string serialName_;
     sc_msgs::Novatel novatelMsg_;
-    // boost::shared_ptr<boost::thread> pCanParserThread_;
 
-    void GetPositionFromGpfpd(const std::string &gpfpd, std::string &position);
     void WriteSerial();
     void ReadSerial();
-    void Parse2SlamData(const std::string &_slamProtocol);
     void ParseFrame(const std::string &_frame, size_t _headerLength);
     void ParsePsrdop(const std::string &psrdopFrame, size_t _headerLength);
     void ParseBestgnsspos(const std::string &bestgnssposFrame, size_t _headerLength);

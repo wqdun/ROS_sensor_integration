@@ -14,7 +14,7 @@
 #include "sc_msgs/MonitorMsg.h"
 #include "sc_msgs/ProjectInfoMsg.h"
 #include "sc_msgs/DiskInfo.h"
-#include "sc_msgs/imu5651.h"
+#include "sc_msgs/Novatel.h"
 #include "velodyne_msgs/Velodyne2Center.h"
 #include "sc_msgs/scIntegrateImu.h"
 #include "sc_msgs/DataFixerProgress.h"
@@ -31,7 +31,7 @@ public:
 private:
     ros::Subscriber subClient_;
 
-    ros::Subscriber sub232_;
+    ros::Subscriber subSerial_;
     ros::Subscriber subVelodyne_;
     ros::Subscriber sub422_;
     ros::Subscriber subCameraImg_;
@@ -42,26 +42,25 @@ private:
     sc_msgs::MonitorMsg monitorMsg_;
     sc_msgs::ProjectInfoMsg projectInfoMsg_;
 
-    double mGpsTime[2];
+    double gpsTime_[2];
     const std::string PPS_STATUS[4] {
         "No PPS", "Synchronizing PPS", "PPS locked", "PPS Error"
     };
 
     boost::shared_ptr<DiskMonitor> pDiskMonitor_;
 
-
     void clientCB(const sc_msgs::ClientCmd::ConstPtr& pClientMsg);
 
     bool isGpsUpdated_, isVelodyneUpdated_, isRawImuUpdated_, isCameraUpdated_, isDiskInfoUpdated_;
-    void gpsCB(const sc_msgs::imu5651::ConstPtr& pGPSmsg);
+    void SerialCB(const sc_msgs::Novatel::ConstPtr& pGPSmsg);
     void velodyneCB(const velodyne_msgs::Velodyne2Center::ConstPtr& pVelodyneMsg);
-    void rawImuCB(const sc_msgs::scIntegrateImu::ConstPtr& pRawImuMsg);
     void cameraImgCB(const std_msgs::Float64::ConstPtr& pCameraImgMsg);
     void projectMonitorCB(const sc_msgs::DiskInfo::ConstPtr& pDiskInfoMsg);
     void dataFixerCB(const sc_msgs::DataFixerProgress::ConstPtr& pDataFixerProgressMsg);
     void CheckHardware();
     void CheckLidar();
     void ParsePositionPkt(const char *pkt);
+    void CheckDiskCapacity();
 
     void updateProjectInfo(const std::string &projectInfo);
 };

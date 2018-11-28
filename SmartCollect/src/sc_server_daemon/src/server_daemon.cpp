@@ -10,15 +10,14 @@ ServerDaemon::ServerDaemon(ros::NodeHandle nh, ros::NodeHandle private_nh) {
 
     // below for composing monitor data
     isGpsUpdated_ = isVelodyneUpdated_ = isRawImuUpdated_ = isCameraUpdated_ = isDiskInfoUpdated_ = false;
-    sub232_ = nh.subscribe("imu_string", 0, &ServerDaemon::gpsCB, this);
+    subSerial_ = nh.subscribe("sc_novatel", 10, &ServerDaemon::SerialCB, this);
     subVelodyne_ = nh.subscribe("velodyne_pps_status", 0, &ServerDaemon::velodyneCB, this);
-    sub422_ = nh.subscribe("imu422_hdop", 0, &ServerDaemon::rawImuCB, this);
     subCameraImg_ = nh.subscribe("cam_speed5555", 0, &ServerDaemon::cameraImgCB, this);
     subProjectMonitor_ = nh.subscribe("sc_disk_info", 0, &ServerDaemon::projectMonitorCB, this);
     subDataFixer_ = nh.subscribe("sc_data_fixer_progress", 0, &ServerDaemon::dataFixerCB, this);
 
     pub2client_ = nh.advertise<sc_msgs::MonitorMsg>("sc_monitor", 0);
-    mGpsTime[0] = mGpsTime[1] = -1;
+    gpsTime_[0] = gpsTime_[1] = -1;
 
     pDiskMonitor_.reset(new DiskMonitor() );
 }
@@ -100,17 +99,6 @@ void ServerDaemon::dataFixerCB(const sc_msgs::DataFixerProgress::ConstPtr& pData
     monitorMsg_.process_num = pDataFixerProgressMsg->processNum;
 }
 
-void ServerDaemon::rawImuCB(const sc_msgs::scIntegrateImu::ConstPtr& pRawImuMsg) {
-    DLOG(INFO) << __FUNCTION__ << " start in 1Hz.";
-    isRawImuUpdated_ = true;
-
-    // format: $GPGGA,,,,,,0,,,,,,,,*66
-    monitorMsg_.latitude = pRawImuMsg->Latitude;
-    monitorMsg_.longitude = pRawImuMsg->Longitude;
-    monitorMsg_.hdop = pRawImuMsg->Hdop;
-    monitorMsg_.noSV_422 = pRawImuMsg->NoSV;
-}
-
 void ServerDaemon::cameraImgCB(const std_msgs::Float64::ConstPtr& pCameraImgMsg) {
     DLOG(INFO) << __FUNCTION__ << " start in ?Hz, camera_fps: " << pCameraImgMsg->data;
     isCameraUpdated_ = true;
@@ -133,44 +121,39 @@ void ServerDaemon::velodyneCB(const velodyne_msgs::Velodyne2Center::ConstPtr& pV
     monitorMsg_.is_gprmc_valid = pVelodyneMsg->is_gprmc_valid;
 }
 
-void ServerDaemon::gpsCB(const sc_msgs::imu5651::ConstPtr& pGPSmsg) {
+void ServerDaemon::SerialCB(const sc_msgs::Novatel::ConstPtr& pNovatelMsg) {
     // 100Hz
-    mGpsTime[0] = mGpsTime[1];
-    mGpsTime[1] = public_tools::PublicTools::string2num(pGPSmsg->GPSTime, -1.0);
+    gpsTime_[0] = gpsTime_[1];
+    gpsTime_[1] = pNovatelMsg->seconds_into_week;
     // do nothing if receive same frame
-    if(mGpsTime[0] == mGpsTime[1]) {
-        LOG(INFO) << "Same frame received, GPStime: " << pGPSmsg->GPSTime;
+    if(gpsTime_[0] == gpsTime_[1]) {
+        LOG_EVERY_N(INFO, 10) << "Same frame received, GPStime: " << pNovatelMsg->seconds_into_week;
         return;
     }
     isGpsUpdated_ = true;
 
-    monitorMsg_.GPStime = mGpsTime[1];
+    monitorMsg_.GPStime = gpsTime_[1];
+    monitorMsg_.hdop_novatel = pNovatelMsg->hdop;
+
     sc_msgs::Point3D p;
     // lat: 1 degree is about 100000 m
-    p.x = public_tools::PublicTools::string2num(pGPSmsg->Latitude, -1.0);
+    p.x = pNovatelMsg->latitude;
     // lon: 1 degree is about 100000 m
-    p.y = public_tools::PublicTools::string2num(pGPSmsg->Longitude, -1.0);
-    p.z = public_tools::PublicTools::string2num(pGPSmsg->Altitude, -1.0);
+    p.y = pNovatelMsg->longitude;
+    p.z = pNovatelMsg->height;
     monitorMsg_.lat_lon_hei = p;
 
-    p.x = public_tools::PublicTools::string2num(pGPSmsg->Pitch, -1.0);
-    p.y = public_tools::PublicTools::string2num(pGPSmsg->Roll, -1.0);
-    p.z = public_tools::PublicTools::string2num(pGPSmsg->Heading, -1.0);
+    p.x = pNovatelMsg->pitch;
+    p.y = pNovatelMsg->roll;
+    p.z = pNovatelMsg->azimuth;
     monitorMsg_.pitch_roll_heading = p;
 
-    if(pGPSmsg->Vel_east.empty() || pGPSmsg->Vel_north.empty() || pGPSmsg->Vel_up.empty() ) {
-        LOG(WARNING) << "pGPSmsg->V is empty: " << pGPSmsg->Vel_east;
-        monitorMsg_.speed = -1;
-    }
-    else {
-        double vEast = public_tools::PublicTools::string2num(pGPSmsg->Vel_east, 0.0);
-        double vNorth = public_tools::PublicTools::string2num(pGPSmsg->Vel_north, 0.0);
-        double vUp = public_tools::PublicTools::string2num(pGPSmsg->Vel_up, 0.0);
-        monitorMsg_.speed = sqrt(vEast * vEast + vNorth * vNorth + vUp * vUp) * 3.6;
-    }
+    const double vEast = pNovatelMsg->east_vel;
+    const double vNorth = pNovatelMsg->north_vel;
+    const double vUp = pNovatelMsg->up_vel;
+    monitorMsg_.speed = sqrt(vEast * vEast + vNorth * vNorth + vUp * vUp) * 3.6;
 
-    monitorMsg_.nsv1_num = public_tools::PublicTools::string2num(pGPSmsg->NSV1_num, -1);
-    monitorMsg_.nsv2_num = public_tools::PublicTools::string2num(pGPSmsg->NSV2_num, -1);
+    monitorMsg_.nsv2_num = monitorMsg_.nsv1_num = pNovatelMsg->sv_num;
 }
 
 void ServerDaemon::clientCB(const sc_msgs::ClientCmd::ConstPtr& pClientMsg) {
@@ -276,7 +259,29 @@ void ServerDaemon::clientCB(const sc_msgs::ClientCmd::ConstPtr& pClientMsg) {
 void ServerDaemon::CheckHardware() {
     LOG(INFO) << __FUNCTION__ << " start.";
     CheckLidar();
+    CheckCamera();
+    CheckDiskCapacity();
 }
+
+
+void ServerDaemon::CheckCamera() {
+    LOG(INFO) << __FUNCTION__ << " start.";
+
+
+}
+
+void ServerDaemon::CheckDiskCapacity() {
+    LOG(INFO) << __FUNCTION__ << " start.";
+    std::vector<std::string> diskFreeSpaceInGB;
+    const std::string getDiskFreeSpaceInGBCmd("df -BG /opt/smartc/record/ | tail -n1 | awk '{print $2\", \"$5}'");
+    (void)public_tools::PublicTools::popenWithReturn(getDiskFreeSpaceInGBCmd, diskFreeSpaceInGB);
+    LOG(INFO) << diskFreeSpaceInGB;
+    // monitorMsg_.disk_usage = (1 == diskUsage.size())? diskUsage[0]: "error: I got !1 lines";
+
+}
+
+
+
 
 void ServerDaemon::CheckLidar() {
     LOG(INFO) << __FUNCTION__ << " start.";

@@ -1,17 +1,19 @@
 float32 hdop
 
-uint8 svNum
+uint8 sv_num
 
 float64 latitude
 float64 longitude
 float64 height
-float64 northVel
-float64 eastVel
-float64 upVel
-float64 absVel
+float64 north_vel
+float64 east_vel
+float64 up_vel
+float64 abs_vel
+float64 roll
+float64 pitch
 float64 azimuth
 
-float64 secondsIntoWeek
+float64 seconds_into_week
 
 
 

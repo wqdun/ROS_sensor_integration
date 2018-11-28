@@ -2,9 +2,11 @@
 float64 GPStime
 Point3D lat_lon_hei
 Point3D pitch_roll_heading
+# speed in km/h
 float64 speed
 int32 nsv1_num
 int32 nsv2_num
+float32 hdop_novatel
 
 # below from RS422
 string latitude
@@ -51,5 +53,8 @@ int8 pps_HWcheck
 int8 gprmc_HWcheck
 #  'A'(65): OK
 #  'V'(86): Unavailable
+
+# disk usage check
+int32 disk_free_space_GB
 
 

@@ -53,7 +53,7 @@ void ToolsNoRos::GeoToGauss(double longitude, double latitude, short beltWidth, 
     y = 500000 + N * (m + (1.0 - pow(t, 2) + et2) * pow(m, 3) / 6.0 + (5.0 - 18.0 * pow(t, 2) + pow(t, 4) + 14.0 * et2 - 58.0 * et2 * pow(t, 2)) * pow(m, 5) / 120.0);
 }
 
-int ToolsNoRos::setSerialOption(int fd, int nSpeed, int nBits, char nEvent, int nStop) {
+int ToolsNoRos::SetSerialOption(int fd, int nSpeed, int nBits, char nEvent, int nStop) {
     LOG(INFO) << __FUNCTION__ << " start.";
     struct termios newtio, oldtio;
     if(tcgetattr(fd, &oldtio) != 0) {

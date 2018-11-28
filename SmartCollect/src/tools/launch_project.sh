@@ -32,6 +32,7 @@ create_record_path() {
     log_with_time "$FUNCNAME start, param: $*"
     local _absolute_record_path=$1
     mkdir -p "${_absolute_record_path}/Image/"
+    mkdir -p "${_absolute_record_path}/Image/panoramas/"
     mkdir -p "${_absolute_record_path}/IMU/"
     mkdir -p "${_absolute_record_path}/Lidar/"
 }
@@ -61,56 +62,38 @@ start_smart_collector_server() {
 
     get_sudo_permission
     sudo chmod +r /dev/ttyUSB0
-    pkill sc_integrate_
-    rosrun sc_integrate_imu_recorder sc_integrate_imu_recorder_node "${_absolute_record_path}/IMU/" &
+    pkill sc_rawimu_record
+    echo "pkill sc_rawimu_record" >"/tmp/kill_smartc.sh"
+    /opt/smartc/devel/lib/sc_rawimu_recorder/sc_rawimu_recorder_node "/dev/ttyUSB0" "${_absolute_record_path}/IMU/" &
     sleep 0.2
 
     get_sudo_permission
     sudo chmod +r /dev/ttyS0
 
-    /sbin/ifconfig eth0 | /bin/grep -w inet >>$result_log 2>&1
-    if [ $? -ne 0 ]; then
-        log_with_time "sc_camera_ip_forcer_node has not been executed, gonna run it."
-        bash /opt/smartc/src/tools/force_ip_per_minute.sh
-    else
-        log_with_time "sc_camera_ip_forcer_node already been executed."
-    fi
-
-    for i in $(seq 30)
-    do
-        pidof sc_camera_ip_forcer_node
-        if [ $? -eq 0 ]; then
-            log_with_time "sc_camera_ip_forcer_node is running, waiting..."
-            sleep 1
-            continue
-        fi
-        pkill sc_camera_ip_
-        pkill sc_camera
-        /opt/smartc/devel/lib/sc_camera/sc_camera jpg "${_absolute_record_path}/" &
-        break
-    done
+    pkill sc_hik_camer
+    echo "pkill sc_hik_camer" >>"/tmp/kill_smartc.sh"
+    /opt/smartc/devel/lib/sc_hik_camera/sc_hik_camera_node "${_absolute_record_path}/" &
 
     killall nodelet
+    echo "killall nodelet" >>"/tmp/kill_smartc.sh"
     roslaunch velodyne_pointcloud VLP16_points.launch &
     sleep 0.2
 
     pkill sc_project_mon
-    /opt/smartc/devel/lib/sc_project_monitor/sc_project_monitor_node "${_absolute_record_path}/" &
+    echo "pkill sc_project_mon" >>"/tmp/kill_smartc.sh"
+    # /opt/smartc/devel/lib/sc_project_monitor/sc_project_monitor_node "${_absolute_record_path}/" &
     sleep 0.2
 
     pkill sc_map_node
-    /opt/smartc/devel/lib/sc_map/sc_map_node "${_absolute_record_path}/" &
+    echo "pkill sc_map_node" >>"/tmp/kill_smartc.sh"
+    # /opt/smartc/devel/lib/sc_map/sc_map_node "${_absolute_record_path}/" &
     sleep 0.2
 }
 
 do_kill() {
     log_with_time "$FUNCNAME start."
 
-    pkill sc_integrate_
-    pkill sc_camera
-    killall nodelet
-    pkill sc_project_mon
-    pkill sc_map_node
+    bash "/tmp/kill_smartc.sh"
     return 0
 }
 

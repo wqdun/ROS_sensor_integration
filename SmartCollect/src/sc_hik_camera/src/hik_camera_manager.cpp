@@ -1,21 +1,21 @@
-#define NDEBUG
-// #undef NDEBUG
-#include <glog/logging.h>
-
 #include "hik_camera_manager.h"
 
-HikCameraManager::HikCameraManager():
+HikCameraManager::HikCameraManager(const std::string &_rawPath):
     threadPool_(10, 30)
 {
     LOG(INFO) << __FUNCTION__ << " start.";
+    rawDataPath_ = _rawPath;
     pSingleCameras_.clear();
     memset(&deviceList_, 0, sizeof(MV_CC_DEVICE_INFO_LIST));
+
+    pSerialReader_.reset(new SerialReader("/dev/ttyUSB1") );
+    pSerialReaderThread_ = boost::shared_ptr<boost::thread>(new boost::thread(boost::bind(&SerialReader::Read, pSerialReader_) ) );
 }
 
 HikCameraManager::~HikCameraManager() {
     LOG(INFO) << __FUNCTION__ << " start.";
-    (void)DoClean();
-
+    pSerialReaderThread_->join();
+    threadPool_.stop();
     LOG(INFO) << __FUNCTION__ << " end.";
 }
 
@@ -35,15 +35,24 @@ void HikCameraManager::Run() {
     }
 
     int i = -1;
-    ros::Rate rate(10);
+    ros::Rate rate(4);
     while(ros::ok()) {
         ros::spinOnce();
         rate.sleep();
-        ++i;
-        i %= camNum;
-        pSingleCameras_[i]->PublishImageAndFreq();
+        pSerialReader_->PublishMsg();
+        if(0 != camNum) {
+            ++i;
+            i %= camNum;
+            pSingleCameras_[i]->PublishImageAndFreq();
+        }
     }
 }
+
+double HikCameraManager::GetGpsTimeFromSerial() {
+    LOG(INFO) << __FUNCTION__ << " start.";
+    return pSerialReader_->GetGpsTime();
+}
+
 
 void HikCameraManager::PressEnterToExit() {
     LOG(INFO) << "Wait enter to stop grabbing.";
@@ -53,7 +62,3 @@ void HikCameraManager::PressEnterToExit() {
     while(getchar() != '\n');
 }
 
-void HikCameraManager::DoClean() {
-    LOG(INFO) << __FUNCTION__ << " start.";
-    threadPool_.stop();
-}

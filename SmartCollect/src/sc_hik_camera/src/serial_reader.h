@@ -2,6 +2,7 @@
 #define __SERIAL_READER_H__
 
 #include <glog/logging.h>
+#include <ros/ros.h>
 #include <deque>
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -37,12 +38,16 @@ public:
     ~SerialReader();
     int Read();
     int Write();
+    void PublishMsg();
+    double GetGpsTime();
 
 
 private:
     int fd_;
     std::string serialName_;
     sc_msgs::Novatel novatelMsg_;
+    ros::NodeHandle nh_;
+    ros::Publisher pubNovatelMsg_;
 
     void WriteSerial();
     void ReadSerial();

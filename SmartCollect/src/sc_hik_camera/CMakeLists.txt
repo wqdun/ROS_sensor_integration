@@ -150,6 +150,7 @@ add_executable(${PROJECT_NAME}_node
   src/hik_camera_manager.cpp
   src/save_image_task.cpp
   src/single_camera.cpp
+  src/serial_reader.cpp
 )
 
 ## Rename C++ executable without prefix
@@ -173,6 +174,7 @@ target_link_libraries(${PROJECT_NAME}_node
   glog
   /opt/MVS/bin/libMvCameraControl.so
   /usr/lib/x86_64-linux-gnu/libturbojpeg.a
+  sc_lib_public_tools
 )
 
 # Below for test serial reader

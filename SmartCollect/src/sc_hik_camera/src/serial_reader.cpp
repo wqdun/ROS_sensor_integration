@@ -3,6 +3,7 @@
 SerialReader::SerialReader(const std::string &_serialName) {
     LOG(INFO) << __FUNCTION__ << " start.";
     serialName_ = _serialName;
+    pubNovatelMsg_ = nh_.advertise<sc_msgs::Novatel>("sc_novatel", 10);
 }
 
 SerialReader::~SerialReader() {
@@ -14,11 +15,11 @@ int SerialReader::Read() {
 
     fd_ = open(serialName_.c_str(), O_RDWR);
     if(fd_ < 0) {
-        LOG(ERROR) << "Failed to open device, try change permission...";
+        LOG(ERROR) << "Failed to open " << serialName_ << ", try change permission...";
         return -1;
     }
 
-    if(public_tools::ToolsNoRos::setSerialOption(fd_, 230400, 8, 'N', 1) < 0) {
+    if(public_tools::ToolsNoRos::SetSerialOption(fd_, 230400, 8, 'N', 1) < 0) {
         LOG(ERROR) << "Failed to setup " << ttyname(fd_);
         return -1;
     }
@@ -38,7 +39,7 @@ int SerialReader::Write() {
         return -1;
     }
 
-    if(public_tools::ToolsNoRos::setSerialOption(fd_, 230400, 8, 'N', 1) < 0) {
+    if(public_tools::ToolsNoRos::SetSerialOption(fd_, 230400, 8, 'N', 1) < 0) {
         LOG(ERROR) << "Failed to setup " << ttyname(fd_);
         return -1;
     }
@@ -47,6 +48,11 @@ int SerialReader::Write() {
 
     close(fd_);
     return 0;
+}
+
+void SerialReader::PublishMsg() {
+    LOG(INFO) << __FUNCTION__ << " start.";
+    pubNovatelMsg_.publish(novatelMsg_);
 }
 
 void SerialReader::WriteSerial() {
@@ -184,11 +190,15 @@ void SerialReader::ParseRawimu(const std::string &inspvaxFrame, size_t _headerLe
     for(size_t i = 0; i < 8; ++i) {
         uchar2Double.uCharData[i] = inspvaxFrame[_headerLength + 4 + i];
     }
-    novatelMsg_.secondsIntoWeek = uchar2Double.doubleData;
-    LOG(INFO) << std::fixed << "novatelMsg_.secondsIntoWeek: " << novatelMsg_.secondsIntoWeek;
+    novatelMsg_.seconds_into_week = uchar2Double.doubleData;
+    // gpsTimeNovatel_ = uchar2Double.doubleData;
+    LOG(INFO) << std::fixed << "novatelMsg_.seconds_into_week: " << novatelMsg_.seconds_into_week;
 }
 
-
+double SerialReader::GetGpsTime() {
+    LOG(INFO) << __FUNCTION__ << " start.";
+    return novatelMsg_.seconds_into_week;
+}
 
 void SerialReader::ParseInspvax(const std::string &inspvaxFrame, size_t _headerLength) {
     LOG(INFO) << __FUNCTION__ << " start, _headerLength: " << _headerLength;
@@ -213,16 +223,26 @@ void SerialReader::ParseInspvax(const std::string &inspvaxFrame, size_t _headerL
     for(size_t i = 0; i < 8; ++i) {
         uchar2Double.uCharData[i] = inspvaxFrame[_headerLength + 36 + i];
     }
-    novatelMsg_.northVel = uchar2Double.doubleData;
+    novatelMsg_.north_vel = uchar2Double.doubleData;
     for(size_t i = 0; i < 8; ++i) {
         uchar2Double.uCharData[i] = inspvaxFrame[_headerLength + 44 + i];
     }
-    novatelMsg_.eastVel = uchar2Double.doubleData;
+    novatelMsg_.east_vel = uchar2Double.doubleData;
     for(size_t i = 0; i < 8; ++i) {
         uchar2Double.uCharData[i] = inspvaxFrame[_headerLength + 52 + i];
     }
-    novatelMsg_.upVel = uchar2Double.doubleData;
-    novatelMsg_.absVel = sqrt(novatelMsg_.northVel * novatelMsg_.northVel + novatelMsg_.eastVel * novatelMsg_.eastVel + novatelMsg_.upVel * novatelMsg_.upVel);
+    novatelMsg_.up_vel = uchar2Double.doubleData;
+    novatelMsg_.abs_vel = sqrt(novatelMsg_.north_vel * novatelMsg_.north_vel + novatelMsg_.east_vel * novatelMsg_.east_vel + novatelMsg_.up_vel * novatelMsg_.up_vel);
+
+    for(size_t i = 0; i < 8; ++i) {
+        uchar2Double.uCharData[i] = inspvaxFrame[_headerLength + 60 + i];
+    }
+    novatelMsg_.roll = uchar2Double.doubleData;
+
+    for(size_t i = 0; i < 8; ++i) {
+        uchar2Double.uCharData[i] = inspvaxFrame[_headerLength + 68 + i];
+    }
+    novatelMsg_.pitch = uchar2Double.doubleData;
 
     for(size_t i = 0; i < 8; ++i) {
         uchar2Double.uCharData[i] = inspvaxFrame[_headerLength + 76 + i];
@@ -232,20 +252,19 @@ void SerialReader::ParseInspvax(const std::string &inspvaxFrame, size_t _headerL
     LOG(INFO) << novatelMsg_;
 }
 
-
 void SerialReader::ParseBestgnsspos(const std::string &bestgnssposFrame, size_t _headerLength) {
     LOG(INFO) << __FUNCTION__ << " start, _headerLength: " << _headerLength;
     assert(bestgnssposFrame.size() > _headerLength + 64);
     unsigned char _svNum = bestgnssposFrame[_headerLength + 64];
-    novatelMsg_.svNum = _svNum;
-    LOG(INFO) << "novatelMsg_.svNum: " << (int)novatelMsg_.svNum;
+    novatelMsg_.sv_num = _svNum;
+    LOG(INFO) << "novatelMsg_.sv_num: " << (int)novatelMsg_.sv_num;
 }
 
 void SerialReader::ParsePsrdop(const std::string &psrdopFrame, size_t _headerLength) {
     LOG(INFO) << __FUNCTION__ << " start, _headerLength: " << _headerLength;
     assert(psrdopFrame.size() > _headerLength + 11);
     uchar2Float_t uchar2Float;
-    for(size_t i = 0; i < 8; ++i) {
+    for(size_t i = 0; i < 4; ++i) {
         uchar2Float.uCharData[i] = psrdopFrame[_headerLength + 8 + i];
     }
     novatelMsg_.hdop = uchar2Float.floatData;

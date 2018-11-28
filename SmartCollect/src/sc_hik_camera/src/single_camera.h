@@ -29,6 +29,7 @@ private:
 
     void SetHandle(const MV_CC_DEVICE_INFO_LIST &deviceInfoList, size_t index);
     void SetIndex_Ip(const MV_CC_DEVICE_INFO_LIST &deviceInfoList, size_t index);
+    void SetImagePath();
     void StartCamera();
     void ConfigDevices();
     size_t GetCameraIndex();
@@ -38,6 +39,7 @@ private:
     // e.g., "6666"
     std::string cameraIP_;
     size_t cameraIndex_;
+    std::string imagePath_;
     std::mutex mat2PubMutex_;
     double lastDeviceTimeStamp_;
     ros::NodeHandle nh_;

@@ -1,25 +1,32 @@
 #ifndef __HIK_CAMERA_MANAGER_H__
 #define __HIK_CAMERA_MANAGER_H__
 
+#include <glog/logging.h>
 #include <vector>
 #include <assert.h>
 #include "include/MvCameraControl.h"
 #include "../../sc_lib_public_tools/src/thread_pool.h"
 #include "save_image_task.h"
 #include "single_camera.h"
+#include "serial_reader.h"
+
 
 class HikCameraManager {
 public:
-    HikCameraManager();
+    HikCameraManager(const std::string &_rawPath);
     ~HikCameraManager();
     void Run();
+    double GetGpsTimeFromSerial();
 
     threadpool<SaveImageTask> threadPool_;
+    std::string rawDataPath_;
 
 
 private:
     std::vector<boost::shared_ptr<SingleCamera>> pSingleCameras_;
     MV_CC_DEVICE_INFO_LIST deviceList_;
+    boost::shared_ptr<SerialReader> pSerialReader_;
+    boost::shared_ptr<boost::thread> pSerialReaderThread_;
 
     void DoClean();
     void PressEnterToExit();

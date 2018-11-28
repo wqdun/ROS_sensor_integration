@@ -37,8 +37,21 @@ void SingleCamera::SetCamera(const MV_CC_DEVICE_INFO_LIST &deviceInfoList, size_
     SetIndex_Ip(deviceInfoList, index);
     SetHandle(deviceInfoList, index);
     SetAdvertiseTopic();
+    SetImagePath();
 
     StartCamera();
+}
+
+void SingleCamera::SetImagePath() {
+    LOG(INFO) << __FUNCTION__ << " start.";
+    if("6666" == cameraIP_) {
+        imagePath_ = (s_pManager_->rawDataPath_) + "/Image/";
+        LOG(INFO) << "Save camera " << cameraIP_ << " in " << imagePath_;
+    }
+    else {
+        imagePath_ = (s_pManager_->rawDataPath_) + "/Image/panoramas/";
+        LOG(INFO) << "Save camera " << cameraIP_ << " in " << imagePath_;
+    }
 }
 
 
@@ -68,7 +81,6 @@ void SingleCamera::PublishImageAndFreq() {
 
     return;
 }
-
 
 void SingleCamera::SetIndex_Ip(const MV_CC_DEVICE_INFO_LIST &deviceInfoList, size_t index) {
     LOG(INFO) << __FUNCTION__ << " start.";
@@ -115,9 +127,10 @@ void SingleCamera::StartCamera() {
 }
 
 void __stdcall SingleCamera::ImageCB(unsigned char *pData, MV_FRAME_OUT_INFO_EX *pFrameInfo, void *_pSingleCamera) {
-    struct timeval now;
-    gettimeofday(&now, NULL);
-    const double unixTime = now.tv_sec + now.tv_usec / 1000000.;
+    // struct timeval now;
+    // gettimeofday(&now, NULL);
+    const double gpsTime = s_pManager_->GetGpsTimeFromSerial();
+    // const double unixTime = now.tv_sec + now.tv_usec / 1000000.;
 
     if(!pFrameInfo) {
         LOG(ERROR) << "pFrameInfo is NULL.";
@@ -159,7 +172,8 @@ void __stdcall SingleCamera::ImageCB(unsigned char *pData, MV_FRAME_OUT_INFO_EX 
     pSingleCamera->imageFreq_ = 1 / (deviceTimeStamp - pSingleCamera->lastDeviceTimeStamp_);
     pSingleCamera->lastDeviceTimeStamp_ = deviceTimeStamp;
     LOG_EVERY_N(INFO, 20) << "pSingleCamera->imageFreq_: " << pSingleCamera->imageFreq_;
-    const std::string picFileName("/tmp/" + std::to_string(unixTime) + "_" + _cameraIP + "_" + std::to_string(pFrameInfo->nFrameNum) + "_" + std::to_string(deviceTimeStamp) + ".jpg");
+
+    const std::string picFileName(pSingleCamera->imagePath_ + std::to_string(gpsTime) + "_" + std::to_string(pFrameInfo->nFrameNum) + "_" + std::to_string(deviceTimeStamp) + "_" + _cameraIP + ".jpg");
     // pSingleCamera->mat2PubMutex_.lock();
     SaveImageTask *pSaveImageTask = new SaveImageTask(pSingleCamera->mat2Pub_, *pFrameInfo, picFileName);
     // pSingleCamera->mat2PubMutex_.unlock();

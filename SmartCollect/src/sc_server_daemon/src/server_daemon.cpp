@@ -273,15 +273,12 @@ void ServerDaemon::CheckCamera() {
 void ServerDaemon::CheckDiskCapacity() {
     LOG(INFO) << __FUNCTION__ << " start.";
     std::vector<std::string> diskFreeSpaceInGB;
-    const std::string getDiskFreeSpaceInGBCmd("df -BG /opt/smartc/record/ | tail -n1 | awk '{print $2\", \"$5}'");
+    const std::string getDiskFreeSpaceInGBCmd("df -BG /opt/smartc/record/ | tail -n1 | awk '{print $4}'");
     (void)public_tools::PublicTools::popenWithReturn(getDiskFreeSpaceInGBCmd, diskFreeSpaceInGB);
-    LOG(INFO) << diskFreeSpaceInGB;
-    // monitorMsg_.disk_usage = (1 == diskUsage.size())? diskUsage[0]: "error: I got !1 lines";
-
+    LOG(INFO) << "diskFreeSpaceInGB: " << diskFreeSpaceInGB[0];
+    assert(1 == diskFreeSpaceInGB.size());
+    monitorMsg_.disk_free_space_GB = public_tools::PublicTools::string2int(diskFreeSpaceInGB[0]);
 }
-
-
-
 
 void ServerDaemon::CheckLidar() {
     LOG(INFO) << __FUNCTION__ << " start.";

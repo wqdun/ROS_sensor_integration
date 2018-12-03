@@ -13,6 +13,7 @@ class ToolsNoRos {
 public:
     static int SetSerialOption(int fd, int nSpeed, int nBits, char nEvent, int nStop);
     static double string2double(const std::string& str);
+    static double string2int(const std::string& str);
     static void GeoToGauss(double longitude, double latitude, short beltWidth, int beltNumber, double &y, double &x);
 
     static bool isOK_;

@@ -12,6 +12,13 @@ double ToolsNoRos::string2double(const std::string& str) {
     return num;
 }
 
+int ToolsNoRos::string2int(const std::string& str) {
+    std::istringstream iss(str);
+    int num;
+    iss >> num;
+    return num;
+}
+
 void ToolsNoRos::GeoToGauss(double longitude, double latitude, short beltWidth, int beltNumber, double &y, double &x) {
     double t;     //  t=tgB
     double L;     //  中央经线的经度

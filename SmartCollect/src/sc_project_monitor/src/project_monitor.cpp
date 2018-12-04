@@ -33,7 +33,7 @@ void ProjectMonitor::run() {
 
         std::vector<std::string> lidarSize;
         const std::string getLidarSizeCmd("du -sm " + rawdataPath_ + "/Lidar/ | awk '{print $1}'");
-        (void)public_tools::PublicTools::popenWithReturn(getLidarSizeCmd, lidarSize);
+        (void)public_tools::PublicTools::PopenWithReturn(getLidarSizeCmd, lidarSize);
         diskInfo.lidar_size = (1 == lidarSize.size())? (public_tools::PublicTools::string2num(lidarSize[0], int32_t(-2))): -1;
 
         pub2web_.publish(diskInfo);

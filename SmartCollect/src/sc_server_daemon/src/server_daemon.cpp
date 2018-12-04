@@ -7,6 +7,7 @@ ServerDaemon::ServerDaemon(ros::NodeHandle nh, ros::NodeHandle private_nh) {
     monitorMsg_.cam_gain = 20;
     monitorMsg_.pps_HWcheck = -1;
     monitorMsg_.gprmc_HWcheck = -1;
+    monitorMsg_.imu_HWcheck = -1;
 
     // below for composing monitor data
     isGpsUpdated_ = isVelodyneUpdated_ = isRawImuUpdated_ = isCameraUpdated_ = isDiskInfoUpdated_ = false;
@@ -166,12 +167,12 @@ void ServerDaemon::clientCB(const sc_msgs::ClientCmd::ConstPtr& pClientMsg) {
         }
         case 1: {
             LOG(INFO) << "I am gonna shutdown.";
-            (void)public_tools::PublicTools::runShellCmd("halt -p");
+            (void)public_tools::PublicTools::PopenWithoutReturn("halt -p");
             break;
         }
         case 2: {
             LOG(INFO) << "I am gonna reboot.";
-            (void)public_tools::PublicTools::runShellCmd("reboot");
+            (void)public_tools::PublicTools::PopenWithoutReturn("reboot");
             break;
         }
         case 3: {
@@ -183,7 +184,7 @@ void ServerDaemon::clientCB(const sc_msgs::ClientCmd::ConstPtr& pClientMsg) {
                 exit(1);
             }
             LOG(INFO) << "launchScript: " << launchScript;
-            (void)public_tools::PublicTools::runShellCmd("bash " + launchScript + " cleanup");
+            (void)public_tools::PublicTools::PopenWithoutReturn("bash " + launchScript + " cleanup");
             break;
         }
         case 4: {
@@ -199,7 +200,7 @@ void ServerDaemon::clientCB(const sc_msgs::ClientCmd::ConstPtr& pClientMsg) {
             }
             const std::string fixDataCmd("bash " + launchScript + " fixdata " + pClientMsg->cmd_arguments);
             LOG(INFO) << "fixDataCmd: " << fixDataCmd;
-            (void)public_tools::PublicTools::runShellCmd(fixDataCmd);
+            (void)public_tools::PublicTools::PopenWithoutReturn(fixDataCmd);
             break;
         }
         case 5: {
@@ -215,7 +216,7 @@ void ServerDaemon::clientCB(const sc_msgs::ClientCmd::ConstPtr& pClientMsg) {
                 // const std::string cmd("mv \'/opt/smartc/record/" + project + "\' /tmp/; true");
                 const std::string cmd("rm -rf \'/opt/smartc/record/" + project + "\'; true");
                 LOG(INFO) << "I am gonna: " + cmd;
-                (void)public_tools::PublicTools::runShellCmd(cmd);
+                (void)public_tools::PublicTools::PopenWithoutReturn(cmd);
             }
             break;
         }
@@ -228,7 +229,7 @@ void ServerDaemon::clientCB(const sc_msgs::ClientCmd::ConstPtr& pClientMsg) {
                 exit(1);
             }
             LOG(INFO) << "launchScript: " << launchScript;
-            (void)public_tools::PublicTools::runShellCmd("bash " + launchScript + " server " + pClientMsg->cmd_arguments);
+            (void)public_tools::PublicTools::PopenWithoutReturn("bash " + launchScript + " server " + pClientMsg->cmd_arguments);
             break;
         }
         case 7: {
@@ -260,24 +261,41 @@ void ServerDaemon::CheckHardware() {
     LOG(INFO) << __FUNCTION__ << " start.";
     CheckLidar();
     CheckCamera();
+    CheckImu();
     CheckDiskCapacity();
 }
 
-
 void ServerDaemon::CheckCamera() {
     LOG(INFO) << __FUNCTION__ << " start.";
-
-
+    if( (0 != public_tools::PublicTools::PopenWithoutReturn("ifconfig | grep '5.5.5.5'")) || (0 != public_tools::PublicTools::PopenWithoutReturn("ifconfig | grep '6.6.6.6'")) || (0 != public_tools::PublicTools::PopenWithoutReturn("ifconfig | grep '7.7.7.7'")) ) {
+        monitorMsg_.camera_HWcheck = -2;
+    }
+    else {
+        monitorMsg_.camera_HWcheck = 3;
+    }
 }
+
+void ServerDaemon::CheckImu() {
+    LOG(INFO) << __FUNCTION__ << " start.";
+
+    if(public_tools::PublicTools::isFileExist("/dev/ttyUSB0") && public_tools::PublicTools::isFileExist("/dev/ttyUSB1") && public_tools::PublicTools::isFileExist("/dev/ttyUSB2")) {
+        monitorMsg_.imu_HWcheck = 3;
+    }
+    else {
+        monitorMsg_.imu_HWcheck = -2;
+    }
+}
+
+
 
 void ServerDaemon::CheckDiskCapacity() {
     LOG(INFO) << __FUNCTION__ << " start.";
     std::vector<std::string> diskFreeSpaceInGB;
     const std::string getDiskFreeSpaceInGBCmd("df -BG /opt/smartc/record/ | tail -n1 | awk '{print $4}'");
-    (void)public_tools::PublicTools::popenWithReturn(getDiskFreeSpaceInGBCmd, diskFreeSpaceInGB);
+    (void)public_tools::PublicTools::PopenWithReturn(getDiskFreeSpaceInGBCmd, diskFreeSpaceInGB);
     LOG(INFO) << "diskFreeSpaceInGB: " << diskFreeSpaceInGB[0];
     assert(1 == diskFreeSpaceInGB.size());
-    monitorMsg_.disk_free_space_GB = public_tools::PublicTools::string2int(diskFreeSpaceInGB[0]);
+    monitorMsg_.disk_free_space_GB_HWcheck = public_tools::ToolsNoRos::string2int(diskFreeSpaceInGB[0]);
 }
 
 void ServerDaemon::CheckLidar() {

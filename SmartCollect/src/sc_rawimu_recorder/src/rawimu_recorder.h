@@ -6,6 +6,7 @@
 #include <fcntl.h>
 #include "sc_msgs/Novatel.h"
 #include "../../sc_lib_public_tools/src/tools_no_ros.h"
+#include "../../sc_lib_public_tools/src/public_tools.h"
 
 class RawimuRecorder {
 public:

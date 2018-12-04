@@ -19,6 +19,7 @@
 #include "sc_msgs/scIntegrateImu.h"
 #include "sc_msgs/DataFixerProgress.h"
 #include "../../sc_lib_public_tools/src/public_tools.h"
+#include "../../sc_lib_public_tools/src/tools_no_ros.h"
 #include "disk_monitor.h"
 
 class ServerDaemon {
@@ -59,6 +60,8 @@ private:
     void dataFixerCB(const sc_msgs::DataFixerProgress::ConstPtr& pDataFixerProgressMsg);
     void CheckHardware();
     void CheckLidar();
+    void CheckCamera();
+    void CheckImu();
     void ParsePositionPkt(const char *pkt);
     void CheckDiskCapacity();
 

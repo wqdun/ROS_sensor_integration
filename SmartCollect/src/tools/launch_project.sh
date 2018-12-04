@@ -81,7 +81,7 @@ start_smart_collector_server() {
 
     pkill sc_project_mon
     echo "pkill sc_project_mon" >>"/tmp/kill_smartc.sh"
-    # /opt/smartc/devel/lib/sc_project_monitor/sc_project_monitor_node "${_absolute_record_path}/" &
+    /opt/smartc/devel/lib/sc_project_monitor/sc_project_monitor_node "${_absolute_record_path}/" &
     sleep 0.2
 
     pkill sc_map_node

@@ -14,6 +14,8 @@ script_name=$(basename $0)
 mkdir -p /opt/smartc/log/
 result_log=/opt/smartc/log/${script_name}".log"
 
+ros_version="indigo"
+
 log_with_time() {
     local now_time=$(date +%Y/%m/%d-%H:%M:%S)
     echo "$now_time: $*" >>$result_log
@@ -93,23 +95,23 @@ run_rosbridge() {
         log_with_time "[ERROR] Failed to find /opt/smartc/devel/setup.bash."
         return
     fi
-    if [ ! -f "/opt/ros/kinetic/share/rosbridge_server/launch/rosbridge_websocket.launch" ]; then
+    if [ ! -f "/opt/ros/${ros_version}/share/rosbridge_server/launch/rosbridge_websocket.launch" ]; then
         log_with_time "[ERROR] Failed to find rosbridge_websocket.launch."
         return
     fi
-    if [ ! -f "/opt/ros/kinetic/lib/web_video_server/web_video_server" ]; then
+    if [ ! -f "/opt/ros/${ros_version}/lib/web_video_server/web_video_server" ]; then
         log_with_time "[ERROR] Failed to find web_video_server"
         return
     fi
 
     . /opt/smartc/devel/setup.bash
     log_with_time "roslaunch start."
-    roslaunch /opt/ros/kinetic/share/rosbridge_server/launch/rosbridge_websocket.launch >>$result_log 2>&1 &
+    roslaunch /opt/ros/${ros_version}/share/rosbridge_server/launch/rosbridge_websocket.launch >>$result_log 2>&1 &
     sleep 1
     log_with_time "roslaunch end."
 
-    . /opt/ros/kinetic/setup.bash
-    /opt/ros/kinetic/lib/web_video_server/web_video_server >>$result_log 2>&1 &
+    . /opt/ros/${ros_version}/setup.bash
+    /opt/ros/${ros_version}/lib/web_video_server/web_video_server >>$result_log 2>&1 &
     sleep 1
     log_with_time "$FUNCNAME return $?."
 }
@@ -131,7 +133,7 @@ run_minemap_service() {
 
         log_with_time "PATH: ${PATH}."
         log_with_time "Run minemap-business script."
-        export PATH=/opt/ros/kinetic/bin:/data/minemap/program/postgres/bin:/opt/java/jdk1.8.0_144/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games
+        export PATH=/opt/ros/${ros_version}/bin:/data/minemap/program/postgres/bin:/opt/java/jdk1.8.0_144/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games
         cd /data/minemap/program/minemap-business/minemap/ && ./start.sh || log_with_time "Failed to run minemap-business script."
         log_with_time "Now PATH is ${PATH}."
     )
@@ -161,8 +163,8 @@ do_start() {
     mount_data_disk
     sleep 1
 
-    . /opt/ros/kinetic/setup.bash
-    /opt/ros/kinetic/bin/roscore >>$result_log 2>&1 &
+    . /opt/ros/${ros_version}/setup.bash
+    /opt/ros/${ros_version}/bin/roscore >>$result_log 2>&1 &
     sleep 1
     run_sc_server_daemon_node
     sleep 1
@@ -170,7 +172,7 @@ do_start() {
     sleep 1
     run_rosbridge
     sleep 1
-    # run_minemap_service
+    run_minemap_service
 
     log_with_time "$FUNCNAME return $?."
 }

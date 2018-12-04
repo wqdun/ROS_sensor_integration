@@ -15,7 +15,7 @@ int RawimuRecorder::Run() {
 
     fd_ = open(serialName_.c_str(), O_RDWR);
     if(fd_ < 0) {
-        LOG(ERROR) << "Failed to open device, try change permission...";
+        LOG(ERROR) << "Failed to open " << serialName_ << ", try change permission...";
         return -1;
     }
 

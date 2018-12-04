@@ -3,7 +3,8 @@
 
 HikCameraManager* SingleCamera::s_pManager_;
 
-SingleCamera::SingleCamera(HikCameraManager *pManager) {
+SingleCamera::SingleCamera(HikCameraManager *pManager):
+mat2Pub_(1200, 1920, CV_8UC3, cv::Scalar::all(0) ) {
     LOG(INFO) << __FUNCTION__ << " start.";
     s_pManager_ = pManager;
 }

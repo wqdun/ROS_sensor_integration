@@ -45,6 +45,7 @@ int8 cam_gain
 # below for hardware check
 # -1: unchecked
 # -2: IP not set or cable not connected
+# LIDAR
 int8 pps_HWcheck
 #  0: "No PPS"
 #  1: "Synchronizing PPS"
@@ -53,8 +54,12 @@ int8 pps_HWcheck
 int8 gprmc_HWcheck
 #  'A'(65): OK
 #  'V'(86): Unavailable
+# IMU
+int8 imu_HWcheck
+# CAMERA
+int8 camera_HWcheck
 
-# disk usage check
-int32 disk_free_space_GB
+# DISK USAGE CHECK
+int32 disk_free_space_GB_HWcheck
 
 

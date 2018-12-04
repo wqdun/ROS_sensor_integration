@@ -46,8 +46,8 @@ public:
     static void getFilesWithExtensionInDir(const std::string &baseDir, const std::string &extension, std::vector<std::string> &files);
     static std::string safeReadlink(const std::string& filename);
     static bool isFileExist(const std::string& fileName);
-    static void runShellCmd(const std::string &cmd);
-    static int popenWithReturn(const std::string &cmd, std::vector<std::string> &cmdReturn);
+    static int PopenWithoutReturn(const std::string &cmd);
+    static int PopenWithReturn(const std::string &cmd, std::vector<std::string> &cmdReturn);
     static bool isInChina(double lat, double lon);
 
 

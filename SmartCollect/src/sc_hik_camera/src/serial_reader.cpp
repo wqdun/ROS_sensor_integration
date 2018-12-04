@@ -60,7 +60,7 @@ void SerialReader::WriteSerial() {
 
     int err = -1;
     const std::vector<std::string> cmds = {
-        "freset\r",
+        // "freset\r",
         "unlogall usb1\r",
         "unlogall usb2\r",
         "unlogall usb3\r",
@@ -68,13 +68,14 @@ void SerialReader::WriteSerial() {
         "log usb1 rawephemb onchanged\r",
         "log usb1 gloephemerisb onchanged\r",
         "log usb1 bdsephemerisb onchanged\r",
-        "log usb1 rawimub ontime 0.005\r",
+        "log usb1 rawimub onnew\r",
         "log usb2 bestgnssposb ontime 1\r",
         "log usb2 psrdopb onchanged\r",
         "log usb2 inspvaxb ontime 1\r",
     };
     for(const auto &data2Send: cmds) {
         err = write(fd_, data2Send.c_str(), data2Send.size() );
+        // sleep
         err = write(fd_, data2Send.c_str(), data2Send.size() );
         err = write(fd_, data2Send.c_str(), data2Send.size() );
         if(err < 0) {

@@ -19,6 +19,7 @@ public:
     ~SingleCamera();
     void SetCamera(const MV_CC_DEVICE_INFO_LIST &deviceInfoList, size_t index);
     std::string GetCameraIP();
+    int GetCameraID();
     void *GetHandle();
     void PublishImageAndFreq();
 
@@ -38,6 +39,7 @@ private:
     void *cameraHandle_;
     // e.g., "6666"
     std::string cameraIP_;
+    int cameraID_;
     size_t cameraIndex_;
     std::string imagePath_;
     std::mutex mat2PubMutex_;

@@ -7,6 +7,7 @@ SingleCamera::SingleCamera(HikCameraManager *pManager):
 mat2Pub_(1200, 1920, CV_8UC3, cv::Scalar::all(0) ) {
     LOG(INFO) << __FUNCTION__ << " start.";
     s_pManager_ = pManager;
+    imageFreq_ = 0;
 }
 
 SingleCamera::~SingleCamera() {
@@ -55,7 +56,6 @@ void SingleCamera::SetImagePath() {
     }
 }
 
-
 void SingleCamera::SetAdvertiseTopic() {
     LOG(INFO) << __FUNCTION__ << " start.";
     pubCamSpeed_ = nh_.advertise<std_msgs::Float64>("cam_speed" + cameraIP_, 10);
@@ -98,6 +98,7 @@ void SingleCamera::SetIndex_Ip(const MV_CC_DEVICE_INFO_LIST &deviceInfoList, siz
 
     const std::string ip = std::to_string(nIp1) + std::to_string(nIp2) + std::to_string(nIp3) + std::to_string(nIp4);
     cameraIP_ = ip;
+    cameraID_ = nIp1 - 5;
 
     LOG(INFO) << "Device Model Name: " << pDeviceInfo->SpecialInfo.stGigEInfo.chModelName << "; CurrentIp: " << cameraIP_ << "; UserDefinedName: " << pDeviceInfo->SpecialInfo.stGigEInfo.chUserDefinedName;
 }
@@ -139,8 +140,8 @@ void __stdcall SingleCamera::ImageCB(unsigned char *pData, MV_FRAME_OUT_INFO_EX 
     }
 
     SingleCamera *pSingleCamera = static_cast<SingleCamera *>(_pSingleCamera);
-    const std::string _cameraIP(pSingleCamera->GetCameraIP());
-    LOG_EVERY_N(INFO, 20) << "GetOneFrame[" << pFrameInfo->nFrameNum << "]: " << pFrameInfo->nWidth << " * " << pFrameInfo->nHeight << " from " << _cameraIP;
+    const int _cameraID(pSingleCamera->GetCameraID());
+    LOG_EVERY_N(INFO, 20) << "GetOneFrame[" << pFrameInfo->nFrameNum << "]: " << pFrameInfo->nWidth << " * " << pFrameInfo->nHeight << " from " << _cameraID;
 
     void *handle = pSingleCamera->GetHandle();
     unsigned char *pDataForRGB = (unsigned char*)malloc(pFrameInfo->nWidth * pFrameInfo->nHeight * 4 + 2048);
@@ -169,16 +170,20 @@ void __stdcall SingleCamera::ImageCB(unsigned char *pData, MV_FRAME_OUT_INFO_EX 
         pDataForRGB = NULL;
     }
 
-    const double deviceTimeStamp = pFrameInfo->nDevTimeStampHigh + pFrameInfo->nDevTimeStampLow / 100000000.;
+    const double deviceTimeStamp = static_cast<double>(pFrameInfo->nDevTimeStampHigh) + static_cast<double>(pFrameInfo->nDevTimeStampLow) / 100000000.;
     pSingleCamera->imageFreq_ = 1 / (deviceTimeStamp - pSingleCamera->lastDeviceTimeStamp_);
     pSingleCamera->lastDeviceTimeStamp_ = deviceTimeStamp;
     LOG_EVERY_N(INFO, 20) << "pSingleCamera->imageFreq_: " << pSingleCamera->imageFreq_;
 
-    const std::string picFileName(pSingleCamera->imagePath_ + std::to_string(gpsTime) + "_" + std::to_string(pFrameInfo->nFrameNum) + "_" + std::to_string(deviceTimeStamp) + "_" + _cameraIP + ".jpg");
-    // pSingleCamera->mat2PubMutex_.lock();
-    SaveImageTask *pSaveImageTask = new SaveImageTask(pSingleCamera->mat2Pub_, *pFrameInfo, picFileName);
-    // pSingleCamera->mat2PubMutex_.unlock();
-    s_pManager_->threadPool_.append_task(pSaveImageTask);
+    const double gpsTimeDaySec = fmod(gpsTime, (3600 * 24));
+    const std::string picFileName(pSingleCamera->imagePath_ + std::to_string(gpsTimeDaySec) + "_" + std::to_string(pFrameInfo->nFrameNum) + "_" + std::to_string(deviceTimeStamp) + "_" + std::to_string(_cameraID) + ".jpg");
+    LOG(INFO) << "picFileName: " << picFileName;
+    if(s_pManager_->isSaveImg_) {
+        // pSingleCamera->mat2PubMutex_.lock();
+        SaveImageTask *pSaveImageTask = new SaveImageTask(pSingleCamera->mat2Pub_, *pFrameInfo, picFileName);
+        // pSingleCamera->mat2PubMutex_.unlock();
+        s_pManager_->threadPool_.append_task(pSaveImageTask);
+    }
 
     LOG_EVERY_N(INFO, 20) << __FUNCTION__ << " end.";
 }
@@ -186,6 +191,11 @@ void __stdcall SingleCamera::ImageCB(unsigned char *pData, MV_FRAME_OUT_INFO_EX 
 std::string SingleCamera::GetCameraIP() {
     DLOG(INFO) << __FUNCTION__ << " start.";
     return cameraIP_;
+}
+
+int SingleCamera::GetCameraID() {
+    DLOG(INFO) << __FUNCTION__ << " start.";
+    return cameraID_;
 }
 
 size_t SingleCamera::GetCameraIndex() {

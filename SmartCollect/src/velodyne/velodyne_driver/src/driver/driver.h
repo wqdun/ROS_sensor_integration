@@ -15,6 +15,7 @@
 #ifndef _VELODYNE_DRIVER_H_
 #define _VELODYNE_DRIVER_H_ 1
 
+#include <glog/logging.h>
 #include <string>
 #include <ros/ros.h>
 #include <diagnostic_updater/diagnostic_updater.h>

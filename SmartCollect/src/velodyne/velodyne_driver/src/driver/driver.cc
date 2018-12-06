@@ -20,9 +20,6 @@
 #include <velodyne_msgs/VelodyneScan.h>
 
 #include "driver.h"
-// #define NDEBUG
-#undef NDEBUG
-#include <glog/logging.h>
 
 namespace velodyne_driver
 {
@@ -139,18 +136,18 @@ VelodyneDriver::VelodyneDriver(ros::NodeHandle node,
 }
 
 static bool parsePositionPkt(const char *pkt, velodyne_msgs::Velodyne2Center &parsedRes) {
-    ROS_DEBUG_STREAM(__FUNCTION__ << " start.");
+    LOG_EVERY_N(INFO, 20) << __FUNCTION__ << " start.";
+    // 00 .. 03
+    parsedRes.pps_status_index = pkt[202];
+
     if('$' != pkt[206]) {
-      ROS_INFO_STREAM("No position packet received: " << std::hex << (int)pkt[206]);
+      LOG(INFO) << "No position packet received: " << std::hex << (int)pkt[206];
       // PPS_STATUS[0] is "No PPS", refer infor_process.h
-      parsedRes.pps_status_index = 0;
       // A validity - A-ok, V-invalid, refer VLP-16 manual
-      parsedRes.is_gprmc_valid = "V";
+      parsedRes.is_gprmc_valid = "N";
       return false;
     }
 
-    // 00 .. 03
-    parsedRes.pps_status_index = pkt[202];
     // $GPRMC,,V,,,,,,,,,,N*53
     std::stringstream isGprmcValid;
     size_t dotCnt = 0;

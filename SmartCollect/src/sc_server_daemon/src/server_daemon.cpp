@@ -41,6 +41,7 @@ void ServerDaemon::run() {
                 DLOG(INFO) << "RS232 node not running.";
                 monitorMsg_.GPStime = monitorMsg_.lat_lon_hei.x = monitorMsg_.lat_lon_hei.y = monitorMsg_.lat_lon_hei.z = monitorMsg_.pitch_roll_heading.x = monitorMsg_.pitch_roll_heading.y = monitorMsg_.pitch_roll_heading.z = monitorMsg_.speed = -2.;
                 monitorMsg_.nsv1_num = monitorMsg_.nsv2_num = -2;
+                monitorMsg_.hdop_novatel = -2;
             }
             isGpsUpdated_ = false;
         }
@@ -88,6 +89,10 @@ void ServerDaemon::run() {
         if(public_tools::PublicTools::isFileExist("/tmp/data_fixer_progress_100%") ) {
             monitorMsg_.process_num = monitorMsg_.total_file_num;
         }
+
+        struct timeval now;
+        gettimeofday(&now, NULL);
+        monitorMsg_.unix_time = now.tv_sec + now.tv_usec / 1000000.;
 
         pub2client_.publish(monitorMsg_);
     }
@@ -286,8 +291,6 @@ void ServerDaemon::CheckImu() {
     }
 }
 
-
-
 void ServerDaemon::CheckDiskCapacity() {
     LOG(INFO) << __FUNCTION__ << " start.";
     std::vector<std::string> diskFreeSpaceInGB;
@@ -417,6 +420,7 @@ void ServerDaemon::projectMonitorCB(const sc_msgs::DiskInfo::ConstPtr& pDiskInfo
     isDiskInfoUpdated_ = true;
     monitorMsg_.img_num = pDiskInfoMsg->img_num;
     monitorMsg_.lidar_size = pDiskInfoMsg->lidar_size;
+    monitorMsg_.img_save_fps = pDiskInfoMsg->img_save_fps;
 }
 
 void ServerDaemon::updateProjectInfo(const std::string &projectInfo) {

@@ -75,15 +75,21 @@
     <div class="subnavbar-inner">
         <div class="container">
             <ul class="mainnav">
+                <li >
+                    <a href="check.jsp">
+                        <i class="icon-exclamation-sign"></i>
+                        <span>设备检查</span>
+                    </a>
+                </li>
                 <li>
                     <a href="index.jsp">
-                        <i class="icon-th-large"></i>
+                        <i class="icon-edit"></i>
                         <span>系统设置</span>
                     </a>
                 </li>
                 <li class="active">
                     <a href="monitor.jsp">
-                        <i class="icon-facetime-video"></i>
+                        <i class="icon-bar-chart"></i>
                         <span>运行监控</span>
                     </a>
                 </li>
@@ -111,6 +117,7 @@
                             <th>卫星数：<a href="#" id="num" class="alert-link">""</a></th>
                             <th>卫星水平定位精度：<a href="#" id="hdop" class="alert-link">""</a></th>
                             <th>磁盘空间：<a href="#" id="diskspace" class="alert-link">""</a></th>
+                            <th>激光包大小：<a href="#" id="lidarpkg" class="alert-link">""</a></th>
                         </tr>
                         <tr>
                             <th>方向：<a href="#" id="heading" class="alert-link">""</a></th>
@@ -118,17 +125,34 @@
                             <th>相机存储频率：<a href="#" id="fps" class="alert-link">""</a></th>
                             <th>PPS：<a href="#" id="pps" class="alert-link">""</a></th>
                             <th>GPRMC：<a href="#" id="gprmc" class="alert-link">""</a></th>
+                            <th>照片数量：<a href="#" id="piccounts" class="alert-link">""</a><button onclick="addEvent(1001, 'test_message');">test</button></th>
                         </tr>
 
-                        <tr>
-                            <th>照片数量：<a href="#" id="piccounts" class="alert-link">""</a></th>
-                            <th>激光包大小：<a href="#" id="lidarpkg" class="alert-link">""</a></th>
-                            <th>&nbsp;</th>
-                            <th></th>
-                            <th>
-                                <button type="button" class="btn btn-inverse" id="mark" data-toggle="modal"
-                                        data-target="#myModal" onclick="marklane();">mark
-                                </button>
+                        <tr >
+                            <th colspan="6">
+                                <p> WARNING  <i class="icon-warning-sign" style="font-size: 25px;color:orange;"></i></p>
+                                <p id="warning">
+                                <!-- <div class="alert alert-error">
+                                    <a href="#" class="close" data-dismiss="alert">
+                                        &times;
+                                    </a>
+                                    【<b style="color:red">1001</b>】GPS信号过弱【2018-10-28 14:23:48】
+                                </div>
+
+                                <div class="alert alert-error">
+                                    <a href="#" class="close" data-dismiss="alert">
+                                        &times;
+                                    </a>
+                                    【<b style="color:red">1002</b>】经纬度输出异常.【2018-10-28 14:23:48】
+                                </div>
+
+                                <div class="alert alert-error">
+                                    <a href="#" class="close" data-dismiss="alert">
+                                        &times;
+                                    </a>
+                                    【<b style="color:red">1003</b>】主板断开连接.【2018-10-28 14:23:48】
+                                </div> -->
+                                </p>
                             </th>
                         </tr>
                         </thead>
@@ -141,7 +165,7 @@
                 <div class="widget">
                     <div class="widget-header">
                         <i class="icon-star"></i>
-                        <h3>地图</h3>
+                        <h3>Map</h3>
                     </div>
                     <div class="widget-content">
                         <iframe src="minemap.jsp" frameborder="0" scrolling="no" id="maplayer"
@@ -218,6 +242,7 @@
     ros_.on('close', function () {
         console.log('Connection closed.');
         document.getElementById('connect').innerHTML = '<font color=red>连接关闭</font>';
+        addEvent(1001, 'test_message');
     });
 
     // Create a connection to the rosbridge WebSocket server.
@@ -233,32 +258,46 @@
         name: '/sc_monitor',
         messageType: 'sc_msgs/MonitorMsg'
     });
-    centerListener.subscribe(function (message) {
 
+    var isAddEventTimeError = false;
+    var isAddEventDiskNotEnough = false;
+    var voiceCounter = -1;
+    centerListener.subscribe(function (message) {
         markposition = message.lat_lon_hei.y+","+message.lat_lon_hei.x+","+message.lat_lon_hei.z;
         pinfo = message.project_info.city_code + "-" + message.project_info.daynight_code + "-" + message.project_info.task_id + "" + message.project_info.device_id;
         console.log(centerListener.name + '::heading: ' + message.pitch_roll_heading.z);
 
+        var gpsTimeMinute = (message.GPStime / 60) % 60;
+        var unixTimeMinute = (message.unix_time / 60) % 60;
+        var errMinute = Math.abs(gpsTimeMinute - unixTimeMinute);
+        if(errMinute > 20) {
+            console.log("errMinute: " + errMinute);
+            if(!isAddEventTimeError) {
+                addEvent(1001, "GPS time is inconsistent with Unix time, please set Unix time.");
+                isAddEventTimeError = true;
+            }
+        }
+
         // text is "sc_integrate_imu_recorder node not running"
-        if (message.hdop.indexOf("not") > 0) {
-            var errMsg = 'IMU组合解算数据采集节点未运行！';
+        if (message.hdop_novatel < 0) {
+            var errMsg = 'IMU节点未运行！';
             document.getElementById('location').innerHTML = "<font color=red >" + errMsg + "</font>";
             document.getElementById('num').innerHTML = "<font color=red >" + errMsg + "</font>";
             document.getElementById('hdop').innerHTML = "<font color=red >" + errMsg + "</font>";
         }
         else {
-            document.getElementById('location').innerHTML = message.latitude + ", " + message.longitude;
-            document.getElementById('num').innerHTML = message.noSV_422;
-            document.getElementById('hdop').innerHTML = message.hdop;
+            document.getElementById('location').innerHTML = message.lat_lon_hei.x.toFixed(8) + ", " + message.lat_lon_hei.y.toFixed(8);
+            document.getElementById('num').innerHTML = message.nsv1_num;
+            document.getElementById('hdop').innerHTML = message.hdop_novatel.toFixed(2);
         }
         // -2 means not running
         if (message.speed <= -1.6) {
-            var errMsg = 'IMU实时数据采集节点未运行！';
+            var errMsg = 'IMU节点未运行！';
             document.getElementById('heading').innerHTML = "<font color=red >" + errMsg + "</font>";
             document.getElementById('speed').innerHTML = "<font color=red >" + errMsg + "</font>";
         }
         else {
-            document.getElementById('heading').innerHTML = message.pitch_roll_heading.z;
+            document.getElementById('heading').innerHTML = message.pitch_roll_heading.z.toFixed(2);
             document.getElementById('speed').innerHTML = message.speed.toFixed(2) + "公里/小时";
         }
 
@@ -271,7 +310,7 @@
         }
 
         if (message.pps_status.indexOf("not") > 0) {
-            var errMsg = '激光雷达数据采集节点未运行！';
+            var errMsg = '激光雷达节点未运行！';
             document.getElementById('pps').innerHTML = "<font color=red >" + errMsg + "</font>";
             document.getElementById('gprmc').innerHTML = "<font color=red >" + errMsg + "</font>";
         }
@@ -288,6 +327,13 @@
         }
 
         $("#diskspace")[0].innerHTML = message.disk_usage;
+        var usedPercentage = parseInt(message.disk_usage.split(",")[1]);
+        if(usedPercentage > 80) {
+            if(!isAddEventDiskNotEnough) {
+                addEvent(1002, "Disk free space is not enough.");
+                isAddEventDiskNotEnough = true;
+            }
+        }
         if (-2 == message.img_num) {
             var errMsg = '没有活动工程！';
             $("#piccounts")[0].innerHTML = $("#lidarpkg")[0].innerHTML = "<font color=red >" + errMsg + "</font>";
@@ -308,6 +354,14 @@
             $("#ex1").slider("setValue", message.cam_gain);
             console.log("cam_gain on server is: " + $("#ex1").slider("getValue"));
         }
+
+        if(isAddEventTimeError || isAddEventDiskNotEnough) {
+            ++voiceCounter;
+            voiceCounter %= 5;
+            if(0 == voiceCounter) {
+                addVoice();
+            }
+        }
     });
 
     $('#ex1').slider({
@@ -316,6 +370,27 @@
         console.log(e.value.oldValue + '--' + e.value.newValue);
         pubCtrlParams();
     });
+
+    function addEvent(warningId, message) {
+        var warningMsg = '<div class="alert alert-error"><a href="#" class="close" data-dismiss="alert">&times;</a>【<b style="color:red">'
+                        + warningId + '</b>】' + message + '</div>';
+        $('#warning').append(warningMsg);
+    }
+
+    function addVoice() {
+        var audioCtx = new AudioContext();
+        var oscillator = audioCtx.createOscillator();
+        var gainNode = audioCtx.createGain();
+        oscillator.connect(gainNode);
+        gainNode.connect(audioCtx.destination);
+        oscillator.type = 'sine';
+        oscillator.frequency.value = 659.25;
+        gainNode.gain.setValueAtTime(0, audioCtx.currentTime);
+        gainNode.gain.linearRampToValueAtTime(1, audioCtx.currentTime + 0.01);
+        oscillator.start(audioCtx.currentTime);
+        gainNode.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 1);
+        oscillator.stop(audioCtx.currentTime + 10);
+    }
 
 </script>
 </body>

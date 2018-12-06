@@ -13,7 +13,7 @@ SerialReader::~SerialReader() {
 int SerialReader::Read() {
     LOG(INFO) << __FUNCTION__ << " start.";
 
-    fd_ = open(serialName_.c_str(), O_RDWR);
+    fd_ = open(serialName_.c_str(), O_RDWR | O_NOCTTY);
     if(fd_ < 0) {
         LOG(ERROR) << "Failed to open " << serialName_ << ", try change permission...";
         return -1;
@@ -33,7 +33,7 @@ int SerialReader::Read() {
 int SerialReader::Write() {
     LOG(INFO) << __FUNCTION__ << " start.";
 
-    fd_ = open(serialName_.c_str(), O_RDWR);
+    fd_ = open(serialName_.c_str(), O_RDWR | O_NOCTTY);
     if(fd_ < 0) {
         LOG(ERROR) << "Failed to open device, try change permission...";
         return -1;
@@ -97,11 +97,12 @@ void SerialReader::ReadSerial() {
     unsigned char buf[BUFFER_SIZE];
     std::string framesBuf("");
 
+    tcflush(fd_, TCIOFLUSH);
     while(1) {
         bzero(buf, BUFFER_SIZE);
         int nread = read(fd_, buf, BUFFER_SIZE);
+        LOG_EVERY_N(INFO, 50) << "nread: " << nread;
         if(nread <= 0) {
-            LOG_EVERY_N(INFO, 10) << "nread: " << nread;
             continue;
         }
 
@@ -119,12 +120,13 @@ void SerialReader::ReadSerial() {
 #endif
         LOG(INFO) << "framesBuf.size(): " << framesBuf.size();
         size_t save4NextFrameIndex = framesBuf.size();
+        double latestGpsTime = -1;
         for(size_t bufIndex = 0; bufIndex < framesBuf.size() - 8; ++bufIndex) {
             if((HEADER_0 == framesBuf[bufIndex]) && (HEADER_1 == framesBuf[bufIndex + 1]) && (HEADER_2_LONG_FRAME == framesBuf[bufIndex + 2])) {
                 const unsigned char headerLength = framesBuf[bufIndex + 3];
                 const unsigned char messageLength = framesBuf[bufIndex + 8];
                 const size_t frameLength = headerLength + messageLength + CHECKSUM_LENGTH;
-                LOG(INFO) << "bufIndex: " << bufIndex << "; frameLength: " << frameLength << "; headerLength: " << (int)headerLength << "; messageLength: " << (int)messageLength;
+                DLOG(INFO) << "bufIndex: " << bufIndex << "; frameLength: " << frameLength << "; headerLength: " << (int)headerLength << "; messageLength: " << (int)messageLength;
                 if( (bufIndex + frameLength) > framesBuf.size() ) {
                     LOG(INFO) << "The last frame is not complete: " << bufIndex << ":" << frameLength;
                     save4NextFrameIndex = bufIndex;
@@ -132,18 +134,23 @@ void SerialReader::ReadSerial() {
                 }
 
                 const std::string aFrame(framesBuf.substr(bufIndex, frameLength));
-                ParseFrame(aFrame, headerLength);
-                LOG(INFO) << "Avoid unnecessary loop: " << bufIndex << ":" << frameLength;
+                ParseFrame(aFrame, headerLength, latestGpsTime);
+                DLOG(INFO) << "Avoid unnecessary loop: " << bufIndex << ":" << frameLength;
                 bufIndex += frameLength;
                 --bufIndex;
             } // else continue
         }
+        if(latestGpsTime > 0) {
+            DLOG(INFO) << "GPS time updated: " << latestGpsTime;
+            novatelMsg_.seconds_into_week = latestGpsTime;
+        }
+        LOG(INFO) << "novatelMsg_.seconds_into_week: " << std::fixed << novatelMsg_.seconds_into_week;
         framesBuf.erase(0, save4NextFrameIndex);
     }
 }
 
-void SerialReader::ParseFrame(const std::string &_frame, size_t _headerLength) {
-    LOG(INFO) << __FUNCTION__ << " start, _headerLength: " << _headerLength;
+void SerialReader::ParseFrame(const std::string &_frame, size_t _headerLength, double &gpsTime2update) {
+    DLOG(INFO) << __FUNCTION__ << " start, _headerLength: " << _headerLength;
 #ifndef NDEBUG
     for(auto &c: _frame) {
         LOG(INFO) << std::hex << (int)c;
@@ -164,7 +171,7 @@ void SerialReader::ParseFrame(const std::string &_frame, size_t _headerLength) {
     uchar2Ushort.uCharData[0] = _frame[4];
     uchar2Ushort.uCharData[1] = _frame[5];
     unsigned short messageID = uchar2Ushort.uShortData;
-    LOG(INFO) << "messageID: " << messageID;
+    LOG_EVERY_N(INFO, 50) << "messageID: " << messageID;
     switch(messageID) {
     case MESSAGE_ID_PSRDOP:
         ParsePsrdop(_frame, _headerLength);
@@ -176,24 +183,23 @@ void SerialReader::ParseFrame(const std::string &_frame, size_t _headerLength) {
         ParseInspvax(_frame, _headerLength);
         break;
     case MESSAGE_ID_RAWIMU:
-        ParseRawimu(_frame, _headerLength);
+        ParseRawimu(_frame, _headerLength, gpsTime2update);
         break;
     default:
         LOG(ERROR) << "Unhandled messageID: " << messageID;
     }
 }
 
-void SerialReader::ParseRawimu(const std::string &inspvaxFrame, size_t _headerLength) {
-    LOG(INFO) << __FUNCTION__ << " start, _headerLength: " << _headerLength;
+void SerialReader::ParseRawimu(const std::string &inspvaxFrame, size_t _headerLength, double &_gpsTime2update) {
+    DLOG(INFO) << __FUNCTION__ << " start, _headerLength: " << _headerLength;
 
     uchar2Double_t uchar2Double;
 
     for(size_t i = 0; i < 8; ++i) {
         uchar2Double.uCharData[i] = inspvaxFrame[_headerLength + 4 + i];
     }
-    novatelMsg_.seconds_into_week = uchar2Double.doubleData;
-    // gpsTimeNovatel_ = uchar2Double.doubleData;
-    LOG(INFO) << std::fixed << "novatelMsg_.seconds_into_week: " << novatelMsg_.seconds_into_week;
+    _gpsTime2update = uchar2Double.doubleData;
+    DLOG(INFO) << std::fixed << "_gpsTime2update: " << _gpsTime2update;
 }
 
 double SerialReader::GetGpsTime() {
@@ -202,9 +208,15 @@ double SerialReader::GetGpsTime() {
 }
 
 void SerialReader::ParseInspvax(const std::string &inspvaxFrame, size_t _headerLength) {
-    LOG(INFO) << __FUNCTION__ << " start, _headerLength: " << _headerLength;
+    DLOG(INFO) << __FUNCTION__ << " start, _headerLength: " << _headerLength;
 
+    uchar2int32_t uchar2int32;
     uchar2Double_t uchar2Double;
+
+    for(size_t i = 0; i < 4; ++i) {
+        uchar2int32.uCharData[i] = inspvaxFrame[_headerLength + i];
+    }
+    novatelMsg_.ins_status = uchar2int32.int32Data;
 
     for(size_t i = 0; i < 8; ++i) {
         uchar2Double.uCharData[i] = inspvaxFrame[_headerLength + 8 + i];
@@ -250,11 +262,11 @@ void SerialReader::ParseInspvax(const std::string &inspvaxFrame, size_t _headerL
     }
     novatelMsg_.azimuth = uchar2Double.doubleData;
 
-    LOG(INFO) << novatelMsg_;
+    DLOG(INFO) << novatelMsg_;
 }
 
 void SerialReader::ParseBestgnsspos(const std::string &bestgnssposFrame, size_t _headerLength) {
-    LOG(INFO) << __FUNCTION__ << " start, _headerLength: " << _headerLength;
+    DLOG(INFO) << __FUNCTION__ << " start, _headerLength: " << _headerLength;
     assert(bestgnssposFrame.size() > _headerLength + 64);
     unsigned char _svNum = bestgnssposFrame[_headerLength + 64];
     novatelMsg_.sv_num = _svNum;
@@ -262,7 +274,7 @@ void SerialReader::ParseBestgnsspos(const std::string &bestgnssposFrame, size_t 
 }
 
 void SerialReader::ParsePsrdop(const std::string &psrdopFrame, size_t _headerLength) {
-    LOG(INFO) << __FUNCTION__ << " start, _headerLength: " << _headerLength;
+    DLOG(INFO) << __FUNCTION__ << " start, _headerLength: " << _headerLength;
     assert(psrdopFrame.size() > _headerLength + 11);
     uchar2Float_t uchar2Float;
     for(size_t i = 0; i < 4; ++i) {
@@ -273,7 +285,7 @@ void SerialReader::ParsePsrdop(const std::string &psrdopFrame, size_t _headerLen
 }
 
 bool SerialReader::IsCheckSumWrong(const std::string &__frame) {
-    LOG(INFO) << __FUNCTION__ << " start.";
+    DLOG(INFO) << __FUNCTION__ << " start.";
     return CalculateBlockCRC32(__frame);
 }
 

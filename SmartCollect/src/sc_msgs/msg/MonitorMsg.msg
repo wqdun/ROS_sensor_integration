@@ -1,5 +1,7 @@
 # below from RS232
 float64 GPStime
+float64 unix_time
+
 Point3D lat_lon_hei
 Point3D pitch_roll_heading
 # speed in km/h
@@ -37,6 +39,7 @@ string[] projects
 int32 img_num
 # unit: MB
 int32 lidar_size
+float32 img_save_fps
 
 # below node control parameters, received from web
 int8 is_record

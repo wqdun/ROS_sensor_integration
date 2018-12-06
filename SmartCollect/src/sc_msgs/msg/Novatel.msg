@@ -2,6 +2,7 @@ float32 hdop
 
 uint8 sv_num
 
+int32 ins_status
 float64 latitude
 float64 longitude
 float64 height

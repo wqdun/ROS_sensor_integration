@@ -7,6 +7,8 @@ HikCameraManager::HikCameraManager(const std::string &_rawPath):
     rawDataPath_ = _rawPath;
     pSingleCameras_.clear();
     memset(&deviceList_, 0, sizeof(MV_CC_DEVICE_INFO_LIST));
+    isSaveImg_ = false;
+    subMonitor_ = nh_.subscribe("sc_monitor", 0, &HikCameraManager::MonitorCB, this);
 
     pSerialReader_.reset(new SerialReader("/dev/ttyUSB1") );
     pSerialReaderThread_ = boost::shared_ptr<boost::thread>(new boost::thread(boost::bind(&SerialReader::Read, pSerialReader_) ) );
@@ -17,6 +19,11 @@ HikCameraManager::~HikCameraManager() {
     pSerialReaderThread_->join();
     threadPool_.stop();
     LOG(INFO) << __FUNCTION__ << " end.";
+}
+
+void HikCameraManager::MonitorCB(const sc_msgs::MonitorMsg::ConstPtr& pMonitorMsg) {
+    LOG_EVERY_N(INFO, 20) << __FUNCTION__ << " start, is_record Camera: " << (int)(pMonitorMsg->is_record);
+    isSaveImg_ = (bool)pMonitorMsg->is_record;
 }
 
 void HikCameraManager::Run() {

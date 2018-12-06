@@ -44,7 +44,7 @@
             <h3>相机1</h3>
           </div>
           <div class="widget-content">
-            <img src="http://<%=ip%>:8080/stream?topic=/camera/image1" height="100%" width="100%" alt="http://<%=ip%>:8080/stream?topic=/camera/image1">
+            <img src="http://<%=ip%>:8080/stream?topic=/camera/image5555" height="100%" width="100%" alt="http://<%=ip%>:8080/stream?topic=/camera/image5555">
           </div>
         </div>
       </div>
@@ -56,7 +56,7 @@
             <h3>相机2</h3>
           </div>
           <div class="widget-content">
-            <img src="http://<%=ip%>:8080/stream?topic=/camera/image2" height="100%" width="100%" alt="http://<%=ip%>:8080/stream?topic=/camera/image2">
+            <img src="http://<%=ip%>:8080/stream?topic=/camera/image6666" height="100%" width="100%" alt="http://<%=ip%>:8080/stream?topic=/camera/image6666">
           </div>
         </div>
       </div>
@@ -68,11 +68,11 @@
             <h3>相机3</h3>
           </div>
           <div class="widget-content">
-            <img src="http://<%=ip%>:8080/stream?topic=/camera/image3" height="100%" width="100%" alt="http://<%=ip%>:8080/stream?topic=/camera/image3">
+            <img src="http://<%=ip%>:8080/stream?topic=/camera/image7777" height="100%" width="100%" alt="http://<%=ip%>:8080/stream?topic=/camera/image7777">
           </div>
         </div>
       </div>
-
+<!--
       <div class="span6">
         <div class="widget">
           <div class="widget-header">
@@ -96,6 +96,7 @@
           </div>
         </div>
       </div>
+       -->
     </div>
   </div>
 </div>

@@ -371,6 +371,10 @@
         pubCtrlParams();
     });
 
+</script>
+
+<audio id="bgMusic" src="ring.mp3" autoplay />
+<script>
     function addEvent(warningId, message) {
         var warningMsg = '<div class="alert alert-error"><a href="#" class="close" data-dismiss="alert">&times;</a>【<b style="color:red">'
                         + warningId + '</b>】' + message + '</div>';
@@ -378,18 +382,17 @@
     }
 
     function addVoice() {
-        var audioCtx = new AudioContext();
-        var oscillator = audioCtx.createOscillator();
-        var gainNode = audioCtx.createGain();
-        oscillator.connect(gainNode);
-        gainNode.connect(audioCtx.destination);
-        oscillator.type = 'sine';
-        oscillator.frequency.value = 659.25;
-        gainNode.gain.setValueAtTime(0, audioCtx.currentTime);
-        gainNode.gain.linearRampToValueAtTime(1, audioCtx.currentTime + 0.01);
-        oscillator.start(audioCtx.currentTime);
-        gainNode.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 1);
-        oscillator.stop(audioCtx.currentTime + 10);
+        bgMusic.volume = 0;
+        v = 0;
+        bgMusic.play();
+        var t = setInterval(function(){
+            v+= 0.1;
+            if(v<=1){
+                bgMusic.volume = v;
+            }else{
+                clearInterval(t);
+            }
+        },50);
     }
 
 </script>

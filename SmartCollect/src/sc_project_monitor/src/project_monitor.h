@@ -1,6 +1,7 @@
 #ifndef __PROJECT_MONITOR_H
 #define __PROJECT_MONITOR_H
 
+#include <glog/logging.h>
 #include <ros/ros.h>
 #include "../../sc_lib_public_tools/src/public_tools.h"
 #include "sc_msgs/DiskInfo.h"
@@ -15,8 +16,8 @@ public:
 
 private:
     ros::Publisher pub2web_;
-
     std::string rawdataPath_;
+    int lastImgNum_;
 };
 
 #endif // __PROJECT_MONITOR_H

@@ -1,11 +1,9 @@
 #include "project_monitor.h"
-#define NDEBUG
-// #undef NDEBUG
-#include <glog/logging.h>
 
 ProjectMonitor::ProjectMonitor(ros::NodeHandle nh, ros::NodeHandle private_nh) {
     LOG(INFO) << __FUNCTION__ << " start.";
     pub2web_ = nh.advertise<sc_msgs::DiskInfo>("sc_disk_info", 0);
+    lastImgNum_ = 0;
 }
 
 ProjectMonitor::~ProjectMonitor() {
@@ -20,8 +18,9 @@ void ProjectMonitor::setRawdataPath(const std::string &_rawdataPath) {
 
 void ProjectMonitor::run() {
     sc_msgs::DiskInfo diskInfo;
+    const double _rate = 0.5;
+    ros::Rate rate(_rate);
 
-    ros::Rate rate(0.5);
     while(ros::ok()) {
         rate.sleep();
         ros::spinOnce();
@@ -30,6 +29,8 @@ void ProjectMonitor::run() {
         (void)public_tools::PublicTools::getFilesInDir(rawdataPath_, "jpg", files_jpg);
         DLOG(INFO) << "The number of jpg is " << files_jpg.size();
         diskInfo.img_num = files_jpg.size();
+        diskInfo.img_save_fps = (diskInfo.img_num - lastImgNum_) * _rate;
+        lastImgNum_ = diskInfo.img_num;
 
         std::vector<std::string> lidarSize;
         const std::string getLidarSizeCmd("du -sm " + rawdataPath_ + "/Lidar/ | awk '{print $1}'");

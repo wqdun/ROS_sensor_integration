@@ -55,20 +55,40 @@ redirect_glog_path() {
     export GLOG_log_dir="${_absolute_record_path}/Log/"
 }
 
+make_tty_softlink() {
+    log_with_time "$FUNCNAME start, param: $*"
+
+    local ls_res=$(ls /dev/ttyUSB*)
+    local usb_num=$(echo ${ls_res} | awk '{print NF}')
+    if [ "${usb_num}" -lt 3 ]; then
+        log_with_time "usb_num should >= 3: ${usb_num}"
+        exit ${usb_num}
+    fi
+
+    rm /dev/novatel_usb*
+    local novatel_usb3=$(echo ${ls_res} | awk '{print $NF}')
+    local novatel_usb2=$(echo ${ls_res} | awk '{print $(NF-1)}')
+    local novatel_usb1=$(echo ${ls_res} | awk '{print $(NF-2)}')
+
+    ln -s ${novatel_usb3} /dev/novatel_usb3
+    ln -s ${novatel_usb2} /dev/novatel_usb2
+    ln -s ${novatel_usb1} /dev/novatel_usb1
+}
+
 start_smart_collector_server() {
     log_with_time "$FUNCNAME start, param: $*"
     log_with_time "ROS_PACKAGE_PATH: ${ROS_PACKAGE_PATH}"
     local _absolute_record_path=$1
 
     get_sudo_permission
-    sudo chmod +r /dev/ttyUSB0
-    pkill sc_rawimu_record
-    echo "pkill sc_rawimu_record" >"/tmp/kill_smartc.sh"
-    /opt/smartc/devel/lib/sc_rawimu_recorder/sc_rawimu_recorder_node "/dev/ttyUSB0" "${_absolute_record_path}/IMU/" &
-    sleep 0.2
+    make_tty_softlink
 
     get_sudo_permission
-    sudo chmod +r /dev/ttyS0
+    sudo chmod +r /dev/ttyUSB0
+    pkill sc_rawimu_rec
+    echo "pkill sc_rawimu_rec" >"/tmp/kill_smartc.sh"
+    /opt/smartc/devel/lib/sc_rawimu_recorder/sc_rawimu_recorder_node "/dev/novatel_usb1" "${_absolute_record_path}/IMU/" &
+    sleep 0.2
 
     pkill sc_hik_camer
     echo "pkill sc_hik_camer" >>"/tmp/kill_smartc.sh"
@@ -86,7 +106,7 @@ start_smart_collector_server() {
 
     pkill sc_map_node
     echo "pkill sc_map_node" >>"/tmp/kill_smartc.sh"
-    # /opt/smartc/devel/lib/sc_map/sc_map_node "${_absolute_record_path}/" &
+    /opt/smartc/devel/lib/sc_map/sc_map_node "${_absolute_record_path}/" &
     sleep 0.2
 }
 

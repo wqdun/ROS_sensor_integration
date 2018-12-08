@@ -1,8 +1,13 @@
 #include "serial_reader.h"
 
-SerialReader::SerialReader(const std::string &_serialName) {
+SerialReader::SerialReader(const std::string &_serialName, const std::string &_imuPath) {
     LOG(INFO) << __FUNCTION__ << " start.";
     serialName_ = _serialName;
+
+    std::string imuFileNamePrefix("");
+    (void)public_tools::PublicTools::generateFileName(_imuPath, imuFileNamePrefix);
+    rtImuFile_ = _imuPath + imuFileNamePrefix + "_rt_track.txt";
+
     pubNovatelMsg_ = nh_.advertise<sc_msgs::Novatel>("sc_novatel", 10);
 }
 
@@ -96,8 +101,12 @@ void SerialReader::ReadSerial() {
     const size_t BUFFER_SIZE = 1000;
     unsigned char buf[BUFFER_SIZE];
     std::string framesBuf("");
-
-    tcflush(fd_, TCIOFLUSH);
+    int err = tcflush(fd_, TCIOFLUSH);
+    LOG(INFO) << "tcflush: " << err;
+    err = tcflush(fd_, TCIFLUSH);
+    LOG(INFO) << "tcflush: " << err;
+    err = tcflush(fd_, TCOFLUSH);
+    LOG(INFO) << "tcflush: " << err;
     while(1) {
         bzero(buf, BUFFER_SIZE);
         int nread = read(fd_, buf, BUFFER_SIZE);
@@ -110,7 +119,7 @@ void SerialReader::ReadSerial() {
             framesBuf += buf[i];
         }
 
-        if(framesBuf.size() < 200) {
+        if(framesBuf.size() < 100) {
             continue;
         }
 #ifndef NDEBUG
@@ -144,7 +153,7 @@ void SerialReader::ReadSerial() {
             DLOG(INFO) << "GPS time updated: " << latestGpsTime;
             novatelMsg_.seconds_into_week = latestGpsTime;
         }
-        LOG(INFO) << "novatelMsg_.seconds_into_week: " << std::fixed << novatelMsg_.seconds_into_week;
+        DLOG(INFO) << "novatelMsg_.seconds_into_week: " << std::fixed << novatelMsg_.seconds_into_week;
         framesBuf.erase(0, save4NextFrameIndex);
     }
 }
@@ -207,11 +216,33 @@ double SerialReader::GetGpsTime() {
     return novatelMsg_.seconds_into_week;
 }
 
+double SerialReader::GetUnixTimeMinusGpsTime() {
+    LOG(INFO) << __FUNCTION__ << " start.";
+    return unixTimeMinusGpsTime_;
+}
+
+double SerialReader::CalcUnixTimeMinusGpsTime(double gpsWeekSec) {
+    DLOG(INFO) << __FUNCTION__ << " start.";
+
+    struct timeval now;
+    gettimeofday(&now, NULL);
+    double unixTime = now.tv_sec + now.tv_usec / 1000000.;
+
+    return (unixTime - gpsWeekSec);
+}
+
 void SerialReader::ParseInspvax(const std::string &inspvaxFrame, size_t _headerLength) {
     DLOG(INFO) << __FUNCTION__ << " start, _headerLength: " << _headerLength;
 
     uchar2int32_t uchar2int32;
     uchar2Double_t uchar2Double;
+
+    for(size_t i = 0; i < 4; ++i) {
+        uchar2int32.uCharData[i] = inspvaxFrame[16 + i];
+    }
+    novatelMsg_.GPS_week_sec =  static_cast<double>(uchar2int32.int32Data) / 1000.;
+    unixTimeMinusGpsTime_ = CalcUnixTimeMinusGpsTime(novatelMsg_.GPS_week_sec);
+    DLOG(INFO) << "unixTimeMinusGpsTime_: " << std::fixed << unixTimeMinusGpsTime_;
 
     for(size_t i = 0; i < 4; ++i) {
         uchar2int32.uCharData[i] = inspvaxFrame[_headerLength + i];
@@ -262,7 +293,38 @@ void SerialReader::ParseInspvax(const std::string &inspvaxFrame, size_t _headerL
     }
     novatelMsg_.azimuth = uchar2Double.doubleData;
 
-    DLOG(INFO) << novatelMsg_;
+    uchar2Float_t uchar2Float;
+    for(size_t i = 0; i < 4; ++i) {
+        uchar2Float.uCharData[i] = inspvaxFrame[_headerLength + 116 + i];
+    }
+    novatelMsg_.azimuth_deviation = uchar2Float.floatData;
+
+    (void)WriteRtImuFile();
+}
+
+void SerialReader::WriteRtImuFile() {
+    DLOG(INFO) << __FUNCTION__ << " start.";
+    std::fstream file(rtImuFile_, std::ios::out | std::ios::app);
+    if(!file) {
+        LOG(ERROR) << "Failed to open " << rtImuFile_;
+        return;
+    }
+
+    file << std::fixed
+         << novatelMsg_.GPS_week_sec << ","
+         << novatelMsg_.azimuth << ","
+         << novatelMsg_.pitch << ","
+         << novatelMsg_.roll << ","
+         << novatelMsg_.latitude << ","
+         << novatelMsg_.longitude << ","
+         << novatelMsg_.height << ","
+         << novatelMsg_.east_vel << ","
+         << novatelMsg_.north_vel << ","
+         << novatelMsg_.up_vel << ","
+         << static_cast<int>(novatelMsg_.sv_num) << "\n";
+
+    file.close();
+    return;
 }
 
 void SerialReader::ParseBestgnsspos(const std::string &bestgnssposFrame, size_t _headerLength) {

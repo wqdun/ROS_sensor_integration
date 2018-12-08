@@ -14,6 +14,7 @@
 #include <boost/thread/thread.hpp>
 #include <mutex>
 #include "../../sc_lib_public_tools/src/tools_no_ros.h"
+#include "../../sc_lib_public_tools/src/public_tools.h"
 #include "sc_msgs/Novatel.h"
 
 typedef union {
@@ -39,20 +40,23 @@ typedef union {
 
 class SerialReader {
 public:
-    SerialReader(const std::string &_serialName);
+    SerialReader(const std::string &_serialName, const std::string &_imuPath = "");
     ~SerialReader();
     int Read();
     int Write();
     void PublishMsg();
     double GetGpsTime();
+    double GetUnixTimeMinusGpsTime();
 
 
 private:
     int fd_;
     std::string serialName_;
     sc_msgs::Novatel novatelMsg_;
+    std::string rtImuFile_;
     ros::NodeHandle nh_;
     ros::Publisher pubNovatelMsg_;
+    double unixTimeMinusGpsTime_;
 
     void WriteSerial();
     void ReadSerial();
@@ -60,12 +64,13 @@ private:
     void ParsePsrdop(const std::string &psrdopFrame, size_t _headerLength);
     void ParseBestgnsspos(const std::string &bestgnssposFrame, size_t _headerLength);
     void ParseInspvax(const std::string &inspvaxFrame, size_t _headerLength);
+    void WriteRtImuFile();
     void ParseRawimu(const std::string &inspvaxFrame, size_t _headerLength, double &gpsTime2update);
-
     void CheckSum(const std::string &__frame);
     unsigned long CRC32Value(int i);
     unsigned long CalculateBlockCRC32(const std::string &___frame);
     bool IsCheckSumWrong(const std::string &__frame);
+    double CalcUnixTimeMinusGpsTime(double gpsWeekSec);
 };
 
 

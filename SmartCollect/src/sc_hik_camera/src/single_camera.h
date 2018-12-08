@@ -12,6 +12,11 @@
 #include <cv_bridge/cv_bridge.h>
 #include "include/MvCameraControl.h"
 
+typedef union {
+    uint32_t uint32Data[2];
+    uint64_t uint64Data;
+} uint32TOuint64_t;
+
 class HikCameraManager;
 class SingleCamera {
 public:

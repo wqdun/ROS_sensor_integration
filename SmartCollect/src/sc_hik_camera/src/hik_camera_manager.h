@@ -18,6 +18,7 @@ public:
     ~HikCameraManager();
     void Run();
     double GetGpsTimeFromSerial();
+    double GetUnixTimeMinusGpsTimeFromSerial();
 
     threadpool<SaveImageTask> threadPool_;
     std::string rawDataPath_;

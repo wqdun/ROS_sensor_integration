@@ -129,10 +129,10 @@ void SingleCamera::StartCamera() {
 }
 
 void __stdcall SingleCamera::ImageCB(unsigned char *pData, MV_FRAME_OUT_INFO_EX *pFrameInfo, void *_pSingleCamera) {
-    // struct timeval now;
-    // gettimeofday(&now, NULL);
-    const double gpsTime = s_pManager_->GetGpsTimeFromSerial();
-    // const double unixTime = now.tv_sec + now.tv_usec / 1000000.;
+    struct timeval now;
+    gettimeofday(&now, NULL);
+    const double unixTime = now.tv_sec + now.tv_usec / 1000000.;
+    const double gpsTime = unixTime - s_pManager_->GetUnixTimeMinusGpsTimeFromSerial();
 
     if(!pFrameInfo) {
         LOG(ERROR) << "pFrameInfo is NULL.";
@@ -170,13 +170,21 @@ void __stdcall SingleCamera::ImageCB(unsigned char *pData, MV_FRAME_OUT_INFO_EX 
         pDataForRGB = NULL;
     }
 
-    const double deviceTimeStamp = static_cast<double>(pFrameInfo->nDevTimeStampHigh) + static_cast<double>(pFrameInfo->nDevTimeStampLow) / 100000000.;
+    uint32TOuint64_t uint32TOuint64;
+    uint32TOuint64.uint32Data[0] = pFrameInfo->nDevTimeStampLow;
+    uint32TOuint64.uint32Data[1] = pFrameInfo->nDevTimeStampHigh;
+    LOG(INFO) << "uint32TOuint64.uint64Data: " << uint32TOuint64.uint64Data;
+    const double deviceTimeStamp = static_cast<double>(uint32TOuint64.uint64Data) / 100000000.;
+    DLOG(INFO) << std::fixed << "deviceTimeStamp: " << deviceTimeStamp;
+
     pSingleCamera->imageFreq_ = 1 / (deviceTimeStamp - pSingleCamera->lastDeviceTimeStamp_);
     pSingleCamera->lastDeviceTimeStamp_ = deviceTimeStamp;
     LOG_EVERY_N(INFO, 20) << "pSingleCamera->imageFreq_: " << pSingleCamera->imageFreq_;
 
     const double gpsTimeDaySec = fmod(gpsTime, (3600 * 24));
-    const std::string picFileName(pSingleCamera->imagePath_ + std::to_string(gpsTimeDaySec) + "_" + std::to_string(pFrameInfo->nFrameNum) + "_" + std::to_string(deviceTimeStamp) + "_" + std::to_string(_cameraID) + ".jpg");
+    const double triggerTimeDaySec = gpsTimeDaySec; // - 0.075;
+    LOG_FIRST_N(INFO, 1) << "MV_CH089_10GC camera callback delay is ~75 ms.";
+    const std::string picFileName(pSingleCamera->imagePath_ + std::to_string(triggerTimeDaySec) + "_" + std::to_string(pFrameInfo->nFrameNum) + "_" + std::to_string(deviceTimeStamp) + "_" + std::to_string(_cameraID) + ".jpg");
     LOG(INFO) << "picFileName: " << picFileName;
     if(s_pManager_->isSaveImg_) {
         // pSingleCamera->mat2PubMutex_.lock();

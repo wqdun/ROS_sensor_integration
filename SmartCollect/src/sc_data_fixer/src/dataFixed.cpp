@@ -5,7 +5,7 @@
 
 dataFixed::dataFixed(ros::NodeHandle nh, ros::NodeHandle private_nh, int cinValue)
 {
-    hzTime_ = 0.01;
+    hzTime_ = 0.1;
     pubProgress_ = nh.advertise<sc_msgs::DataFixerProgress>("sc_data_fixer_progress", 10);
     LOG(INFO) << "Sleep 1 s in case pubProgress_ construct incomplete.";
     sleep(1);
@@ -230,7 +230,7 @@ void dataFixed::fixProjectsData(const std::string &_projects)
         LOG(INFO) << "start to fix Project: " << projectArr[i];
         this->initMemberVar();
         this->markPointGeo2Gauss(projectArr[i]);
-        this->panoramasSort(projectArr[i]);
+        // this->panoramasSort(projectArr[i]);
         returnValue = this->readOntimeTraceData(projectArr[i], imuData);
         if( 0 != returnValue )
         {
@@ -247,6 +247,9 @@ void dataFixed::fixProjectsData(const std::string &_projects)
             continue;
         LOG(INFO) << "going to invoke mkLidarTraceFile";
         mkLidarTraceFile(projectArr[i], imuData);
+
+        const std::string imageGroupCmd("/opt/smartc/devel/lib/sc_images_group/sc_images_group_node " + projectArr[i]);
+        (void)public_tools::PublicTools::PopenWithoutReturn(imageGroupCmd);
 
         LOG(INFO) << "fixing Project: " << projectArr[i] << " is finished";
     }
@@ -479,10 +482,14 @@ int dataFixed::mkLostImageTraceData(double imageTime,std::string &projectName,st
     oneLostImageTraceData.Roll = imuData[imuDataSubMark].Roll;
     oneLostImageTraceData.Pitch = imuData[imuDataSubMark].Pitch;
     oneLostImageTraceData.Heading = imuData[imuDataSubMark].Heading;
+	oneLostImageTraceData.addPicName = "Null";
     return 0;
 }
 
 void dataFixed::saveImageTraceData(std::string &savePath,std::string &projectName,std::vector<imageTraceDataFormat> &imageTraceData,int saveMark){
+    LOG(INFO) << "savePath:" << savePath;
+    LOG(INFO) << "projectName:" << projectName;
+    LOG(INFO) << "imageTraceData.size() = " << imageTraceData.size();
     std::ofstream imageTraceDataFile;
     std::string imageEffectTracePartName="-RTimgpost.txt";
     int recordBeltNumber=0;
@@ -527,7 +534,7 @@ void dataFixed::saveImageTraceData(std::string &savePath,std::string &projectNam
             }
         }
         std::string seqNumString=std::to_string(i);
-        imageTraceDataFile << seqNumString << "\t" << imageTraceData[i].Pano_name <<
+        imageTraceDataFile << seqNumString << "\t" << imageTraceData[i].Pano_name << "\t" << imageTraceData[i].addPicName <<
         "\t" << imageTraceData[i].Date <<"\t"<< std::fixed << std::setprecision(2)
         << imageTraceData[i].GpsTime << "\t" << imageTraceData[i].BeijingTime << "\t"
         <<std::fixed <<std::setprecision(4) << imageTraceData[i].Easting << "\t"
@@ -675,10 +682,10 @@ int dataFixed::readOntimeTraceData(std::string &projectPath, std::vector<ontimeD
         std::string line(buffer);
         std::vector<std::string> parsedLine;
         boost::split(parsedLine, line, boost::is_any_of(",*") );
-        if(17 == parsedLine.size())
+        if(11 == parsedLine.size())
         {
             std::stringstream ss;
-            ss << parsedLine[2];
+            ss << parsedLine[0];
             double weekSecondTime;
             ss >> weekSecondTime;
             if(weekSecondTime < timeMark)
@@ -688,41 +695,37 @@ int dataFixed::readOntimeTraceData(std::string &projectPath, std::vector<ontimeD
             int modNumber=int(weekSecondTime)/totalDaySecondTime;
             imuonTimeData.GPSWeekTime=weekSecondTime-modNumber*totalDaySecondTime;
             ss.clear();
-            ss << parsedLine[3];
+            ss << parsedLine[1];
             ss >> imuonTimeData.Heading;
             ss.clear();
-            ss << parsedLine[4];
+            ss << parsedLine[2];
             ss >> imuonTimeData.Pitch;
             ss.clear();
-            ss << parsedLine[5];
+            ss << parsedLine[3];
             ss >> imuonTimeData.Roll;
             ss.clear();
-            ss << parsedLine[6];
+            ss << parsedLine[4];
             ss >> imuonTimeData.Latitude;
             ss.clear();
-            ss << parsedLine[7];
+            ss << parsedLine[5];
             ss >> imuonTimeData.Longitude;
             ss.clear();
-            ss << parsedLine[8];
+            ss << parsedLine[6];
             ss >> imuonTimeData.Height;
             ss.clear();
-            ss << parsedLine[9];
+			ss << parsedLine[7];
             ss >> imuonTimeData.Ve;
             ss.clear();
-            ss << parsedLine[10];
+			ss << parsedLine[8];
             ss >> imuonTimeData.Vn;
             ss.clear();
-            ss << parsedLine[11];
+			ss << parsedLine[9];
             ss >> imuonTimeData.Vu;
             ss.clear();
-            ss << parsedLine[12];
-            ss >> imuonTimeData.Baseline;
-            ss.clear();
-            ss << parsedLine[13];
-            ss >> imuonTimeData.NSV1;
-            ss.clear();
-            ss << parsedLine[14];
+            ss << parsedLine[10];
             ss >> imuonTimeData.NSV2;
+            ss.clear();
+
             if(imuonTimeData.GPSWeekTime<minGPSTime)
             {
                 minGPSTime=imuonTimeData.GPSWeekTime;
@@ -881,10 +884,36 @@ int dataFixed::reNameImageAndMkTraceFile(std::string &projectPath,std::vector <o
     imageTraceDataFormat oneLostImageTraceData;
     std::vector<imageTraceDataFormat> allImageTraceData;
     std::vector<imageTraceDataFormat> allLostImageTraceData;
-
+	std::vector<std::string> splitVector;
+	std::string addNameString;
+	std::string copyString;
+    std::vector<std::string> picNameBackUp(pictureName);
     for(unsigned long i=0; i < pictureName.size(); i++)
     {
-        std::string readPartImageName = pictureName[i].substr(0,3);
+        boost::split(splitVector, pictureName[i], boost::is_any_of("_"));
+		copyString = pictureName[i];
+		if(4 > splitVector.size())
+		{
+			LOG(WARNING) << "picture: " << pictureName[i] << " is invalid.";
+			continue;
+		}
+		pictureName[i] = splitVector[0];
+		for(int k = 1; k < splitVector.size() - 3; k++)
+		{
+			pictureName[i] += splitVector[i];
+		}
+        pictureName[i] += ".jpg";
+		boost::split(splitVector, copyString, boost::is_any_of("/"));
+		if(0 == splitVector.size())
+		{
+			LOG(WARNING) << "picture: " << copyString << " is invalid.";
+			continue;
+		}
+		addNameString = splitVector[splitVector.size() - 1];
+        addNameString = addNameString.substr(0, addNameString.size() - 4);
+
+
+		std::string readPartImageName = pictureName[i].substr(0,3);
         if(readPartImageName == uselessImageMark)
         {
             editePictureNameMark[i] = 2;
@@ -909,6 +938,8 @@ int dataFixed::reNameImageAndMkTraceFile(std::string &projectPath,std::vector <o
             continue;
         }
         newPictureName[i] = reNewPicture;
+        //newPictureName[i] +=
+		oneImageTraceData.addPicName = addNameString;
         allImageTraceData.push_back(oneImageTraceData);
         editePictureNameMark[i] = 1;
         if(imageMark == 1)
@@ -950,7 +981,7 @@ int dataFixed::reNameImageAndMkTraceFile(std::string &projectPath,std::vector <o
         if(editePictureNameMark[i] == 1)
         {
            FILE * renameImageFpin;
-            const std::string renameImagecmd = "cd "+ imagePath +" && mv " + pictureName[i] + " " + newPictureName[i];
+            const std::string renameImagecmd = "cd "+ imagePath +" && mv " + picNameBackUp[i] + " " + newPictureName[i];
             if(NULL == ( renameImageFpin = popen(renameImagecmd.c_str(),"w" ) ) )
                 LOG(ERROR) << projectPath <<":Rename Picture falied";
             if(0 != pclose(renameImageFpin))

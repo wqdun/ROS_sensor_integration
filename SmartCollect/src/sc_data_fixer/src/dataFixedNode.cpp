@@ -13,7 +13,7 @@ int main(int argc, char **argv) {
     }
     ros::init(argc, argv, "data_fixer_node");
 
-    int imageCollectionHz = 10;
+    int imageCollectionHz = 5;
     dataFixed dataFixer(ros::NodeHandle(), ros::NodeHandle("~"), imageCollectionHz);
 
     const std::string projects(argv[1]);

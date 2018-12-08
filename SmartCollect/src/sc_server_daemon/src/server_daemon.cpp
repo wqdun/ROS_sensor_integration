@@ -130,10 +130,10 @@ void ServerDaemon::velodyneCB(const velodyne_msgs::Velodyne2Center::ConstPtr& pV
 void ServerDaemon::SerialCB(const sc_msgs::Novatel::ConstPtr& pNovatelMsg) {
     // 100Hz
     gpsTime_[0] = gpsTime_[1];
-    gpsTime_[1] = pNovatelMsg->seconds_into_week;
+    gpsTime_[1] = pNovatelMsg->GPS_week_sec;
     // do nothing if receive same frame
     if(gpsTime_[0] == gpsTime_[1]) {
-        LOG_EVERY_N(INFO, 10) << "Same frame received, GPStime: " << pNovatelMsg->seconds_into_week;
+        LOG_EVERY_N(INFO, 10) << "Same frame received, GPStime: " << pNovatelMsg->GPS_week_sec;
         return;
     }
     isGpsUpdated_ = true;

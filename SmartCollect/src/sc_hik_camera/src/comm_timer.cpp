@@ -1,272 +1,188 @@
 #include "comm_timer.h"
-#include "camera.h"
 
-#define NDEBUG
-// #undef NDEBUG
-#include <glog/logging.h>
+CommTimer::CommTimer(const std::string &_serialName, const std::string &_imuPath) {
+    LOG(INFO) << __FUNCTION__ << " start.";
+    serialName_ = _serialName;
 
-CommTimer::CommTimer(const std::string &_rawdataPath) {
-    LOG(INFO) << __FUNCTION__ << " start, rawdataPath_: " << _rawdataPath;
-    ros::NodeHandle nh;
-    pubImu5651_ = nh.advertise<sc_msgs::imu5651>("imu_string", 0);
-    rawdataPath_ = _rawdataPath;
+    std::string imuFileNamePrefix("");
+    (void)public_tools::PublicTools::generateFileName(_imuPath, imuFileNamePrefix);
+    rtImuFile_ = _imuPath + imuFileNamePrefix + "_rt_track.txt";
+
+    pubImu5651_ = nh_.advertise<sc_msgs::imu5651>("imu_string", 10);
 }
 
-CommTimer::~CommTimer() {}
+CommTimer::~CommTimer() {
+    LOG(INFO) << __FUNCTION__ << " start.";
+}
 
-int CommTimer::getTime(Cameras *pCameras)
-{
-    char buf[1024];
+void CommTimer::PublishMsg() {
+    LOG(INFO) << __FUNCTION__ << " start.";
+    pubImu5651_.publish(imu232Msg_);
+}
 
-    int fd1 = open("/dev/ttyS0", O_RDONLY);
-    if(-1 == fd1)
-    {
-        LOG(ERROR) << "Failed to open /dev/ttyS0.";
-        exit(6);
-    }
-    LOG(INFO) << "Open /dev/ttyUSB0 successfully.";
+int CommTimer::Read() {
+    LOG(INFO) << __FUNCTION__ << " start.";
 
-    int nset1 = setOpt(fd1, 115200, 8, 'N', 1);
-    if(-1 == nset1)
-    {
-        LOG(ERROR) << "Failed to setup /dev/ttyS0 properties.";
-        exit(1);
+    const int fd = open(serialName_.c_str(), O_RDWR | O_NOCTTY);
+    if(fd < 0) {
+        LOG(ERROR) << "Failed to open " << serialName_ << ", try change permission...";
+        return -1;
     }
 
-    const std::string imuPath(rawdataPath_);// + "/IMU/");
-    std::string imuFileName("");
-    public_tools::PublicTools::generateFileName(imuPath, imuFileName);
-    imuFileName += "_rt_track.txt";
-    LOG(INFO) << "imuFileName: " << imuFileName;
-    std::string imuFile(imuPath + imuFileName);
-    LOG(INFO) << "imuFile: " << imuFile;
+    if(public_tools::ToolsNoRos::SetSerialOption(fd, 115200, 8, 'N', 1) < 0) {
+        LOG(ERROR) << "Failed to setup " << ttyname(fd);
+        return -1;
+    }
 
+    (void)ReadSerial(fd);
 
-    std::fstream file;
+    close(fd);
+    return 0;
+}
+
+void CommTimer::ReadSerial(int _fd) {
+    LOG(INFO) << __FUNCTION__ << " start.";
+
+    const size_t BUFFER_SIZE = 1000;
+    unsigned char buf[BUFFER_SIZE];
+    bool isFirstFrame = true;
     std::string frameBuf("");
 
-    bool isGpsWeekTimeUpdated = false;
-    timespec time_sys_end, time_sys_start;
-    double GPS_week_time = -1.;
-    std::vector<std::string> parsed_data;
-    bool isGpsTimeValidBeforeGpsWeekTimeCorrected = false;
-
-    bool isFirstFrame = true;
-    LOG(INFO) << "First frame might be incomplete, abandon it.";
-
-    while(ros::ok() )
-    {
-        memset(buf, 0, 1024);
-        int nread = read(fd1, buf, 1024);
-
-        if(nread <= 0)
-        {
+    int err = tcflush(_fd, TCIOFLUSH);
+    LOG(INFO) << "tcflush: " << err;
+    while(ros::ok()) {
+        bzero(buf, BUFFER_SIZE);
+        int nread = read(_fd, buf, BUFFER_SIZE);
+        LOG_EVERY_N(INFO, 50) << "nread: " << nread;
+        if(nread <= 0) {
             continue;
         }
-        bool is_frame_completed = false;
 
-        for(size_t i = 0; i < nread; ++i)
-        {
-            is_frame_completed = false;
-            std::string frame_complete("");
-            switch(buf[i])
-            {
+        for(size_t i = 0; i < nread; ++i) {
+            bool isFrameCompleted = false;
+            double unixTime = -1.;
+            switch(buf[i]) {
             case '$': {
+                struct timeval now;
+                gettimeofday(&now, NULL);
+                unixTime = now.tv_sec + now.tv_usec / 1000000.;
                 isFirstFrame = false;
-                double sysTime = ros::Time::now().toSec();
-
-                frameBuf = std::to_string(sysTime) + ",$";
-                // frameBuf = buf[i];
+                frameBuf = buf[i];
                 break;
             }
             case '\r':
                 break;
             case '\n':
-                is_frame_completed = true;
-                frame_complete = frameBuf;
-                frameBuf.clear();
+                isFrameCompleted = true;
                 break;
             default:
                 frameBuf += buf[i];
             }
 
             if(isFirstFrame) {
-                LOG_EVERY_N(INFO, 10) << "First frame might be incomplete, abandon it.";
+                LOG_EVERY_N(INFO, 10) << "First frame might be incomplete, abandon: " << frameBuf;
                 continue;
             }
 
-            if(!is_frame_completed)
-            {
+            if(!isFrameCompleted) {
                 continue;
             }
 
-            // boost::split(parsed_data, frame_complete, boost::is_any_of( ",*" ) );
-            // if(11 != parsed_data.size() )
-            // {
-            //     LOG(ERROR) << "Error parsing " << frame_complete << "; parsed_data.size(): " << parsed_data.size();
-            //     continue;
-            // }
-
-            // // e.g. "279267.900"
-            // GPS_week_time = public_tools::PublicTools::string2num(parsed_data[2], (double)(0) );
-            // isGpsWeekTimeUpdated = true;
-
-            // imu232Msg_.GPSWeek = parsed_data[1];
-            // imu232Msg_.GPSTime = parsed_data[2];
-            // imu232Msg_.Heading = parsed_data[3];
-            // imu232Msg_.Pitch = parsed_data[4];
-            // imu232Msg_.Roll = parsed_data[5];
-            // imu232Msg_.Latitude = parsed_data[6];
-            // imu232Msg_.Longitude = parsed_data[7];
-            // imu232Msg_.Altitude = parsed_data[8];
-            // imu232Msg_.Vel_east = parsed_data[9];
-            // imu232Msg_.Vel_north = parsed_data[10];
-            // imu232Msg_.Vel_up = parsed_data[11];
-            // imu232Msg_.Baseline = parsed_data[12];
-            // imu232Msg_.NSV1_num = parsed_data[13];
-            // imu232Msg_.NSV2_num = parsed_data[14];
-            // imu232Msg_.Status = parsed_data[15];
-
-            // pubImu5651_.publish(imu232Msg_);
-
-            // if(imu232Msg_.Latitude.find("0.0000") < imu232Msg_.Latitude.size() ) {
-            //     LOG_EVERY_N(INFO, 1000) << "imu232Msg_.Latitude is invalid: " << imu232Msg_.Latitude;
-            //     continue;
-            // }
-            // const double sysWeekSec = ros::Time::now().toSec() - 24 * 3600 * 3;
-            // const int timeErr = (int)sysWeekSec % (24 * 7 * 3600) - GPS_week_time;
-            // LOG_FIRST_N(INFO, 1) << "Invalid GPS frame when time diff > 20 min.";
-            // LOG_EVERY_N(INFO, 1000) << "Unix time and GPS week time diff: " << timeErr << "s.";
-            // if(timeErr < -1200 || timeErr > 1200) {
-            //     LOG_EVERY_N(WARNING, 100) << "Invalid GPS frame; time diff: " << timeErr << "s.";
-            //     continue;
-            // }
-            // isGpsTimeValidBeforeGpsWeekTimeCorrected = true;
-
-            file.open(imuFile, std::ios::out | std::ios::app);
-            if(!file)
-            {
-                LOG(ERROR) << "Failed to open " << imuFile;
-                exit(1);
-            }
-            file << frame_complete << "\n";
-            file.close();
+            Parse5651Frame(frameBuf, unixTime);
+            frameBuf.clear();
         }
-
-        // if(isGpsWeekTimeUpdated)
-        // {
-        //     DLOG(INFO) << "Update GPS_week_time: " << std::fixed << GPS_week_time;
-        //     pCameras->gpsWeekTimeCorrected_ = GPS_week_time;
-        //     isGpsWeekTimeUpdated = false;
-        //     clock_gettime(CLOCK_REALTIME, &time_sys_start);
-        // }
-        // else
-        // {
-        //     clock_gettime(CLOCK_REALTIME, &time_sys_end);
-        //     double time_diff = time_sys_end.tv_sec + time_sys_end.tv_nsec / 1000000000.0 - (time_sys_start.tv_sec + time_sys_start.tv_nsec / 1000000000.0);
-        //     pCameras->gpsWeekTimeCorrected_ = GPS_week_time + time_diff;
-        //     DLOG(INFO) << "pCameras->gpsWeekTimeCorrected_: " << std::fixed << pCameras->gpsWeekTimeCorrected_ << "; time_diff: " << time_diff;
-        // }
-        // pCameras->isGpsTimeValid_ = isGpsTimeValidBeforeGpsWeekTimeCorrected;
     }
-
-    close(fd1);
-    return 0;
+    return;
 }
 
-int CommTimer::setOpt(int fd, int nSpeed, int nBits, char nEvent, int nStop)
-{
-    struct termios newtio, oldtio;
-    if(tcgetattr(fd, &oldtio) != 0)
-    {
-        LOG(INFO) << ("Setup Serial 1.");
-        return -1;
-    }
-    bzero(&newtio, sizeof(newtio));
-    newtio.c_cflag |= (CLOCAL | CREAD);
-    newtio.c_cflag &= ~CSIZE;
+void CommTimer::Parse5651Frame(const std::string &_frame, double _unixTime) {
+    LOG(INFO) << __FUNCTION__ << " start.";
+    assert(!_frame.empty() );
 
-    switch(nBits)
-   {
-    case 7:
-        newtio.c_cflag |= CS7;
-        break;
-    case 8:
-        newtio.c_cflag |= CS8;
-        break;
-    }
-
-    switch(nEvent)
-    {
-    case 'O':
-        newtio.c_cflag |= PARENB;
-        newtio.c_cflag |= PARODD;
-        newtio.c_iflag |= (INPCK | ISTRIP);
-        break;
-    case 'E':
-        newtio.c_iflag |= (INPCK | ISTRIP);
-        newtio.c_cflag |= PARENB;
-        newtio.c_cflag &= ~PARODD;
-        break;
-    case 'N':
-        newtio.c_cflag &= ~PARENB;
-        break;
-    }
-
-    switch(nSpeed)
-    {
-    case 2400:
-        cfsetispeed(&newtio, B2400);
-        cfsetospeed(&newtio, B2400);
-        break;
-    case 4800:
-        cfsetispeed(&newtio, B4800);
-        cfsetospeed(&newtio, B4800);
-        break;
-    case 9600:
-        cfsetispeed(&newtio, B9600);
-        cfsetospeed(&newtio, B9600);
-        break;
-    case 115200:
-        cfsetispeed(&newtio, B115200);
-        cfsetospeed(&newtio, B115200);
-        break;
-    case 460800:
-        cfsetispeed(&newtio, B460800);
-        cfsetospeed(&newtio, B460800);
-        break;
-    default:
-        cfsetispeed(&newtio, B9600);
-        cfsetospeed(&newtio, B9600);
-        break;
-    }
-
-    if(1 == nStop)
-    {
-        newtio.c_cflag &= ~CSTOPB;
+    if("$GPFPD" == _frame.substr(0, 6)) {
+        WriteRtImuFile(_frame);
+        Parse5651GpfpdFrame(_frame, _unixTime);
     }
     else
-    if(2 == nStop)
-    {
-        newtio.c_cflag |= CSTOPB;
+    if("$GPGGA" == _frame.substr(0, 6)) {
+        Parse5651GpggaFrame(_frame);
     }
-    else
-    {
-        LOG(ERROR) << "Setup nStop unavailable.";
-        return -1;
+    else {
+        LOG(WARNING) << "Unhandled frame: " << _frame;
     }
 
-    tcflush(fd, TCIFLUSH);
-
-    newtio.c_cc[VTIME] = 100;
-    newtio.c_cc[VMIN] = 0;
-
-    if(0 != tcsetattr(fd, TCSANOW, &newtio))
-    {
-        LOG(ERROR) << "Com setup error.";
-        return -1;
-    }
-
-    LOG(INFO) << "Set done.";
-    return 0;
+    return;
 }
+
+void CommTimer::Parse5651GpggaFrame(const std::string &_gpggaFrame) {
+    LOG(INFO) << __FUNCTION__ << " start.";
+
+    std::vector<std::string> gpggaFrameParsed;
+    boost::split(gpggaFrameParsed, _gpggaFrame, boost::is_any_of(",*") );
+    if(15 != gpggaFrameParsed.size()) {
+        LOG(ERROR) << "Error parsing " << _gpggaFrame << "; gpggaFrameParsed.size(): " << gpggaFrameParsed.size();
+        return;
+    }
+
+    // e.g. "279267.900"
+    imu232Msg_.UtcTime = gpggaFrameParsed[1];
+    imu232Msg_.LatitudeGpgga = gpggaFrameParsed[2] + gpggaFrameParsed[3];
+    imu232Msg_.LongitudeGpgga = gpggaFrameParsed[4] + gpggaFrameParsed[5];
+    imu232Msg_.NoSV = gpggaFrameParsed[7];
+    imu232Msg_.Hdop = gpggaFrameParsed[8];
+
+    return;
+}
+
+void CommTimer::WriteRtImuFile(const std::string &_gpfpdFrame) {
+    LOG(INFO) << __FUNCTION__ << " start.";
+
+    std::fstream file(rtImuFile_, std::ios::out | std::ios::app);
+    if(!file)
+    {
+        LOG(ERROR) << "Failed to open " << rtImuFile_;
+        return;
+    }
+    file << _gpfpdFrame << "\n";
+    file.close();
+
+    return;
+}
+
+void CommTimer::Parse5651GpfpdFrame(const std::string &_gpfpdFrame, double __unixTime) {
+    LOG(INFO) << __FUNCTION__ << " start.";
+
+    std::vector<std::string> gpfpdFrameParsed;
+    boost::split(gpfpdFrameParsed, _gpfpdFrame, boost::is_any_of(",*") );
+    if(15 != gpfpdFrameParsed.size()) {
+        LOG(ERROR) << "Error parsing " << _gpfpdFrame << "; gpfpdFrameParsed.size(): " << gpfpdFrameParsed.size();
+        return;
+    }
+
+    // e.g. "279267.900"
+    imu232Msg_.GPSWeek = gpfpdFrameParsed[1];
+    imu232Msg_.GPSTime = gpfpdFrameParsed[2];
+    imu232Msg_.Heading = gpfpdFrameParsed[3];
+    imu232Msg_.Pitch = gpfpdFrameParsed[4];
+    imu232Msg_.Roll = gpfpdFrameParsed[5];
+    imu232Msg_.Latitude = gpfpdFrameParsed[6];
+    imu232Msg_.Longitude = gpfpdFrameParsed[7];
+    imu232Msg_.Altitude = gpfpdFrameParsed[8];
+    imu232Msg_.Vel_east = gpfpdFrameParsed[9];
+    imu232Msg_.Vel_north = gpfpdFrameParsed[10];
+    imu232Msg_.Vel_up = gpfpdFrameParsed[11];
+    imu232Msg_.Baseline = gpfpdFrameParsed[12];
+    imu232Msg_.NSV1_num = gpfpdFrameParsed[13];
+    imu232Msg_.NSV2_num = gpfpdFrameParsed[14];
+    imu232Msg_.Status = gpfpdFrameParsed[15];
+
+    const double GpsWeekTime = public_tools::ToolsNoRos::string2double(imu232Msg_.GPSTime);
+    unixTimeMinusGpsTime_ = __unixTime - GpsWeekTime;
+    return;
+}
+
+double CommTimer::GetUnixTimeMinusGpsTime() {
+    LOG(INFO) << __FUNCTION__ << " start.";
+    return unixTimeMinusGpsTime_;
+}
+

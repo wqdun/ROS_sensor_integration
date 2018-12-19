@@ -11,8 +11,8 @@ HikCameraManager::HikCameraManager(const std::string &_rawPath):
     subMonitor_ = nh_.subscribe("sc_monitor", 0, &HikCameraManager::MonitorCB, this);
 
     const std::string rawdataImuPath(_rawPath + "/IMU/");
-    pSerialReader_.reset(new SerialReader("/dev/novatel_usb2", rawdataImuPath) );
-    pSerialReaderThread_ = boost::shared_ptr<boost::thread>(new boost::thread(boost::bind(&SerialReader::Read, pSerialReader_) ) );
+    pSerialReader_.reset(new CommTimer("/dev/ttyS0", rawdataImuPath) );
+    pSerialReaderThread_ = boost::shared_ptr<boost::thread>(new boost::thread(boost::bind(&CommTimer::Read, pSerialReader_) ) );
 }
 
 HikCameraManager::~HikCameraManager() {
@@ -54,11 +54,6 @@ void HikCameraManager::Run() {
             pSingleCameras_[i]->PublishImageAndFreq();
         }
     }
-}
-
-double HikCameraManager::GetGpsTimeFromSerial() {
-    LOG(INFO) << __FUNCTION__ << " start.";
-    return pSerialReader_->GetGpsTime();
 }
 
 double HikCameraManager::GetUnixTimeMinusGpsTimeFromSerial() {

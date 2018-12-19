@@ -211,11 +211,6 @@ void SerialReader::ParseRawimu(const std::string &inspvaxFrame, size_t _headerLe
     DLOG(INFO) << std::fixed << "_gpsTime2update: " << _gpsTime2update;
 }
 
-double SerialReader::GetGpsTime() {
-    LOG(INFO) << __FUNCTION__ << " start.";
-    return novatelMsg_.seconds_into_week;
-}
-
 double SerialReader::GetUnixTimeMinusGpsTime() {
     LOG(INFO) << __FUNCTION__ << " start.";
     return unixTimeMinusGpsTime_;

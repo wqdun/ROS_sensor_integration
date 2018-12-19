@@ -47,8 +47,8 @@ void RawimuRecorder::Record2File(const std::string &rawInsFile) {
     while(ros::ok() ) {
         bzero(buf, BUFFER_SIZE);
         int nread = read(fd_, buf, BUFFER_SIZE);
+        LOG_EVERY_N(INFO, 50) << "nread: " << nread;
         if(nread <= 0) {
-            LOG_EVERY_N(INFO, 10) << "nread: " << nread;
             continue;
         }
 

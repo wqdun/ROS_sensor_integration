@@ -150,7 +150,7 @@ add_executable(${PROJECT_NAME}_node
   src/hik_camera_manager.cpp
   src/save_image_task.cpp
   src/single_camera.cpp
-  src/serial_reader.cpp
+  src/comm_timer.cpp
 )
 
 ## Rename C++ executable without prefix
@@ -173,21 +173,20 @@ target_link_libraries(${PROJECT_NAME}_node
   /usr/local/lib/libopencv_imgproc.so
   glog
   /opt/MVS/bin/libMvCameraControl.so
-  /usr/lib/x86_64-linux-gnu/libturbojpeg.a
   sc_lib_public_tools
 )
 
 # Below for test serial reader
-add_executable(serial_reader_test
-  src/serial_reader.cpp
-  src/serial_reader_test.cpp
-)
-target_link_libraries(serial_reader_test
-  ${catkin_LIBRARIES}
-  glog
-  sc_lib_public_tools
-  boost_system
-)
+# add_executable(serial_reader_test
+#   src/serial_reader.cpp
+#   src/serial_reader_test.cpp
+# )
+# target_link_libraries(serial_reader_test
+#   ${catkin_LIBRARIES}
+#   glog
+#   sc_lib_public_tools
+#   boost_system
+# )
 
 #############
 ## Install ##

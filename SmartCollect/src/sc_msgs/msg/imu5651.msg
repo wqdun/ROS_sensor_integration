@@ -1,3 +1,4 @@
+# below from 5651 $GPFPD
 string GPSWeek
 string GPSTime
 string Heading
@@ -13,3 +14,11 @@ string Baseline
 string NSV1_num
 string NSV2_num
 string Status
+
+# below from 5651 $GPGGA
+string UtcTime
+string LatitudeGpgga
+string LongitudeGpgga
+string NoSV
+string Hdop
+

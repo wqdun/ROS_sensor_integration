@@ -1,48 +1,39 @@
 #ifndef __COMM_TIME_H
 #define __COMM_TIME_H
 
-#include <sstream>
-#include <stdio.h>
-#include <stdlib.h>
+#include <glog/logging.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
-#include <unistd.h>
-#include <termios.h>
-#include <string.h>
-#include <error.h>
-#include <time.h>
-#include <math.h>
-#include <vector>
-#include <boost/algorithm/string/classification.hpp>
-#include <boost/algorithm/string/split.hpp>
-#include <string>
-#include "sc_msgs/imu5651.h"
 #include <ros/ros.h>
-#include <std_msgs/String.h>
-#include "../../sc_lib_public_tools/src/public_tools.h"
-#include "../../sc_lib_public_tools/src/coordtrans.h"
 #include <fstream>
-#include "lock.h"
+#include <boost/algorithm/string/split.hpp>
+#include "sc_msgs/imu5651.h"
+#include "../../sc_lib_public_tools/src/tools_no_ros.h"
+#include "../../sc_lib_public_tools/src/public_tools.h"
 
-class Cameras;
-
-class CommTimer
-{
+class CommTimer {
 public:
-    CommTimer(const std::string &_rawdataPath);
+    CommTimer(const std::string &_serialName, const std::string &_imuPath);
     ~CommTimer();
-
-    int getTime(Cameras *pCameras);
-
-    sc_msgs::imu5651 imu232Msg_;
+    int Read();
+    double GetUnixTimeMinusGpsTime();
+    void PublishMsg();
 
 
 private:
-    int setOpt(int fd, int nSpeed, int nBits, char nEvent, int nStop);
+    void ReadSerial(int _fd);
+    void Parse5651Frame(const std::string &_frame, double _unixTime);
+    void Parse5651GpggaFrame(const std::string &_gpggaFrame);
+    void WriteRtImuFile(const std::string &_gpfpdFrame);
+    void Parse5651GpfpdFrame(const std::string &_gpfpdFrame, double __unixTime);
 
-    std::string rawdataPath_;
+    ros::NodeHandle nh_;
     ros::Publisher pubImu5651_;
+    sc_msgs::imu5651 imu232Msg_;
+    std::string serialName_;
+    std::string rtImuFile_;
+    double unixTimeMinusGpsTime_;
 };
 
 #endif

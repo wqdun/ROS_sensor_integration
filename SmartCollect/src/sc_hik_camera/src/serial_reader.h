@@ -45,7 +45,6 @@ public:
     int Read();
     int Write();
     void PublishMsg();
-    double GetGpsTime();
     double GetUnixTimeMinusGpsTime();
 
 

@@ -19,7 +19,7 @@ int main(int argc, char **argv) {
     LOG(INFO) << "Open " << ttyname(fd) << " successfully";
 
     // Setup port properties
-    if(0 != set_opt(fd, 230400, 8, 'N', 1) ) {
+    if(0 != public_tools::ToolsNoRos::SetSerialOption(fd, 230400, 8, 'N', 1) ) {
         LOG(ERROR) << "Failed to set " << ttyname(fd);
         exit(1);
     }
@@ -184,105 +184,3 @@ bool getGdopFromGpgga(const string &inGpgga, sc_msgs::scIntegrateImu &out422Msg,
     return true;
 }
 
-int set_opt(int fd, int nSpeed, int nBits, char nEvent, int nStop) {
-    struct termios newtio, oldtio;
-    if(tcgetattr(fd, &oldtio) != 0) {
-        perror("Setup Serial 1.\n");
-        return -1;
-    }
-    bzero(&newtio, sizeof(newtio));
-    newtio.c_cflag |= (CLOCAL | CREAD);
-    newtio.c_cflag &= ~CSIZE;
-
-    switch(nBits) {
-    case 7:
-        newtio.c_cflag |= CS7;
-        break;
-    case 8:
-        newtio.c_cflag |= CS8;
-        break;
-    default:
-        perror("Unsupported data size.\n");
-        return -1;
-    }
-
-    switch(nEvent) {
-    case 'o':
-    case 'O':
-        newtio.c_cflag |= PARENB;
-        newtio.c_cflag |= PARODD;
-        newtio.c_iflag |= (INPCK | ISTRIP);
-        break;
-    case 'e':
-    case 'E':
-        newtio.c_iflag |= (INPCK | ISTRIP);
-        newtio.c_cflag |= PARENB;
-        newtio.c_cflag &= ~PARODD;
-        break;
-    case 'n':
-    case 'N':
-        newtio.c_cflag &= ~PARENB;
-        break;
-    default:
-        perror("Unsupported parity.\n");
-        return -1;
-    }
-
-    switch(nSpeed) {
-    case 2400:
-        cfsetispeed(&newtio, B2400);
-        cfsetospeed(&newtio, B2400);
-        break;
-    case 4800:
-        cfsetispeed(&newtio, B4800);
-        cfsetospeed(&newtio, B4800);
-        break;
-    case 9600:
-        cfsetispeed(&newtio, B9600);
-        cfsetospeed(&newtio, B9600);
-        break;
-    case 115200:
-        cfsetispeed(&newtio, B115200);
-        cfsetospeed(&newtio, B115200);
-        break;
-    case 230400:
-        cfsetispeed(&newtio, B230400);
-        cfsetospeed(&newtio, B230400);
-        break;
-    case 460800:
-        cfsetispeed(&newtio, B460800);
-        cfsetospeed(&newtio, B460800);
-        break;
-    default:
-        cfsetispeed(&newtio, B9600);
-        cfsetospeed(&newtio, B9600);
-        break;
-    }
-
-    if(1 == nStop) {
-        newtio.c_cflag &= ~CSTOPB;
-    }
-    else
-    if(2 == nStop) {
-        newtio.c_cflag |= CSTOPB;
-    }
-    else {
-        perror("Setup nStop unavailable.\n");
-        return -1;
-    }
-
-    tcflush(fd, TCIFLUSH);
-
-    // time out 15s重要
-    newtio.c_cc[VTIME] = 100;
-    // Update the option and do it now 返回的最小值  重要
-    newtio.c_cc[VMIN] = 0;
-
-    if(0 != tcsetattr(fd, TCSANOW, &newtio) ) {
-        perror("Com setup error.\n");
-        return -1;
-    }
-
-    printf("Set done.\n");
-    return 0;
-}

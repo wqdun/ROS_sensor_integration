@@ -4,20 +4,19 @@
 #include <glog/logging.h>
 #include <vector>
 #include <assert.h>
+#include <boost/thread/thread.hpp>
 #include "include/MvCameraControl.h"
 #include "../../sc_lib_public_tools/src/thread_pool.h"
 #include "save_image_task.h"
 #include "single_camera.h"
-#include "serial_reader.h"
+#include "comm_timer.h"
 #include "sc_msgs/MonitorMsg.h"
-
 
 class HikCameraManager {
 public:
     HikCameraManager(const std::string &_rawPath);
     ~HikCameraManager();
     void Run();
-    double GetGpsTimeFromSerial();
     double GetUnixTimeMinusGpsTimeFromSerial();
 
     threadpool<SaveImageTask> threadPool_;
@@ -28,7 +27,7 @@ public:
 private:
     std::vector<boost::shared_ptr<SingleCamera>> pSingleCameras_;
     MV_CC_DEVICE_INFO_LIST deviceList_;
-    boost::shared_ptr<SerialReader> pSerialReader_;
+    boost::shared_ptr<CommTimer> pSerialReader_;
     boost::shared_ptr<boost::thread> pSerialReaderThread_;
     ros::NodeHandle nh_;
     ros::Subscriber subMonitor_;

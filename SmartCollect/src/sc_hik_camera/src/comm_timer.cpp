@@ -47,6 +47,7 @@ void CommTimer::ReadSerial(int _fd) {
     unsigned char buf[BUFFER_SIZE];
     bool isFirstFrame = true;
     std::string frameBuf("");
+    double unixTime = -1.;
 
     int err = tcflush(_fd, TCIOFLUSH);
     LOG(INFO) << "tcflush: " << err;
@@ -60,7 +61,6 @@ void CommTimer::ReadSerial(int _fd) {
 
         for(size_t i = 0; i < nread; ++i) {
             bool isFrameCompleted = false;
-            double unixTime = -1.;
             switch(buf[i]) {
             case '$': {
                 struct timeval now;
@@ -119,7 +119,7 @@ void CommTimer::Parse5651GpggaFrame(const std::string &_gpggaFrame) {
 
     std::vector<std::string> gpggaFrameParsed;
     boost::split(gpggaFrameParsed, _gpggaFrame, boost::is_any_of(",*") );
-    if(15 != gpggaFrameParsed.size()) {
+    if(16 != gpggaFrameParsed.size()) {
         LOG(ERROR) << "Error parsing " << _gpggaFrame << "; gpggaFrameParsed.size(): " << gpggaFrameParsed.size();
         return;
     }
@@ -138,8 +138,7 @@ void CommTimer::WriteRtImuFile(const std::string &_gpfpdFrame) {
     LOG(INFO) << __FUNCTION__ << " start.";
 
     std::fstream file(rtImuFile_, std::ios::out | std::ios::app);
-    if(!file)
-    {
+    if(!file) {
         LOG(ERROR) << "Failed to open " << rtImuFile_;
         return;
     }
@@ -154,7 +153,7 @@ void CommTimer::Parse5651GpfpdFrame(const std::string &_gpfpdFrame, double __uni
 
     std::vector<std::string> gpfpdFrameParsed;
     boost::split(gpfpdFrameParsed, _gpfpdFrame, boost::is_any_of(",*") );
-    if(15 != gpfpdFrameParsed.size()) {
+    if(17 != gpfpdFrameParsed.size()) {
         LOG(ERROR) << "Error parsing " << _gpfpdFrame << "; gpfpdFrameParsed.size(): " << gpfpdFrameParsed.size();
         return;
     }

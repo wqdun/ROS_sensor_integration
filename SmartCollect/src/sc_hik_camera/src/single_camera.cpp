@@ -132,7 +132,9 @@ void __stdcall SingleCamera::ImageCB(unsigned char *pData, MV_FRAME_OUT_INFO_EX 
     struct timeval now;
     gettimeofday(&now, NULL);
     const double unixTime = now.tv_sec + now.tv_usec / 1000000.;
-    const double gpsTime = unixTime - s_pManager_->GetUnixTimeMinusGpsTimeFromSerial();
+    const double unixTimeMinusGpsTime = s_pManager_->GetUnixTimeMinusGpsTimeFromSerial();
+    LOG(INFO) << "unixTimeMinusGpsTime: " << std::fixed << unixTimeMinusGpsTime;
+    const double gpsTime = unixTime - unixTimeMinusGpsTime;
 
     if(!pFrameInfo) {
         LOG(ERROR) << "pFrameInfo is NULL.";

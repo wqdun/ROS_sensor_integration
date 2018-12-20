@@ -1,20 +1,15 @@
-# below from RS232
-float64 GPStime
 float64 unix_time
 
+# below from 5651 RS232
+float64 GPStime
 Point3D lat_lon_hei
 Point3D pitch_roll_heading
 # speed in km/h
 float64 speed
-int32 nsv1_num
-int32 nsv2_num
-float32 hdop_novatel
+int32 status
 
-# below from RS422
-string latitude
-string longitude
-string hdop
-string noSV_422
+int32 no_sv
+float64 hdop
 
 # below from velodyne
 string pps_status

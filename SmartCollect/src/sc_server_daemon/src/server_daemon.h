@@ -14,7 +14,7 @@
 #include "sc_msgs/MonitorMsg.h"
 #include "sc_msgs/ProjectInfoMsg.h"
 #include "sc_msgs/DiskInfo.h"
-#include "sc_msgs/Novatel.h"
+#include "sc_msgs/imu5651.h"
 #include "velodyne_msgs/Velodyne2Center.h"
 #include "sc_msgs/scIntegrateImu.h"
 #include "sc_msgs/DataFixerProgress.h"
@@ -43,7 +43,7 @@ private:
     sc_msgs::MonitorMsg monitorMsg_;
     sc_msgs::ProjectInfoMsg projectInfoMsg_;
 
-    double gpsTime_[2];
+    std::vector<std::string> gpsTime_;
     const std::string PPS_STATUS[4] {
         "No PPS", "Synchronizing PPS", "PPS locked", "PPS Error"
     };
@@ -53,7 +53,7 @@ private:
     void clientCB(const sc_msgs::ClientCmd::ConstPtr& pClientMsg);
 
     bool isGpsUpdated_, isVelodyneUpdated_, isRawImuUpdated_, isCameraUpdated_, isDiskInfoUpdated_;
-    void SerialCB(const sc_msgs::Novatel::ConstPtr& pGPSmsg);
+    void SerialCB(const sc_msgs::imu5651::ConstPtr& pImu5651Msg);
     void velodyneCB(const velodyne_msgs::Velodyne2Center::ConstPtr& pVelodyneMsg);
     void cameraImgCB(const std_msgs::Float64::ConstPtr& pCameraImgMsg);
     void projectMonitorCB(const sc_msgs::DiskInfo::ConstPtr& pDiskInfoMsg);

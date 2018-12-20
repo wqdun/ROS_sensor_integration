@@ -1,6 +1,7 @@
 #include "server_daemon.h"
 
 ServerDaemon::ServerDaemon(ros::NodeHandle nh, ros::NodeHandle private_nh) {
+    gpsTime_.resize(2);
     // below for SC control
     subClient_ = nh.subscribe("sc_client_cmd", 10, &ServerDaemon::clientCB, this);
     monitorMsg_.is_record = 0;
@@ -11,7 +12,7 @@ ServerDaemon::ServerDaemon(ros::NodeHandle nh, ros::NodeHandle private_nh) {
 
     // below for composing monitor data
     isGpsUpdated_ = isVelodyneUpdated_ = isRawImuUpdated_ = isCameraUpdated_ = isDiskInfoUpdated_ = false;
-    subSerial_ = nh.subscribe("sc_novatel", 10, &ServerDaemon::SerialCB, this);
+    subSerial_ = nh.subscribe("imu_string", 10, &ServerDaemon::SerialCB, this);
     subVelodyne_ = nh.subscribe("velodyne_pps_status", 0, &ServerDaemon::velodyneCB, this);
     subCameraImg_ = nh.subscribe("cam_speed5555", 0, &ServerDaemon::cameraImgCB, this);
     subProjectMonitor_ = nh.subscribe("sc_disk_info", 0, &ServerDaemon::projectMonitorCB, this);
@@ -40,19 +41,9 @@ void ServerDaemon::run() {
             if(!isGpsUpdated_) {
                 DLOG(INFO) << "RS232 node not running.";
                 monitorMsg_.GPStime = monitorMsg_.lat_lon_hei.x = monitorMsg_.lat_lon_hei.y = monitorMsg_.lat_lon_hei.z = monitorMsg_.pitch_roll_heading.x = monitorMsg_.pitch_roll_heading.y = monitorMsg_.pitch_roll_heading.z = monitorMsg_.speed = -2.;
-                monitorMsg_.nsv1_num = monitorMsg_.nsv2_num = -2;
-                monitorMsg_.hdop_novatel = -2;
+                monitorMsg_.hdop = -2;
             }
             isGpsUpdated_ = false;
-        }
-
-        // 0.5Hz
-        if(0 == (freqDivider % 4) ) {
-            if(!isRawImuUpdated_) {
-                DLOG(INFO) << "sc_integrate_imu_recorder node not running.";
-                monitorMsg_.hdop = monitorMsg_.latitude = monitorMsg_.longitude = monitorMsg_.noSV_422 = "sc_integrate_imu_recorder node not running";
-            }
-            isRawImuUpdated_ = false;
         }
 
         // 1Hz
@@ -127,39 +118,43 @@ void ServerDaemon::velodyneCB(const velodyne_msgs::Velodyne2Center::ConstPtr& pV
     monitorMsg_.is_gprmc_valid = pVelodyneMsg->is_gprmc_valid;
 }
 
-void ServerDaemon::SerialCB(const sc_msgs::Novatel::ConstPtr& pNovatelMsg) {
-    // 100Hz
+void ServerDaemon::SerialCB(const sc_msgs::imu5651::ConstPtr& pImu5651Msg) {
     gpsTime_[0] = gpsTime_[1];
-    gpsTime_[1] = pNovatelMsg->GPS_week_sec;
+    gpsTime_[1] = pImu5651Msg->gps_time;
     // do nothing if receive same frame
     if(gpsTime_[0] == gpsTime_[1]) {
-        LOG_EVERY_N(INFO, 10) << "Same frame received, GPStime: " << pNovatelMsg->GPS_week_sec;
+        LOG_EVERY_N(INFO, 10) << "Same frame received, GPStime: " << pImu5651Msg->gps_time;
         return;
     }
     isGpsUpdated_ = true;
 
-    monitorMsg_.GPStime = gpsTime_[1];
-    monitorMsg_.hdop_novatel = pNovatelMsg->hdop;
+    monitorMsg_.GPStime = public_tools::ToolsNoRos::string2double(gpsTime_[1]);
 
     sc_msgs::Point3D p;
     // lat: 1 degree is about 100000 m
-    p.x = pNovatelMsg->latitude;
+    p.x = public_tools::ToolsNoRos::string2double(pImu5651Msg->latitude);
     // lon: 1 degree is about 100000 m
-    p.y = pNovatelMsg->longitude;
-    p.z = pNovatelMsg->height;
+    p.y = public_tools::ToolsNoRos::string2double(pImu5651Msg->longitude);
+    p.z = public_tools::ToolsNoRos::string2double(pImu5651Msg->altitude);
     monitorMsg_.lat_lon_hei = p;
 
-    p.x = pNovatelMsg->pitch;
-    p.y = pNovatelMsg->roll;
-    p.z = pNovatelMsg->azimuth;
+    p.x = public_tools::ToolsNoRos::string2double(pImu5651Msg->pitch);
+    p.y = public_tools::ToolsNoRos::string2double(pImu5651Msg->roll);
+    p.z = public_tools::ToolsNoRos::string2double(pImu5651Msg->heading);
     monitorMsg_.pitch_roll_heading = p;
 
-    const double vEast = pNovatelMsg->east_vel;
-    const double vNorth = pNovatelMsg->north_vel;
-    const double vUp = pNovatelMsg->up_vel;
-    monitorMsg_.speed = sqrt(vEast * vEast + vNorth * vNorth + vUp * vUp) * 3.6;
+    const double vEast = public_tools::ToolsNoRos::string2double(pImu5651Msg->vel_east);
+    const double vNorth = public_tools::ToolsNoRos::string2double(pImu5651Msg->vel_north);
+    const double vUp = public_tools::ToolsNoRos::string2double(pImu5651Msg->vel_up);
+    monitorMsg_.speed = pImu5651Msg->vel_east.empty()? -1: (sqrt(vEast * vEast + vNorth * vNorth + vUp * vUp) * 3.6);
 
-    monitorMsg_.nsv2_num = monitorMsg_.nsv1_num = pNovatelMsg->sv_num;
+    std::stringstream iss(pImu5651Msg->status);
+    int _status = 0;
+    iss >> std::hex >> _status;
+    monitorMsg_.status = _status;
+
+    monitorMsg_.no_sv = public_tools::ToolsNoRos::string2double(pImu5651Msg->no_sv);
+    monitorMsg_.hdop = public_tools::ToolsNoRos::string2double(pImu5651Msg->hdop);
 }
 
 void ServerDaemon::clientCB(const sc_msgs::ClientCmd::ConstPtr& pClientMsg) {

@@ -6,6 +6,9 @@
 namespace public_tools
 {
 double ToolsNoRos::string2double(const std::string& str) {
+    if(str.empty() ) {
+        return -1;
+    }
     std::istringstream iss(str);
     double num;
     iss >> num;
@@ -13,6 +16,9 @@ double ToolsNoRos::string2double(const std::string& str) {
 }
 
 int ToolsNoRos::string2int(const std::string& str) {
+    if(str.empty() ) {
+        return -1;
+    }
     std::istringstream iss(str);
     int num;
     iss >> num;

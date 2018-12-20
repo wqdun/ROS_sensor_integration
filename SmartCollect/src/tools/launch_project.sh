@@ -81,13 +81,13 @@ start_smart_collector_server() {
     local _absolute_record_path=$1
 
     get_sudo_permission
-    make_tty_softlink
+    # make_tty_softlink
 
     get_sudo_permission
     sudo chmod +r /dev/ttyUSB0
     pkill sc_rawimu_rec
     echo "pkill sc_rawimu_rec" >"/tmp/kill_smartc.sh"
-    /opt/smartc/devel/lib/sc_rawimu_recorder/sc_rawimu_recorder_node "/dev/novatel_usb1" "${_absolute_record_path}/IMU/" &
+    /opt/smartc/devel/lib/sc_rawimu_recorder/sc_rawimu_recorder_node "/dev/ttyUSB0" "${_absolute_record_path}/IMU/" &
     sleep 0.2
 
     pkill sc_hik_camer

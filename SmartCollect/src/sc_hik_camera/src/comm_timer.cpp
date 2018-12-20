@@ -125,11 +125,11 @@ void CommTimer::Parse5651GpggaFrame(const std::string &_gpggaFrame) {
     }
 
     // e.g. "279267.900"
-    imu232Msg_.UtcTime = gpggaFrameParsed[1];
-    imu232Msg_.LatitudeGpgga = gpggaFrameParsed[2] + gpggaFrameParsed[3];
-    imu232Msg_.LongitudeGpgga = gpggaFrameParsed[4] + gpggaFrameParsed[5];
-    imu232Msg_.NoSV = gpggaFrameParsed[7];
-    imu232Msg_.Hdop = gpggaFrameParsed[8];
+    imu232Msg_.utc_time = gpggaFrameParsed[1];
+    imu232Msg_.latitude_gpgga = gpggaFrameParsed[2] + gpggaFrameParsed[3];
+    imu232Msg_.longitude_gpgga = gpggaFrameParsed[4] + gpggaFrameParsed[5];
+    imu232Msg_.no_sv = gpggaFrameParsed[7];
+    imu232Msg_.hdop = gpggaFrameParsed[8];
 
     return;
 }
@@ -160,23 +160,23 @@ void CommTimer::Parse5651GpfpdFrame(const std::string &_gpfpdFrame, double __uni
     }
 
     // e.g. "279267.900"
-    imu232Msg_.GPSWeek = gpfpdFrameParsed[1];
-    imu232Msg_.GPSTime = gpfpdFrameParsed[2];
-    imu232Msg_.Heading = gpfpdFrameParsed[3];
-    imu232Msg_.Pitch = gpfpdFrameParsed[4];
-    imu232Msg_.Roll = gpfpdFrameParsed[5];
-    imu232Msg_.Latitude = gpfpdFrameParsed[6];
-    imu232Msg_.Longitude = gpfpdFrameParsed[7];
-    imu232Msg_.Altitude = gpfpdFrameParsed[8];
-    imu232Msg_.Vel_east = gpfpdFrameParsed[9];
-    imu232Msg_.Vel_north = gpfpdFrameParsed[10];
-    imu232Msg_.Vel_up = gpfpdFrameParsed[11];
-    imu232Msg_.Baseline = gpfpdFrameParsed[12];
-    imu232Msg_.NSV1_num = gpfpdFrameParsed[13];
-    imu232Msg_.NSV2_num = gpfpdFrameParsed[14];
-    imu232Msg_.Status = gpfpdFrameParsed[15];
+    imu232Msg_.gps_week = gpfpdFrameParsed[1];
+    imu232Msg_.gps_time = gpfpdFrameParsed[2];
+    imu232Msg_.heading = gpfpdFrameParsed[3];
+    imu232Msg_.pitch = gpfpdFrameParsed[4];
+    imu232Msg_.roll = gpfpdFrameParsed[5];
+    imu232Msg_.latitude = gpfpdFrameParsed[6];
+    imu232Msg_.longitude = gpfpdFrameParsed[7];
+    imu232Msg_.altitude = gpfpdFrameParsed[8];
+    imu232Msg_.vel_east = gpfpdFrameParsed[9];
+    imu232Msg_.vel_north = gpfpdFrameParsed[10];
+    imu232Msg_.vel_up = gpfpdFrameParsed[11];
+    imu232Msg_.baseline = gpfpdFrameParsed[12];
+    imu232Msg_.nsv1_num = gpfpdFrameParsed[13];
+    imu232Msg_.nsv2_num = gpfpdFrameParsed[14];
+    imu232Msg_.status = gpfpdFrameParsed[15];
 
-    const double GpsWeekTime = public_tools::ToolsNoRos::string2double(imu232Msg_.GPSTime);
+    const double GpsWeekTime = public_tools::ToolsNoRos::string2double(imu232Msg_.gps_time);
     unixTimeMinusGpsTime_ = __unixTime - GpsWeekTime;
     return;
 }

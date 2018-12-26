@@ -66,7 +66,7 @@ void SingleCamera::SetAdvertiseTopic() {
     return;
 }
 
-void SingleCamera::PublishImageAndFreq() {
+void SingleCamera::PublishImage() {
     DLOG(INFO) << __FUNCTION__ << " start.";
 
     cv::Mat imageResized;
@@ -75,10 +75,6 @@ void SingleCamera::PublishImageAndFreq() {
     // mat2PubMutex_.unlock();
     sensor_msgs::ImagePtr imgMsg = cv_bridge::CvImage(std_msgs::Header(), "bgr8", imageResized).toImageMsg();
     pubImage_.publish(imgMsg);
-
-    std_msgs::Float64 msgImageFreq;
-    msgImageFreq.data = imageFreq_;
-    pubCamSpeed_.publish(msgImageFreq);
 
     return;
 }
@@ -182,6 +178,7 @@ void __stdcall SingleCamera::ImageCB(unsigned char *pData, MV_FRAME_OUT_INFO_EX 
     pSingleCamera->imageFreq_ = 1 / (deviceTimeStamp - pSingleCamera->lastDeviceTimeStamp_);
     pSingleCamera->lastDeviceTimeStamp_ = deviceTimeStamp;
     LOG_EVERY_N(INFO, 20) << "pSingleCamera->imageFreq_: " << pSingleCamera->imageFreq_;
+    pSingleCamera->PublishCamFps();
 
     const double gpsTimeDaySec = fmod(gpsTime, (3600 * 24));
     const double triggerTimeDaySec = gpsTimeDaySec; // - 0.075;
@@ -196,6 +193,12 @@ void __stdcall SingleCamera::ImageCB(unsigned char *pData, MV_FRAME_OUT_INFO_EX 
     }
 
     LOG_EVERY_N(INFO, 20) << __FUNCTION__ << " end.";
+}
+
+void SingleCamera::PublishCamFps() {
+    std_msgs::Float64 msgImageFreq;
+    msgImageFreq.data = imageFreq_;
+    pubCamSpeed_.publish(msgImageFreq);
 }
 
 std::string SingleCamera::GetCameraIP() {

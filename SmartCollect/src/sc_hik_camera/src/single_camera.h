@@ -26,7 +26,7 @@ public:
     std::string GetCameraIP();
     int GetCameraID();
     void *GetHandle();
-    void PublishImageAndFreq();
+    void PublishImage();
 
 
 private:
@@ -40,6 +40,7 @@ private:
     void ConfigDevices();
     size_t GetCameraIndex();
     void SetAdvertiseTopic();
+    void PublishCamFps();
 
     void *cameraHandle_;
     // e.g., "6666"

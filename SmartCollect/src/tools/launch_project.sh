@@ -90,6 +90,11 @@ start_smart_collector_server() {
     /opt/smartc/devel/lib/sc_rawimu_recorder/sc_rawimu_recorder_node "/dev/ttyUSB0" "${_absolute_record_path}/IMU/" &
     sleep 0.2
 
+    pkill sc_images_time
+    echo "pkill sc_images_time" >"/tmp/kill_smartc.sh"
+    /opt/smartc/devel/lib/sc_images_timestamper/sc_images_timestamper_node "/dev/ttyUSB0" "${_absolute_record_path}/IMU/" &
+    sleep 0.2
+
     pkill sc_hik_camer
     echo "pkill sc_hik_camer" >>"/tmp/kill_smartc.sh"
     /opt/smartc/devel/lib/sc_hik_camera/sc_hik_camera_node "${_absolute_record_path}/" &
@@ -125,13 +130,17 @@ do_fixdata() {
     return 0
 }
 
-
 main() {
     if [ "AA$1" = "AAserver" ]; then
         task_name=$2
-        local absolute_record_path=${absolute_catkin_path}"/record/"${task_name}"/Rawdata/"
-        mkdir -p "${absolute_record_path}"
-        local absolute_glog_path=${absolute_catkin_path}"/record/"${task_name}"/Rawdata/Log"
+        echo "${task_name}" | grep "check" >/dev/null 2>&1
+        if [ $? -eq 0 ]; then
+            local absolute_record_path="/tmp/${task_name}/Rawdata/"
+        else
+            local absolute_record_path="${absolute_catkin_path}/record/${task_name}/Rawdata/"
+        fi
+
+        local absolute_glog_path="${absolute_record_path}/Log"
         mkdir -p "${absolute_glog_path}"
 
         source_ROS_Env

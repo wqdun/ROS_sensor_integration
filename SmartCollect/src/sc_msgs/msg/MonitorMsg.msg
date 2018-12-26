@@ -41,6 +41,8 @@ int8 is_record
 int8 cam_gain
 
 # below for hardware check
+int32 sc_check_camera_num
+
 # -1: unchecked
 # -2: IP not set or cable not connected
 # LIDAR

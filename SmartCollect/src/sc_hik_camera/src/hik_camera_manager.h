@@ -5,8 +5,11 @@
 #include <vector>
 #include <assert.h>
 #include <boost/thread/thread.hpp>
+#include <sys/types.h>
+#include <sys/shm.h>
 #include "include/MvCameraControl.h"
 #include "../../sc_lib_public_tools/src/thread_pool.h"
+#include "../../sc_lib_public_tools/src/shm_data.h"
 #include "save_image_task.h"
 #include "single_camera.h"
 #include "comm_timer.h"
@@ -31,6 +34,7 @@ private:
     boost::shared_ptr<boost::thread> pSerialReaderThread_;
     ros::NodeHandle nh_;
     ros::Subscriber subMonitor_;
+    struct SharedMem *sharedMem_;
 
     void DoClean();
     void PressEnterToExit();

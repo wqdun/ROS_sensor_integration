@@ -9,6 +9,8 @@
 #include <netinet/in.h>
 #include <fcntl.h>
 #include <poll.h>
+#include <sys/types.h>
+#include <sys/shm.h>
 #include "sc_msgs/ClientCmd.h"
 #include "sc_msgs/ServerMsg.h"
 #include "sc_msgs/MonitorMsg.h"
@@ -20,6 +22,7 @@
 #include "sc_msgs/DataFixerProgress.h"
 #include "../../sc_lib_public_tools/src/public_tools.h"
 #include "../../sc_lib_public_tools/src/tools_no_ros.h"
+#include "../../sc_lib_public_tools/src/shm_data.h"
 #include "disk_monitor.h"
 
 class ServerDaemon {
@@ -47,6 +50,7 @@ private:
     const std::string PPS_STATUS[4] {
         "No PPS", "Synchronizing PPS", "PPS locked", "PPS Error"
     };
+    struct SharedMem *sharedMem_;
 
     boost::shared_ptr<DiskMonitor> pDiskMonitor_;
 

@@ -12,7 +12,20 @@ HikCameraManager::HikCameraManager(const std::string &_rawPath):
 
     const std::string rawdataImuPath(_rawPath + "/IMU/");
     pSerialReader_.reset(new CommTimer("/dev/ttyS0", rawdataImuPath) );
-    pSerialReaderThread_ = boost::shared_ptr<boost::thread>(new boost::thread(boost::bind(&CommTimer::Read, pSerialReader_) ) );
+    pSerialReaderThread_ = boost::shared_ptr<boost::thread>(new boost::thread(boost::bind(&CommTimer::Run, pSerialReader_) ) );
+
+    int shmid = shmget((key_t)1234, sizeof(struct SharedMem), 0666|IPC_CREAT);
+    if(shmid < 0) {
+        LOG(ERROR) << "shget failed.";
+        exit(1);
+    }
+    void *shm = shmat(shmid, 0, 0);
+    if(shm == (void *)-1) {
+        LOG(ERROR) << "shmat failed.";
+        exit(1);
+    }
+    LOG(INFO) << "Memory attached at " << shm;
+    sharedMem_ = (struct SharedMem*)shm;
 }
 
 HikCameraManager::~HikCameraManager() {
@@ -35,6 +48,7 @@ void HikCameraManager::Run() {
     assert(MV_OK == err);
     const size_t camNum = deviceList_.nDeviceNum;
     LOG(INFO) << "Find " << camNum << " Devices.";
+    sharedMem_->cameraNum = camNum;
 
     for(size_t i = 0; i < camNum; ++i) {
         boost::shared_ptr<SingleCamera> pSingleCamera(new SingleCamera(this));
@@ -51,7 +65,7 @@ void HikCameraManager::Run() {
         if(0 != camNum) {
             ++i;
             i %= camNum;
-            pSingleCameras_[i]->PublishImageAndFreq();
+            pSingleCameras_[i]->PublishImage();
         }
     }
 }

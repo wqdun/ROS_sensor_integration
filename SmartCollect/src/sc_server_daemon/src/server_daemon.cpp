@@ -22,6 +22,19 @@ ServerDaemon::ServerDaemon(ros::NodeHandle nh, ros::NodeHandle private_nh) {
     gpsTime_[0] = gpsTime_[1] = -1;
 
     pDiskMonitor_.reset(new DiskMonitor() );
+
+    int shmid = shmget((key_t)1234, sizeof(struct SharedMem), 0666|IPC_CREAT);
+    if(shmid < 0) {
+        LOG(ERROR) << "shget failed.";
+        exit(1);
+    }
+    void *shm = shmat(shmid, 0, 0);
+    if(shm == (void *)-1) {
+        LOG(ERROR) << "shmat failed.";
+        exit(1);
+    }
+    LOG(INFO) << "Memory attached at " << shm;
+    sharedMem_ = (struct SharedMem*)shm;
 }
 
 ServerDaemon::~ServerDaemon() {}
@@ -59,7 +72,7 @@ void ServerDaemon::run() {
         if(0 == (freqDivider % 4) ) {
             if(!isCameraUpdated_) {
                 DLOG(INFO) << "camera node not running.";
-                monitorMsg_.camera_fps = -2.;
+                monitorMsg_.camera_fps = 0;
             }
             isCameraUpdated_ = false;
         }
@@ -84,6 +97,8 @@ void ServerDaemon::run() {
         struct timeval now;
         gettimeofday(&now, NULL);
         monitorMsg_.unix_time = now.tv_sec + now.tv_usec / 1000000.;
+
+        monitorMsg_.sc_check_camera_num = sharedMem_->cameraNum;
 
         pub2client_.publish(monitorMsg_);
     }

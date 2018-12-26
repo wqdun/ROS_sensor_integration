@@ -16,13 +16,14 @@ class CommTimer {
 public:
     CommTimer(const std::string &_serialName, const std::string &_imuPath);
     ~CommTimer();
-    int Read();
+    int Run();
     double GetUnixTimeMinusGpsTime();
     void PublishMsg();
 
 
 private:
     void ReadSerial(int _fd);
+    void WriteSerial(int _fd);
     void Parse5651Frame(const std::string &_frame, double _unixTime);
     void Parse5651GpggaFrame(const std::string &_gpggaFrame);
     void WriteRtImuFile(const std::string &_gpfpdFrame);

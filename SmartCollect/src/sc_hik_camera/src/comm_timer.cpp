@@ -15,12 +15,7 @@ CommTimer::~CommTimer() {
     LOG(INFO) << __FUNCTION__ << " start.";
 }
 
-void CommTimer::PublishMsg() {
-    LOG(INFO) << __FUNCTION__ << " start.";
-    pubImu5651_.publish(imu232Msg_);
-}
-
-int CommTimer::Read() {
+int CommTimer::Run() {
     LOG(INFO) << __FUNCTION__ << " start.";
 
     const int fd = open(serialName_.c_str(), O_RDWR | O_NOCTTY);
@@ -31,14 +26,43 @@ int CommTimer::Read() {
 
     if(public_tools::ToolsNoRos::SetSerialOption(fd, 115200, 8, 'N', 1) < 0) {
         LOG(ERROR) << "Failed to setup " << ttyname(fd);
+        close(fd);
         return -1;
     }
 
+    (void)WriteSerial(fd);
     (void)ReadSerial(fd);
 
     close(fd);
     return 0;
 }
+
+void CommTimer::WriteSerial(int _fd) {
+    LOG(INFO) << __FUNCTION__ << " start.";
+    int err = -1;
+    const std::vector<std::string> cmds = {
+        "$cmd,output,com0,null*ff",
+        "$cmd,through,com0,null*ff",
+        "$cmd,output,com0,gpfpd,0.1*ff",
+        "$cmd,through,com0,gpgga,1*ff",
+    };
+    for(const auto &data2Send: cmds) {
+        err = write(_fd, data2Send.c_str(), data2Send.size() );
+        if(err < 0) {
+            LOG(ERROR) << "Failed to send " << data2Send << ", err: " << err;
+            close(_fd);
+            exit(1);
+        }
+        usleep(10000);
+        LOG(INFO) << "Send " << data2Send << " successfully, bytes: " << err;
+    }
+}
+
+void CommTimer::PublishMsg() {
+    DLOG(INFO) << __FUNCTION__ << " start.";
+    pubImu5651_.publish(imu232Msg_);
+}
+
 
 void CommTimer::ReadSerial(int _fd) {
     LOG(INFO) << __FUNCTION__ << " start.";

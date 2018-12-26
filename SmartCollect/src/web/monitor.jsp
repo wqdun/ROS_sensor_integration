@@ -125,7 +125,13 @@
                             <th>相机存储频率：<a href="#" id="fps" class="alert-link">""</a></th>
                             <th>PPS：<a href="#" id="pps" class="alert-link">""</a></th>
                             <th>GPRMC：<a href="#" id="gprmc" class="alert-link">""</a></th>
-                            <th>照片数量：<a href="#" id="piccounts" class="alert-link">""</a><button onclick="addEvent(1001, 'test_message');">test</button></th>
+                            <th>照片数量：<a href="#" id="piccounts" class="alert-link">""</a>
+                                <!-- <button onclick="AddEvent(1001, 'test_message');">test</button> -->
+                            </th>
+                        </tr>
+                        <tr>
+                            <th>IMU status: <a href="#" id="imu_status" class="alert-link">""</a></th>
+                            <th>Camera Number: <a href="#" id="camera_number" class="alert-link">""</a></th>
                         </tr>
 
                         <tr >
@@ -242,7 +248,7 @@
     ros_.on('close', function () {
         console.log('Connection closed.');
         document.getElementById('connect').innerHTML = '<font color=red>连接关闭</font>';
-        addEvent(1001, 'test_message');
+        AddEvent(1001, 'test_message');
     });
 
     // Create a connection to the rosbridge WebSocket server.
@@ -261,6 +267,7 @@
 
     var isAddEventTimeError = false;
     var isAddEventDiskNotEnough = false;
+    var isAddEventCameraNum = false;
     var voiceCounter = -1;
     centerListener.subscribe(function (message) {
         markposition = message.lat_lon_hei.y+","+message.lat_lon_hei.x+","+message.lat_lon_hei.z;
@@ -273,22 +280,22 @@
         if(errMinute > 20) {
             console.log("errMinute: " + errMinute);
             if(!isAddEventTimeError) {
-                addEvent(1001, "GPS time is inconsistent with Unix time, please set Unix time.");
+                AddEvent(1001, "GPS time is inconsistent with Unix time, please set Unix time.");
                 isAddEventTimeError = true;
             }
         }
 
         // text is "sc_integrate_imu_recorder node not running"
-        if (message.hdop_novatel < 0) {
-            var errMsg = 'IMU节点未运行！';
-            document.getElementById('location').innerHTML = "<font color=red >" + errMsg + "</font>";
-            document.getElementById('num').innerHTML = "<font color=red >" + errMsg + "</font>";
-            document.getElementById('hdop').innerHTML = "<font color=red >" + errMsg + "</font>";
+        if (message.hdop < 0) {
+            // var errMsg = 'IMU节点未运行！';
+            document.getElementById('location').innerHTML = "<font color=red >" + message.lat_lon_hei.x.toFixed(8) + ", " + message.lat_lon_hei.y.toFixed(8); + "</font>";
+            document.getElementById('num').innerHTML = "<font color=red>\"\"</font>";
+            document.getElementById('hdop').innerHTML = "<font color=red>\"\"</font>";
         }
         else {
             document.getElementById('location').innerHTML = message.lat_lon_hei.x.toFixed(8) + ", " + message.lat_lon_hei.y.toFixed(8);
-            document.getElementById('num').innerHTML = message.nsv1_num;
-            document.getElementById('hdop').innerHTML = message.hdop_novatel.toFixed(2);
+            document.getElementById('num').innerHTML = message.no_sv;
+            document.getElementById('hdop').innerHTML = message.hdop.toFixed(2);
         }
         // -2 means not running
         if (message.speed <= -1.6) {
@@ -299,6 +306,15 @@
         else {
             document.getElementById('heading').innerHTML = message.pitch_roll_heading.z.toFixed(2);
             document.getElementById('speed').innerHTML = message.speed.toFixed(2) + "公里/小时";
+        }
+
+        document.getElementById('imu_status').innerHTML = message.status;
+        document.getElementById('camera_number').innerHTML = message.sc_check_camera_num;
+        if(3 != message.sc_check_camera_num) {
+            if(!isAddEventCameraNum) {
+                AddEvent(1002, "Camera number is not 3.");
+                isAddEventCameraNum = true;
+            }
         }
 
         if (message.camera_fps <= -1.6) {
@@ -330,7 +346,7 @@
         var usedPercentage = parseInt(message.disk_usage.split(",")[1]);
         if(usedPercentage > 80) {
             if(!isAddEventDiskNotEnough) {
-                addEvent(1002, "Disk free space is not enough.");
+                AddEvent(1002, "Disk free space is not enough.");
                 isAddEventDiskNotEnough = true;
             }
         }
@@ -355,7 +371,7 @@
             console.log("cam_gain on server is: " + $("#ex1").slider("getValue"));
         }
 
-        if(isAddEventTimeError || isAddEventDiskNotEnough) {
+        if(isAddEventTimeError || isAddEventDiskNotEnough || isAddEventCameraNum) {
             ++voiceCounter;
             voiceCounter %= 5;
             if(0 == voiceCounter) {
@@ -375,7 +391,7 @@
 
 <audio id="bgMusic" src="ring.mp3" autoplay />
 <script>
-    function addEvent(warningId, message) {
+    function AddEvent(warningId, message) {
         var warningMsg = '<div class="alert alert-error"><a href="#" class="close" data-dismiss="alert">&times;</a>【<b style="color:red">'
                         + warningId + '</b>】' + message + '</div>';
         $('#warning').append(warningMsg);

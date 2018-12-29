@@ -42,6 +42,7 @@ int8 cam_gain
 
 # below for hardware check
 int32 sc_check_camera_num
+int32 sc_check_imu_serial_port
 
 # -1: unchecked
 # -2: IP not set or cable not connected

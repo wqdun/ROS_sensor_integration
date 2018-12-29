@@ -3,7 +3,7 @@
 
 struct SharedMem {
     int cameraNum;
-
+    int imuSerialPortStatus;
     // char text[TEXT_SZ];
 };
 

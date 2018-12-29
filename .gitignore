@@ -14,6 +14,7 @@
 *.jpeg
 *.png
 *.7z
+*.zip
 
 3rd/
 log/

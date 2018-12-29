@@ -91,8 +91,8 @@ start_smart_collector_server() {
     sleep 0.2
 
     pkill sc_images_time
-    echo "pkill sc_images_time" >"/tmp/kill_smartc.sh"
-    /opt/smartc/devel/lib/sc_images_timestamper/sc_images_timestamper_node "/dev/ttyUSB0" "${_absolute_record_path}/IMU/" &
+    echo "pkill sc_images_time" >>"/tmp/kill_smartc.sh"
+    /opt/smartc/devel/lib/sc_images_timestamper/sc_images_timestamper_node "/dev/ttyUSB1" "${_absolute_record_path}/IMU/" &
     sleep 0.2
 
     pkill sc_hik_camer
@@ -133,7 +133,7 @@ do_fixdata() {
 main() {
     if [ "AA$1" = "AAserver" ]; then
         task_name=$2
-        echo "${task_name}" | grep "check" >/dev/null 2>&1
+        echo "${task_name}" | grep "9999" >/dev/null 2>&1
         if [ $? -eq 0 ]; then
             local absolute_record_path="/tmp/${task_name}/Rawdata/"
         else

@@ -63,7 +63,7 @@ void ServerDaemon::run() {
         if(0 == (freqDivider % 2) ) {
             if(!isVelodyneUpdated_) {
                 DLOG(INFO) << "velodyne node not running.";
-                monitorMsg_.pps_status = monitorMsg_.is_gprmc_valid = "velodyne node not running";
+                monitorMsg_.pps_status = monitorMsg_.is_gprmc_valid = "";
             }
             isVelodyneUpdated_ = false;
         }
@@ -99,6 +99,7 @@ void ServerDaemon::run() {
         monitorMsg_.unix_time = now.tv_sec + now.tv_usec / 1000000.;
 
         monitorMsg_.sc_check_camera_num = sharedMem_->cameraNum;
+        monitorMsg_.sc_check_imu_serial_port = sharedMem_->imuSerialPortStatus;
 
         pub2client_.publish(monitorMsg_);
     }
@@ -168,7 +169,7 @@ void ServerDaemon::SerialCB(const sc_msgs::imu5651::ConstPtr& pImu5651Msg) {
     iss >> std::hex >> _status;
     monitorMsg_.status = _status;
 
-    monitorMsg_.no_sv = public_tools::ToolsNoRos::string2double(pImu5651Msg->no_sv);
+    monitorMsg_.no_sv = public_tools::ToolsNoRos::string2int(pImu5651Msg->no_sv);
     monitorMsg_.hdop = public_tools::ToolsNoRos::string2double(pImu5651Msg->hdop);
 }
 

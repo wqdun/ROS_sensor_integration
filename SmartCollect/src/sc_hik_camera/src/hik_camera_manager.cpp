@@ -8,9 +8,9 @@ HikCameraManager::HikCameraManager(const std::string &_rawPath):
     pSingleCameras_.clear();
     memset(&deviceList_, 0, sizeof(MV_CC_DEVICE_INFO_LIST));
     isSaveImg_ = false;
-    subMonitor_ = nh_.subscribe("sc_monitor", 0, &HikCameraManager::MonitorCB, this);
 
     const std::string rawdataImuPath(_rawPath + "/IMU/");
+
     pSerialReader_.reset(new CommTimer("/dev/ttyS0", rawdataImuPath) );
     pSerialReaderThread_ = boost::shared_ptr<boost::thread>(new boost::thread(boost::bind(&CommTimer::Run, pSerialReader_) ) );
 
@@ -40,8 +40,13 @@ void HikCameraManager::MonitorCB(const sc_msgs::MonitorMsg::ConstPtr& pMonitorMs
     isSaveImg_ = (bool)pMonitorMsg->is_record;
 }
 
+void HikCameraManager::RegisterCB() {
+    subMonitor_ = nh_.subscribe("sc_monitor", 10, &HikCameraManager::MonitorCB, this);
+}
+
 void HikCameraManager::Run() {
     LOG(INFO) << __FUNCTION__ << " start.";
+    (void)RegisterCB();
     int err = MV_OK;
     threadPool_.start();
     err = MV_CC_EnumDevices(MV_GIGE_DEVICE, &deviceList_);
@@ -50,6 +55,13 @@ void HikCameraManager::Run() {
     LOG(INFO) << "Find " << camNum << " Devices.";
     sharedMem_->cameraNum = camNum;
 
+    if(public_tools::PublicTools::isFileExist("/dev/ttyS0")) {
+        sharedMem_->imuSerialPortStatus = 0;
+    }
+    else {
+        sharedMem_->imuSerialPortStatus = -1;
+    }
+
     for(size_t i = 0; i < camNum; ++i) {
         boost::shared_ptr<SingleCamera> pSingleCamera(new SingleCamera(this));
         pSingleCamera->SetCamera(deviceList_, i);
@@ -57,7 +69,7 @@ void HikCameraManager::Run() {
     }
 
     int i = -1;
-    ros::Rate rate(4);
+    ros::Rate rate(2);
     while(ros::ok()) {
         ros::spinOnce();
         rate.sleep();

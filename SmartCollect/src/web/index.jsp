@@ -29,7 +29,7 @@
     }
 
     function smartcCheck_onclick() {
-        var scCheckProjectName = "1001-1-sccheck0001-000001";
+        var scCheckProjectName = "9999-1-T0001-000001";
         console.log('scCheckProjectName: ' + scCheckProjectName);
         $("#projname").html(scCheckProjectName);
     }
@@ -49,7 +49,6 @@
 </head>
 
 <body>
-
   <div class="modal fade" id="myModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
     <div class="modal-dialog">
       <div class="modal-content">
@@ -107,25 +106,25 @@
     <div class="subnavbar-inner">
       <div class="container">
         <ul class="mainnav">
-          <li class="active">
-            <a href="index.jsp">
-              <i class="icon-th-large"></i>
-              <span>系统设置</span>
-            </a>
-          </li>
-          <li>
-            <a href="monitor.jsp">
-              <i class="icon-facetime-video"></i>
-              <span>运行监控</span>
-            </a>
-          </li>
-          <li >
-            <a href="camera.jsp">
-              <i class="icon-facetime-video"></i>
-              <span>全景相机</span>
-            </a>
-          </li>
-        </ul>
+                <li class="active">
+                    <a href="index.jsp">
+                        <i class="icon-edit"></i>
+                        <span>Setting</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="monitor.jsp">
+                        <i class="icon-bar-chart"></i>
+                        <span>Monitor</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="camera.jsp">
+                        <i class="icon-facetime-video"></i>
+                        <span>Image</span>
+                    </a>
+                </li>
+            </ul>
       </div>
     </div>
   </div>
@@ -148,8 +147,8 @@
                       <label class="control-label">工程信息</label>
                       <div class="controls">
                         <select class="form-control" id='city'>
-                          <option>Beijing-1001</option>
-                          <option selected>Nagoya-1002</option>
+                          <option>China-1001</option>
+                          <option selected>Japan-1002</option>
                           <option>Test-9999</option>
                         </select>
                         <select class="form-control" id='dayORnight'>

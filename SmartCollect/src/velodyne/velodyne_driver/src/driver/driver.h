@@ -43,8 +43,8 @@ public:
 private:
 
   ///Callback for dynamic reconfigure
-  void callback(velodyne_driver::VelodyneNodeConfig &config,
-              uint32_t level);
+  void callback(velodyne_driver::VelodyneNodeConfig &config, uint32_t level);
+  double CalcLidarRpm(const velodyne_msgs::VelodynePacket &startPkt, const velodyne_msgs::VelodynePacket &endPkt);
 
   ///Pointer to dynamic reconfigure service srv_
   boost::shared_ptr<dynamic_reconfigure::Server<velodyne_driver::

@@ -78,7 +78,8 @@ VelodyneDriver::VelodyneDriver(ros::NodeHandle node,
     }
   std::string deviceName(std::string("Velodyne ") + model_full_name);
 
-  private_nh.param("rpm", config_.rpm, 600.0);
+  // private_nh.param("rpm", config_.rpm, 600.0);
+  config_.rpm = 1200;
   ROS_INFO_STREAM(deviceName << " rotating at " << config_.rpm << " RPM");
   double frequency = (config_.rpm / 60.0);     // expected Hz rate
 
@@ -207,6 +208,8 @@ bool VelodyneDriver::poll(int64_t isSaveLidar)
   velodyne_msgs::Velodyne2Center pps_status;
   // only last position pkt be published, ignore the rest
   (void)parsePositionPkt(positionPkt, pps_status);
+
+  pps_status.velodyne_rpm = CalcLidarRpm(scan->packets.front(), scan->packets[(config_.npackets) / 4]);
   pub2Center_.publish(pps_status);
 
   // notify diagnostics that a message has been published, updating
@@ -231,9 +234,7 @@ bool VelodyneDriver::poll(int64_t isSaveLidar)
     if(!isSaveLidar) {
       return true;
     }
-    else {
-      // last save and now save
-    }
+    // else: last save and now save; do nothing
   }
 
   // write LIDAR file
@@ -268,7 +269,26 @@ bool VelodyneDriver::poll(int64_t isSaveLidar)
   }
   fclose(pOutFile);
 
+
   return true;
+}
+
+double VelodyneDriver::CalcLidarRpm(const velodyne_msgs::VelodynePacket &startPkt, const velodyne_msgs::VelodynePacket &midPkt) {
+  DLOG(INFO) << __FUNCTION__ << " start.";
+
+  const uint16_t startAzimuthTimes100 = (startPkt.data[3] << 8) + startPkt.data[2];
+  const uint16_t endAzimuthTimes100 = (midPkt.data[3] << 8) + midPkt.data[2];
+
+  const double startTime = startPkt.stamp.toSec();
+  const double endTime = midPkt.stamp.toSec();
+
+  DLOG(INFO) << "endTime - startTime: " << endTime - startTime;
+  DLOG(INFO) << "endAzimuthTimes100 - startAzimuthTimes100: " << endAzimuthTimes100 - startAzimuthTimes100;
+  const double rounds = (endAzimuthTimes100 - startAzimuthTimes100 + 36000) % 36000 / 36000.;
+  const double rpm = 60. * rounds / (endTime - startTime);
+
+  DLOG(INFO) << "rpm: " << rpm;
+  return rpm;
 }
 
 void VelodyneDriver::callback(velodyne_driver::VelodyneNodeConfig &config,

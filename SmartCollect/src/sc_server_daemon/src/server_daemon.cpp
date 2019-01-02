@@ -132,6 +132,7 @@ void ServerDaemon::velodyneCB(const velodyne_msgs::Velodyne2Center::ConstPtr& pV
     monitorMsg_.pps_status = PPS_STATUS[pVelodyneMsg->pps_status_index];
     // A validity - A-ok, V-invalid, refer VLP-16 manual
     monitorMsg_.is_gprmc_valid = pVelodyneMsg->is_gprmc_valid;
+    monitorMsg_.velodyne_rpm = pVelodyneMsg->velodyne_rpm;
 }
 
 void ServerDaemon::SerialCB(const sc_msgs::imu5651::ConstPtr& pImu5651Msg) {

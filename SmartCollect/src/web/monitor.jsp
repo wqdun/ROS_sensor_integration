@@ -72,6 +72,7 @@
                             <th>Camera Number: <a href="#" id="camera_number" class="alert-link">""</a></th>
                             <th>GPS time: <a href="#" id="gps_time" class="alert-link">""</a></th>
                             <th>Unix time: <a href="#" id="unix_time" class="alert-link">""</a></th>
+                            <th>LIDAR rpm: <a href="#" id="velodyne_rpm" class="alert-link">""</a></th>
                             <!-- <th><input type=button onclick="addVoice();" value="tttt"></th> -->
                         </tr>
 
@@ -242,6 +243,7 @@
         if(0 == message.pps_status.length) {
             document.getElementById('pps').innerHTML = "<font color=red>\"\"</font>";
             document.getElementById('gprmc').innerHTML = "<font color=red>\"\"</font>";
+            document.getElementById('velodyne_rpm').innerHTML = "<font color=red>\"\"</font>";
             isAddVoice = true;
             if(!isAddEventVelodyneFault) {
                 AddEvent(1006, "LIDAR not running.");
@@ -251,6 +253,7 @@
         else {
             document.getElementById('pps').innerHTML = message.pps_status;
             document.getElementById('gprmc').innerHTML = message.is_gprmc_valid;
+            document.getElementById('velodyne_rpm').innerHTML = message.velodyne_rpm.toFixed(2);
             if('A' != message.is_gprmc_valid) {
                 isAddVoice = true;
                 if(!isAddEventGprmcFault) {

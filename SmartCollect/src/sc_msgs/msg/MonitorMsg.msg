@@ -14,6 +14,7 @@ float64 hdop
 # below from velodyne
 string pps_status
 string is_gprmc_valid
+float64 velodyne_rpm
 
 # below from camera
 float64 camera_fps

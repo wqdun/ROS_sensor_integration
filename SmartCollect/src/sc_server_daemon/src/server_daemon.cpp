@@ -49,8 +49,8 @@ void ServerDaemon::run() {
         ros::spinOnce();
         rate.sleep();
 
-        // 1Hz
-        if(0 == (freqDivider % 2) ) {
+        // 0.5Hz
+        if(0 == (freqDivider % 4) ) {
             if(!isGpsUpdated_) {
                 DLOG(INFO) << "RS232 node not running.";
                 monitorMsg_.GPStime = monitorMsg_.lat_lon_hei.x = monitorMsg_.lat_lon_hei.y = monitorMsg_.lat_lon_hei.z = monitorMsg_.pitch_roll_heading.x = monitorMsg_.pitch_roll_heading.y = monitorMsg_.pitch_roll_heading.z = monitorMsg_.speed = -2.;

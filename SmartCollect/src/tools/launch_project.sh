@@ -86,17 +86,17 @@ start_smart_collector_server() {
     get_sudo_permission
     sudo chmod +r /dev/ttyUSB0
     pkill sc_rawimu_rec
-    echo "pkill sc_rawimu_rec" >"/tmp/kill_smartc.sh"
+    echo "pkill -INT sc_rawimu_rec" >"/tmp/kill_smartc.sh"
     /opt/smartc/devel/lib/sc_rawimu_recorder/sc_rawimu_recorder_node "/dev/ttyUSB0" "${_absolute_record_path}/IMU/" &
     sleep 0.2
 
     pkill sc_images_time
-    echo "pkill sc_images_time" >>"/tmp/kill_smartc.sh"
+    echo "pkill -INT sc_images_time" >>"/tmp/kill_smartc.sh"
     /opt/smartc/devel/lib/sc_images_timestamper/sc_images_timestamper_node "/dev/ttyUSB1" "${_absolute_record_path}/IMU/" &
     sleep 0.2
 
     pkill sc_hik_camer
-    echo "pkill sc_hik_camer" >>"/tmp/kill_smartc.sh"
+    echo "pkill -INT sc_hik_camer" >>"/tmp/kill_smartc.sh"
     /opt/smartc/devel/lib/sc_hik_camera/sc_hik_camera_node "${_absolute_record_path}/" &
 
     killall nodelet
@@ -105,12 +105,12 @@ start_smart_collector_server() {
     sleep 0.2
 
     pkill sc_project_mon
-    echo "pkill sc_project_mon" >>"/tmp/kill_smartc.sh"
+    echo "pkill -INT sc_project_mon" >>"/tmp/kill_smartc.sh"
     /opt/smartc/devel/lib/sc_project_monitor/sc_project_monitor_node "${_absolute_record_path}/" &
     sleep 0.2
 
     pkill sc_map_node
-    echo "pkill sc_map_node" >>"/tmp/kill_smartc.sh"
+    echo "pkill -INT sc_map_node" >>"/tmp/kill_smartc.sh"
     /opt/smartc/devel/lib/sc_map/sc_map_node "${_absolute_record_path}/" &
     sleep 0.2
 }

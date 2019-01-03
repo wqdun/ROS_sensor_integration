@@ -69,9 +69,8 @@
                         </tr>
                         <tr>
                             <th>IMU status: <a href="#" id="imu_status" class="alert-link">""</a></th>
-                            <th>Camera Number: <a href="#" id="camera_number" class="alert-link">""</a></th>
                             <th>GPS time: <a href="#" id="gps_time" class="alert-link">""</a></th>
-                            <th>Unix time: <a href="#" id="unix_time" class="alert-link">""</a></th>
+                            <th>SC time: <a href="#" id="unix_time" class="alert-link">""</a></th>
                             <th>LIDAR rpm: <a href="#" id="velodyne_rpm" class="alert-link">""</a></th>
                             <!-- <th><input type=button onclick="addVoice();" value="tttt"></th> -->
                         </tr>
@@ -151,7 +150,6 @@
     ros_.on('close', function () {
         console.log('Connection closed.');
         document.getElementById('connect').innerHTML = '<font color=red>Closed</font>';
-        AddEvent(1009, "WebSocket disconnected.");
     });
 
     // Create a connection to the rosbridge WebSocket server.
@@ -171,11 +169,8 @@
     var isAddEventTimeError = false;
     var isAddEventDiskNotEnough = false;
     var isAddEventCameraNumFault = false;
-    var isAddEventSerialPortOK = false;
-    var isAddEventGprmcFault = false;
-    var isAddEventGetImuError = false;
-    var isAddEventVelodyneFault = false;
     var isAddEventNoProject = false;
+    var isAddEventImuGone = false;
 
     var isAddVoice = false;
     var voiceCounter = -1;
@@ -188,14 +183,7 @@
 
         // below is IMU related
         if(message.GPStime < 0) {
-            isAddVoice = true;
-            if(!isAddEventGetImuError) {
-                AddEvent(1005, "IMU not ready.");
-                isAddEventGetImuError = true;
-            }
-        }
-
-        if(isAddEventGetImuError) {
+            console.log("I got no IMU frame.");
             document.getElementById('location').innerHTML = "<font color=red >\"\"</font>";
             document.getElementById('gps_time').innerHTML = "<font color=red>\"\"</font>";
             document.getElementById('heading').innerHTML = "<font color=red >\"\"</font>";
@@ -205,62 +193,83 @@
             document.getElementById('hdop').innerHTML = "<font color=red>\"\"</font>";
         }
         else {
-            document.getElementById('location').innerHTML = message.lat_lon_hei.x.toFixed(8) + ", " + message.lat_lon_hei.y.toFixed(8);
+            document.getElementById('location').innerHTML = "<font color=green>" + message.lat_lon_hei.x.toFixed(8) + ", " + message.lat_lon_hei.y.toFixed(8) + "</font>";
             var gpsDateObj = new Date(message.GPStime * 1000);
             var gps_hour = gpsDateObj.getUTCHours();
             var gps_minute = gpsDateObj.getUTCMinutes();
             var gps_second = gpsDateObj.getUTCSeconds();
             document.getElementById('gps_time').innerHTML = gps_hour + ":" + gps_minute + ":" + gps_second;
-            document.getElementById('heading').innerHTML = message.pitch_roll_heading.z.toFixed(2);
-            document.getElementById('speed').innerHTML = message.speed.toFixed(2) + "km/h";
-            document.getElementById('imu_status').innerHTML = message.status.toString(16);
+            document.getElementById('heading').innerHTML = "<font color=green>" + message.pitch_roll_heading.z.toFixed(2) + "</font>";
+            if(message.speed > 120) {
+                document.getElementById('speed').innerHTML = "<font color=red>" + message.speed.toFixed(2) + "km/h</font>";
+            }
+            else {
+                document.getElementById('speed').innerHTML = "<font color=green>" + message.speed.toFixed(2) + "km/h</font>";
+            }
+            var imuStatus = message.status & 0xF;
+            if(8 == imuStatus) {
+                document.getElementById('imu_status').innerHTML = "<font color=yellow>" + message.status.toString(16) + "</font>";
+            }
+            else if(3 == imuStatus) {
+                document.getElementById('imu_status').innerHTML = "<font color=green>" + message.status.toString(16) + "</font>";
+            }
+            else {
+                document.getElementById('imu_status').innerHTML = "<font color=red>" + message.status.toString(16) + "</font>";
+            }
 
             var errSecond = Math.abs(message.unix_time - message.GPStime);
             errSecond = errSecond % (24 * 3600);
-            errSecond = Math.abs(errSecond - 86400);
-            if(errSecond > 1800) {
+            if(errSecond > 1000 && errSecond < 85400) {
                 isAddVoice = true;
                 if(!isAddEventTimeError) {
-                    AddEvent(1001, "GPS time is inconsistent with Unix time, check Unix time and IMU.");
+                    AddEvent(1003, "SC time error, please set SC time.");
                     isAddEventTimeError = true;
                 }
             }
 
             if(message.no_sv < 0) {
+                console.log("GPGGA contains null satellite number.");
                 document.getElementById('num').innerHTML = "<font color=red>\"\"</font>";
                 document.getElementById('hdop').innerHTML = "<font color=red>\"\"</font>";
             }
             else {
-                document.getElementById('num').innerHTML = message.no_sv;
-                document.getElementById('hdop').innerHTML = message.hdop.toFixed(2);
+                if(0 == message.no_sv) {
+                    document.getElementById('num').innerHTML = "<font color=red>0</font>";
+                }
+                else {
+                    document.getElementById('num').innerHTML = "<font color=green>" + message.no_sv + "</font>";
+                }
+                document.getElementById('hdop').innerHTML = "<font color=green>" + message.hdop.toFixed(2) + "</font>";
             }
         }
 
         // below is camera related
-        document.getElementById('fps').innerHTML = message.camera_fps.toFixed(2);
+        if(message.camera_fps < 0.01) {
+            document.getElementById('fps').innerHTML = "<font color=red>" + message.camera_fps.toFixed(2) + "</font>";
+        }
+        else {
+            document.getElementById('fps').innerHTML = "<font color=green>" + message.camera_fps.toFixed(2) + "</font>";
+        }
 
         // below is velodyne related
         if(0 == message.pps_status.length) {
-            document.getElementById('pps').innerHTML = "<font color=red>\"\"</font>";
-            document.getElementById('gprmc').innerHTML = "<font color=red>\"\"</font>";
+            console.log("I got no pps status.");
+            document.getElementById('pps').innerHTML = "<font color=red>Absent</font>";
+            document.getElementById('gprmc').innerHTML = "<font color=red>Absent</font>";
             document.getElementById('velodyne_rpm').innerHTML = "<font color=red>\"\"</font>";
-            isAddVoice = true;
-            if(!isAddEventVelodyneFault) {
-                AddEvent(1006, "LIDAR not running.");
-                isAddEventVelodyneFault = true;
-            }
         }
         else {
-            document.getElementById('pps').innerHTML = message.pps_status;
-            document.getElementById('gprmc').innerHTML = message.is_gprmc_valid;
-            document.getElementById('velodyne_rpm').innerHTML = message.velodyne_rpm.toFixed(2);
-            if('A' != message.is_gprmc_valid) {
-                isAddVoice = true;
-                if(!isAddEventGprmcFault) {
-                    AddEvent(1004, "GPRMC not ready.");
-                    isAddEventGprmcFault = true;
-                }
+            if() {//TODO;
+
             }
+            document.getElementById('pps').innerHTML = "<font color=green>" + message.pps_status + "</font>";
+            if('A' != message.is_gprmc_valid) {
+                document.getElementById('gprmc').innerHTML = "<font color=red>" + message.is_gprmc_valid + "</font>";
+            }
+            else {
+                document.getElementById('gprmc').innerHTML = "<font color=green>" + message.is_gprmc_valid + "</font>";
+            }
+            document.getElementById('velodyne_rpm').innerHTML = message.velodyne_rpm.toFixed(2);
         }
 
         // below is project monitor related
@@ -268,7 +277,7 @@
             $("#piccounts")[0].innerHTML = $("#lidarpkg")[0].innerHTML = "<font color=red>\"\"</font>";
             isAddVoice = true;
             if(!isAddEventNoProject) {
-                AddEvent(1007, "No active project.");
+                AddEvent(1001, "No active project.");
                 isAddEventNoProject = true;
             }
         }
@@ -278,28 +287,19 @@
         }
 
         // below is sc check
-        document.getElementById('camera_number').innerHTML = message.sc_check_camera_num;
         if(3 != message.sc_check_camera_num) {
             isAddVoice = true;
             if(!isAddEventCameraNumFault) {
-                AddEvent(1002, "Camera number is not 3.");
+                AddEvent(1005, "Camera number is " + message.sc_check_camera_num + ", should be 3.");
                 isAddEventCameraNumFault = true;
             }
         }
 
-        if(message.speed > 200) {
+        if(message.speed > 120) {
             isAddVoice = true;
-            if(!isAddEventCameraNumFault) {
-                AddEvent(1002, "Camera number is not 3.");
-                isAddEventCameraNumFault = true;
-            }
-        }
-
-        if(message.sc_check_imu_serial_port < 0) {
-            isAddVoice = true;
-            if(!isAddEventSerialPortOK) {
-                AddEvent(1003, "Serial port fault.");
-                isAddEventSerialPortOK = true;
+            if(!isAddEventImuGone) {
+                AddEvent(1002, "Speed > 120km/h, please restart IMU.");
+                isAddEventImuGone = true;
             }
         }
 
@@ -308,7 +308,7 @@
         if(usedPercentage > 80) {
             isAddVoice = true;
             if(!isAddEventDiskNotEnough) {
-                AddEvent(1002, "Disk free space is not enough.");
+                AddEvent(1004, "Disk free space is not enough: " + message.disk_usage);
                 isAddEventDiskNotEnough = true;
             }
         }

@@ -1,6 +1,7 @@
 #ifndef __BASE_MAP_H__
 #define __BASE_MAP_H__
 
+#include <glog/logging.h>
 #include <ros/ros.h>
 #include "sc_msgs/Lines2D.h"
 #include "sc_msgs/MonitorMsg.h"

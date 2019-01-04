@@ -5,6 +5,7 @@
 #include <unistd.h>
 #include <string>
 #include <math.h>
+#include <sys/stat.h>
 
 namespace public_tools
 {
@@ -15,6 +16,8 @@ public:
     static double string2double(const std::string& str);
     static int string2int(const std::string& str);
     static void GeoToGauss(double longitude, double latitude, short beltWidth, int beltNumber, double &y, double &x);
+    static bool IsFileExist(const std::string& fileName);
+    static long GetFileSizeInByte(const std::string& filename);
 
     static bool isOK_;
 

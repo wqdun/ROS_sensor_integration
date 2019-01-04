@@ -167,5 +167,19 @@ int ToolsNoRos::SetSerialOption(int fd, int nSpeed, int nBits, char nEvent, int 
     return 0;
 }
 
+bool ToolsNoRos::IsFileExist(const std::string& fileName) {
+    return (access(fileName.c_str(), 0) >= 0);
+}
+
+long ToolsNoRos::GetFileSizeInByte(const std::string& filename) {
+    if(!IsFileExist(filename) ) {
+        return 0;
+    }
+
+    struct stat statbuf;
+    stat(filename.c_str(), &statbuf);
+    return statbuf.st_size;
+}
+
 }
 // namespace public_tools

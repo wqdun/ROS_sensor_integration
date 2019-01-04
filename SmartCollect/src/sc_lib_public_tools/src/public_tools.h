@@ -44,6 +44,7 @@ public:
     static void generateFileName(const std::string &path, std::string &fileName, bool isAppendTime = true);
     static void getFilesInDir(const std::string &baseDir, const std::string &keyWord, std::vector<std::string> &files);
     static void getFilesWithExtensionInDir(const std::string &baseDir, const std::string &extension, std::vector<std::string> &files);
+    static void GetFilesCountInDir(const std::string &baseDir, const std::string &keyWord, int &numOfFileWithKeyWord);
     static std::string safeReadlink(const std::string& filename);
     static bool isFileExist(const std::string& fileName);
     static int PopenWithoutReturn(const std::string &cmd);

@@ -180,6 +180,47 @@ void PublicTools::getFilesWithExtensionInDir(const std::string &baseDir, const s
     return;
 }
 
+void PublicTools::GetFilesCountInDir(const std::string &baseDir, const std::string &keyWord, int &numOfFileWithKeyWord) {
+    DIR *dir;
+    dirent *ptr;
+
+    // if dir == NULL
+    if( !(dir = opendir(baseDir.c_str())) ) {
+        LOG(WARNING) << "Failed to open " << baseDir;
+        return;
+    }
+
+    // while ptr != NULL
+    while(ptr = readdir(dir)) {
+        // ignore . and ..
+        if( !(strcmp(ptr->d_name, ".")) ||
+            !(strcmp(ptr->d_name, "..")) ) {
+            continue;
+        }
+
+        // regular file
+        if(8 == ptr->d_type) {
+            const std::string fileName(ptr->d_name);
+            if(std::string::npos != fileName.find(keyWord) ) {
+                ++numOfFileWithKeyWord;
+            }
+            // else do nothing
+        }
+        // directory
+        else
+        if(4 == ptr->d_type) {
+            const std::string subDir(baseDir + "/" + ptr->d_name);
+            GetFilesCountInDir(subDir, keyWord, numOfFileWithKeyWord);
+        }
+        // else {
+        //     // ignore links(10) & others
+        // }
+    }
+
+    closedir(dir);
+    return;
+}
+
 int PublicTools::PopenWithReturn(const std::string &cmd, std::vector<std::string> &cmdReturn) {
     const size_t maxByte = 1000;
     char result[maxByte];

@@ -25,10 +25,10 @@ void ProjectMonitor::run() {
         rate.sleep();
         ros::spinOnce();
 
-        std::vector<std::string> files_jpg;
-        (void)public_tools::PublicTools::getFilesInDir(rawdataPath_, "jpg", files_jpg);
-        DLOG(INFO) << "The number of jpg is " << files_jpg.size();
-        diskInfo.img_num = files_jpg.size();
+        int jpgFilesCount = 0;
+        (void)public_tools::PublicTools::GetFilesCountInDir(rawdataPath_, "jpg", jpgFilesCount);
+        DLOG(INFO) << "The number of jpg is " << jpgFilesCount;
+        diskInfo.img_num = jpgFilesCount;
         diskInfo.img_save_fps = (diskInfo.img_num - lastImgNum_) * _rate;
         lastImgNum_ = diskInfo.img_num;
 
@@ -37,7 +37,24 @@ void ProjectMonitor::run() {
         (void)public_tools::PublicTools::PopenWithReturn(getLidarSizeCmd, lidarSize);
         diskInfo.lidar_size = (1 == lidarSize.size())? (public_tools::PublicTools::string2num(lidarSize[0], int32_t(-2))): -1;
 
+        diskInfo.raw_ins_size = GetRawInsSizeInByte();
+
         pub2web_.publish(diskInfo);
     }
 }
+
+long ProjectMonitor::GetRawInsSizeInByte() {
+    LOG(INFO) << __FUNCTION__ << " start.";
+
+    std::vector<std::string> files_dat;
+    (void)public_tools::PublicTools::getFilesInDir(rawdataPath_ + "/IMU/", "dat", files_dat);
+    if(files_dat.empty() ) {
+        LOG(WARNING) << "Failed to find dat file in " << rawdataPath_;
+        return 0;
+    }
+
+    return public_tools::ToolsNoRos::GetFileSizeInByte(files_dat[0]);
+}
+
+
 

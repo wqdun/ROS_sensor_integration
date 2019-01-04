@@ -36,6 +36,7 @@ int32 img_num
 # unit: MB
 int32 lidar_size
 float32 img_save_fps
+uint64 raw_ins_size
 
 # below node control parameters, received from web
 int8 is_record

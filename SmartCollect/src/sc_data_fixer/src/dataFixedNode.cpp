@@ -1,7 +1,4 @@
 #include "dataFixed.h"
-#define NDEBUG
-// #undef NDEBUG
-#include <glog/logging.h>
 
 int main(int argc, char **argv) {
     FLAGS_log_dir = "/opt/smartc/log/";

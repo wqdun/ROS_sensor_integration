@@ -1,6 +1,8 @@
 #ifndef DATAFIXED_H
 #define DATAFIXED_H
 #pragma GCC diagnostic error "-std=c++11"
+
+#include <glog/logging.h>
 #include <ros/ros.h>
 #include "sc_msgs/DataFixerProgress.h"
 #include <string>

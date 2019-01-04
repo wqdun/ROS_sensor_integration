@@ -7,8 +7,6 @@
 *.rar
 *.so
 *.o
-
-
 *.bmp
 *.jpg
 *.jpeg
@@ -19,3 +17,4 @@
 3rd/
 log/
 
+a.out

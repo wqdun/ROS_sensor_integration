@@ -1,7 +1,4 @@
 #include "dataFixed.h"
-#define NDEBUG
-// #undef NDEBUG
-#include <glog/logging.h>
 
 dataFixed::dataFixed(ros::NodeHandle nh, ros::NodeHandle private_nh, int cinValue)
 {

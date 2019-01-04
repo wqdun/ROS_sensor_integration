@@ -69,15 +69,14 @@
                         </tr>
                         <tr>
                             <th>IMU status: <a href="#" id="imu_status" class="alert-link">""</a></th>
-                            <th>GPS time: <a href="#" id="gps_time" class="alert-link">""</a></th>
                             <th>SC time: <a href="#" id="unix_time" class="alert-link">""</a></th>
                             <th>LIDAR rpm: <a href="#" id="velodyne_rpm" class="alert-link">""</a></th>
-                            <!-- <th><input type=button onclick="addVoice();" value="tttt"></th> -->
+                            <th>Raw INS: <a href="#" id="raw_ins" class="alert-link">""</a></th>
+                            <th><button onclick="addVoice();" id='test'>test</button></th>
                         </tr>
 
                         <tr >
                             <th colspan="6">
-                                <p>WARNING<i class="icon-warning-sign" style="font-size: 25px;color:orange;"></i></p>
                                 <p id="warning"></p>
                             </th>
                         </tr>
@@ -128,7 +127,20 @@
 </div>
 
 <%@ include file="include/footer.jsp" %>
+<audio id="bgMusic" src="ring.mp3" autoplay />
 <script>
+    function AddEvent(warningId, message) {
+        var warningMsg = '<div class="alert alert-error"><a href="#" class="close" data-dismiss="alert">&times;</a>【<b style="color:red">'
+                        + warningId + '</b>】' + message + '</div>';
+        $('#warning').append(warningMsg);
+    }
+
+    function addVoice() {
+        bgMusic.play();
+    }
+
+    // window.onload = addVoice;
+
     var url_ = window.location.host;
     console.log("window.location.host: " + url_);
 
@@ -144,8 +156,8 @@
     });
     // Find out exactly when we made a connection.
     ros_.on('connection', function () {
-        document.getElementById('connect').innerHTML = '<font color=green>Established</font>';
         console.log('Connection made!');
+        document.getElementById('connect').innerHTML = '<font color=green>Established</font>';
     });
     ros_.on('close', function () {
         console.log('Connection closed.');
@@ -166,14 +178,9 @@
         messageType: 'sc_msgs/MonitorMsg'
     });
 
-    var isAddEventTimeError = false;
-    var isAddEventDiskNotEnough = false;
-    var isAddEventCameraNumFault = false;
-    var isAddEventNoProject = false;
-    var isAddEventImuGone = false;
-
-    var isAddVoice = false;
     var voiceCounter = -1;
+    var isWarningAdded = false;
+
     centerListener.subscribe(function (message) {
         var unixDateObj = new Date(message.unix_time * 1000);
         var _unix_hour = unixDateObj.getUTCHours();
@@ -181,11 +188,12 @@
         var _unix_second = unixDateObj.getUTCSeconds();
         document.getElementById('unix_time').innerHTML = _unix_hour + ":" + _unix_minute + ":" + _unix_second;
 
+        var warningMap = new Map();
+
         // below is IMU related
         if(message.GPStime < 0) {
             console.log("I got no IMU frame.");
             document.getElementById('location').innerHTML = "<font color=red >\"\"</font>";
-            document.getElementById('gps_time').innerHTML = "<font color=red>\"\"</font>";
             document.getElementById('heading').innerHTML = "<font color=red >\"\"</font>";
             document.getElementById('speed').innerHTML = "<font color=red >\"\"</font>";
             document.getElementById('imu_status').innerHTML = "<font color=red >\"\"</font>";
@@ -194,11 +202,6 @@
         }
         else {
             document.getElementById('location').innerHTML = "<font color=green>" + message.lat_lon_hei.x.toFixed(8) + ", " + message.lat_lon_hei.y.toFixed(8) + "</font>";
-            var gpsDateObj = new Date(message.GPStime * 1000);
-            var gps_hour = gpsDateObj.getUTCHours();
-            var gps_minute = gpsDateObj.getUTCMinutes();
-            var gps_second = gpsDateObj.getUTCSeconds();
-            document.getElementById('gps_time').innerHTML = gps_hour + ":" + gps_minute + ":" + gps_second;
             document.getElementById('heading').innerHTML = "<font color=green>" + message.pitch_roll_heading.z.toFixed(2) + "</font>";
             if(message.speed > 120) {
                 document.getElementById('speed').innerHTML = "<font color=red>" + message.speed.toFixed(2) + "km/h</font>";
@@ -220,11 +223,7 @@
             var errSecond = Math.abs(message.unix_time - message.GPStime);
             errSecond = errSecond % (24 * 3600);
             if(errSecond > 1000 && errSecond < 85400) {
-                isAddVoice = true;
-                if(!isAddEventTimeError) {
-                    AddEvent(1003, "SC time error, please set SC time.");
-                    isAddEventTimeError = true;
-                }
+                warningMap.set(1003, "SC time error, please set SC time");
             }
 
             if(message.no_sv < 0) {
@@ -259,58 +258,61 @@
             document.getElementById('velodyne_rpm').innerHTML = "<font color=red>\"\"</font>";
         }
         else {
-            if() {//TODO;
-
+            if(message.pps_status.indexOf("PPS locked") < 0) {
+                document.getElementById('pps').innerHTML = "<font color=red>" + message.pps_status + "</font>";
             }
-            document.getElementById('pps').innerHTML = "<font color=green>" + message.pps_status + "</font>";
+            else {
+                document.getElementById('pps').innerHTML = "<font color=green>" + message.pps_status + "</font>";
+            }
+
             if('A' != message.is_gprmc_valid) {
                 document.getElementById('gprmc').innerHTML = "<font color=red>" + message.is_gprmc_valid + "</font>";
             }
             else {
                 document.getElementById('gprmc').innerHTML = "<font color=green>" + message.is_gprmc_valid + "</font>";
             }
+
             document.getElementById('velodyne_rpm').innerHTML = message.velodyne_rpm.toFixed(2);
         }
 
         // below is project monitor related
         if(message.img_num < 0) {
             $("#piccounts")[0].innerHTML = $("#lidarpkg")[0].innerHTML = "<font color=red>\"\"</font>";
-            isAddVoice = true;
-            if(!isAddEventNoProject) {
-                AddEvent(1001, "No active project.");
-                isAddEventNoProject = true;
-            }
+            warningMap.set(1001, "No active project");
         }
         else {
             $("#piccounts")[0].innerHTML = message.img_num;
-            $("#lidarpkg")[0].innerHTML = message.lidar_size + "M";
+            $("#lidarpkg")[0].innerHTML = (message.lidar_size - 1) + "M";
+        }
+        if(message.raw_ins_size < 1024) {
+            document.getElementById('raw_ins').innerHTML = message.raw_ins_size + "B";
+        }
+        else if(message.raw_ins_size < 1048576) {
+            document.getElementById('raw_ins').innerHTML = (message.raw_ins_size / 1024).toFixed(2) + "KB";
+        }
+        else {
+            document.getElementById('raw_ins').innerHTML = (message.raw_ins_size / 1048576).toFixed(2) + "MB";
         }
 
         // below is sc check
         if(3 != message.sc_check_camera_num) {
-            isAddVoice = true;
-            if(!isAddEventCameraNumFault) {
-                AddEvent(1005, "Camera number is " + message.sc_check_camera_num + ", should be 3.");
-                isAddEventCameraNumFault = true;
-            }
+            warningMap.set(1005, "Camera number is " + message.sc_check_camera_num + ", should be 3");
         }
 
         if(message.speed > 120) {
-            isAddVoice = true;
-            if(!isAddEventImuGone) {
-                AddEvent(1002, "Speed > 120km/h, please restart IMU.");
-                isAddEventImuGone = true;
-            }
+            warningMap.set(1002, "Speed > 120km/h, please restart IMU");
         }
 
-        $("#diskspace")[0].innerHTML = message.disk_usage;
-        var usedPercentage = parseInt(message.disk_usage.split(",")[1]);
-        if(usedPercentage > 80) {
-            isAddVoice = true;
-            if(!isAddEventDiskNotEnough) {
-                AddEvent(1004, "Disk free space is not enough: " + message.disk_usage);
-                isAddEventDiskNotEnough = true;
-            }
+        var diskUsageArr = message.disk_usage.split(",");
+        var freePercentage = 100 - parseInt(diskUsageArr[1]);
+        if(freePercentage > 20) {
+            document.getElementById('diskspace').innerHTML = "<font color=green>" + diskUsageArr[0] + ", " + freePercentage + "%</font>";
+        }
+        else {
+            document.getElementById('diskspace').innerHTML = "<font color=red>" + diskUsageArr[0] + ", " + freePercentage + "%</font>";
+        }
+        if(freePercentage < 10) {
+            warningMap.set(1004, "Disk free space is not enough: " + freePercentage);
         }
 
         $('#isRecordCheckBox').prop('disabled', ('A' != message.is_gprmc_valid));
@@ -322,38 +324,24 @@
             $("#isRecordCheckBox").prop("checked", message.is_record);
         }
 
-        if(isAddVoice) {
+        if(!isWarningAdded) {
+            warningMap.forEach(function(value, key, map) {
+                AddEvent(key, value);
+            } );
+            isWarningAdded = true;
+        }
+
+        if(0 != warningMap.size) {
             ++voiceCounter;
-            voiceCounter %= 5;
-            if(0 == voiceCounter) {
-                // addVoice();
-            }
+            voiceCounter %= 10;
+            console.log("NOISE!");
+            addVoice();
+
+            // if(0 == voiceCounter) {
+            //     addVoice();
+            // }
         }
     });
 </script>
-
-<!-- <audio id="bgMusic" src="ring.mp3" autoplay /> -->
-<script>
-    function AddEvent(warningId, message) {
-        var warningMsg = '<div class="alert alert-error"><a href="#" class="close" data-dismiss="alert">&times;</a>【<b style="color:red">'
-                        + warningId + '</b>】' + message + '</div>';
-        $('#warning').append(warningMsg);
-    }
-
-    // function addVoice() {
-    //     bgMusic.volume = 0;
-    //     v = 0;
-    //     bgMusic.play();
-    //     var t = setInterval(function(){
-    //         v+= 0.1;
-    //         if(v<=1){
-    //             bgMusic.volume = v;
-    //         }else{
-    //             clearInterval(t);
-    //         }
-    //     },50);
-    // }
-</script>
 </body>
-
 </html>

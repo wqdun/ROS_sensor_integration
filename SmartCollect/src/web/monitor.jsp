@@ -223,7 +223,7 @@
             var errSecond = Math.abs(message.unix_time - message.GPStime);
             errSecond = errSecond % (24 * 3600);
             if(errSecond > 1000 && errSecond < 85400) {
-                warningMap.set(1003, "SC time error, please set SC time");
+                warningMap.set(1003, "SC time error, please set SC time or check GPS time");
             }
 
             if(message.no_sv < 0) {

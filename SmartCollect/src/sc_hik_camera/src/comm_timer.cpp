@@ -173,7 +173,7 @@ void CommTimer::WriteRtImuFile(const std::string &_gpfpdFrame) {
 }
 
 void CommTimer::Parse5651GpfpdFrame(const std::string &_gpfpdFrame, double __unixTime) {
-    LOG(INFO) << __FUNCTION__ << " start.";
+    DLOG(INFO) << __FUNCTION__ << " start.";
 
     std::vector<std::string> gpfpdFrameParsed;
     boost::split(gpfpdFrameParsed, _gpfpdFrame, boost::is_any_of(",*") );
@@ -205,7 +205,7 @@ void CommTimer::Parse5651GpfpdFrame(const std::string &_gpfpdFrame, double __uni
 }
 
 double CommTimer::GetUnixTimeMinusGpsTime() {
-    LOG(INFO) << __FUNCTION__ << " start.";
+    DLOG(INFO) << __FUNCTION__ << " start.";
     return unixTimeMinusGpsTime_;
 }
 

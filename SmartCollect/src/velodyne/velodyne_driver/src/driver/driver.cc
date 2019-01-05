@@ -208,6 +208,9 @@ bool VelodyneDriver::poll(int64_t isSaveLidar)
   velodyne_msgs::Velodyne2Center pps_status;
   // only last position pkt be published, ignore the rest
   (void)parsePositionPkt(positionPkt, pps_status);
+  if("A" != pps_status.is_gprmc_valid) {
+    LOG(WARNING) << "pps_status.is_gprmc_valid: " << pps_status.is_gprmc_valid;
+  }
 
   pps_status.velodyne_rpm = CalcLidarRpm(scan->packets.front(), scan->packets[(config_.npackets) / 4]);
   pub2Center_.publish(pps_status);

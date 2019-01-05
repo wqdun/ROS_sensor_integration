@@ -52,7 +52,7 @@ void ServerDaemon::run() {
         // 0.5Hz
         if(0 == (freqDivider % 4) ) {
             if(!isGpsUpdated_) {
-                DLOG(INFO) << "RS232 node not running.";
+                LOG(INFO) << "RS232 node not running.";
                 monitorMsg_.GPStime = monitorMsg_.lat_lon_hei.x = monitorMsg_.lat_lon_hei.y = monitorMsg_.lat_lon_hei.z = monitorMsg_.pitch_roll_heading.x = monitorMsg_.pitch_roll_heading.y = monitorMsg_.pitch_roll_heading.z = monitorMsg_.speed = -2.;
                 monitorMsg_.hdop = -2;
             }
@@ -138,9 +138,8 @@ void ServerDaemon::velodyneCB(const velodyne_msgs::Velodyne2Center::ConstPtr& pV
 void ServerDaemon::SerialCB(const sc_msgs::imu5651::ConstPtr& pImu5651Msg) {
     gpsTime_[0] = gpsTime_[1];
     gpsTime_[1] = pImu5651Msg->gps_time;
-    // do nothing if receive same frame
     if(gpsTime_[0] == gpsTime_[1]) {
-        LOG_EVERY_N(INFO, 10) << "Same frame received, GPStime: " << pImu5651Msg->gps_time;
+        LOG(INFO) << "Same frame received, GPStime: " << pImu5651Msg->gps_time;
         return;
     }
     isGpsUpdated_ = true;

@@ -84,15 +84,15 @@ start_smart_collector_server() {
     # make_tty_softlink
 
     get_sudo_permission
-    sudo chmod +r /dev/ttyUSB0
+    sudo chmod +r /dev/imuRawIns
     pkill sc_rawimu_rec
     echo "pkill -INT sc_rawimu_rec" >"/tmp/kill_smartc.sh"
-    /opt/smartc/devel/lib/sc_rawimu_recorder/sc_rawimu_recorder_node "/dev/ttyUSB0" "${_absolute_record_path}/IMU/" &
+    /opt/smartc/devel/lib/sc_rawimu_recorder/sc_rawimu_recorder_node "/dev/imuRawIns" "${_absolute_record_path}/IMU/" &
     sleep 0.2
 
     pkill sc_images_time
     echo "pkill -INT sc_images_time" >>"/tmp/kill_smartc.sh"
-    /opt/smartc/devel/lib/sc_images_timestamper/sc_images_timestamper_node "/dev/ttyUSB1" "${_absolute_record_path}/IMU/" &
+    /opt/smartc/devel/lib/sc_images_timestamper/sc_images_timestamper_node "/dev/timeStamper" "${_absolute_record_path}/IMU/" &
     sleep 0.2
 
     pkill sc_hik_camer

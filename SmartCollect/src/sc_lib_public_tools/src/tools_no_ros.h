@@ -18,6 +18,7 @@ public:
     static void GeoToGauss(double longitude, double latitude, short beltWidth, int beltNumber, double &y, double &x);
     static bool IsFileExist(const std::string& fileName);
     static long GetFileSizeInByte(const std::string& filename);
+    static double CalcUnixTimeByGpsWeek(int gpsWeek, double gpsWeekSecond);
 
     static bool isOK_;
 

@@ -181,5 +181,10 @@ long ToolsNoRos::GetFileSizeInByte(const std::string& filename) {
     return statbuf.st_size;
 }
 
+double ToolsNoRos::CalcUnixTimeByGpsWeek(int gpsWeek, double gpsWeekSecond) {
+    return (gpsWeek * 7 * 24 * 3600 + gpsWeekSecond + 315964800);
 }
+
+}
+
 // namespace public_tools

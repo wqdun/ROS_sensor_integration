@@ -21,7 +21,7 @@ void DiskMonitor::run(const std::string &_projectPath, sc_msgs::MonitorMsg &_mon
 }
 
 void DiskMonitor::getProjects(const std::string &_projectPath, sc_msgs::MonitorMsg &_monitorMsg) {
-    LOG(INFO) << __FUNCTION__ << " start, to monitor " << _projectPath;
+    DLOG(INFO) << __FUNCTION__ << " start, to monitor " << _projectPath;
 
     std::string lsCmd("ls -t " + _projectPath);
     if(public_tools::PublicTools::PopenWithReturn(lsCmd, _monitorMsg.projects) < 0) {

@@ -43,6 +43,7 @@ void ServerDaemon::run() {
     ros::Rate rate(2);
     size_t freqDivider = 0;
 
+    bool isScTimeCalibrated = false;
     while(ros::ok() ) {
         ++freqDivider;
         freqDivider %= 256;
@@ -98,11 +99,59 @@ void ServerDaemon::run() {
         gettimeofday(&now, NULL);
         monitorMsg_.unix_time = now.tv_sec + now.tv_usec / 1000000.;
 
+        if(!isScTimeCalibrated) {
+            if(IsGpsTimeGood()) {
+                if(IsScTimeBad() ) {
+                    SetScTimeByGpsTime();
+                    LOG(INFO) << "SC time is calibrated.";
+                }
+                else {
+                    LOG(INFO) << "SC time is good.";
+                }
+                isScTimeCalibrated = true;
+            }
+            else {
+                LOG(INFO) << "Wait GPS time till good.";
+            }
+        }
+
         monitorMsg_.sc_check_camera_num = sharedMem_->cameraNum;
         monitorMsg_.sc_check_imu_serial_port = sharedMem_->imuSerialPortStatus;
 
         pub2client_.publish(monitorMsg_);
     }
+}
+
+int ServerDaemon::SetScTimeByGpsTime() {
+    LOG(INFO) << __FUNCTION__ << " start.";
+    const time_t gpsUnixTime = public_tools::ToolsNoRos::CalcUnixTimeByGpsWeek(monitorMsg_.GPSweek, monitorMsg_.GPStime);
+    tm tmGpsUnixTime = { 0 };
+    localtime_r(&gpsUnixTime, &tmGpsUnixTime);
+
+    const std::string timeString(
+        std::to_string(tmGpsUnixTime.tm_year + 1900) + "-" +
+        std::to_string(tmGpsUnixTime.tm_mon + 1) + "-" +
+        std::to_string(tmGpsUnixTime.tm_mday)
+        + " " +
+        std::to_string(tmGpsUnixTime.tm_hour) + ":" +
+        std::to_string(tmGpsUnixTime.tm_min) + ":" +
+        std::to_string(tmGpsUnixTime.tm_sec)
+    );
+
+    const std::string setScTimeCmd("date -s " + timeString);
+    LOG(INFO) << "Do " << setScTimeCmd;
+    // return public_tools::PublicTools::PopenWithoutReturn(setScTimeCmd);
+    return 0;
+}
+
+bool ServerDaemon::IsGpsTimeGood() {
+    return ("A" == monitorMsg_.is_gprmc_valid) && (monitorMsg_.GPStime > 1.);
+}
+
+bool ServerDaemon::IsScTimeBad() {
+    double errSecond = fabs(monitorMsg_.unix_time - monitorMsg_.GPStime);
+    errSecond = fmod(errSecond, 24 * 3600);
+    return (errSecond > 1000 && errSecond < 85400);
 }
 
 void ServerDaemon::dataFixerCB(const sc_msgs::DataFixerProgress::ConstPtr& pDataFixerProgressMsg) {
@@ -144,6 +193,7 @@ void ServerDaemon::SerialCB(const sc_msgs::imu5651::ConstPtr& pImu5651Msg) {
     }
     isGpsUpdated_ = true;
 
+    monitorMsg_.GPSweek = public_tools::ToolsNoRos::string2int(pImu5651Msg->gps_week);
     monitorMsg_.GPStime = public_tools::ToolsNoRos::string2double(gpsTime_[1]);
 
     sc_msgs::Point3D p;

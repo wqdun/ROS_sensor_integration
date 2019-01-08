@@ -1,6 +1,7 @@
 float64 unix_time
 
 # below from 5651 RS232
+int32 GPSweek
 float64 GPStime
 Point3D lat_lon_hei
 Point3D pitch_roll_heading

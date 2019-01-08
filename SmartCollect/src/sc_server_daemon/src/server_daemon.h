@@ -68,6 +68,9 @@ private:
     void CheckImu();
     void ParsePositionPkt(const char *pkt);
     void CheckDiskCapacity();
+    int SetScTimeByGpsTime();
+    bool IsGpsTimeGood();
+    bool IsScTimeBad();
 
     void updateProjectInfo(const std::string &projectInfo);
 };

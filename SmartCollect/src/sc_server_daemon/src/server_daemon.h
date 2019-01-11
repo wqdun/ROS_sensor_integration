@@ -71,6 +71,7 @@ private:
     int SetScTimeByGpsTime();
     bool IsGpsTimeGood();
     bool IsScTimeBad();
+    void RestartSelf();
 
     void updateProjectInfo(const std::string &projectInfo);
 };

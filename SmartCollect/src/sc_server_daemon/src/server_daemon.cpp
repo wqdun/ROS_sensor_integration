@@ -3,7 +3,7 @@
 ServerDaemon::ServerDaemon(ros::NodeHandle nh, ros::NodeHandle private_nh) {
     gpsTime_.resize(2);
     // below for SC control
-    subClient_ = nh.subscribe("sc_client_cmd", 10, &ServerDaemon::clientCB, this);
+    subClient_ = nh.subscribe("sc_client_cmd", 1, &ServerDaemon::clientCB, this);
     monitorMsg_.is_record = 0;
     monitorMsg_.cam_gain = 20;
     monitorMsg_.pps_HWcheck = -1;
@@ -124,28 +124,30 @@ void ServerDaemon::run() {
 
 int ServerDaemon::SetScTimeByGpsTime() {
     LOG(INFO) << __FUNCTION__ << " start.";
-    const time_t gpsUnixTime = public_tools::ToolsNoRos::CalcUnixTimeByGpsWeek(monitorMsg_.GPSweek, monitorMsg_.GPStime);
-    tm tmGpsUnixTime = { 0 };
-    localtime_r(&gpsUnixTime, &tmGpsUnixTime);
+    const double gpsUnixTime = public_tools::ToolsNoRos::CalcUnixTimeByGpsWeek(monitorMsg_.GPSweek, monitorMsg_.GPStime);
 
-    const std::string timeString(
-        std::to_string(tmGpsUnixTime.tm_year + 1900) + "-" +
-        std::to_string(tmGpsUnixTime.tm_mon + 1) + "-" +
-        std::to_string(tmGpsUnixTime.tm_mday)
-        + " " +
-        std::to_string(tmGpsUnixTime.tm_hour) + ":" +
-        std::to_string(tmGpsUnixTime.tm_min) + ":" +
-        std::to_string(tmGpsUnixTime.tm_sec)
-    );
+    timeval tv;
+    tv.tv_sec = static_cast<time_t>(gpsUnixTime);
+    tv.tv_usec = 0;
 
-    const std::string setScTimeCmd("date -s " + timeString);
-    LOG(INFO) << "Do " << setScTimeCmd;
-    // return public_tools::PublicTools::PopenWithoutReturn(setScTimeCmd);
+    settimeofday(&tv, NULL);
+    (void)public_tools::PublicTools::PopenWithoutReturn("/sbin/hwclock -w");
+    RestartSelf();
+    LOG(INFO) << "gpsUnixTime: " << std::fixed << gpsUnixTime << " set; errno: " << errno;
     return 0;
 }
 
 bool ServerDaemon::IsGpsTimeGood() {
     return ("A" == monitorMsg_.is_gprmc_valid) && (monitorMsg_.GPStime > 1.);
+}
+
+void ServerDaemon::RestartSelf() {
+    LOG(INFO) << __FUNCTION__ << " start.";
+
+    const std::string launchScript("/opt/smartc/src/tools/launch_project.sh");
+    (void)public_tools::PublicTools::PopenWithoutReturn("bash " + launchScript + " restart_server &");
+
+    LOG(INFO) << __FUNCTION__ << " start.";
 }
 
 bool ServerDaemon::IsScTimeBad() {

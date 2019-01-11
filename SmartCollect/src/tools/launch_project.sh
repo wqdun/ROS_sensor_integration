@@ -85,18 +85,21 @@ start_smart_collector_server() {
 
     get_sudo_permission
     sudo chmod +r /dev/imuRawIns
-    pkill sc_rawimu_rec
-    echo "pkill -INT sc_rawimu_rec" >"/tmp/kill_smartc.sh"
+    local task_keyword="sc_rawimu_rec"
+    pkill "${task_keyword}"
+    echo "pkill -INT ${task_keyword}; pkill ${task_keyword}" >"/tmp/kill_smartc.sh"
     /opt/smartc/devel/lib/sc_rawimu_recorder/sc_rawimu_recorder_node "/dev/imuRawIns" "${_absolute_record_path}/IMU/" &
     sleep 0.2
 
-    pkill sc_images_time
-    echo "pkill -INT sc_images_time" >>"/tmp/kill_smartc.sh"
+    local task_keyword="sc_images_time"
+    pkill "${task_keyword}"
+    echo "pkill -INT ${task_keyword}; pkill ${task_keyword}" >>"/tmp/kill_smartc.sh"
     /opt/smartc/devel/lib/sc_images_timestamper/sc_images_timestamper_node "/dev/timeStamper" "${_absolute_record_path}/IMU/" &
     sleep 0.2
 
-    pkill sc_hik_camer
-    echo "pkill -INT sc_hik_camer" >>"/tmp/kill_smartc.sh"
+    local task_keyword="sc_hik_camer"
+    pkill "${task_keyword}"
+    echo "pkill -INT ${task_keyword}; pkill ${task_keyword}" >>"/tmp/kill_smartc.sh"
     /opt/smartc/devel/lib/sc_hik_camera/sc_hik_camera_node "${_absolute_record_path}/" &
 
     killall nodelet
@@ -104,13 +107,15 @@ start_smart_collector_server() {
     roslaunch velodyne_pointcloud VLP16_points.launch &
     sleep 0.2
 
-    pkill sc_project_mon
-    echo "pkill -INT sc_project_mon" >>"/tmp/kill_smartc.sh"
+    local task_keyword="sc_project_mon"
+    pkill "${task_keyword}"
+    echo "pkill -INT ${task_keyword}; pkill ${task_keyword}" >>"/tmp/kill_smartc.sh"
     /opt/smartc/devel/lib/sc_project_monitor/sc_project_monitor_node "${_absolute_record_path}/" &
     sleep 0.2
 
-    pkill sc_map_node
-    echo "pkill -INT sc_map_node" >>"/tmp/kill_smartc.sh"
+    local task_keyword="sc_map_node"
+    pkill "${task_keyword}"
+    echo "pkill -INT ${task_keyword}; pkill ${task_keyword}" >>"/tmp/kill_smartc.sh"
     /opt/smartc/devel/lib/sc_map/sc_map_node "${_absolute_record_path}/" &
     sleep 0.2
 }
@@ -127,6 +132,14 @@ do_fixdata() {
 
     local _projects=$1
     /opt/smartc/devel/lib/sc_data_fixer/sc_data_fixer_node "${_projects}" &
+    return 0
+}
+
+do_restart_server() {
+    log_with_time "$FUNCNAME start, param: $*"
+
+    pkill -INT sc_server_d; pkill sc_server_d
+    /opt/smartc/devel/lib/sc_server_daemon/sc_server_daemon_node &
     return 0
 }
 
@@ -159,6 +172,11 @@ main() {
     if [ "AA$1" = "AAfixdata" ]; then
         local projects=$2
         do_fixdata "${projects}"
+        return
+    fi
+
+    if [ "AA$1" = "AArestart_server" ]; then
+        do_restart_server
         return
     fi
 }

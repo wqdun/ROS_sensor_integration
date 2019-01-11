@@ -149,7 +149,7 @@
                         <select class="form-control" id='city'>
                           <option>China-1001</option>
                           <option selected>Japan-1002</option>
-                          <option>Test-9999</option>
+                          <option disabled>Test-9999</option>
                         </select>
                         <select class="form-control" id='dayORnight'>
                           <option>白天</option>
@@ -290,7 +290,7 @@
     });
     serverListener_.subscribe(
       function(message) {
-        console.log("I am listening: " + serverListener_.name);
+        console.log("I am listening " + serverListener_.name);
         console.log("Process status: " + message.process_num + "/" + message.total_file_num);
         var fixPercent = message.process_num / (message.total_file_num + 0.00000001) * 100;
         fixPercent = fixPercent.toFixed(2);
@@ -307,6 +307,7 @@
           $('#fixData').prop('disabled', false);
         }
 
+        // $('#smartcCheck').prop('disabled', !$('#newProject').prop("disabled"));
         if(0 == message.project_info.city_code) {
             console.log("No project running.");
             // enable input
@@ -367,13 +368,10 @@
     );
 
     $('#pid').bind('input propertychange', function() {
-        if ($('#pid').val() == '' || $('#pid').val().indexOf("-") >= 0) {
-            console.log("Task ID should not empty or contains -.");
-            $('#newProject').prop('disabled', true);
-        }
-        else {
-            $('#newProject').prop('disabled', false);
-        }
+      $('#newProject').prop('disabled', $('#pid').val().length != 1 || $('#pid').val().indexOf("-") >= 0 || 2 === document.getElementById("city").selectedIndex);
+    });
+    $('#city').bind('input propertychange', function() {
+      $('#newProject').prop('disabled', $('#pid').val().length != 1 || $('#pid').val().indexOf("-") >= 0 || 2 === document.getElementById("city").selectedIndex);
     });
 
     $('#shutdown').click(function () {

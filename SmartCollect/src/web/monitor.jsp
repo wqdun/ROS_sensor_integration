@@ -14,6 +14,16 @@
             pubCmd_.publish(clientMsg);
         }
     </script>
+    <style type="text/css">
+        .scimg{
+        width:200px;
+        height:200px;
+        border:1px solid black;
+        }
+
+        .scimg img{width:100%;height:100%;}
+    </style>
+
 </head>
 
 <body>
@@ -46,6 +56,7 @@
 
 <div class="main-inner">
     <div class="container">
+
         <div class="row">
             <div class="span12">
                 <div class="widget big-stats-container">
@@ -53,38 +64,56 @@
                         <thead>
                         <tr>
                             <th>Connection: <a href="#" id="connect" class="alert-link"></a></th>
-                            <th>Location: <a href="#" id="location" class="alert-link">"bbb", "cc"</a></th>
+                            <th colspan="2">Location: <a href="#" id="location" class="alert-link">"bbb", "cc"</a></th>
+                            <th colspan="2" rowspan="2"><p id="warning"></p></th>
+                        </tr>
+                        <tr>
                             <th>Satellite: <a href="#" id="num" class="alert-link">""</a></th>
                             <th>Hdop: <a href="#" id="hdop" class="alert-link">""</a></th>
-                            <th>Disk usage: <a href="#" id="diskspace" class="alert-link">""</a></th>
-                            <th>LIDAR size: <a href="#" id="lidarpkg" class="alert-link">""</a></th>
+                            <th>Speed: <a href="#" id="speed" class="alert-link">""km/h</a></th>
+
                         </tr>
                         <tr>
-                            <th>Heading: <a href="#" id="heading" class="alert-link">""</a></th>
-                            <th>Speed: <a href="#" id="speed" class="alert-link">""km/h</a></th>
-                            <th>Camera FPS: <a href="#" id="fps" class="alert-link">""</a></th>
                             <th>PPS: <a href="#" id="pps" class="alert-link">""</a></th>
                             <th>GPRMC: <a href="#" id="gprmc" class="alert-link">""</a></th>
-                            <th>Image Number: <a href="#" id="piccounts" class="alert-link">""</a></th>
-                        </tr>
-                        <tr>
-                            <th>IMU status: <a href="#" id="imu_status" class="alert-link">""</a></th>
-                            <th>SC time: <a href="#" id="unix_time" class="alert-link">""</a></th>
-                            <th>LIDAR rpm: <a href="#" id="velodyne_rpm" class="alert-link">""</a></th>
-                            <th>Raw INS: <a href="#" id="raw_ins" class="alert-link">""</a></th>
-                            <th><button onclick="addVoice();" id='test'>test</button></th>
-                        </tr>
+                            <th>LIDAR size: <a href="#" id="lidarpkg" class="alert-link">""</a></th>
 
-                        <tr >
-                            <th colspan="6">
-                                <p id="warning"></p>
+                            <th colspan="2" rowspan="3">
+                                <div style="float:left">
+                                <img src="http://<%=ip%>:8080/stream?topic=/camera/image6666"
+                                     alt="http://<%=ip%>:8080/stream?topic=/camera/image6666">
+                                </div>
+
+                                <div style="float:right" class="scimg">
+
+
+                                <p id="voff"><i class="icon-volume-off" style="color:red;">×</i>
+                                    <button id="voice_control" onclick="addVoice();">AlermOn</button>
+                                </p>
+                                <p id="von"><i class="icon-volume-up" style="color:green;"></i></p>
+
+                                <p id="collect"><input id="isRecordCheckBox" type="checkbox" onchange="pubCtrlParams();">COLLECT</p>
+                                </div>
                             </th>
                         </tr>
+                        <tr>
+                            <th>Camera FPS: <a href="#" id="fps" class="alert-link">""</a></th>
+                            <th>IMU status: <a href="#" id="imu_status" class="alert-link">""</a></th>
+                            <th>Image Number: <a href="#" id="piccounts" class="alert-link">""</a></th>
+
+                        </tr>
+                        <tr>
+                            <th colspan="2">SC time: <a href="#" id="unix_time" class="alert-link">""</a></th>
+                            <th>Disk usage: <a href="#" id="diskspace" class="alert-link">""</a></th>
+                        </tr>
+
                         </thead>
                     </table>
                 </div>
             </div>
+
         </div>
+
         <div class="row">
             <div class="span12">
                 <div class="widget">
@@ -93,49 +122,29 @@
                         <h3>Map</h3>
                     </div>
                     <div class="widget-content">
-                        <iframe src="minemap.jsp" frameborder="0" scrolling="no" id="maplayer"
+                        <iframe src="scmap.jsp" frameborder="0" scrolling="no" id="maplayer"
                                 onload="this.height='450px'; this.width='100%'"></iframe>
                     </div>
                 </div>
             </div>
         </div>
 
-            <div class="row">
-            <div class="span12">
-                <div class="widget">
-                    <div class="widget-header">
-                        <i class="icon-list-alt"></i>
-                        <h3>Main Camera</h3>
-                    </div>
-                    <div class="widget-content">
-                        <table class="table table-bordered table-striped">
-                            <thead>
-                            <tr>
-                                <th style="text-align:center;"><label class="checkbox">
-                                    <input id="isRecordCheckBox" type="checkbox"
-                                           onchange="pubCtrlParams();">Collecting</label></th>
-                            </tr>
-                            </thead>
-                        </table>
-                        <img src="http://<%=ip%>:8080/stream?topic=/camera/image6666" height="100%" width="100%"
-                             alt="http://<%=ip%>:8080/stream?topic=/camera/image6666">
-                    </div>
-                </div>
-            </div>
-        </div>
     </div>
 </div>
 
 <%@ include file="include/footer.jsp" %>
-<audio id="bgMusic" src="ring.mp3" autoplay />
+<audio id="bgMusic" src="ring.mp3" autoplay/>
 <script>
     function AddEvent(warningId, message) {
         var warningMsg = '<div class="alert alert-error"><a href="#" class="close" data-dismiss="alert">&times;</a>【<b style="color:red">'
-                        + warningId + '</b>】' + message + '</div>';
+            + warningId + '</b>】' + message + '</div>';
         $('#warning').append(warningMsg);
     }
 
+    $("#von").hide();
     function addVoice() {
+        $("#von").show();
+        $("#voff").hide()
         bgMusic.play();
     }
 
@@ -191,10 +200,9 @@
         var warningMap = new Map();
 
         // below is IMU related
-        if(message.GPStime < 0) {
+        if (message.GPStime < 0) {
             console.log("I got no IMU frame.");
             document.getElementById('location').innerHTML = "<font color=red >\"\"</font>";
-            document.getElementById('heading').innerHTML = "<font color=red >\"\"</font>";
             document.getElementById('speed').innerHTML = "<font color=red >\"\"</font>";
             document.getElementById('imu_status').innerHTML = "<font color=red >\"\"</font>";
             document.getElementById('num').innerHTML = "<font color=red>\"\"</font>";
@@ -202,18 +210,17 @@
         }
         else {
             document.getElementById('location').innerHTML = "<font color=green>" + message.lat_lon_hei.x.toFixed(8) + ", " + message.lat_lon_hei.y.toFixed(8) + "</font>";
-            document.getElementById('heading').innerHTML = "<font color=green>" + message.pitch_roll_heading.z.toFixed(2) + "</font>";
-            if(message.speed > 120) {
+            if (message.speed > 120) {
                 document.getElementById('speed').innerHTML = "<font color=red>" + message.speed.toFixed(2) + "km/h</font>";
             }
             else {
                 document.getElementById('speed').innerHTML = "<font color=green>" + message.speed.toFixed(2) + "km/h</font>";
             }
             var imuStatus = message.status & 0xF;
-            if(8 == imuStatus) {
+            if (8 == imuStatus) {
                 document.getElementById('imu_status').innerHTML = "<font color=yellow>" + message.status.toString(16) + "</font>";
             }
-            else if(3 == imuStatus) {
+            else if (3 == imuStatus) {
                 document.getElementById('imu_status').innerHTML = "<font color=green>" + message.status.toString(16) + "</font>";
             }
             else {
@@ -222,17 +229,17 @@
 
             var errSecond = Math.abs(message.unix_time - message.GPStime);
             errSecond = errSecond % (24 * 3600);
-            if(errSecond > 1000 && errSecond < 85400) {
+            if (errSecond > 1000 && errSecond < 85400) {
                 warningMap.set(1003, "SC time error, please set SC time or check GPS time");
             }
 
-            if(message.no_sv < 0) {
+            if (message.no_sv < 0) {
                 console.log("GPGGA contains null satellite number.");
                 document.getElementById('num').innerHTML = "<font color=red>\"\"</font>";
                 document.getElementById('hdop').innerHTML = "<font color=red>\"\"</font>";
             }
             else {
-                if(0 == message.no_sv) {
+                if (0 == message.no_sv) {
                     document.getElementById('num').innerHTML = "<font color=red>0</font>";
                 }
                 else {
@@ -243,7 +250,7 @@
         }
 
         // below is camera related
-        if(message.camera_fps < 0.01) {
+        if (message.camera_fps < 0.01) {
             document.getElementById('fps').innerHTML = "<font color=red>" + message.camera_fps.toFixed(2) + "</font>";
         }
         else {
@@ -251,67 +258,55 @@
         }
 
         // below is velodyne related
-        if(0 == message.pps_status.length) {
+        if (0 == message.pps_status.length) {
             console.log("I got no pps status.");
             document.getElementById('pps').innerHTML = "<font color=red>Absent</font>";
             document.getElementById('gprmc').innerHTML = "<font color=red>Absent</font>";
-            document.getElementById('velodyne_rpm').innerHTML = "<font color=red>\"\"</font>";
         }
         else {
-            if(message.pps_status.indexOf("PPS locked") < 0) {
+            if (message.pps_status.indexOf("PPS locked") < 0) {
                 document.getElementById('pps').innerHTML = "<font color=red>" + message.pps_status + "</font>";
             }
             else {
                 document.getElementById('pps').innerHTML = "<font color=green>" + message.pps_status + "</font>";
             }
 
-            if('A' != message.is_gprmc_valid) {
+            if ('A' != message.is_gprmc_valid) {
                 document.getElementById('gprmc').innerHTML = "<font color=red>" + message.is_gprmc_valid + "</font>";
             }
             else {
                 document.getElementById('gprmc').innerHTML = "<font color=green>" + message.is_gprmc_valid + "</font>";
             }
-
-            document.getElementById('velodyne_rpm').innerHTML = message.velodyne_rpm.toFixed(2);
         }
 
         // below is project monitor related
-        if(message.img_num < 0) {
+        if (message.img_num < 0) {
             $("#piccounts")[0].innerHTML = $("#lidarpkg")[0].innerHTML = "<font color=red>\"\"</font>";
             warningMap.set(1001, "No active project");
         }
         else {
             $("#piccounts")[0].innerHTML = message.img_num;
-            $("#lidarpkg")[0].innerHTML = (((message.lidar_size - 1) < 0)? message.lidar_size: (message.lidar_size - 1)) + "M";
-        }
-        if(message.raw_ins_size < 1024) {
-            document.getElementById('raw_ins').innerHTML = message.raw_ins_size + "B";
-        }
-        else if(message.raw_ins_size < 1048576) {
-            document.getElementById('raw_ins').innerHTML = (message.raw_ins_size / 1024).toFixed(2) + "KB";
-        }
-        else {
-            document.getElementById('raw_ins').innerHTML = (message.raw_ins_size / 1048576).toFixed(2) + "MB";
+            $("#lidarpkg")[0].innerHTML = (message.lidar_size - 1) + "M";
         }
 
         // below is sc check
-        if(3 != message.sc_check_camera_num) {
+        if (3 != message.sc_check_camera_num) {
             warningMap.set(1005, "Camera number is " + message.sc_check_camera_num + ", should be 3");
         }
 
-        if(message.speed > 120) {
+        if (message.speed > 120) {
             warningMap.set(1002, "Speed > 120km/h, please restart IMU");
         }
 
         var diskUsageArr = message.disk_usage.split(",");
         var freePercentage = 100 - parseInt(diskUsageArr[1]);
-        if(freePercentage > 20) {
+        if (freePercentage > 20) {
             document.getElementById('diskspace').innerHTML = "<font color=green>" + diskUsageArr[0] + ", " + freePercentage + "%</font>";
         }
         else {
             document.getElementById('diskspace').innerHTML = "<font color=red>" + diskUsageArr[0] + ", " + freePercentage + "%</font>";
         }
-        if(freePercentage < 10) {
+        if (freePercentage < 10) {
             warningMap.set(1004, "Disk free space is not enough: " + freePercentage);
         }
 
@@ -324,14 +319,14 @@
             $("#isRecordCheckBox").prop("checked", message.is_record);
         }
 
-        if(!isWarningAdded) {
-            warningMap.forEach(function(value, key, map) {
+        if (!isWarningAdded) {
+            warningMap.forEach(function (value, key, map) {
                 AddEvent(key, value);
-            } );
+            });
             isWarningAdded = true;
         }
 
-        if(0 != warningMap.size) {
+        if (0 != warningMap.size) {
             ++voiceCounter;
             voiceCounter %= 10;
             console.log("NOISE!");

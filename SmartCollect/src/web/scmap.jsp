@@ -65,6 +65,32 @@ var map = new ol.Map({
     })
 });
 
+// 我们需要一个vector的layer来放置图标
+var layer = new ol.layer.Vector({
+    source: new ol.source.Vector()
+});
+
+var _anchor = new ol.Feature({
+    geometry: new ol.geom.Point(transform(currentLocation_))
+});
+// 设置样式，在样式中就可以设置图标
+_anchor.setStyle(new ol.style.Style({
+    image: new ol.style.Icon({
+        src: '../img/loc.png',
+        scale:10
+    })
+}));
+// 添加到之前的创建的layer中去
+layer.getSource().addFeature(_anchor);
+
+// 监听地图层级变化
+map.getView().on('change:resolution', function() {
+    var style = _anchor.getStyle();
+    // 重新设置图标的缩放率，基于层级10来做缩放
+    _anchor.setStyle(style);
+})
+map.addLayer(layer);
+
 var recordedTrackLayer_ = new ol.layer.Vector({
     source: new ol.source.Vector(),
     style: new ol.style.Style({

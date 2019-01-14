@@ -5,6 +5,7 @@
     <title>scmap</title>
     <%@ include file="include/header.jsp" %>
 
+    <link href="css/ol.css" rel="stylesheet" type="text/css" />
     <script type="text/javascript" src="js/ol.js"></script>
     <script type="text/javascript" src="build/eventemitter2.min.js"></script>
     <script type="text/javascript" src="build/roslib.js"></script>
@@ -65,37 +66,58 @@ var map = new ol.Map({
     })
 });
 
-// 我们需要一个vector的layer来放置图标
-var layer = new ol.layer.Vector({
-    source: new ol.source.Vector()
+var scaleLineControl = new ol.control.ScaleLine({
+    units : 'metric',
+    target : 'scalebar',
+    className : 'ol-scale-line'
 });
+map.addControl(scaleLineControl);
 
-var _anchor = new ol.Feature({
+var arrowFeature = new ol.Feature({
     geometry: new ol.geom.Point(transform(currentLocation_))
 });
-// 设置样式，在样式中就可以设置图标
-_anchor.setStyle(new ol.style.Style({
-    image: new ol.style.Icon({
-        src: '../img/loc.png',
-        scale:10
-    })
-}));
-// 添加到之前的创建的layer中去
-layer.getSource().addFeature(_anchor);
+// 我们需要一个vector的layer来放置图标
+arrowFeature.set("rotation", 0);
 
-// 监听地图层级变化
-map.getView().on('change:resolution', function() {
-    var style = _anchor.getStyle();
-    // 重新设置图标的缩放率，基于层级10来做缩放
-    _anchor.setStyle(style);
-})
-map.addLayer(layer);
+
+var arrowLayer = new ol.layer.Vector({
+    source : new ol.source.Vector({
+        features: [arrowFeature]
+    }),
+    style :function(feature) {
+        var r = feature.get("rotation");
+        console.log("rotation: " + r);
+        // 设置点样式
+        var style = new ol.style.Style({
+            image: new ol.style.Icon({
+                src: '/img/loc.png',
+                rotation : r,
+                scale: 0.04
+            })
+        })
+        return [ style ];
+    }
+});
+
+map.addLayer(arrowLayer);
+
+var centerListener = new ROSLIB.Topic({
+    ros: ros_,
+    name: '/sc_monitor',
+    messageType: 'sc_msgs/MonitorMsg'
+});
+var currentHeading_ = 0;
+centerListener.subscribe(function (message) {
+    currentHeading_ = message.pitch_roll_heading.z;
+
+    console.log('currentHeading_: ' + currentHeading_);
+});
 
 var recordedTrackLayer_ = new ol.layer.Vector({
     source: new ol.source.Vector(),
     style: new ol.style.Style({
         stroke: new ol.style.Stroke({
-            color: '#000000',
+            color: '#FF0000',
             width: 2,
         })
     })
@@ -111,31 +133,49 @@ var recordedTrackListener_ = new ROSLIB.Topic({
 var recordedPointNumOfLastLineLast_ = -1;
 recordedTrackListener_.subscribe(
     function (recordedTrackMsg) {
-        var lineLength = recordedTrackMsg.lines2D.length;
-        console.log("Found " + lineLength + " lines in " + recordedTrackListener_.name);
-        if (lineLength <= 0) {
+        var startTime = new Date().getTime() / 1000;
+
+        var linesNum = recordedTrackMsg.lines2D.length;
+        console.log("Found " + linesNum + " lines in " + recordedTrackListener_.name);
+        if (linesNum <= 0) {
             return;
         }
 
-        var linesNum = recordedTrackMsg.lines2D.length;
         var pointNumOfLastLine = recordedTrackMsg.lines2D[linesNum - 1].line2D.length;
         if (recordedPointNumOfLastLineLast_ != pointNumOfLastLine) {
             console.log("I am recording.");
             currentLocation_ = [recordedTrackMsg.lines2D[linesNum - 1].line2D[pointNumOfLastLine - 1].x, recordedTrackMsg.lines2D[linesNum - 1].line2D[pointNumOfLastLine - 1].y];
+
+            var currentPoint = new ol.geom.Point(transform(currentLocation_));
+            arrowFeature.setGeometry(currentPoint);
+            var lastHeading = arrowFeature.get("rotation");
+
+            arrowFeature.set("rotation", currentHeading_ * Math.PI / 180);
+
+
+            map.getView().setCenter(transform(currentLocation_));
         }
         // else {nothing}
         recordedPointNumOfLastLineLast_ = pointNumOfLastLine;
 
-        for (var i = 0; i < lineLength; ++i) {
+        var recordedLinesFeatures = [];
+        var allPointsNum = 0;
+        for (var i = 0; i < linesNum; ++i) {
             var points = recordedTrackMsg.lines2D[i];
-            var addLineWkt = "LINESTRING(";
+            var lineFeatures = [];
+            allPointsNum += points.line2D.length;
             for (var j = 0; j < points.line2D.length; ++j) {
-                addLineWkt += points.line2D[j].x + " " + points.line2D[j].y;
+                lineFeatures.push(points.line2D[j].x + " " + points.line2D[j].y);
             }
-            addLineWkt += ")";
-            console.log("addLineWkt: " + addLineWkt);
-            recordedTrackLayer_.getSource().addFeature(new ol.Feature(getGeometry(addLineWkt)));
+            var lineWkt = 'LINESTRING(' +lineFeatures.join(',')+ ')';
+            recordedLinesFeatures.push(new ol.Feature(getGeometry(lineWkt)));
         }
+        recordedTrackLayer_.getSource().clear();
+        recordedTrackLayer_.getSource().addFeatures(recordedLinesFeatures);
+        console.log("recordedTrackLayer_.getSource().getFeatures().length: " + recordedTrackLayer_.getSource().getFeatures().length);
+
+        var endTime = new Date().getTime() / 1000;
+        console.log(startTime + " --> " + endTime + "; recordedTrack cost " + (endTime - startTime) + "; allPointsNum: " + allPointsNum);
     }
 );
 
@@ -143,7 +183,7 @@ var unrecordedTrackLayer_ = new ol.layer.Vector({
     source: new ol.source.Vector(),
     style: new ol.style.Style({
         stroke: new ol.style.Stroke({
-            color: '#FF0000',
+            color: '#0000FF',
             width: 2,
         })
     })
@@ -155,33 +195,49 @@ var unrecordedTrackListener_ = new ROSLIB.Topic({
     name: '/sc_unrecorded_track',
     messageType: 'sc_msgs/Lines2D'
 });
+
 unrecordedTrackListener_.subscribe(
     function (unrecordedTrackMsg) {
-        var lineLength = unrecordedTrackMsg.lines2D.length;
-        console.log("Found " + lineLength + " lines in " + unrecordedTrackListener_.name);
-        if (lineLength <= 0) {
+        var startTime = new Date().getTime() / 1000;
+
+        var linesNum = unrecordedTrackMsg.lines2D.length;
+        console.log("Found " + linesNum + " lines in " + unrecordedTrackListener_.name);
+        if (linesNum <= 0) {
             return;
         }
 
-        var linesNum = unrecordedTrackMsg.lines2D.length;
         var pointNumOfLastLine = unrecordedTrackMsg.lines2D[linesNum - 1].line2D.length;
         if (unrecordedPointNumOfLastLineLast_ != pointNumOfLastLine) {
             console.log("I am not recording.");
             currentLocation_ = [unrecordedTrackMsg.lines2D[linesNum - 1].line2D[pointNumOfLastLine - 1].x, unrecordedTrackMsg.lines2D[linesNum - 1].line2D[pointNumOfLastLine - 1].y];
+            var currentPoint = new ol.geom.Point(transform(currentLocation_));
+            arrowFeature.setGeometry(currentPoint);
+            arrowFeature.set("rotation", currentHeading_ * Math.PI / 180);
+
+            map.getView().setCenter(transform(currentLocation_));
         }
         // else {nothing}
         unrecordedPointNumOfLastLineLast_ = pointNumOfLastLine;
 
-        for (var i = 0; i < lineLength; ++i) {
+        var unrecordedLinesFeatures = [];
+        var allPointsNum = 0;
+        for (var i = 0; i < linesNum; ++i) {
             var points = unrecordedTrackMsg.lines2D[i];
-            var addLineWkt = "LINESTRING(";
+            var lineFeatures = [];
+            allPointsNum += points.line2D.length;
             for (var j = 0; j < points.line2D.length; ++j) {
-                addLineWkt += points.line2D[j].x + " " + points.line2D[j].y;
+                lineFeatures.push(points.line2D[j].x + " " + points.line2D[j].y);
             }
-            addLineWkt += ")";
-            console.log("addLineWkt: " + addLineWkt);
-            unrecordedTrackLayer_.getSource().addFeature(new ol.Feature(getGeometry(addLineWkt)));
+            var lineWkt = 'LINESTRING(' +lineFeatures.join(',')+ ')';
+
+            unrecordedLinesFeatures.push(new ol.Feature(getGeometry(lineWkt)));
         }
+        unrecordedTrackLayer_.getSource().clear();
+        unrecordedTrackLayer_.getSource().addFeatures(unrecordedLinesFeatures);
+        console.log("unrecordedTrackLayer_.getSource().getFeatures().length: " + unrecordedTrackLayer_.getSource().getFeatures().length);
+
+        var endTime = new Date().getTime() / 1000;
+        console.log(startTime + " --> " + endTime + "; unrecordedTrack cost " + (endTime - startTime) + "; allPointsNum: " + allPointsNum);
     }
 );
 

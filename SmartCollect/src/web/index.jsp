@@ -3,6 +3,7 @@
 <html lang="en">
 <head>
   <%@ include file="include/header.jsp" %>
+  <%@ include file="include/footer.jsp" %>
   <script>
     function projlayer() {
         var cityCode = $("#city").val().substr(-4);
@@ -232,7 +233,6 @@
     </div>
   </div>
 
-  <%@ include file="include/footer.jsp" %>
   <script>
     console.log("Task ID should not empty or contains -.");
     $('#newProject').prop('disabled', true);

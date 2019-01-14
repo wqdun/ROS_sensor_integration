@@ -14,15 +14,7 @@
             pubCmd_.publish(clientMsg);
         }
     </script>
-    <style type="text/css">
-        .scimg{
-        width:200px;
-        height:200px;
-        border:1px solid black;
-        }
 
-        .scimg img{width:100%;height:100%;}
-    </style>
 
 </head>
 
@@ -63,48 +55,47 @@
                     <table class="table table-bordered table-striped">
                         <thead>
                         <tr>
-                            <th>Connection: <a href="#" id="connect" class="alert-link"></a></th>
-                            <th colspan="2">Location: <a href="#" id="location" class="alert-link">"bbb", "cc"</a></th>
-                            <th colspan="2" rowspan="2"><p id="warning"></p></th>
+                            <td>Connection: <a href="#" id="connect" class="alert-link"></a></td>
+                            <td colspan="3">Location: <a href="#" id="location" class="alert-link">"bbb", "cc"</a></td>
+                            <td colspan="2" rowspan="2"><p id="warning"></p></td>
                         </tr>
                         <tr>
-                            <th>Satellite: <a href="#" id="num" class="alert-link">""</a></th>
-                            <th>Hdop: <a href="#" id="hdop" class="alert-link">""</a></th>
-                            <th>Speed: <a href="#" id="speed" class="alert-link">""km/h</a></th>
+                            <td>Satellite:<br/> <a href="#" id="num" class="alert-link">""</a></td>
+                            <td>Hdop: <br/><a href="#" id="hdop" class="alert-link">""</a></td>
+                            <td>Speed: <br/><a href="#" id="speed" class="alert-link">""km/h</a></td>
+                            <td>Heading: <br/><a href="#" id="heading" class="alert-link">""km/h</a></td>
 
                         </tr>
                         <tr>
-                            <th>PPS: <a href="#" id="pps" class="alert-link">""</a></th>
-                            <th>GPRMC: <a href="#" id="gprmc" class="alert-link">""</a></th>
-                            <th>LIDAR size: <a href="#" id="lidarpkg" class="alert-link">""</a></th>
+                            <td>PPS: <br/><a href="#" id="pps" class="alert-link">""</a></td>
+                            <td>GPRMC: <br/><a href="#" id="gprmc" class="alert-link">""</a></td>
+                            <td>LIDAR Size: <br/><a href="#" id="lidarpkg" class="alert-link">""</a></td>
+                            <td>Rawins Size: <br/><a href="#" id="raw_ins" class="alert-link">""</a></td>
+                            <td rowspan="3" style="text-align:center;">
+                                <img src="http://<%=ip%>:8080/stream?topic=/camera/image6666" width="160px" alt="http://<%=ip%>:8080/stream?topic=/camera/image6666">
+                            </td>
 
-                            <th colspan="2" rowspan="3">
-                                <div style="float:left">
-                                <img src="http://<%=ip%>:8080/stream?topic=/camera/image6666"
-                                     alt="http://<%=ip%>:8080/stream?topic=/camera/image6666">
-                                </div>
-
-                                <div style="float:right" class="scimg">
-
-
+                            <td  rowspan="3">
                                 <p id="voff"><i class="icon-volume-off" style="color:red;">×</i>
                                     <button id="voice_control" onclick="addVoice();">AlermOn</button>
                                 </p>
                                 <p id="von"><i class="icon-volume-up" style="color:green;"></i></p>
 
-                                <p id="collect"><input id="isRecordCheckBox" type="checkbox" onchange="pubCtrlParams();">COLLECT</p>
-                                </div>
-                            </th>
+                                <p id="collect">COLLECT<input id="isRecordCheckBox" type="checkbox" onchange="pubCtrlParams();"></p>
+
+                            </td>
                         </tr>
                         <tr>
-                            <th>Camera FPS: <a href="#" id="fps" class="alert-link">""</a></th>
-                            <th>IMU status: <a href="#" id="imu_status" class="alert-link">""</a></th>
-                            <th>Image Number: <a href="#" id="piccounts" class="alert-link">""</a></th>
+                            <td>Camera FPS: <br/><a href="#" id="fps" class="alert-link">""</a></td>
+                            <td>IMU Status: <br/><a href="#" id="imu_status" class="alert-link">""</a></td>
+                            <td>Image Num: <br/><a href="#" id="piccounts" class="alert-link">""</a></td>
+                            <td>LIDAR Rpm: <br/><a href="#" id="velodyne_rpm" class="alert-link">""</a></td>
 
                         </tr>
                         <tr>
-                            <th colspan="2">SC time: <a href="#" id="unix_time" class="alert-link">""</a></th>
-                            <th>Disk usage: <a href="#" id="diskspace" class="alert-link">""</a></th>
+                            <td colspan="2">SC Time: <a href="#" id="unix_time" class="alert-link">""</a></td>
+                            <td>Disk Usage: <a href="#" id="diskspace" class="alert-link">""</a></td>
+                            <td>reserved: <a href="#" id="reserved" class="alert-link">""</a></td>
                         </tr>
 
                         </thead>
@@ -202,6 +193,7 @@
         // below is IMU related
         if (message.GPStime < 0) {
             console.log("I got no IMU frame.");
+            document.getElementById('heading').innerHTML = "<font color=red >\"\"</font>";
             document.getElementById('location').innerHTML = "<font color=red >\"\"</font>";
             document.getElementById('speed').innerHTML = "<font color=red >\"\"</font>";
             document.getElementById('imu_status').innerHTML = "<font color=red >\"\"</font>";
@@ -209,6 +201,7 @@
             document.getElementById('hdop').innerHTML = "<font color=red>\"\"</font>";
         }
         else {
+            document.getElementById('heading').innerHTML = "<font color=green>" + message.pitch_roll_heading.z.toFixed(2) + "</font>";
             document.getElementById('location').innerHTML = "<font color=green>" + message.lat_lon_hei.x.toFixed(8) + ", " + message.lat_lon_hei.y.toFixed(8) + "</font>";
             if (message.speed > 120) {
                 document.getElementById('speed').innerHTML = "<font color=red>" + message.speed.toFixed(2) + "km/h</font>";
@@ -262,6 +255,7 @@
             console.log("I got no pps status.");
             document.getElementById('pps').innerHTML = "<font color=red>Absent</font>";
             document.getElementById('gprmc').innerHTML = "<font color=red>Absent</font>";
+            document.getElementById('velodyne_rpm').innerHTML = "<font color=red>\"\"</font>";
         }
         else {
             if (message.pps_status.indexOf("PPS locked") < 0) {
@@ -277,6 +271,8 @@
             else {
                 document.getElementById('gprmc').innerHTML = "<font color=green>" + message.is_gprmc_valid + "</font>";
             }
+
+            document.getElementById('velodyne_rpm').innerHTML = message.velodyne_rpm.toFixed(2);
         }
 
         // below is project monitor related
@@ -287,6 +283,16 @@
         else {
             $("#piccounts")[0].innerHTML = message.img_num;
             $("#lidarpkg")[0].innerHTML = (message.lidar_size - 1) + "M";
+        }
+
+        if(message.raw_ins_size < 1024) {
+            document.getElementById('raw_ins').innerHTML = message.raw_ins_size + "B";
+        }
+        else if(message.raw_ins_size < 1048576) {
+            document.getElementById('raw_ins').innerHTML = (message.raw_ins_size / 1024).toFixed(2) + "KB";
+        }
+        else {
+            document.getElementById('raw_ins').innerHTML = (message.raw_ins_size / 1048576).toFixed(2) + "MB";
         }
 
         // below is sc check

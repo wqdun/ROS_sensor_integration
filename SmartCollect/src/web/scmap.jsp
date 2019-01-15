@@ -54,15 +54,30 @@ var ros_ = new ROSLIB.Ros();
 ros_.connect('ws://<%=ip%>:9090');
 
 var currentLocation_ = [116.2394822, 40.0719897];
+
+
+var sdMapLayer = function() {
+    // 获取标准地图图层，用于地图底图显示
+    var sdMapLayer = new ol.layer.Tile({
+        source : new ol.source.XYZ({
+            wrapX : true,
+            projection : 'EPSG:900913',
+            url:'http://<%=ip%>/roadmap/{z}/{x}/{y}.png'
+        })
+    });
+    return sdMapLayer;
+}
+
 var map = new ol.Map({
     target: 'map',
     // layer图层
-    layers : [],
+    layers : [ sdMapLayer() ],
     view: new ol.View({
         center: transform(currentLocation_),
-        zoom: 15,
-        minZoom: 0,
-        maxZoom: 21
+        zoom: 10,
+        minZoom: 6,
+        maxZoom: 17,
+        rotation: 0 * Math.PI / 180
     })
 });
 
@@ -109,7 +124,8 @@ var centerListener = new ROSLIB.Topic({
 var currentHeading_ = 0;
 centerListener.subscribe(function (message) {
     currentHeading_ = message.pitch_roll_heading.z;
-
+    currentHeading_ += map.getView().getRotation() * 180 / Math.PI;
+    console.log("map.getView().getRotation(): " + map.getView().getRotation());
     console.log('currentHeading_: ' + currentHeading_);
 });
 

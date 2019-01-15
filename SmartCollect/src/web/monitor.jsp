@@ -282,7 +282,7 @@
         }
         else {
             $("#piccounts")[0].innerHTML = message.img_num;
-            $("#lidarpkg")[0].innerHTML = (message.lidar_size - 1) + "M";
+            $("#lidarpkg")[0].innerHTML = (((message.lidar_size - 1) < 0)? message.lidar_size: (message.lidar_size - 1)) + "M";
         }
 
         if(message.raw_ins_size < 1024) {

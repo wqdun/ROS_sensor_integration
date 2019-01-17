@@ -37,7 +37,7 @@ void ImagesTimestamper::ReadSerial() {
     LOG(INFO) << __FUNCTION__ << " start.";
     const char HEADER_0 = 0xaa;
     const char HEADER_1 = 0x55;
-    const size_t FRAME_LENGTH = 20;
+    const size_t FRAME_LENGTH = 22;
     const size_t CHECKSUM_LENGTH = 4;
     const size_t BUFFER_SIZE = 1000;
     unsigned char buf[BUFFER_SIZE];
@@ -91,7 +91,7 @@ void ImagesTimestamper::ReadSerial() {
 
 void ImagesTimestamper::ParseFrame(const std::string &_frame) {
     DLOG(INFO) << __FUNCTION__ << " start.";
-    const size_t _FRAME_LENGTH = 20;
+    const size_t _FRAME_LENGTH = 22;
 
 #ifndef NDEBUG
     for(auto &c: _frame) {
@@ -114,17 +114,20 @@ void ImagesTimestamper::ParseFrame(const std::string &_frame) {
 
     uchar2Uint32_t uchar2Uint32;
     for(size_t i = 0; i < 4; ++i) {
-        // [3] --> [14]
+        // [3] --> [10]
         uchar2Uint32.uCharData[i] = _frame[13 - i];
     }
     const int32_t imagesGpsTimeSec = uchar2Uint32.uint32Data;
     for(size_t i = 0; i < 4; ++i) {
-        // [3] --> [10]
+        // [3] --> [14]
         uchar2Uint32.uCharData[i] = _frame[17 - i];
     }
     const uint32_t imagesGpsTimeNsec = uchar2Uint32.uint32Data;
     LOG(INFO) << "imagesGpsTimeNsec: " << imagesGpsTimeNsec;
     const double imagesGpsTime = imagesGpsTimeSec + imagesGpsTimeNsec / 100000000.;
+
+    const int speed = static_cast<int>(_frame[18]);
+    const char posStatus = static_cast<char>(_frame[19]);
 
     std::fstream file(imagesTimestampFile_, std::ios::out | std::ios::app);
     if(!file) {
@@ -134,7 +137,9 @@ void ImagesTimestamper::ParseFrame(const std::string &_frame) {
 
     file << std::fixed
          << imagesId << ","
-         << imagesGpsTime << "\n";
+         << imagesGpsTime << ","
+         << speed << ","
+         << posStatus << "\n";
 
     file.close();
 }

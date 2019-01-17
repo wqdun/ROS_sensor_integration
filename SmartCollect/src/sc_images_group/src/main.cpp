@@ -184,7 +184,7 @@ bool ParseAssistImgToStructList(std::vector<string> &namelist,std::vector<Camera
 	CameraElements m_CameraElements;
 	//m_CameraElements.SrcName=namelist.at(i);
 	ParseNameProcess(namelist.at(i),m_CameraElements);
-
+	
 	AssistImage.push_back(m_CameraElements);
     }
 
@@ -214,7 +214,7 @@ bool ParseCoreImgToStructList(std::string PostPath,std::vector<CameraElements> &
 	    if(i==2)
 		m_CameraElements.SrcName=temp+".jpg";//src name
 	}
-
+	
 	ParseNameProcess(m_CameraElements.SrcName,m_CameraElements);
 	CoreImage.push_back(m_CameraElements);
     }
@@ -293,7 +293,7 @@ bool GetNearestImg(CameraElements &m_CameraElements,std::vector<CameraElements> 
 	}
 
     }
-    if(min_diff<0.01)
+    if(min_diff<0.05)
 	return true;
     return false;
 }
@@ -305,12 +305,12 @@ void GetPanoGroup(std::vector<CameraElements> &leftImgList,
 		   double &left_diff,double &right_diff)
 {
 
-    for(int i=3;i<middleImgList.size();i++)
+    for(int i=0;i<middleImgList.size();i++)
     {
 	PanoGroupElement m_PanoGroupElement;
 	m_PanoGroupElement.middleImg=middleImgList.at(i).SysName;//待替换成重命名后的名字
 	m_PanoGroupElement.middleImgSrcName=middleImgList.at(i).SrcName;//原始命名，匹配率检查时用
-
+	
 	std::string outImgName="";
         bool flag=GetNearestImg(middleImgList.at(i),leftImgList,left_diff,outImgName);
 	if(flag==false)
@@ -344,6 +344,7 @@ void SavePanoGroupList(std::string file_path,std::vector<PanoGroupElement> &Pano
 	ofn<<"#"<<std::endl;
 
     }
+    ofn.close();
 
 }
 bool ImgGroupProcess(std::string &project_path,std::vector<PanoGroupElement> &PanoGroupList)
@@ -370,7 +371,7 @@ bool ImgGroupProcess(std::string &project_path,std::vector<PanoGroupElement> &Pa
    getformatList(cmd3,temp);
    if(temp.size()==0)
    {
-	std::cout<<"there is no RTimgpost.txt"<<std::endl;
+	std::cout<<"there is no RTimgPost.txt"<<std::endl;
         return 0;
     }
 
@@ -417,7 +418,7 @@ void saveComputeMatchResult(std::string &Matchresult_path,std::vector<string> lo
 
     ofn<<"totalNum = "<<totalsize<<std::endl;
     std::cout<<"totalNum = "<<totalsize<<std::endl;
-
+    
     double probability = 100.0*lostImgList.size()/totalsize;
     ofn<<"Pano Img lost probability =  "<<probability<<"%"<<std::endl;
     std::cout<<"Pano Img lost probability =  "<<probability<<"%"<<std::endl;
@@ -430,11 +431,7 @@ void saveComputeMatchResult(std::string &Matchresult_path,std::vector<string> lo
 	ofn<<lostImgList.at(i)<<std::endl;
 	std::cout<<lostImgList.at(i)<<std::endl;
     }
-
-
-
-
-
+    ofn.close();
 }
 bool ComputeMatching(std::string file_path,std::vector<PanoGroupElement> &m_PanoGroupList,std::vector<std::string> &lostImgList,int &allsize)
 {
@@ -461,7 +458,7 @@ bool ComputeMatching(std::string file_path,std::vector<PanoGroupElement> &m_Pano
     {
 	std::string srcImgName=srcImglist.at(i);
         bool flag=isImgLost(srcImgName,m_PanoGroupList);
-	if(flag==false&&!srcImgName.empty())
+	if(flag==false&&!srcImgName.empty()) 
         {
 	    lostImgList.push_back(srcImgName);
 	}
@@ -471,21 +468,6 @@ bool ComputeMatching(std::string file_path,std::vector<PanoGroupElement> &m_Pano
 
 int main(int argc,char **argv)
 {
-
-
-/*
-string cmd="cd /media/guowenxian/数据/0000-1-10000-181206/Rawdata/Image/;ls *.jpg";
-vector<string> list;
-getformatList(cmd,list);
-ofstream ofn("/media/guowenxian/数据/0000-1-10000-181206/Rawdata/Image/RTimgPost.txt");
-for(int i=0;i<list.size();i++)
-{
-ofn<<i<<"    "<<"20181206******"<<to_string(i)<<"    "<<list.at(i).substr(0,list.at(i).length()-4);
-ofn<<"    "<<"****"<<"    "<<"****"<<"    "<<"****"<<"    "<<"****"<<"    "<<"****"<<"    "<<"****"<<"    "<<"****"<<"    "<<"****"<<"    "<<"****"<<"    "<<"****"<<"    "<<"****"<<endl;
-}
-return 0;
-*/
-
     if(argc!=2)
     {
 	std::cout<<"input paramers is err,should be ./test project_path"<<std::endl;
@@ -498,23 +480,26 @@ return 0;
 
 //----------------------------------
     std::vector<imageTraceDataFormat> m_imageTraceDataList;
-
-    ReadToVector(m_imageTraceDataList);
+    std::cout<<"start group image..."<<std::endl;
+ //   ReadToVector(m_imageTraceDataList);
 
     std::vector<PanoGroupElement> m_PanoGroupList;
     ImgGroupProcess(project_path,m_PanoGroupList);
+    std::cout<<"group image end!"<<std::endl;
 
+    std::cout<<"save imglist.txt ..."<<std::endl;
     std::string panofile_path=project_path+"Rawdata/Image/imglist.txt";
     SavePanoGroupList(panofile_path,m_PanoGroupList);
+    std::cout<<"save imglist.txt end!"<<std::endl;
 //统计匹配率
-    std::string alllist_path=project_path+"Rawdata/Image/alllist.txt";
+  /*  std::string alllist_path=project_path+"Rawdata/Image/alllist.txt";
     std::vector<std::string> lostPanoImg;
     int allsize=0;
-    // ComputeMatching(alllist_path,m_PanoGroupList,lostPanoImg,allsize);
+    ComputeMatching(alllist_path,m_PanoGroupList,lostPanoImg,allsize);
 
-    // std::string lostPano_path=project_path+"Process/PanoLostLog.txt";
-    // saveComputeMatchResult(lostPano_path,lostPanoImg,allsize);
-
+    std::string lostPano_path=project_path+"Process/PanoLostLog.txt";
+    saveComputeMatchResult(lostPano_path,lostPanoImg,allsize);
+*/
     return 0;
 }
 

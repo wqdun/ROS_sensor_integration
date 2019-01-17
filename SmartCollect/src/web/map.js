@@ -1,5 +1,4 @@
-
-    console.log("********************************");
+console.log("********************************");
 
 // 坐标转换，将WGS84坐标系转换成Web Mercator坐标
 var transform = function(coordinate) {

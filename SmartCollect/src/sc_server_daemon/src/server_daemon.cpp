@@ -147,7 +147,7 @@ void ServerDaemon::RestartSelf() {
     const std::string launchScript("/opt/smartc/src/tools/launch_project.sh");
     (void)public_tools::PublicTools::PopenWithoutReturn("bash " + launchScript + " restart_server &");
 
-    LOG(INFO) << __FUNCTION__ << " start.";
+    LOG(INFO) << __FUNCTION__ << " end.";
 }
 
 bool ServerDaemon::IsScTimeBad() {

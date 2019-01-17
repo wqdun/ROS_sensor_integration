@@ -76,7 +76,7 @@
                             </td>
 
                             <td  rowspan="3">
-                                <p id="voff"><i class="icon-volume-off" style="color:red;">×</i>
+                                <p id="voff" style="display: block;"><i class="icon-volume-off" style="color:red;">×</i>
                                     <button id="voice_control" onclick="addVoice();">AlermOn</button>
                                 </p>
                                 <p id="von"><i class="icon-volume-up" style="color:green;"></i></p>
@@ -138,9 +138,9 @@
         $("#voff").hide()
         bgMusic.play();
     }
-
-    // window.onload = addVoice;
-
+    // window.onload=function(){
+    //     bgMusic.play();
+    // }
     var url_ = window.location.host;
     console.log("window.location.host: " + url_);
 
@@ -336,7 +336,7 @@
             ++voiceCounter;
             voiceCounter %= 10;
             console.log("NOISE!");
-            addVoice();
+            bgMusic.play();
 
             // if(0 == voiceCounter) {
             //     addVoice();

@@ -12,8 +12,7 @@
     <script type="text/javascript">
     // 坐标转换，将WGS84坐标系转换成Web Mercator坐标
     var transform = function (coordinate) {
-        var coor = ol.proj.transform(coordinate, 'EPSG:4326', 'EPSG:900913');
-        return coor;
+        return ol.proj.transform(coordinate, 'EPSG:4326', 'EPSG:900913');
     };
 
     // 将WGS84坐标系的WKT字符串转换成Openlayer的Geometry对象
@@ -58,14 +57,13 @@ var currentLocation_ = [116.2394822, 40.0719897];
 
 var sdMapLayer = function() {
     // 获取标准地图图层，用于地图底图显示
-    var sdMapLayer = new ol.layer.Tile({
+    return new ol.layer.Tile({
         source : new ol.source.XYZ({
-            wrapX : true,
-            projection : 'EPSG:900913',
-            url : 'http://<%=ip%>/roadmap/{z}/{x}/{y}.png'
+        wrapX : true,
+        projection : 'EPSG:900913',
+        url : 'http://<%=ip%>/roadmap/{z}/{x}/{y}.png'
         })
     });
-    return sdMapLayer;
 }
 
 var map = new ol.Map({
@@ -77,7 +75,8 @@ var map = new ol.Map({
         zoom: 10,
         minZoom: 6,
         maxZoom: 17,
-        rotation: 0 * Math.PI / 180
+        // rotation in rad
+        rotation: 0,
     })
 });
 
@@ -109,7 +108,7 @@ var arrowLayer = new ol.layer.Vector({
                 rotation : r,
                 scale: 0.04
             })
-        })
+        });
         return [ style ];
     }
 });
@@ -158,7 +157,7 @@ recordedTrackListener_.subscribe(
         }
 
         var pointNumOfLastLine = recordedTrackMsg.lines2D[linesNum - 1].line2D.length;
-        if (recordedPointNumOfLastLineLast_ != pointNumOfLastLine) {
+        if (recordedPointNumOfLastLineLast_ !== pointNumOfLastLine) {
             console.log("I am recording.");
             currentLocation_ = [recordedTrackMsg.lines2D[linesNum - 1].line2D[pointNumOfLastLine - 1].x, recordedTrackMsg.lines2D[linesNum - 1].line2D[pointNumOfLastLine - 1].y];
 
@@ -223,7 +222,7 @@ unrecordedTrackListener_.subscribe(
         }
 
         var pointNumOfLastLine = unrecordedTrackMsg.lines2D[linesNum - 1].line2D.length;
-        if (unrecordedPointNumOfLastLineLast_ != pointNumOfLastLine) {
+        if (unrecordedPointNumOfLastLineLast_ !== pointNumOfLastLine) {
             console.log("I am not recording.");
             currentLocation_ = [unrecordedTrackMsg.lines2D[linesNum - 1].line2D[pointNumOfLastLine - 1].x, unrecordedTrackMsg.lines2D[linesNum - 1].line2D[pointNumOfLastLine - 1].y];
             var currentPoint = new ol.geom.Point(transform(currentLocation_));

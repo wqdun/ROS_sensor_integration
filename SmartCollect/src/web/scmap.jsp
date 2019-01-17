@@ -62,7 +62,7 @@ var sdMapLayer = function() {
         source : new ol.source.XYZ({
             wrapX : true,
             projection : 'EPSG:900913',
-            url:'http://<%=ip%>/roadmap/{z}/{x}/{y}.png'
+            url : 'http://<%=ip%>/roadmap/{z}/{x}/{y}.png'
         })
     });
     return sdMapLayer;

@@ -51,8 +51,8 @@ mount_data_disk() {
     log_with_time "I have ${data_disk_partition_num} disk partition: ${data_disk_partition} in ${data_disk}."
 
     mkdir -p /opt/smartc/record/
-    mount "$data_disk_partition" /opt/smartc/record/
-    log_with_time "$FUNCNAME success."
+    mount "$data_disk_partition" /opt/smartc/record/ >>$result_log 2>&1
+    log_with_time "$FUNCNAME return $?."
     return
 }
 
@@ -176,8 +176,8 @@ do_start() {
     run_tomcat
     sleep 10
     run_rosbridge
-    sleep 10
-    run_minemap_service
+    # sleep 10
+    # run_minemap_service
 
     log_with_time "$FUNCNAME return $?."
 }

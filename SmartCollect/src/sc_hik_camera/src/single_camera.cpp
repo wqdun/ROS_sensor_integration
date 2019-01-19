@@ -70,9 +70,9 @@ void SingleCamera::PublishImage() {
     DLOG(INFO) << __FUNCTION__ << " start.";
 
     cv::Mat imageResized;
-    // mat2PubMutex_.lock();
+    mat2PubMutex_.lock();
     cv::resize(mat2Pub_, imageResized, cv::Size(mat2Pub_.cols / 10, mat2Pub_.rows / 10));
-    // mat2PubMutex_.unlock();
+    mat2PubMutex_.unlock();
     sensor_msgs::ImagePtr imgMsg = cv_bridge::CvImage(std_msgs::Header(), "bgr8", imageResized).toImageMsg();
     pubImage_.publish(imgMsg);
 
@@ -159,10 +159,10 @@ void __stdcall SingleCamera::ImageCB(unsigned char *pData, MV_FRAME_OUT_INFO_EX 
         return;
     }
 
-    // pSingleCamera->mat2PubMutex_.lock();
+    pSingleCamera->mat2PubMutex_.lock();
     pSingleCamera->mat2Pub_.create(pFrameInfo->nHeight, pFrameInfo->nWidth, CV_8UC3);
     memcpy(pSingleCamera->mat2Pub_.data, pDataForRGB, pFrameInfo->nWidth * pFrameInfo->nHeight * 3);
-    // pSingleCamera->mat2PubMutex_.unlock();
+    pSingleCamera->mat2PubMutex_.unlock();
     if(pDataForRGB) {
         free(pDataForRGB);
         pDataForRGB = NULL;
@@ -186,9 +186,9 @@ void __stdcall SingleCamera::ImageCB(unsigned char *pData, MV_FRAME_OUT_INFO_EX 
     const std::string picFileName(pSingleCamera->imagePath_ + std::to_string(triggerTimeDaySec) + "_" + std::to_string(pFrameInfo->nFrameNum) + "_" + std::to_string(deviceTimeStamp) + "_" + std::to_string(_cameraID) + ".jpg");
     LOG(INFO) << "picFileName: " << picFileName;
     if(s_pManager_->isSaveImg_) {
-        // pSingleCamera->mat2PubMutex_.lock();
+        pSingleCamera->mat2PubMutex_.lock();
         SaveImageTask *pSaveImageTask = new SaveImageTask(pSingleCamera->mat2Pub_, *pFrameInfo, picFileName);
-        // pSingleCamera->mat2PubMutex_.unlock();
+        pSingleCamera->mat2PubMutex_.unlock();
         s_pManager_->threadPool_.append_task(pSaveImageTask);
     }
 

@@ -8,7 +8,7 @@
     function projlayer() {
         var cityCode = $("#city").val().substr(-4);
         var dayNightCode = 1;
-        if ('白天' != $("#dayORnight").val()) {
+        if ('Day' !== $("#dayORnight").val()) {
             dayNightCode = 2;
         }
 
@@ -58,18 +58,18 @@
             &times;
           </button>
           <h4 class="modal-title" id="myModalLabel">
-              新建工程
+              New Project
           </h4>
         </div>
         <div class="modal-body">
-          提交新工程：<label id="projname"></label>
+          Submit Project: <label id="projname"></label>
         </div>
         <div class="modal-footer">
           <button type="button" class="btn btn-default" data-dismiss="modal">
-            取消
+            Cancel
           </button>
           <button type="button" class="btn btn-primary" onclick="createProject();" data-dismiss="modal">
-            提交
+            Submit
           </button>
         </div>
       </div>
@@ -84,19 +84,19 @@
             &times;
           </button>
           <h4 class="modal-title" id="optModalLabel">
-            提交操作
+            Submit
           </h4>
         </div>
         <div class="modal-body">
-          确认要提交操作？<label id="optname"></label>
+          Confirm Operation: <label id="optname"></label>
           <input type="hidden" id="optid" value="0"/>
         </div>
         <div class="modal-footer">
           <button type="button" class="btn btn-default" data-dismiss="modal">
-            取消
+            Cancel
           </button>
           <button type="button" class="btn btn-primary" data-dismiss="modal" id="cmtBtn">
-            提交
+            Submit
           </button>
         </div>
       </div>
@@ -137,7 +137,7 @@
           <div class="widget ">
             <div class="widget-header">
               <i class="icon-user"></i>
-              <h3>系统设置</h3>
+              <h3>SETTINGS</h3>
             </div>
             <div class="widget-content">
               <div class="tabbable">
@@ -145,7 +145,7 @@
                   <div class="tab-pane active" id="profile">
                     <div id="edit-profile" class="form-horizontal"/>
                     <div class="control-group">
-                      <label class="control-label">工程信息</label>
+                      <label class="control-label">Project Setting</label>
                       <div class="controls">
                         <select class="form-control" id='city'>
                           <option>China-1001</option>
@@ -153,27 +153,27 @@
                           <option disabled>Test-9999</option>
                         </select>
                         <select class="form-control" id='dayORnight'>
-                          <option>白天</option>
-                          <option>晚上</option>
+                          <option>Day</option>
+                          <option>Night</option>
                         </select>
                       </div>
                     </div>
                     <div class="control-group">
                       <label class="control-label"></label>
                       <div class="controls">
-                        <input class="form-control" placeholder="任务ID" maxlength=1 id='pid'>
+                        <input class="form-control" placeholder="Task ID" maxlength=1 id='pid'>
                         <select class="form-control" id='deviceID'>
-                          <option>设备号-0001</option>
-                          <option>设备号-0002</option>
-                          <option>设备号-0003</option>
-                          <option>设备号-0004</option>
-                          <option>设备号-0005</option>
-                          <option>设备号-0006</option>
-                          <option>设备号-0007</option>
-                          <option>设备号-0008</option>
-                          <option>设备号-0009</option>
-                          <option>设备号-0010</option>
-                          <option>设备号-0011</option>
+                          <option>SC0001</option>
+                          <option>SC0002</option>
+                          <option>SC0003</option>
+                          <option>SC0004</option>
+                          <option>SC0005</option>
+                          <option>SC0006</option>
+                          <option>SC0007</option>
+                          <option>SC0008</option>
+                          <option selected>SC0009</option>
+                          <option>SC0010</option>
+                          <option>SC0011</option>
                         </select>
                       </div>
                     </div>
@@ -184,16 +184,16 @@
                             data-target="#myModal" onclick="smartcCheck_onclick();">SmartC Check
                         </button>
                         <button type="button" class="btn btn-inverse" id="newProject" data-toggle="modal"
-                            data-target="#myModal" onclick="projlayer();">新建工程
+                            data-target="#myModal" onclick="projlayer();">Build Project
                         </button>
                         <button class="btn btn-inverse" id="clear" data-toggle="modal"
-                            data-target="#optModal">关闭工程
+                            data-target="#optModal">Close Project
                         </button>
                       </div>
                     </div>
 
                     <div class="control-group">
-                      <label class="control-label">选择工程</label>
+                      <label class="control-label">Collected Projects</label>
                       <div class="controls">
                         <select class="selectpicker" multiple id='dirname'>
                         </select>
@@ -210,16 +210,16 @@
                     <br/>
                     <div class="form-actions">
                       <button class="btn btn-inverse" id="removeData" data-toggle="modal"
-                          data-target="#optModal">删除数据
+                          data-target="#optModal">Delete Data
                       </button>
                       <button class="btn btn-inverse" id="fixData" data-toggle="modal"
-                          data-target="#optModal">整理数据
+                          data-target="#optModal">Collate Data
                       </button>
                       <button class="btn btn-inverse" id="reboot" data-toggle="modal"
-                          data-target="#optModal">重启
+                          data-target="#optModal">Reboot OS
                       </button>
                       <button class="btn btn-inverse" id="shutdown" data-toggle="modal"
-                          data-target="#optModal">关机
+                          data-target="#optModal">Shutdown OS
                       </button>
                     </div>
                     </div>
@@ -249,7 +249,7 @@
         // 苹果、谷歌内核
         webKit: u.indexOf('AppleWebKit') > -1,
         // 火狐内核
-        gecko: u.indexOf('Gecko') > -1 && u.indexOf('KHTML') == -1,
+        gecko: u.indexOf('Gecko') > -1 && u.indexOf('KHTML') === -1,
         // 是否为移动终端
         mobile: !!u.match(/AppleWebKit.*Mobile.*/)||!!u.match(/AppleWebKit/),
         // ios终端
@@ -261,11 +261,11 @@
         // 是否iPad
         iPad: u.indexOf('iPad') > -1,
         // 是否web应该程序，没有头部与底部
-        webApp: u.indexOf('Safari') == -1
+        webApp: u.indexOf('Safari') === -1
       };
     } (),
     language: (navigator.browserLanguage || navigator.language).toLowerCase()
-  }
+  };
   if(navigator.userAgent.toLowerCase().indexOf('mobile') > -1) {
     console.log("I am a mobile browser.");
     $('.selectpicker').selectpicker('mobile');
@@ -299,7 +299,7 @@
         $("#pathcontent").html(fixPercent + "%  (" + message.process_num + "/" + message.total_file_num + ")");
 
         console.log("city_code: " + message.project_info.city_code);
-        if(0 != message.project_info.city_code || message.total_file_num != message.process_num) {
+        if(0 !== message.project_info.city_code || message.total_file_num !== message.process_num) {
           console.log("You cannot fix data when project running or being fixed.");
           $('#fixData').prop('disabled', true);
         }
@@ -308,7 +308,7 @@
         }
 
         // $('#smartcCheck').prop('disabled', !$('#newProject').prop("disabled"));
-        if(0 == message.project_info.city_code) {
+        if(0 === message.project_info.city_code) {
             console.log("No project running.");
             // enable input
             $('#city').prop('disabled', false);
@@ -351,11 +351,11 @@
             }
         }
 
-        if(0 == doItOnce) {
+        if(0 === doItOnce) {
           doItOnce = 1;
           console.log("I found " + message.projects.length + " projects in " + serverListener_.name);
             for(x in message.projects) {
-                if(0 == x % 2) {
+                if(0 === x % 2) {
                     $("#dirname").append("<option data-content=\"<span class='label label-success'>" +  message.projects[x] + "</span>\">" + message.projects[x] + "</option>");
                 }
                 else {
@@ -368,35 +368,35 @@
     );
 
     $('#pid').bind('input propertychange', function() {
-      $('#newProject').prop('disabled', $('#pid').val().length != 1 || $('#pid').val().indexOf("-") >= 0 || 2 === document.getElementById("city").selectedIndex);
+      $('#newProject').prop('disabled', $('#pid').val().length !== 1 || $('#pid').val().indexOf("-") >= 0 || 2 === document.getElementById("city").selectedIndex);
     });
     $('#city').bind('input propertychange', function() {
-      $('#newProject').prop('disabled', $('#pid').val().length != 1 || $('#pid').val().indexOf("-") >= 0 || 2 === document.getElementById("city").selectedIndex);
+      $('#newProject').prop('disabled', $('#pid').val().length !== 1 || $('#pid').val().indexOf("-") >= 0 || 2 === document.getElementById("city").selectedIndex);
     });
 
     $('#shutdown').click(function () {
-        $("#optname").html('关机');
+        $("#optname").html('Shutdown OS?');
         $("#optid").text("1");
-    })
+    });
     $('#reboot').click(function () {
-        $("#optname").html('重启');
+        $("#optname").html('Reboot OS?');
         $("#optid").text("2");
-    })
+    });
     $('#clear').click(function () {
-        $("#optname").html('关闭工程');
+        $("#optname").html('Close Project?');
         $("#optid").text("3");
-    })
+    });
 
     $('#fixData').click(function () {
-        $("#optname").html('整理工程: ' + $("#dirname").selectpicker('val'));
+        $("#optname").html('Collate Data: ' + $("#dirname").selectpicker('val'));
         $("#optid").text("4");
-    })
+    });
     $('#removeData').click(function () {
-        $("#optname").html('删除数据: ' + $("#dirname").selectpicker('val'));
+        $("#optname").html('Delete Data: ' + $("#dirname").selectpicker('val'));
         $("#optid").text("5");
         // $('.selectpicker option:selected').remove();
         // $('.selectpicker').selectpicker('refresh');
-    })
+    });
 
     $('#cmtBtn').click(function() {
         var projectSelected = $("#dirname").selectpicker('val');

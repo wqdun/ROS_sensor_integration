@@ -20,7 +20,7 @@
         if (wkt == null) {
             return null;
         }
-        var wktFormat = new ol.format.WKT()
+        var wktFormat = new ol.format.WKT();
         return wktFormat.readGeometry(wkt, {
             // 输入
             "dataProjection": 'EPSG:4326',
@@ -45,6 +45,11 @@
 
 <body>
 <div id="map">
+    <th style="text-align:center;">
+        <label class="checkbox"><input id="isFollowCar" type="checkbox" checked="true">
+            Follow
+        </label>
+    </th>
 </div>
 
 <script>
@@ -54,14 +59,14 @@ ros_.connect('ws://<%=ip%>:9090');
 
 var currentLocation_ = [116.2394822, 40.0719897];
 
-
 var sdMapLayer = function() {
     // 获取标准地图图层，用于地图底图显示
     return new ol.layer.Tile({
         source : new ol.source.XYZ({
-        wrapX : true,
-        projection : 'EPSG:900913',
-        url : 'http://<%=ip%>/roadmap/{z}/{x}/{y}.png'
+            wrapX : true,
+            projection : 'EPSG:900913',
+            // url : 'http://<%=ip%>/roadmap/{z}/{x}/{y}.png'
+            url : 'roadmap/{z}/{x}/{y}.png'
         })
     });
 }
@@ -72,7 +77,7 @@ var map = new ol.Map({
     layers : [ sdMapLayer() ],
     view: new ol.View({
         center: transform(currentLocation_),
-        zoom: 10,
+        zoom: 13,
         minZoom: 6,
         maxZoom: 17,
         // rotation in rad
@@ -98,7 +103,7 @@ var arrowLayer = new ol.layer.Vector({
     source : new ol.source.Vector({
         features: [arrowFeature]
     }),
-    style :function(feature) {
+    style: function(feature) {
         var r = feature.get("rotation");
         console.log("rotation: " + r);
         // 设置点样式
@@ -156,19 +161,19 @@ recordedTrackListener_.subscribe(
             return;
         }
 
+        arrowFeature.set("rotation", currentHeading_ * Math.PI / 180);
         var pointNumOfLastLine = recordedTrackMsg.lines2D[linesNum - 1].line2D.length;
+        var isFollow = document.getElementById("isFollowCar").checked;
         if (recordedPointNumOfLastLineLast_ !== pointNumOfLastLine) {
             console.log("I am recording.");
-            currentLocation_ = [recordedTrackMsg.lines2D[linesNum - 1].line2D[pointNumOfLastLine - 1].x, recordedTrackMsg.lines2D[linesNum - 1].line2D[pointNumOfLastLine - 1].y];
+            if (isFollow) {
+                currentLocation_ = [recordedTrackMsg.lines2D[linesNum - 1].line2D[pointNumOfLastLine - 1].x, recordedTrackMsg.lines2D[linesNum - 1].line2D[pointNumOfLastLine - 1].y];
+                var currentPoint = new ol.geom.Point(transform(currentLocation_));
+                arrowFeature.setGeometry(currentPoint);
+                map.getView().setCenter(transform(currentLocation_));
 
-            var currentPoint = new ol.geom.Point(transform(currentLocation_));
-            arrowFeature.setGeometry(currentPoint);
-            var lastHeading = arrowFeature.get("rotation");
-
-            arrowFeature.set("rotation", currentHeading_ * Math.PI / 180);
-
-
-            map.getView().setCenter(transform(currentLocation_));
+            }
+            // else {}
         }
         // else {nothing}
         recordedPointNumOfLastLineLast_ = pointNumOfLastLine;
@@ -221,15 +226,19 @@ unrecordedTrackListener_.subscribe(
             return;
         }
 
+        arrowFeature.set("rotation", currentHeading_ * Math.PI / 180);
+
         var pointNumOfLastLine = unrecordedTrackMsg.lines2D[linesNum - 1].line2D.length;
+        var isFollow = document.getElementById("isFollowCar").checked;
         if (unrecordedPointNumOfLastLineLast_ !== pointNumOfLastLine) {
             console.log("I am not recording.");
-            currentLocation_ = [unrecordedTrackMsg.lines2D[linesNum - 1].line2D[pointNumOfLastLine - 1].x, unrecordedTrackMsg.lines2D[linesNum - 1].line2D[pointNumOfLastLine - 1].y];
-            var currentPoint = new ol.geom.Point(transform(currentLocation_));
-            arrowFeature.setGeometry(currentPoint);
-            arrowFeature.set("rotation", currentHeading_ * Math.PI / 180);
-
-            map.getView().setCenter(transform(currentLocation_));
+            if (isFollow) {
+                currentLocation_ = [unrecordedTrackMsg.lines2D[linesNum - 1].line2D[pointNumOfLastLine - 1].x, unrecordedTrackMsg.lines2D[linesNum - 1].line2D[pointNumOfLastLine - 1].y];
+                var currentPoint = new ol.geom.Point(transform(currentLocation_));
+                arrowFeature.setGeometry(currentPoint);
+                map.getView().setCenter(transform(currentLocation_));
+            }
+            // else {}
         }
         // else {nothing}
         unrecordedPointNumOfLastLineLast_ = pointNumOfLastLine;

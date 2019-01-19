@@ -55,8 +55,8 @@
                     <table class="table table-bordered table-striped">
                         <thead>
                         <tr>
-                            <td>Connection: <a href="#" id="connect" class="alert-link"></a></td>
-                            <td colspan="3">Location: <a href="#" id="location" class="alert-link">"bbb", "cc"</a></td>
+                            <td>Connection: <br/><a href="#" id="connect" class="alert-link"></a></td>
+                            <td colspan="3">Location: <br/><a href="#" id="location" class="alert-link">"bbb", "cc"</a></td>
                             <td colspan="2" rowspan="2"><p id="warning"></p></td>
                         </tr>
                         <tr>
@@ -93,9 +93,9 @@
 
                         </tr>
                         <tr>
-                            <td colspan="2">SC Time: <a href="#" id="unix_time" class="alert-link">""</a></td>
-                            <td>Disk Usage: <a href="#" id="diskspace" class="alert-link">""</a></td>
-                            <td>reserved: <a href="#" id="reserved" class="alert-link">""</a></td>
+                            <td colspan="2">SC Time: <br/><a href="#" id="unix_time" class="alert-link">""</a></td>
+                            <td>Disk Usage: <br/><a href="#" id="diskspace" class="alert-link">""</a></td>
+                            <td>Image Stamp Size: <br/><a href="#" id="timestamp_size" class="alert-link">""</a></td>
                         </tr>
 
                         </thead>
@@ -124,7 +124,7 @@
 </div>
 
 <%@ include file="include/footer.jsp" %>
-<audio id="bgMusic" src="ring.mp3" autoplay/>
+<audio id="bgMusic" src="ring.mp3" autoplay></audio>
 <script>
     function AddEvent(warningId, message) {
         var warningMsg = '<div class="alert alert-error"><a href="#" class="close" data-dismiss="alert">&times;</a>【<b style="color:red">'
@@ -135,10 +135,10 @@
     $("#von").hide();
     function addVoice() {
         $("#von").show();
-        $("#voff").hide()
+        $("#voff").hide();
         bgMusic.play();
     }
-    // window.onload=function(){
+    // window.onload=function() {
     //     bgMusic.play();
     // }
     var url_ = window.location.host;
@@ -210,10 +210,10 @@
                 document.getElementById('speed').innerHTML = "<font color=green>" + message.speed.toFixed(2) + "km/h</font>";
             }
             var imuStatus = message.status & 0xF;
-            if (8 == imuStatus) {
+            if (8 === imuStatus) {
                 document.getElementById('imu_status').innerHTML = "<font color=yellow>" + message.status.toString(16) + "</font>";
             }
-            else if (3 == imuStatus) {
+            else if (3 === imuStatus) {
                 document.getElementById('imu_status').innerHTML = "<font color=green>" + message.status.toString(16) + "</font>";
             }
             else {
@@ -232,7 +232,7 @@
                 document.getElementById('hdop').innerHTML = "<font color=red>\"\"</font>";
             }
             else {
-                if (0 == message.no_sv) {
+                if (0 === message.no_sv) {
                     document.getElementById('num').innerHTML = "<font color=red>0</font>";
                 }
                 else {
@@ -251,7 +251,7 @@
         }
 
         // below is velodyne related
-        if (0 == message.pps_status.length) {
+        if (0 === message.pps_status.length) {
             console.log("I got no pps status.");
             document.getElementById('pps').innerHTML = "<font color=red>Absent</font>";
             document.getElementById('gprmc').innerHTML = "<font color=red>Absent</font>";
@@ -265,7 +265,7 @@
                 document.getElementById('pps').innerHTML = "<font color=green>" + message.pps_status + "</font>";
             }
 
-            if ('A' != message.is_gprmc_valid) {
+            if ('A' !== message.is_gprmc_valid) {
                 document.getElementById('gprmc').innerHTML = "<font color=red>" + message.is_gprmc_valid + "</font>";
             }
             else {
@@ -295,8 +295,19 @@
             document.getElementById('raw_ins').innerHTML = (message.raw_ins_size / 1048576).toFixed(2) + "MB";
         }
 
+        if(message.timestamp_size < 1024) {
+            document.getElementById('timestamp_size').innerHTML = message.timestamp_size + "B";
+        }
+        else
+        if(message.timestamp_size < 1048576) {
+            document.getElementById('timestamp_size').innerHTML = (message.timestamp_size / 1024).toFixed(2) + "KB";
+        }
+        else {
+            document.getElementById('timestamp_size').innerHTML = (message.timestamp_size / 1048576).toFixed(2) + "MB";
+        }
+
         // below is sc check
-        if (3 != message.sc_check_camera_num) {
+        if (3 !== message.sc_check_camera_num) {
             warningMap.set(1005, "Camera number is " + message.sc_check_camera_num + ", should be 3");
         }
 
@@ -316,8 +327,8 @@
             warningMap.set(1004, "Disk free space is not enough: " + freePercentage);
         }
 
-        $('#isRecordCheckBox').prop('disabled', ('A' != message.is_gprmc_valid));
-        if (isRecordclicked_ != 0) {
+        $('#isRecordCheckBox').prop('disabled', ('A' !== message.is_gprmc_valid));
+        if (isRecordclicked_ !== 0) {
             --isRecordclicked_;
             console.log("Waiting modify take effect: " + isRecordclicked_);
         }
@@ -332,15 +343,11 @@
             isWarningAdded = true;
         }
 
-        if (0 != warningMap.size) {
+        if (0 !== warningMap.size) {
             ++voiceCounter;
             voiceCounter %= 10;
             console.log("NOISE!");
             bgMusic.play();
-
-            // if(0 == voiceCounter) {
-            //     addVoice();
-            // }
         }
     });
 </script>

@@ -21,6 +21,7 @@ private:
     int lastImgNum_;
 
     long GetRawInsSizeInByte();
+    long GetTimestampFileSizeInByte();
 };
 
 #endif // __PROJECT_MONITOR_H

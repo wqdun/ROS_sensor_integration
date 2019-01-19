@@ -484,6 +484,7 @@ void ServerDaemon::projectMonitorCB(const sc_msgs::DiskInfo::ConstPtr& pDiskInfo
     monitorMsg_.lidar_size = pDiskInfoMsg->lidar_size;
     monitorMsg_.img_save_fps = pDiskInfoMsg->img_save_fps;
     monitorMsg_.raw_ins_size = pDiskInfoMsg->raw_ins_size;
+    monitorMsg_.timestamp_size = pDiskInfoMsg->timestamp_size;
 }
 
 void ServerDaemon::updateProjectInfo(const std::string &projectInfo) {

@@ -38,6 +38,7 @@ void ProjectMonitor::run() {
         diskInfo.lidar_size = (1 == lidarSize.size())? (public_tools::PublicTools::string2num(lidarSize[0], int32_t(-2))): -1;
 
         diskInfo.raw_ins_size = GetRawInsSizeInByte();
+        diskInfo.timestamp_size = GetTimestampFileSizeInByte();
 
         pub2web_.publish(diskInfo);
     }
@@ -55,6 +56,20 @@ long ProjectMonitor::GetRawInsSizeInByte() {
 
     return public_tools::ToolsNoRos::GetFileSizeInByte(files_dat[0]);
 }
+
+long ProjectMonitor::GetTimestampFileSizeInByte() {
+    LOG(INFO) << __FUNCTION__ << " start.";
+
+    std::vector<std::string> timestampFile;
+    (void)public_tools::PublicTools::getFilesInDir(rawdataPath_ + "/IMU/", "timestamp", timestampFile);
+    if(timestampFile.empty() ) {
+        LOG(WARNING) << "Failed to find timestamp file in " << rawdataPath_;
+        return 0;
+    }
+
+    return public_tools::ToolsNoRos::GetFileSizeInByte(timestampFile[0]);
+}
+
 
 
 

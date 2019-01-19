@@ -51,7 +51,7 @@ void ImagesTimestamper::ReadSerial() {
     while(ros::ok() ) {
         bzero(buf, BUFFER_SIZE);
         int nread = read(fd_, buf, BUFFER_SIZE);
-        LOG_EVERY_N(INFO, 50) << "nread: " << nread;
+        LOG_EVERY_N(INFO, 500000) << "nread: " << nread;
         if(nread <= 0) {
             continue;
         }
@@ -123,7 +123,7 @@ void ImagesTimestamper::ParseFrame(const std::string &_frame) {
         uchar2Uint32.uCharData[i] = _frame[17 - i];
     }
     const uint32_t imagesGpsTimeNsec = uchar2Uint32.uint32Data;
-    LOG(INFO) << "imagesGpsTimeNsec: " << imagesGpsTimeNsec;
+    DLOG(INFO) << "imagesGpsTimeNsec: " << imagesGpsTimeNsec;
     const double imagesGpsTime = imagesGpsTimeSec + imagesGpsTimeNsec / 100000000.;
 
     const int speed = static_cast<int>(_frame[18]);

@@ -76,12 +76,11 @@
                             </td>
 
                             <td  rowspan="3">
-                                <p id="voff" style="display: block;"><i class="icon-volume-off" style="color:red;">×</i>
-                                    <button id="voice_control" onclick="addVoice();">AlermOn</button>
+                                <p id="voff" style="display: block;"><button id="voice_control" onclick="addVoice();">AlermOn</button><i class="icon-volume-off" style="color:red;">×</i>
                                 </p>
                                 <p id="von"><i class="icon-volume-up" style="color:green;"></i></p>
 
-                                <p id="collect">COLLECT<input id="isRecordCheckBox" type="checkbox" onchange="pubCtrlParams();"></p>
+                                <p id="collect">COLLECT <input id="isRecordCheckBox" type="checkbox" onchange="pubCtrlParams();"></p>
 
                             </td>
                         </tr>
@@ -94,7 +93,7 @@
                         </tr>
                         <tr>
                             <td colspan="2">SC Time: <br/><a href="#" id="unix_time" class="alert-link">""</a></td>
-                            <td>Disk Usage: <br/><a href="#" id="diskspace" class="alert-link">""</a></td>
+                            <td>Disk Free: <br/><a href="#" id="diskspace" class="alert-link">""</a></td>
                             <td>Image Stamp Size: <br/><a href="#" id="timestamp_size" class="alert-link">""</a></td>
                         </tr>
 
@@ -138,9 +137,7 @@
         $("#voff").hide();
         bgMusic.play();
     }
-    // window.onload=function() {
-    //     bgMusic.play();
-    // }
+
     var url_ = window.location.host;
     console.log("window.location.host: " + url_);
 
@@ -211,7 +208,7 @@
             }
             var imuStatus = message.status & 0xF;
             if (8 === imuStatus) {
-                document.getElementById('imu_status').innerHTML = "<font color=yellow>" + message.status.toString(16) + "</font>";
+                document.getElementById('imu_status').innerHTML = "<font color=#B8860B>" + message.status.toString(16) + "</font>";
             }
             else if (3 === imuStatus) {
                 document.getElementById('imu_status').innerHTML = "<font color=green>" + message.status.toString(16) + "</font>";
@@ -272,7 +269,7 @@
                 document.getElementById('gprmc').innerHTML = "<font color=green>" + message.is_gprmc_valid + "</font>";
             }
 
-            document.getElementById('velodyne_rpm').innerHTML = message.velodyne_rpm.toFixed(2);
+            document.getElementById('velodyne_rpm').innerHTML = "<font color=green>" + message.velodyne_rpm.toFixed(2) + "</font>";
         }
 
         // below is project monitor related

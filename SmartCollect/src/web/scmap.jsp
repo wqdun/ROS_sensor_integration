@@ -44,12 +44,9 @@
 </head>
 
 <body>
-<div id="map">
-    <th style="text-align:center;">
-        <label class="checkbox"><input id="isFollowCar" type="checkbox" checked="true">
-            Follow
-        </label>
-    </th>
+<div id="map"></div>
+<div style="position: absolute; z-index: 2; top: 2%; left: 6%; text-align:center;">
+    <input id="isFollowCar" type="checkbox" checked="true">Follow</input>
 </div>
 
 <script>
@@ -69,7 +66,7 @@ var sdMapLayer = function() {
             url : 'roadmap/{z}/{x}/{y}.png'
         })
     });
-}
+};
 
 var map = new ol.Map({
     target: 'map',
@@ -166,12 +163,11 @@ recordedTrackListener_.subscribe(
         var isFollow = document.getElementById("isFollowCar").checked;
         if (recordedPointNumOfLastLineLast_ !== pointNumOfLastLine) {
             console.log("I am recording.");
+            currentLocation_ = [recordedTrackMsg.lines2D[linesNum - 1].line2D[pointNumOfLastLine - 1].x, recordedTrackMsg.lines2D[linesNum - 1].line2D[pointNumOfLastLine - 1].y];
+            var currentPoint = new ol.geom.Point(transform(currentLocation_));
+            arrowFeature.setGeometry(currentPoint);
             if (isFollow) {
-                currentLocation_ = [recordedTrackMsg.lines2D[linesNum - 1].line2D[pointNumOfLastLine - 1].x, recordedTrackMsg.lines2D[linesNum - 1].line2D[pointNumOfLastLine - 1].y];
-                var currentPoint = new ol.geom.Point(transform(currentLocation_));
-                arrowFeature.setGeometry(currentPoint);
                 map.getView().setCenter(transform(currentLocation_));
-
             }
             // else {}
         }
@@ -227,15 +223,14 @@ unrecordedTrackListener_.subscribe(
         }
 
         arrowFeature.set("rotation", currentHeading_ * Math.PI / 180);
-
         var pointNumOfLastLine = unrecordedTrackMsg.lines2D[linesNum - 1].line2D.length;
         var isFollow = document.getElementById("isFollowCar").checked;
         if (unrecordedPointNumOfLastLineLast_ !== pointNumOfLastLine) {
             console.log("I am not recording.");
+            currentLocation_ = [unrecordedTrackMsg.lines2D[linesNum - 1].line2D[pointNumOfLastLine - 1].x, unrecordedTrackMsg.lines2D[linesNum - 1].line2D[pointNumOfLastLine - 1].y];
+            var currentPoint = new ol.geom.Point(transform(currentLocation_));
+            arrowFeature.setGeometry(currentPoint);
             if (isFollow) {
-                currentLocation_ = [unrecordedTrackMsg.lines2D[linesNum - 1].line2D[pointNumOfLastLine - 1].x, unrecordedTrackMsg.lines2D[linesNum - 1].line2D[pointNumOfLastLine - 1].y];
-                var currentPoint = new ol.geom.Point(transform(currentLocation_));
-                arrowFeature.setGeometry(currentPoint);
                 map.getView().setCenter(transform(currentLocation_));
             }
             // else {}

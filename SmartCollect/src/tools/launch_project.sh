@@ -75,6 +75,28 @@ make_tty_softlink() {
     ln -s ${novatel_usb1} /dev/novatel_usb1
 }
 
+make_serial_softlink_by_path() {
+    log_with_time "$FUNCNAME start, param: $*"
+
+    # sc0010
+    rm /dev/imuRawIns
+    local imuRawIns=$(ls /dev/serial/by-path | grep "usb-0:4:1.0" | head -n1)
+    if [ "AA${imuRawIns}" = "AA" ]; then
+        log_with_time "Failed to find usb-0:4:1.0 in /dev/serial/by-path."
+        return
+    fi
+    ln -s "/dev/serial/by-path/"${imuRawIns} /dev/imuRawIns
+
+    rm /dev/timeStamper
+    local timeStamper=$(ls /dev/serial/by-path | grep "usb-0:2:1.0" | head -n1)
+    if [ "AA${timeStamper}" = "AA" ]; then
+        log_with_time "Failed to find usb-0:2:1.0 in /dev/serial/by-path."
+        return
+    fi
+    ln -s "/dev/serial/by-path/"${timeStamper} /dev/timeStamper
+    # sc0010 end
+}
+
 start_smart_collector_server() {
     log_with_time "$FUNCNAME start, param: $*"
     log_with_time "ROS_PACKAGE_PATH: ${ROS_PACKAGE_PATH}"
@@ -82,6 +104,7 @@ start_smart_collector_server() {
 
     get_sudo_permission
     # make_tty_softlink
+    make_serial_softlink_by_path
 
     get_sudo_permission
     sudo chmod +r /dev/imuRawIns

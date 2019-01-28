@@ -183,7 +183,11 @@ void __stdcall SingleCamera::ImageCB(unsigned char *pData, MV_FRAME_OUT_INFO_EX 
     const double gpsTimeDaySec = fmod(gpsTime, (3600 * 24));
     const double triggerTimeDaySec = gpsTimeDaySec; // - 0.075;
     LOG_FIRST_N(INFO, 1) << "MV_CH089_10GC camera callback delay is ~75 ms.";
-    const std::string picFileName(pSingleCamera->imagePath_ + std::to_string(triggerTimeDaySec) + "_" + std::to_string(pFrameInfo->nFrameNum) + "_" + std::to_string(deviceTimeStamp) + "_" + std::to_string(_cameraID) + ".jpg");
+
+    char triggerTimeDaySecCstr[20];
+    sprintf(triggerTimeDaySecCstr, "%012.6f", triggerTimeDaySec);
+
+    const std::string picFileName(pSingleCamera->imagePath_ + triggerTimeDaySecCstr + "_" + std::to_string(pFrameInfo->nFrameNum) + "_" + std::to_string(deviceTimeStamp) + "_" + std::to_string(_cameraID) + ".jpg");
     LOG(INFO) << "picFileName: " << picFileName;
     if(s_pManager_->isSaveImg_) {
         pSingleCamera->mat2PubMutex_.lock();

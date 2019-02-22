@@ -21,6 +21,12 @@ TriggerSource: 0
 # 3.LevelLow
 TriggerActivation: 0
 
+# To avoid frame loss
+GevSCPD: 2000
+# 0:Off
+# 1:On
+GevPAUSEFrameReception: 1
+
 # 1:BinningHorizontal1
 # 2:BinningHorizontal2
 # 3:BinningHorizontal3

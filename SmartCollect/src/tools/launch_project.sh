@@ -76,31 +76,55 @@ make_tty_softlink() {
 }
 
 make_serial_softlink_by_path() {
-    log_with_time "$FUNCNAME start, param: $*"
+    log_with_time "$FUNCNAME start, param: $*; HOSTNAME: ${HOSTNAME}"
 
-    # sc0010
-    rm /dev/imuRawIns
-    local imuRawIns=$(ls /dev/serial/by-path | grep "usb-0:4:1.0" | head -n1)
-    if [ "AA${imuRawIns}" = "AA" ]; then
-        log_with_time "Failed to find usb-0:4:1.0 in /dev/serial/by-path."
-        return
-    fi
-    ln -s "/dev/serial/by-path/"${imuRawIns} /dev/imuRawIns
+    # sc0010 differ from sc0009
+    if [ "AA${HOSTNAME}" = "AAsc0010" ]; then
+        rm /dev/imuRawIns
+        local imuRawIns=$(ls /dev/serial/by-path | grep "usb-0:4:1.0" | head -n1)
+        if [ "AA${imuRawIns}" = "AA" ]; then
+            log_with_time "Failed to find usb-0:4:1.0 in /dev/serial/by-path."
+            exit 1
+        fi
+        ln -s "/dev/serial/by-path/"${imuRawIns} /dev/imuRawIns
 
-    rm /dev/timeStamper
-    local timeStamper=$(ls /dev/serial/by-path | grep "usb-0:2:1.0" | head -n1)
-    if [ "AA${timeStamper}" = "AA" ]; then
-        log_with_time "Failed to find usb-0:2:1.0 in /dev/serial/by-path."
-        return
+        rm /dev/timeStamper
+        local timeStamper=$(ls /dev/serial/by-path | grep "usb-0:3:1.0" | head -n1)
+        if [ "AA${timeStamper}" = "AA" ]; then
+            log_with_time "Failed to find usb-0:3:1.0 in /dev/serial/by-path."
+            exit 1
+        fi
+        ln -s "/dev/serial/by-path/"${timeStamper} /dev/timeStamper
+    elif [ "AA${HOSTNAME}" = "AAsc0009" ]; then
+        rm /dev/imuRawIns
+        local imuRawIns=$(ls /dev/serial/by-path | grep "usb-0:4:1.0" | head -n1)
+        if [ "AA${imuRawIns}" = "AA" ]; then
+            log_with_time "Failed to find usb-0:4:1.0 in /dev/serial/by-path."
+            exit 1
+        fi
+        ln -s "/dev/serial/by-path/"${imuRawIns} /dev/imuRawIns
+
+        rm /dev/timeStamper
+        local timeStamper=$(ls /dev/serial/by-path | grep "usb-0:2:1.0" | head -n1)
+        if [ "AA${timeStamper}" = "AA" ]; then
+            log_with_time "Failed to find usb-0:2:1.0 in /dev/serial/by-path."
+            exit 1
+        fi
+        ln -s "/dev/serial/by-path/"${timeStamper} /dev/timeStamper
+    else
+        log_with_time "Unknown HOSTNAME: ${HOSTNAME}"
     fi
-    ln -s "/dev/serial/by-path/"${timeStamper} /dev/timeStamper
-    # sc0010 end
 }
 
 start_smart_collector_server() {
     log_with_time "$FUNCNAME start, param: $*"
     log_with_time "ROS_PACKAGE_PATH: ${ROS_PACKAGE_PATH}"
     local _absolute_record_path=$1
+
+    log_with_time "sysctl -a start."
+    sysctl -a >>$result_log 2>&1
+    log_with_time "ulimit start."
+    ulimit -c >>$result_log 2>&1
 
     get_sudo_permission
     # make_tty_softlink
@@ -175,6 +199,10 @@ main() {
         else
             local absolute_record_path="${absolute_catkin_path}/record/${task_name}/Rawdata/"
         fi
+
+        sysctl -w kernel.core_pattern=/var/crash/core.%u.%e.%p.%t
+        sysctl -w fs.suid_dumpable=1
+        ulimit -c unlimited >>result_log 2>&1
 
         local absolute_glog_path="${absolute_record_path}/Log"
         mkdir -p "${absolute_glog_path}"

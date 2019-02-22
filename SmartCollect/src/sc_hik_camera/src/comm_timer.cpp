@@ -60,7 +60,9 @@ void CommTimer::WriteSerial(int _fd) {
 
 void CommTimer::PublishMsg() {
     DLOG(INFO) << __FUNCTION__ << " start.";
+    imu232MsgMutex_.lock();
     pubImu5651_.publish(imu232Msg_);
+    imu232MsgMutex_.unlock();
 }
 
 
@@ -148,12 +150,14 @@ void CommTimer::Parse5651GpggaFrame(const std::string &_gpggaFrame) {
         return;
     }
 
+    imu232MsgMutex_.lock();
     // e.g. "279267.900"
     imu232Msg_.utc_time = gpggaFrameParsed[1];
     imu232Msg_.latitude_gpgga = gpggaFrameParsed[2] + gpggaFrameParsed[3];
     imu232Msg_.longitude_gpgga = gpggaFrameParsed[4] + gpggaFrameParsed[5];
     imu232Msg_.no_sv = gpggaFrameParsed[7];
     imu232Msg_.hdop = gpggaFrameParsed[8];
+    imu232MsgMutex_.unlock();
 
     return;
 }
@@ -182,6 +186,7 @@ void CommTimer::Parse5651GpfpdFrame(const std::string &_gpfpdFrame, double __uni
         return;
     }
 
+    imu232MsgMutex_.lock();
     // e.g. "279267.900"
     imu232Msg_.gps_week = gpfpdFrameParsed[1];
     imu232Msg_.gps_time = gpfpdFrameParsed[2];
@@ -200,6 +205,7 @@ void CommTimer::Parse5651GpfpdFrame(const std::string &_gpfpdFrame, double __uni
     imu232Msg_.status = gpfpdFrameParsed[15];
 
     const double GpsWeekTime = public_tools::ToolsNoRos::string2double(imu232Msg_.gps_time);
+    imu232MsgMutex_.unlock();
     unixTimeMinusGpsTime_ = __unixTime - GpsWeekTime;
     return;
 }

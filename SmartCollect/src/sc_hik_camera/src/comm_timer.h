@@ -6,6 +6,7 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <ros/ros.h>
+#include <mutex>
 #include <fstream>
 #include <boost/algorithm/string/split.hpp>
 #include "sc_msgs/imu5651.h"
@@ -35,6 +36,7 @@ private:
     std::string serialName_;
     std::string rtImuFile_;
     double unixTimeMinusGpsTime_;
+    std::mutex imu232MsgMutex_;
 };
 
 #endif

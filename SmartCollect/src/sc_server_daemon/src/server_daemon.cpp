@@ -187,6 +187,7 @@ void ServerDaemon::velodyneCB(const velodyne_msgs::Velodyne2Center::ConstPtr& pV
 }
 
 void ServerDaemon::SerialCB(const sc_msgs::imu5651::ConstPtr& pImu5651Msg) {
+    LOG_EVERY_N(INFO, 10) << __FUNCTION__ << " start.";
     gpsTime_[0] = gpsTime_[1];
     gpsTime_[1] = pImu5651Msg->gps_time;
     if(gpsTime_[0] == gpsTime_[1]) {

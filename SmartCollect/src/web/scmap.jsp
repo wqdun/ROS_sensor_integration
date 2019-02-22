@@ -54,7 +54,10 @@ console.log("Connecting to ROS: rosbridge WebSocket server...");
 var ros_ = new ROSLIB.Ros();
 ros_.connect('ws://<%=ip%>:9090');
 
-var currentLocation_ = [116.2394822, 40.0719897];
+// Navinfo location
+// var currentLocation_ = [116.2394822, 40.0719897];
+// Mtisui Garden Hotel location
+var currentLocation_ = [136.8866862, 35.1702498];
 
 var sdMapLayer = function() {
     // 获取标准地图图层，用于地图底图显示
@@ -75,8 +78,8 @@ var map = new ol.Map({
     view: new ol.View({
         center: transform(currentLocation_),
         zoom: 13,
-        minZoom: 6,
-        maxZoom: 17,
+        minZoom: 1,
+        maxZoom: 19,
         // rotation in rad
         rotation: 0,
     })

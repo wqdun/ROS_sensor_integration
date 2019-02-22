@@ -292,6 +292,10 @@
             document.getElementById('raw_ins').innerHTML = (message.raw_ins_size / 1048576).toFixed(2) + "MB";
         }
 
+        if(message.timestamp_size <= 0) {
+            document.getElementById('timestamp_size').innerHTML = "<font color=red>" + message.timestamp_size + "B</font>";
+        }
+        else
         if(message.timestamp_size < 1024) {
             document.getElementById('timestamp_size').innerHTML = message.timestamp_size + "B";
         }

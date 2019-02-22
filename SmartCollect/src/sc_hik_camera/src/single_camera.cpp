@@ -261,6 +261,22 @@ void SingleCamera::ConfigDevices() {
     err = MV_CC_SetIntValue(cameraHandle_, "GevSCPSPacketSize", nPacketSize);
     assert(MV_OK == err);
 
+    MVCC_INTVALUE currentGevSCPD = {};
+    err = MV_CC_GetIntValue(cameraHandle_, "GevSCPD", &currentGevSCPD);
+    assert(MV_OK == err);
+    fs["GevSCPD"] >> configValue1;
+    err = MV_CC_SetIntValue(cameraHandle_, "GevSCPD", configValue1);
+    assert(MV_OK == err);
+    LOG(INFO) << "Set GevSCPD: " << currentGevSCPD.nCurValue << " --> " << configValue1;
+
+    bool currentGevPAUSEFrameReception = {};
+    err = MV_CC_GetBoolValue(cameraHandle_, "GevPAUSEFrameReception", &currentGevPAUSEFrameReception);
+    assert(MV_OK == err);
+    fs["GevPAUSEFrameReception"] >> configValue1;
+    err = MV_CC_SetBoolValue(cameraHandle_, "GevPAUSEFrameReception", configValue1);
+    assert(MV_OK == err);
+    LOG(INFO) << "Set GevPAUSEFrameReception: " << currentGevPAUSEFrameReception << "-->" << configValue1;
+
     MVCC_ENUMVALUE currentBinningHorizontal = {0};
     err = MV_CC_GetEnumValue(cameraHandle_, "BinningHorizontal", &currentBinningHorizontal);
     assert(MV_OK == err);

@@ -26,7 +26,7 @@ void ProjectMonitor::run() {
         ros::spinOnce();
 
         int jpgFilesCount = 0;
-        (void)public_tools::PublicTools::GetFilesCountInDir(rawdataPath_, "jpg", jpgFilesCount);
+        (void)public_tools::PublicTools::GetFilesCountInDir(rawdataPath_ + "/Image/", "jpg", jpgFilesCount);
         DLOG(INFO) << "The number of jpg is " << jpgFilesCount;
         diskInfo.img_num = jpgFilesCount;
         diskInfo.img_save_fps = (diskInfo.img_num - lastImgNum_) * _rate;
@@ -69,7 +69,5 @@ long ProjectMonitor::GetTimestampFileSizeInByte() {
 
     return public_tools::ToolsNoRos::GetFileSizeInByte(timestampFile[0]);
 }
-
-
 
 

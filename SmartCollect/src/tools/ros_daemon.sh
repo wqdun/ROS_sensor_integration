@@ -14,7 +14,7 @@ script_name=$(basename $0)
 mkdir -p /opt/smartc/log/
 result_log=/opt/smartc/log/${script_name}".log"
 
-ros_version="indigo"
+ros_version="kinetic"
 
 log_with_time() {
     local now_time=$(date +%Y/%m/%d-%H:%M:%S)
@@ -166,11 +166,11 @@ do_start() {
     log_with_time "$FUNCNAME start."
 
     mount_data_disk
-    sleep 10
 
     . /opt/ros/${ros_version}/setup.bash
     /opt/ros/${ros_version}/bin/roscore >>$result_log 2>&1 &
-    sleep 10
+    sleep 2
+    mkdir -p /opt/smartc/record/
     run_sc_server_daemon_node
     sleep 10
     run_tomcat

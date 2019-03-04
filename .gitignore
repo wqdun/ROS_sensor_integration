@@ -12,14 +12,17 @@
 *.jpeg
 *.png
 *.7z
-*.zip
 *.*project
 *.settings.xml
 
 3rd/
 log/
+roadmap/
+devel/
+build/
 .idea/
 .settings/
 
 a.out
-
+/SmartCollect/.catkin_workspace
+/SmartCollect/src/CMakeLists.txt

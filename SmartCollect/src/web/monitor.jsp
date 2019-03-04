@@ -273,12 +273,13 @@
         }
 
         // below is project monitor related
-        if (message.img_num < 0) {
-            $("#piccounts")[0].innerHTML = $("#lidarpkg")[0].innerHTML = "<font color=red>\"\"</font>";
+        console.log("message.img_num: " + message.img_num);
+        if (0 === message.project_info.city_code) {
             warningMap.set(1001, "No active project");
+            $("#piccounts")[0].innerHTML = $("#lidarpkg")[0].innerHTML = "<font color=red>\"\"</font>";
         }
         else {
-            $("#piccounts")[0].innerHTML = message.img_num;
+            $("#piccounts")[0].innerHTML = (message.img_num < 0)? 0: message.img_num;
             $("#lidarpkg")[0].innerHTML = (((message.lidar_size - 1) < 0)? message.lidar_size: (message.lidar_size - 1)) + "M";
         }
 

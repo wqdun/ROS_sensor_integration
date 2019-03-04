@@ -358,19 +358,19 @@ roscore_startup() {
     local err=0
 
     echo ${passphrase} | sudo -S su >/dev/null 2>&1
-    sed -i 's/\r//' ${absolute_script_path}"/src/tools/ros_daemon.bash" \
-        && sudo cp ${absolute_script_path}"/src/tools/ros_daemon.bash" /etc/init.d/ \
-        && sudo chmod +x /etc/init.d/ros_daemon.bash
+    sed -i 's/\r//' ${absolute_script_path}"/src/tools/ros_daemon.sh" \
+        && sudo cp ${absolute_script_path}"/src/tools/ros_daemon.sh" /etc/init.d/ \
+        && sudo chmod +x /etc/init.d/ros_daemon.sh
     let err+=$?
     if [ $err -ne 0 ]; then
-        echo "[ERROR] Failed to cp && chmod ros_daemon.bash."
+        echo "[ERROR] Failed to cp && chmod ros_daemon.sh."
         write_result $FUNCNAME" returns "$err.
         return
     fi
 
     echo ${passphrase} | sudo -S su >/dev/null 2>&1
-    sudo update-rc.d -f ros_daemon.bash remove
-    sudo update-rc.d ros_daemon.bash defaults 90 10
+    sudo update-rc.d -f ros_daemon.sh remove
+    sudo update-rc.d ros_daemon.sh defaults 90 10
     let err+=$?
 
     write_result $FUNCNAME" returns "$err.
@@ -388,8 +388,8 @@ install_tomcat() {
 
     # sudo sh -c echo "TOMCAT_HOME=/opt/apache-tomcat-9.0.6"  >>/opt/apache-tomcat-9.0.6/bin/startup.sh
     # test BELOW
-    sudo /opt/apache-tomcat-9.0.6/bin/startup.sh
-    sudo /opt/apache-tomcat-9.0.6/bin/shutdown.sh
+    # sudo /opt/apache-tomcat-9.0.6/bin/startup.sh
+    # sudo /opt/apache-tomcat-9.0.6/bin/shutdown.sh
 
     # in front of *.sh, add JAVA_HOME
 
@@ -446,7 +446,7 @@ main() {
     install_ros_indigo
     install_velodyne_essential
     install_opencv
-    remove_older_cv_bridge
+    # remove_older_cv_bridge
     install_FlyCapture2
 
     install_glog

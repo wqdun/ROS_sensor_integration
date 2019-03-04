@@ -82,7 +82,7 @@ void ServerDaemon::run() {
         if(0 == (freqDivider % 8) ) {
             if(!isDiskInfoUpdated_) {
                 DLOG(INFO) << "project monitor node not running.";
-                monitorMsg_.img_num = -2;
+                monitorMsg_.img_num = monitorMsg_.lidar_size = -2;
             }
             isDiskInfoUpdated_ = false;
         }

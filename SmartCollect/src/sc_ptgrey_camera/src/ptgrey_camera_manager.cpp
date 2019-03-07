@@ -1,93 +1,97 @@
-#include "hik_camera_manager.h"
+#include "ptgrey_camera_manager.h"
+#include "ptgrey_save_image_task.h"
 
-HikCameraManager::HikCameraManager(const std::string &_rawPath):
-    threadPool_(10, 30)
+PtgreyCameraManager::PtgreyCameraManager(const std::string &_rawPath):
+    threadPool_(4, 30)
 {
     LOG(INFO) << __FUNCTION__ << " start.";
-    rawDataPath_ = _rawPath;
-    pSingleCameras_.clear();
-    memset(&deviceList_, 0, sizeof(MV_CC_DEVICE_INFO_LIST));
-    isSaveImg_ = false;
+    LogBuildInfo();
 
-    const std::string rawdataImuPath(_rawPath + "/IMU/");
-
-    pSerialReader_.reset(new CommTimer("/dev/ttyS0", rawdataImuPath) );
-    pSerialReaderThread_ = boost::shared_ptr<boost::thread>(new boost::thread(boost::bind(&CommTimer::Run, pSerialReader_) ) );
-
-    int shmid = shmget((key_t)1234, sizeof(struct SharedMem), 0666|IPC_CREAT);
-    if(shmid < 0) {
-        LOG(ERROR) << "shget failed.";
+    FlyCapture2::BusManager busMgr;
+    unsigned int cameraNum = 0;
+    FlyCapture2::Error error = busMgr.GetNumOfCameras(&cameraNum);
+    if(error != FlyCapture2::PGRERROR_OK) {
+        LogErrorTrace(error);
         exit(1);
     }
-    void *shm = shmat(shmid, 0, 0);
-    if(shm == (void *)-1) {
-        LOG(ERROR) << "shmat failed.";
-        exit(1);
+    LOG(INFO) << "Number of cameras detected: " << cameraNum;
+    if(cameraNum < 1) {
+        LOG(INFO) << "Insufficient number of cameras: " << cameraNum;
+        exit(2);
     }
-    LOG(INFO) << "Memory attached at " << shm;
-    sharedMem_ = (struct SharedMem*)shm;
+
+    pSinglePtgreyCameras_.clear();
+    (void)GetCameras(cameraNum, _rawPath);
 }
 
-HikCameraManager::~HikCameraManager() {
+void PtgreyCameraManager::GetCameras(unsigned int _cameraNum, const std::string &__rawdataDir) {
     LOG(INFO) << __FUNCTION__ << " start.";
-    pSerialReaderThread_->join();
+
+    for(int i = 0; i < _cameraNum; ++i) {
+        SinglePtgreyCamera *pSinglePtgreyCamera = new SinglePtgreyCamera(this);
+        if(!pSinglePtgreyCamera) {
+            LOG(ERROR) << "Failed to create SinglePtgreyCamera.";
+            exit(1);
+        }
+
+        pSinglePtgreyCamera->InitCamera(i, __rawdataDir);
+        pSinglePtgreyCameras_.push_back(pSinglePtgreyCamera);
+    }
+}
+
+PtgreyCameraManager::~PtgreyCameraManager() {
+    LOG(INFO) << __FUNCTION__ << " start.";
     threadPool_.stop();
     LOG(INFO) << __FUNCTION__ << " end.";
 }
 
-void HikCameraManager::MonitorCB(const sc_msgs::MonitorMsg::ConstPtr& pMonitorMsg) {
-    LOG_EVERY_N(INFO, 20) << __FUNCTION__ << " start, is_record Camera: " << (int)(pMonitorMsg->is_record);
-    isSaveImg_ = (bool)pMonitorMsg->is_record;
+void PtgreyCameraManager::LogBuildInfo() {
+    FlyCapture2::FC2Version fc2Version;
+    FlyCapture2::Utilities::GetLibraryVersion(&fc2Version);
+
+    std::ostringstream version;
+    version << "FlyCapture2 library version: " << fc2Version.major << "."
+            << fc2Version.minor << "." << fc2Version.type << "."
+            << fc2Version.build;
+    LOG(INFO) << version.str();
+
+    std::ostringstream timeStamp;
+    timeStamp << "Application build date: " << __DATE__ << " " << __TIME__;
+    LOG(INFO) << timeStamp.str();
 }
 
-void HikCameraManager::RegisterCB() {
-    subMonitor_ = nh_.subscribe("sc_monitor", 10, &HikCameraManager::MonitorCB, this);
+void PtgreyCameraManager::LogErrorTrace(FlyCapture2::Error error) {
+    LOG(ERROR) << error.GetFilename() << ":" << error.GetLine() << ":" << error.GetDescription();
 }
 
-void HikCameraManager::Run() {
+void PtgreyCameraManager::RunAllCameras() {
     LOG(INFO) << __FUNCTION__ << " start.";
-    (void)RegisterCB();
-    int err = MV_OK;
+    for(auto &pSinglePtgreyCamera: pSinglePtgreyCameras_) {
+        pSinglePtgreyCamera->Run();
+    }
+}
+
+void PtgreyCameraManager::Run() {
+    LOG(INFO) << __FUNCTION__ << " start.";
     threadPool_.start();
-    err = MV_CC_EnumDevices(MV_GIGE_DEVICE, &deviceList_);
-    assert(MV_OK == err);
-    const size_t camNum = deviceList_.nDeviceNum;
-    LOG(INFO) << "Find " << camNum << " Devices.";
-    sharedMem_->cameraNum = camNum;
+    (void)RunAllCameras();
 
-    if(public_tools::PublicTools::isFileExist("/dev/ttyS0")) {
-        sharedMem_->imuSerialPortStatus = 0;
-    }
-    else {
-        sharedMem_->imuSerialPortStatus = -1;
-    }
-
-    for(size_t i = 0; i < camNum; ++i) {
-        boost::shared_ptr<SingleCamera> pSingleCamera(new SingleCamera(this));
-        pSingleCamera->SetCamera(deviceList_, i);
-        pSingleCameras_.push_back(pSingleCamera);
-    }
-
+    const int CAM_NUM = pSinglePtgreyCameras_.size();
     int i = -1;
+    ros::NodeHandle nh;
     ros::Rate rate(2);
     while(ros::ok()) {
         ros::spinOnce();
         rate.sleep();
-        pSerialReader_->PublishMsg();
-        if(0 != camNum) {
-            ++i;
-            i %= camNum;
-            pSingleCameras_[i]->PublishImage();
-        }
+        ++i;
+        i %= CAM_NUM;
+        pSinglePtgreyCameras_[i]->PublishImage();
     }
+
+    (void)PressEnterToExit();
 }
 
-double HikCameraManager::GetUnixTimeMinusGpsTimeFromSerial() {
-    LOG(INFO) << __FUNCTION__ << " start.";
-    return pSerialReader_->GetUnixTimeMinusGpsTime();
-}
-
-void HikCameraManager::PressEnterToExit() {
+void PtgreyCameraManager::PressEnterToExit() {
     LOG(INFO) << "Wait enter to stop grabbing.";
     int c;
     while( (c = getchar()) != '\n' && c != EOF);

@@ -1,45 +1,33 @@
 #ifndef __PTGREY_CAMERA_MANAGER_H__
 #define __PTGREY_CAMERA_MANAGER_H__
 
+#include <sstream>
 #include <glog/logging.h>
-#include <vector>
-#include <assert.h>
-#include <boost/thread/thread.hpp>
-#include <sys/types.h>
-#include <sys/shm.h>
-#include "include/MvCameraControl.h"
-#include "../../sc_lib_public_tools/src/thread_pool.h"
-#include "../../sc_lib_public_tools/src/shm_data.h"
-#include "save_image_task.h"
-#include "single_camera.h"
-#include "comm_timer.h"
-#include "sc_msgs/MonitorMsg.h"
 
+#include "FlyCapture2.h"
+#include "../../sc_lib_public_tools/src/thread_pool.h"
+
+class PtgreySaveImageTask;
+class SinglePtgreyCamera;
 class PtgreyCameraManager {
 public:
+    static void LogErrorTrace(FlyCapture2::Error error);
     PtgreyCameraManager(const std::string &_rawPath);
     ~PtgreyCameraManager();
     void Run();
-    double GetUnixTimeMinusGpsTimeFromSerial();
 
-    threadpool<SaveImageTask> threadPool_;
+    threadpool<PtgreySaveImageTask> threadPool_;
     std::string rawDataPath_;
     bool isSaveImg_;
 
 
 private:
-    std::vector<boost::shared_ptr<SingleCamera>> pSingleCameras_;
-    MV_CC_DEVICE_INFO_LIST deviceList_;
-    boost::shared_ptr<CommTimer> pSerialReader_;
-    boost::shared_ptr<boost::thread> pSerialReaderThread_;
-    ros::NodeHandle nh_;
-    ros::Subscriber subMonitor_;
-    struct SharedMem *sharedMem_;
-
-    void DoClean();
+    void LogBuildInfo();
+    void GetCameras(unsigned int _cameraNum, const std::string &__rawdataDir);
+    void RunAllCameras();
     void PressEnterToExit();
-    void MonitorCB(const sc_msgs::MonitorMsg::ConstPtr& pMonitorMsg);
-    void RegisterCB();
+
+    std::vector<SinglePtgreyCamera *> pSinglePtgreyCameras_;
 };
 
 #endif

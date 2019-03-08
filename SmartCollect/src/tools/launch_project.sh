@@ -144,10 +144,11 @@ start_smart_collector_server() {
     /opt/smartc/devel/lib/sc_images_timestamper/sc_images_timestamper_node "/dev/timeStamper" "${_absolute_record_path}/IMU/" &
     sleep 0.2
 
-    local task_keyword="sc_hik_camer"
+    local task_keyword="sc_ptgrey_ca"
     pkill "${task_keyword}"
     echo "pkill -INT ${task_keyword}; pkill ${task_keyword}" >>"/tmp/kill_smartc.sh"
-    /opt/smartc/devel/lib/sc_hik_camera/sc_hik_camera_node "${_absolute_record_path}/" &
+    sysctl -w net.core.rmem_max=33554432 net.core.rmem_default=33554432 net.core.wmem_max=33554432 net.core.wmem_default=33554432 >>$result_log 2>&1
+    /opt/smartc/devel/lib/sc_ptgrey_camera/sc_ptgrey_camera_node "${_absolute_record_path}/" &
 
     killall nodelet
     echo "killall nodelet" >>"/tmp/kill_smartc.sh"

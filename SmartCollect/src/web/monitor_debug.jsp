@@ -72,7 +72,7 @@
                             <td>LIDAR Size: <br/><a href="#" id="lidarpkg" class="alert-link">""</a></td>
                             <td>Rawins Size: <br/><a href="#" id="raw_ins" class="alert-link">""</a></td>
                             <td rowspan="3" style="text-align:center;">
-                                <img src="http://<%=ip%>:8080/stream?topic=/camera/image0" width="160px" alt="http://<%=ip%>:8080/stream?topic=/camera/image0">
+                                <img src="http://<%=ip%>:8080/stream?topic=/camera/image6666" width="160px" alt="http://<%=ip%>:8080/stream?topic=/camera/image6666">
                             </td>
 
                             <td  rowspan="3">
@@ -329,7 +329,7 @@
             warningMap.set(1004, "Disk free space is not enough: " + freePercentage);
         }
 
-        $('#isRecordCheckBox').prop('disabled', ('A' !== message.is_gprmc_valid));
+        // $('#isRecordCheckBox').prop('disabled', ('A' !== message.is_gprmc_valid));
         if (isRecordclicked_ !== 0) {
             --isRecordclicked_;
             console.log("Waiting modify take effect: " + isRecordclicked_);

@@ -35,44 +35,21 @@
 
 <div class="main-inner">
   <div class="container">
-
     <div class="row">
-      <div class="span6">
-        <div class="widget">
-          <div class="widget-header">
-            <i class="icon-list-alt"></i>
-            <h3>Camera 1</h3>
-          </div>
-          <div class="widget-content">
-            <img src="http://<%=ip%>:8080/stream?topic=/camera/image5555" height="100%" width="100%" alt="http://<%=ip%>:8080/stream?topic=/camera/image5555">
-          </div>
-        </div>
-      </div>
 
-      <div class="span6">
+      <div class="span9">
         <div class="widget">
           <div class="widget-header">
             <i class="icon-list-alt"></i>
-            <h3>Camera 2</h3>
+            <h3>Camera 0</h3>
           </div>
           <div class="widget-content">
-            <img src="http://<%=ip%>:8080/stream?topic=/camera/image6666" height="100%" width="100%" alt="http://<%=ip%>:8080/stream?topic=/camera/image6666">
-          </div>
-        </div>
-      </div>
-
-      <div class="span6">
-        <div class="widget">
-          <div class="widget-header">
-            <i class="icon-list-alt"></i>
-            <h3>Camera 3</h3>
-          </div>
-          <div class="widget-content">
-            <img src="http://<%=ip%>:8080/stream?topic=/camera/image7777" height="100%" width="100%" alt="http://<%=ip%>:8080/stream?topic=/camera/image7777">
+            <img src="http://<%=ip%>:8080/stream?topic=/camera/image0" height="100%" width="100%" alt="http://<%=ip%>:8080/stream?topic=/camera/image0">
           </div>
         </div>
       </div>
     </div>
+
   </div>
 </div>
 

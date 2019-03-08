@@ -13,7 +13,6 @@ PtgreySaveImageTask::~PtgreySaveImageTask() {
 void PtgreySaveImageTask::doit() {
     LOG_EVERY_N(INFO, 100) << __FUNCTION__ << " start.";
 
-
     flyError_ = flyImage_.Convert(FlyCapture2::PIXEL_FORMAT_BGR, &convertedFlyImage_);
     if(flyError_ != FlyCapture2::PGRERROR_OK) {
         LOG(WARNING) << "Failed to Convert flyImage_ " << picFile_;

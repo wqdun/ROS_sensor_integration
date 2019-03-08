@@ -2,7 +2,7 @@
 #include "ptgrey_camera_manager.h"
 
 int main(int argc, char **argv) {
-    // google::InitGoogleLogging(argv[0]);
+    google::InitGoogleLogging(argv[0]);
     LOG(INFO) << "Got " << argc << " parameters.";
     if(argc < 2) {
         LOG(ERROR) << "usage: exec path_rawdata.";

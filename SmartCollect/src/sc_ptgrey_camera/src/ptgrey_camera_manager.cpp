@@ -5,8 +5,10 @@ PtgreyCameraManager::PtgreyCameraManager(const std::string &_rawPath):
     threadPool_(4, 30)
 {
     LOG(INFO) << __FUNCTION__ << " start.";
-    LogBuildInfo();
+    isSaveImg_ = false;
+    rawDataPath_ = _rawPath;
 
+    LogBuildInfo();
     FlyCapture2::BusManager busMgr;
     unsigned int cameraNum = 0;
     FlyCapture2::Error error = busMgr.GetNumOfCameras(&cameraNum);
@@ -71,14 +73,23 @@ void PtgreyCameraManager::RunAllCameras() {
     }
 }
 
+void PtgreyCameraManager::RegisterCB() {
+    subMonitor_ = nh_.subscribe("sc_monitor", 10, &PtgreyCameraManager::MonitorCB, this);
+}
+
+void PtgreyCameraManager::MonitorCB(const sc_msgs::MonitorMsg::ConstPtr& pMonitorMsg) {
+    LOG_EVERY_N(INFO, 20) << __FUNCTION__ << " start, is_record Camera: " << (int)(pMonitorMsg->is_record);
+    isSaveImg_ = (bool)pMonitorMsg->is_record;
+}
+
 void PtgreyCameraManager::Run() {
     LOG(INFO) << __FUNCTION__ << " start.";
     threadPool_.start();
     (void)RunAllCameras();
+    (void)RegisterCB();
 
     const int CAM_NUM = pSinglePtgreyCameras_.size();
     int i = -1;
-    ros::NodeHandle nh;
     ros::Rate rate(2);
     while(ros::ok()) {
         ros::spinOnce();

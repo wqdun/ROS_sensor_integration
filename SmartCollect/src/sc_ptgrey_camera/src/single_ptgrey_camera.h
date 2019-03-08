@@ -28,14 +28,19 @@ private:
     static void XferCallBack(FlyCapture2::Image *pImage, const void *_pSinglePtgreyCamera);
     static PtgreyCameraManager *s_pManager_;
     static bool ConvertImage(cv::Mat* matImage, FlyCapture2::Image* image);
+    void SetImagePath();
+    void SetCameraProperties();
 
     FlyCapture2::Error error_;
     FlyCapture2::GigECamera *pCamera_;
     cv::Mat mat2Pub_;
     std::mutex mat2PubMutex_;
     image_transport::Publisher pubImage_;
+    FlyCapture2::Image inImage_;
     FlyCapture2::Image convertedImage_;
-
+    std::string imagePath_;
+    double lastImageTimeStampInSeconds;
+    unsigned int imageTimeStampInSecondsTimes128;
 };
 
 #endif

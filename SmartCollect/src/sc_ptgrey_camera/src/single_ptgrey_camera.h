@@ -22,6 +22,7 @@ public:
     bool Run();
     void InitCamera(int _index, const std::string &_rawdataDir);
     void PublishImage();
+    void PublishImageFreq();
 
 
 private:
@@ -41,6 +42,10 @@ private:
     std::string imagePath_;
     double lastImageTimeStampInSeconds;
     unsigned int imageTimeStampInSecondsTimes128;
+
+    ros::NodeHandle nh_;
+    ros::Publisher pubCamSpeed_;
+    double imageFreq_;
 };
 
 #endif

@@ -309,9 +309,9 @@
         }
 
         // below is sc check
-        if (3 !== message.sc_check_camera_num) {
-            warningMap.set(1005, "Camera number is " + message.sc_check_camera_num + ", should be 3");
-        }
+        // if (3 !== message.sc_check_camera_num) {
+        //     warningMap.set(1005, "Camera number is " + message.sc_check_camera_num + ", should be 3");
+        // }
 
         if (message.speed > 120) {
             warningMap.set(1002, "Speed > 120km/h, please restart IMU");

@@ -1,12 +1,12 @@
 #include "comm_timer.h"
 
-CommTimer::CommTimer(const std::string &_serialName, const std::string &_imuPath) {
+CommTimer::CommTimer(const std::string &_serialName/*, const std::string &_imuPath*/) {
     LOG(INFO) << __FUNCTION__ << " start.";
     serialName_ = _serialName;
 
     std::string imuFileNamePrefix("");
-    (void)public_tools::PublicTools::generateFileName(_imuPath, imuFileNamePrefix);
-    rtImuFile_ = _imuPath + imuFileNamePrefix + "_rt_track.txt";
+    // (void)public_tools::PublicTools::generateFileName(_imuPath, imuFileNamePrefix);
+    // rtImuFile_ = _imuPath + imuFileNamePrefix + "_rt_track.txt";
 
     pubImu5651_ = nh_.advertise<sc_msgs::imu5651>("imu_string", 10);
 }
@@ -30,7 +30,7 @@ int CommTimer::Run() {
         return -1;
     }
 
-    (void)WriteSerial(fd);
+    // (void)WriteSerial(fd);
     (void)ReadSerial(fd);
 
     close(fd);
@@ -53,16 +53,14 @@ void CommTimer::WriteSerial(int _fd) {
             close(_fd);
             exit(1);
         }
-        usleep(10000);
+        usleep(1000000);
         LOG(INFO) << "Send " << data2Send << " successfully, bytes: " << err;
     }
 }
 
 void CommTimer::PublishMsg() {
     DLOG(INFO) << __FUNCTION__ << " start.";
-    imu232MsgMutex_.lock();
     pubImu5651_.publish(imu232Msg_);
-    imu232MsgMutex_.unlock();
 }
 
 
@@ -107,6 +105,7 @@ void CommTimer::ReadSerial(int _fd) {
 
             if(isFirstFrame) {
                 LOG_EVERY_N(INFO, 10) << "First frame might be incomplete, abandon: " << frameBuf;
+                frameBuf.clear();
                 continue;
             }
 
@@ -116,6 +115,8 @@ void CommTimer::ReadSerial(int _fd) {
 
             Parse5651Frame(frameBuf, unixTime);
             frameBuf.clear();
+
+            PublishMsg();
         }
     }
     return;
@@ -126,7 +127,7 @@ void CommTimer::Parse5651Frame(const std::string &_frame, double _unixTime) {
     assert(!_frame.empty() );
 
     if("$GPFPD" == _frame.substr(0, 6)) {
-        WriteRtImuFile(_frame);
+        // WriteRtImuFile(_frame);
         Parse5651GpfpdFrame(_frame, _unixTime);
     }
     else
@@ -150,14 +151,12 @@ void CommTimer::Parse5651GpggaFrame(const std::string &_gpggaFrame) {
         return;
     }
 
-    imu232MsgMutex_.lock();
     // e.g. "279267.900"
     imu232Msg_.utc_time = gpggaFrameParsed[1];
     imu232Msg_.latitude_gpgga = gpggaFrameParsed[2] + gpggaFrameParsed[3];
     imu232Msg_.longitude_gpgga = gpggaFrameParsed[4] + gpggaFrameParsed[5];
     imu232Msg_.no_sv = gpggaFrameParsed[7];
     imu232Msg_.hdop = gpggaFrameParsed[8];
-    imu232MsgMutex_.unlock();
 
     return;
 }
@@ -186,7 +185,6 @@ void CommTimer::Parse5651GpfpdFrame(const std::string &_gpfpdFrame, double __uni
         return;
     }
 
-    imu232MsgMutex_.lock();
     // e.g. "279267.900"
     imu232Msg_.gps_week = gpfpdFrameParsed[1];
     imu232Msg_.gps_time = gpfpdFrameParsed[2];
@@ -205,9 +203,29 @@ void CommTimer::Parse5651GpfpdFrame(const std::string &_gpfpdFrame, double __uni
     imu232Msg_.status = gpfpdFrameParsed[15];
 
     const double GpsWeekTime = public_tools::ToolsNoRos::string2double(imu232Msg_.gps_time);
-    imu232MsgMutex_.unlock();
     unixTimeMinusGpsTime_ = __unixTime - GpsWeekTime;
+    unixTimeMinusGpsTimeQueue_.push_back(unixTimeMinusGpsTime_);
+    if (unixTimeMinusGpsTimeQueue_.size() > 50) {
+        unixTimeMinusGpsTimeQueue_.pop_front();
+    }
+    // else do nothing
+
+    imu232Msg_.unix_time_minus_gps_time = FillerDeque(unixTimeMinusGpsTimeQueue_);
     return;
+}
+
+double CommTimer::FillerDeque(std::deque<double> &aDeque) {
+    DLOG(INFO) << __FUNCTION__ << " start, aDeque.size(): " << aDeque.size();
+
+    if (aDeque.size() < 50) {
+        return 0;
+    }
+
+    std::sort(aDeque.begin(), aDeque.end());
+    const double filteredResult = aDeque[aDeque.size() / 2];
+
+    DLOG(INFO) << __FUNCTION__ << " end, filteredResult: " << std::fixed << filteredResult;
+    return filteredResult;
 }
 
 double CommTimer::GetUnixTimeMinusGpsTime() {

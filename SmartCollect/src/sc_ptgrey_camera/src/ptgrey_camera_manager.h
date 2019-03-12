@@ -21,6 +21,7 @@ public:
     threadpool<PtgreySaveImageTask> threadPool_;
     std::string rawDataPath_;
     bool isSaveImg_;
+    double unixTimeMinusGpsTime_;
 
 
 private:

@@ -24,7 +24,7 @@ int CommTimer::Run() {
         return -1;
     }
 
-    if(public_tools::ToolsNoRos::SetSerialOption(fd, 115200, 8, 'N', 1) < 0) {
+    if(public_tools::ToolsNoRos::SetSerialOption(fd, 230400, 8, 'N', 1) < 0) {
         LOG(ERROR) << "Failed to setup " << ttyname(fd);
         close(fd);
         return -1;

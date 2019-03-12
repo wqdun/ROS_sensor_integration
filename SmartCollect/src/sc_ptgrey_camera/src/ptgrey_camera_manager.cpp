@@ -80,6 +80,7 @@ void PtgreyCameraManager::RegisterCB() {
 void PtgreyCameraManager::MonitorCB(const sc_msgs::MonitorMsg::ConstPtr& pMonitorMsg) {
     LOG_EVERY_N(INFO, 20) << __FUNCTION__ << " start, is_record Camera: " << (int)(pMonitorMsg->is_record);
     isSaveImg_ = (bool)pMonitorMsg->is_record;
+    unixTimeMinusGpsTime_ = pMonitorMsg->unix_time_minus_gps_time;
 }
 
 void PtgreyCameraManager::Run() {
@@ -97,6 +98,7 @@ void PtgreyCameraManager::Run() {
         ++i;
         i %= CAM_NUM;
         pSinglePtgreyCameras_[i]->PublishImage();
+        pSinglePtgreyCameras_[i]->PublishImageFreq();
     }
 
     (void)PressEnterToExit();

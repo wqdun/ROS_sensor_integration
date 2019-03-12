@@ -10,7 +10,6 @@ SinglePtgreyCamera::SinglePtgreyCamera(PtgreyCameraManager *pManager):
     lastImageTimeStampInSeconds = 0;
     imageTimeStampInSecondsTimes128 = 0;
     s_pManager_ = pManager;
-
 }
 
 void SinglePtgreyCamera::InitCamera(int _index, const std::string &_rawdataDir) {
@@ -38,10 +37,9 @@ void SinglePtgreyCamera::InitCamera(int _index, const std::string &_rawdataDir) 
         exit(3);
     }
 
-    SetCameraProperties();
-
-    ros::NodeHandle nh;
-    image_transport::ImageTransport it(nh);
+    // SetCameraProperties();
+    pubCamSpeed_ = nh_.advertise<std_msgs::Float64>("cam_speed" + std::to_string(_index), 10);
+    image_transport::ImageTransport it(nh_);
     pubImage_ = it.advertise("camera/image" + std::to_string(_index), 10);
 
     SetImagePath();
@@ -60,9 +58,10 @@ void SinglePtgreyCamera::SetCameraProperties() {
         exit(1);
     }
     LOG(INFO) << "property: " << property.absValue;
+    LOG(INFO) << "property: " << std::boolalpha << property.autoManualMode;
 
-    property.autoManualMode = false;
-    property.absValue = 1.;
+    property.autoManualMode = true;
+    // property.absValue = 2.;
     error_ = pCamera_->SetProperty(&property);
     if (error_ != FlyCapture2::PGRERROR_OK) {
         LOG(ERROR) << "property.absValue: " << property.absValue;
@@ -135,10 +134,18 @@ bool SinglePtgreyCamera::Run() {
 void SinglePtgreyCamera::XferCallBack(FlyCapture2::Image *pImage, const void *_pSinglePtgreyCamera) {
     struct timeval now;
     gettimeofday(&now, NULL);
-    const double unixTime = now.tv_sec + now.tv_usec / 1000000.;
 
     DLOG(INFO) << __FUNCTION__ << " start.";
     SinglePtgreyCamera *pSinglePtgreyCamera = (SinglePtgreyCamera *)_pSinglePtgreyCamera;
+
+    const double unixTime = now.tv_sec + now.tv_usec / 1000000.;
+    const double _unixTimeMinusGpsTime = s_pManager_->unixTimeMinusGpsTime_;
+    DLOG(INFO) << "unixTimeMinusGpsTime: " << std::fixed << _unixTimeMinusGpsTime;
+    const double gpsTime = unixTime - _unixTimeMinusGpsTime;
+
+    const double gpsTimeDaySec = fmod(gpsTime, (3600 * 24));
+    char gpsTimeDaySecCstr[20];
+    sprintf(gpsTimeDaySecCstr, "%012.6f", gpsTimeDaySec);
 
     pSinglePtgreyCamera->mat2PubMutex_.lock();
     pSinglePtgreyCamera->inImage_ = *pImage;
@@ -157,13 +164,16 @@ void SinglePtgreyCamera::XferCallBack(FlyCapture2::Image *pImage, const void *_p
     const int nCycleOffset = (uiRawTimestamp >>  0) & 0xFFF;  // get rid of *_count
     double imageTimeStampInSeconds = (double)nSecond + (((double)nCycleCount+((double)nCycleOffset/3072.0))/8000.0);
 
+    pSinglePtgreyCamera->imageFreq_ =  1. / fmod(((imageTimeStampInSeconds + 128) - pSinglePtgreyCamera->lastImageTimeStampInSeconds), 128.);
+
     if(imageTimeStampInSeconds < pSinglePtgreyCamera->lastImageTimeStampInSeconds) {
         ++(pSinglePtgreyCamera->imageTimeStampInSecondsTimes128);
     }
     pSinglePtgreyCamera->lastImageTimeStampInSeconds = imageTimeStampInSeconds;
 
     imageTimeStampInSeconds += (pSinglePtgreyCamera->imageTimeStampInSecondsTimes128 * 128);
-    const std::string picFileName(pSinglePtgreyCamera->imagePath_ + std::to_string(imageTimeStamp) + "_" + std::to_string(unixTime) + "_" + std::to_string(imageTimeStampInSeconds) + "_" + std::to_string(imageMetadata.embeddedFrameCounter) + "_" + cycleTime + ".jpg");
+
+    const std::string picFileName(pSinglePtgreyCamera->imagePath_ + gpsTimeDaySecCstr + "_" + std::to_string(imageMetadata.embeddedFrameCounter) + "_" + std::to_string(imageTimeStampInSeconds) + ".jpg");
     DLOG(INFO) << "picFileName: " << picFileName;
     if(s_pManager_->isSaveImg_) {
         PtgreySaveImageTask *pSaveImageTask = new PtgreySaveImageTask(pImage, picFileName);
@@ -173,6 +183,12 @@ void SinglePtgreyCamera::XferCallBack(FlyCapture2::Image *pImage, const void *_p
 
     DLOG(INFO) << __FUNCTION__ << " end.";
     return;
+}
+
+void SinglePtgreyCamera::PublishImageFreq() {
+    std_msgs::Float64 msgImageFreq;
+    msgImageFreq.data = imageFreq_;
+    pubCamSpeed_.publish(msgImageFreq);
 }
 
 void SinglePtgreyCamera::PublishImage() {

@@ -14,7 +14,7 @@ ServerDaemon::ServerDaemon(ros::NodeHandle nh, ros::NodeHandle private_nh) {
     isGpsUpdated_ = isVelodyneUpdated_ = isRawImuUpdated_ = isCameraUpdated_ = isDiskInfoUpdated_ = false;
     subSerial_ = nh.subscribe("imu_string", 10, &ServerDaemon::SerialCB, this);
     subVelodyne_ = nh.subscribe("velodyne_pps_status", 0, &ServerDaemon::velodyneCB, this);
-    subCameraImg_ = nh.subscribe("cam_speed5555", 0, &ServerDaemon::cameraImgCB, this);
+    subCameraImg_ = nh.subscribe("cam_speed0", 0, &ServerDaemon::cameraImgCB, this);
     subProjectMonitor_ = nh.subscribe("sc_disk_info", 0, &ServerDaemon::projectMonitorCB, this);
     subDataFixer_ = nh.subscribe("sc_data_fixer_progress", 0, &ServerDaemon::dataFixerCB, this);
 
@@ -224,6 +224,8 @@ void ServerDaemon::SerialCB(const sc_msgs::imu5651::ConstPtr& pImu5651Msg) {
 
     monitorMsg_.no_sv = public_tools::ToolsNoRos::string2int(pImu5651Msg->no_sv);
     monitorMsg_.hdop = public_tools::ToolsNoRos::string2double(pImu5651Msg->hdop);
+
+    monitorMsg_.unix_time_minus_gps_time = pImu5651Msg->unix_time_minus_gps_time;
 }
 
 void ServerDaemon::clientCB(const sc_msgs::ClientCmd::ConstPtr& pClientMsg) {

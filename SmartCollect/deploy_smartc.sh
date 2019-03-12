@@ -453,6 +453,7 @@ main() {
     install_rs422_driver
     install_sqlite3
     install_gdal
+    install_cutecom
 
     install_rosbridge
     install_web_video_server

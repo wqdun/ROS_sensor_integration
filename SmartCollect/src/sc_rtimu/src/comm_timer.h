@@ -30,7 +30,7 @@ private:
     void Parse5651GpggaFrame(const std::string &_gpggaFrame);
     void WriteRtImuFile(const std::string &_gpfpdFrame);
     void Parse5651GpfpdFrame(const std::string &_gpfpdFrame, double __unixTime);
-    double FillerDeque(std::deque<double> &aDeque);
+    double FillerDeque(std::deque<double> aDeque);
 
     ros::NodeHandle nh_;
     ros::Publisher pubImu5651_;

@@ -214,7 +214,8 @@ void CommTimer::Parse5651GpfpdFrame(const std::string &_gpfpdFrame, double __uni
     return;
 }
 
-double CommTimer::FillerDeque(std::deque<double> &aDeque) {
+// do not use reference parameter, we do not want to modify the input deque
+double CommTimer::FillerDeque(std::deque<double> aDeque) {
     DLOG(INFO) << __FUNCTION__ << " start, aDeque.size(): " << aDeque.size();
 
     if (aDeque.size() < 50) {

@@ -1,5 +1,6 @@
 #include <iostream>
 #include <opencv2/opencv.hpp>
+#include <opencv2/tracking.hpp>
 
 using namespace std;
 using namespace cv;
@@ -309,161 +310,93 @@ void draw_area(const cv::Mat& src,vector<cv::Point>& lp,vector<cv::Point>& rp,co
     // cv::waitKey(10000);
 }
 
+static void detectAndDraw(const HOGDescriptor &hog, Mat &img)
+{
+    vector<Rect> found, found_filtered;
+    double t = (double) getTickCount();
+    // Run the detector with default parameters. to get a higher hit-rate
+    // (and more false alarms, respectively), decrease the hitThreshold and
+    // groupThreshold (set groupThreshold to 0 to turn off the grouping completely).
+    hog.detectMultiScale(img, found, 0, Size(8,8), Size(32,32), 1.05, 2);
+    t = (double) getTickCount() - t;
+    cout << "detection time = " << (t*1000./cv::getTickFrequency()) << " ms" << endl;
 
+    for(size_t i = 0; i < found.size(); i++ )
+    {
+        Rect r = found[i];
 
-int main(int argc, char **argv) {
-    const std::string _filename(argv[1]);
-    const char* filename = _filename.c_str();
-    Mat image, dst;
-    //image = imread(filename, CV_LOAD_IMAGE_GRAYSCALE);
-    image = imread(filename, CV_LOAD_IMAGE_COLOR);
-    assert(!(image.empty()));
+        size_t j;
+        // Do not add small detections inside a bigger detection.
+        for ( j = 0; j < found.size(); j++ )
+            if ( j != i && (r & found[j]) == r )
+                break;
 
-    imshow("image", image);
-    // cout << "cvWaitKey(0): " << cvWaitKey(2000) << "\n";
-
-    //image.cols 为图像的宽度 image.rows 为图像的高度
-    int w = image.cols;
-    int h = image.rows;
-    std::cout<<"Image size:"<<w <<" * "<<h<<std::endl;
-    imageResize(image, &dst, w / 2, 0);
-
-    std::cout<<"new Image size:"<<dst.cols <<" * "<<dst.rows<<std::endl;
-    vector<int> compression_params;
-    //JPEG，参数为CV_IMWRITE_JPEG_QUALITY，值是从0到100，值越小压缩的越多
-    compression_params.push_back(CV_IMWRITE_JPEG_QUALITY);
-    compression_params.push_back(100);
-    //imshow("dstImage", dst);
-    imwrite("dstImage.jpg",dst,compression_params);
-
-
-    // sobel边缘识别
-    cv:Mat _sobel;
-    abs_sobel_thresh(image, _sobel, 'x', 55, 200);
-    imwrite(_filename + "_sobel.jpg", dst, compression_params);
-
-    // cout << "cvWaitKey(0): " << cvWaitKey(0) << "\n";
-
-    cv::Mat _mag;
-    mag_thresh(image, _mag, 3, 45, 150);
-    imwrite(_filename + "_mag.jpg", _mag, compression_params);
-
-    cv::Mat _luv;
-    luv_select(image, _luv, 'l', 180, 255);
-    imwrite(_filename + "_luv.jpg", _luv, compression_params);
-
-    cv::Mat _hls;
-    hls_select(image, _hls, 's',160,255);
-    imwrite(_filename + "_hls.jpg", _hls, compression_params);
-
-    cv::Mat imgout( (_sobel & _mag & _luv) | (_hls & _luv) );
-
-    // 车道线坐标点
-    std::vector<cv::Point> lp, rp;
-    // 车道线基坐标点x轴
-    int rightx_current, leftx_current;
-    double distance_from_center;
-    find_line(imgout, lp, rp, rightx_current, leftx_current, distance_from_center);
-
-    // 变形基础点
-    vector<cv::Point2f> src={cv::Point2f(203,720),
-                            cv::Point2f(585,460),
-                            cv::Point2f(695,460),
-                            cv::Point2f(1127,720)};
-    vector<cv::Point2f> dst_param= {cv::Point2f(320,720),
-                            cv::Point2f(320,0),
-                            cv::Point2f(960,0),
-                            cv::Point2f(960,720)};
-    cv::Mat M, Minv;
-    get_M_Minv(src, dst_param, M, Minv);
-
-    draw_area(image, lp, rp, Minv, distance_from_center);
-
-
-    cv::Mat _warp;
-    cv::warpPerspective(image, _warp, M, image.size(), cv::INTER_LINEAR);
-    imwrite(_filename + "_warp.jpg", _warp, compression_params);
-
-    // sobel边缘识别
-    cv::Mat _sobel2;
-    abs_sobel_thresh(_warp, _sobel2, 'x', 55, 200);
-    imwrite(_filename + "_sobel2.jpg", _sobel2, compression_params);
-
-    // cout << "cvWaitKey(0): " << cvWaitKey(0) << "\n";
-
-    cv::Mat _mag2;
-    mag_thresh(_warp, _mag2, 3, 45, 150);
-    imwrite(_filename + "_mag2.jpg", _mag2, compression_params);
-
-    cv::Mat _luv2;
-    luv_select(_warp, _luv2, 'l', 180, 255);
-    imwrite(_filename + "_luv2.jpg", _luv2, compression_params);
-
-    cv::Mat _hls2;
-    hls_select(_warp, _hls2, 's',160,255);
-    imwrite(_filename + "_hls2.jpg", _hls2, compression_params);
-
-    cv::Mat imgout2( (_sobel2 & _mag2 & _luv2) | (_hls2 & _luv2) );
-
-    find_line(imgout2, lp, rp, rightx_current, leftx_current, distance_from_center);
-    draw_area(image, lp, rp, Minv, distance_from_center);
-
-
-    cv::Mat imageGray;
-    cv::cvtColor(image, imageGray, cv::COLOR_RGB2GRAY);
-    cv::imwrite(_filename + "_gray.jpg", imageGray, compression_params);
-
-    cv::Mat imageBinary;
-    cv::threshold(imageGray, imageBinary, 160, 255.0, CV_THRESH_BINARY);
-    cv::imwrite(_filename + "_binary.jpg", imageBinary, compression_params);
-
-    cv::Mat imageAdaptiveBinary;
-    cv::adaptiveThreshold(imageGray, imageAdaptiveBinary, 255.0, ADAPTIVE_THRESH_MEAN_C, CV_THRESH_BINARY, 11, 3.);
-    cv::imwrite(_filename + "_adaptive_binary.jpg", imageAdaptiveBinary, compression_params);
-
-    const int structElementSize = 1;
-    cv::Mat element = getStructuringElement(MORPH_RECT, Size(2 * structElementSize + 1, 2 * structElementSize + 1) );
-    cv::Mat imageErode;
-    cv::erode(imageBinary, imageErode, element);
-    cv::imwrite(_filename + "_erode.jpg", imageErode, compression_params);
-
-    cv::Mat imageDilate;
-    cv::dilate(imageErode, imageDilate, element);
-    cv::imwrite(_filename + "_dilate.jpg", imageDilate, compression_params);
-
-    cv::Mat imageCanny;
-    cv::Canny(imageDilate, imageCanny, 50, 120);
-    cv::imwrite(_filename + "_Canny.jpg", imageCanny, compression_params);
-
-
-    cv::Mat imageConvertCanny;
-    cv::cvtColor(imageCanny, imageConvertCanny, cv::COLOR_GRAY2BGR);
-    cv::imwrite(_filename + "_CvtCanny.jpg", imageConvertCanny, compression_params);
-
-    std::vector<Vec2f> lines;
-    cv::HoughLines(imageCanny, lines, 1, CV_PI / 180, 150);
-    //画出直线
-    for (size_t i = 0; i < lines.size(); ++i) {
-        float rho = lines[i][0], theta = lines[i][1];
-        Point pt1, pt2;
-        double a = cos(theta), b = sin(theta);
-        double x0 = a*rho, y0 = b*rho;
-        pt1.x = cvRound(x0 + 1000*(-b));
-        pt1.y = cvRound(y0 + 1000*(a));
-        pt2.x = cvRound(x0 - 1000*(-b));
-        pt2.y = cvRound(y0 - 1000*(a));
-        //此句代码的OpenCV2版为:
-        //line( imageCanny, pt1, pt2, Scalar(55,100,195), 1, CV_AA);
-        //此句代码的OpenCV3版为:
-        line( imageCanny, pt1, pt2, Scalar(255, 255, 255), 1, LINE_AA);
+        if ( j == found.size() )
+            found_filtered.push_back(r);
     }
 
-    cv::imshow("Result:", imageCanny);
-    cv::waitKey(0);
+    for (size_t i = 0; i < found_filtered.size(); i++)
+    {
+        Rect r = found_filtered[i];
 
-
-
-    return 0;
+        // The HOG detector returns slightly larger rectangles than the real objects,
+        // so we slightly shrink the rectangles to get a nicer output.
+        r.x += cvRound(r.width*0.1);
+        r.width = cvRound(r.width*0.8);
+        r.y += cvRound(r.height*0.07);
+        r.height = cvRound(r.height*0.8);
+        rectangle(img, r.tl(), r.br(), cv::Scalar(255, 0, 0), 3);
+    }
 }
+
+
+int main( int argc, char** argv ){
+  // show help
+  if(argc<2){
+    cout<<
+      " Usage: tracker <video_name>\n"
+      " examples:\n"
+      " example_tracking_kcf Bolt/img/%04d.jpg\n"
+      " example_tracking_kcf faceocc2.webm\n"
+      << endl;
+    return 0;
+  }
+  // declares all required variables
+  Rect2d roi;
+  Mat frame;
+  // create a tracker object
+  Ptr<Tracker> tracker = TrackerKCF::create();
+  // set input video
+  std::string video = argv[1];
+  VideoCapture cap(video);
+  // get bounding box
+  cap >> frame;
+  roi=selectROI("tracker",frame);
+  //quit if ROI was not selected
+  if(roi.width==0 || roi.height==0)
+    return 0;
+  // initialize the tracker
+  tracker->init(frame,roi);
+  // perform the tracking process
+  printf("Start the tracking process, press ESC to quit.\n");
+  for ( ;; ){
+    // get frame from the video
+    cap >> frame;
+    // stop the program if no more images
+    if(frame.rows==0 || frame.cols==0)
+      break;
+    // update the tracking result
+    tracker->update(frame,roi);
+    // draw the tracked object
+    rectangle( frame, roi, Scalar( 255, 0, 0 ), 2, 1 );
+    // show image with the tracked object
+    imshow("tracker",frame);
+    //quit on ESC button
+    if(waitKey(1)==27)break;
+  }
+  return 0;
+}
+
+
 
 // compile cmd: g++ -std=c++11 mylinedetect.cpp  -o resize  `pkg-config --cflags --libs opencv` && ./resize

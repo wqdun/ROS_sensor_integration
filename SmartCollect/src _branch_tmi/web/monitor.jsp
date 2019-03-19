@@ -179,6 +179,7 @@
     var isWarningAdded = false;
 
     centerListener.subscribe(function (message) {
+        var isStatusError = false;
         var unixDateObj = new Date(message.unix_time * 1000);
         var _unix_hour = unixDateObj.getUTCHours();
         var _unix_minute = unixDateObj.getUTCMinutes();
@@ -209,12 +210,14 @@
             var imuStatus = message.status & 0xF;
             if (8 === imuStatus) {
                 document.getElementById('imu_status').innerHTML = "<font color=#B8860B>" + message.status.toString(16) + "</font>";
+                isStatusError = true;
             }
             else if (3 === imuStatus) {
                 document.getElementById('imu_status').innerHTML = "<font color=green>" + message.status.toString(16) + "</font>";
             }
             else {
                 document.getElementById('imu_status').innerHTML = "<font color=red>" + message.status.toString(16) + "</font>";
+                isStatusError = true;
             }
 
             var errSecond = Math.abs(message.unix_time - message.GPStime);
@@ -345,7 +348,7 @@
             isWarningAdded = true;
         }
 
-        if (0 !== warningMap.size) {
+        if (0 !== warningMap.size || isStatusError) {
             ++voiceCounter;
             voiceCounter %= 10;
             console.log("NOISE!");

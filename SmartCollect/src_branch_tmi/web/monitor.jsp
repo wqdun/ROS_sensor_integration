@@ -178,6 +178,8 @@
     var voiceCounter = -1;
     var isWarningAdded = false;
 
+    var isStatusErrorWarningMessageAdded_ = false;
+
     centerListener.subscribe(function (message) {
         var isStatusError = false;
         var unixDateObj = new Date(message.unix_time * 1000);
@@ -353,6 +355,11 @@
             voiceCounter %= 10;
             console.log("NOISE!");
             bgMusic.play();
+        }
+
+        if(isStatusError && !isStatusErrorWarningMessageAdded_) {
+            AddEvent(1006, "IMU loses lock");
+            isStatusErrorWarningMessageAdded_ = true;
         }
     });
 </script>

@@ -30,7 +30,7 @@ int CommTimer::Run() {
         return -1;
     }
 
-    (void)WriteSerial(fd);
+    // (void)WriteSerial(fd);
     (void)ReadSerial(fd);
 
     close(fd);

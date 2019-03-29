@@ -79,7 +79,7 @@ make_serial_softlink_by_path() {
     log_with_time "$FUNCNAME start, param: $*; HOSTNAME: ${HOSTNAME}"
 
     # sc0010 differ from sc0009
-    if [ "AA${HOSTNAME}" = "AAsc0010" ] || [ "AA${HOSTNAME}" = "AAsc0011" ] || [ "AA${HOSTNAME}" = "AAsc0012" ] || [ "AA${HOSTNAME}" = "AAsc0013" ] || [ "AA${HOSTNAME}" = "AAsc0014" ]; then
+    if [ "AA${HOSTNAME}" = "AAsc0010" ] || [ "AA${HOSTNAME}" = "AAsc0011" ] || [ "AA${HOSTNAME}" = "AAsc0012" ] || [ "AA${HOSTNAME}" = "AAsc0013" ] || [ "AA${HOSTNAME}" = "AAsc0014" ] || [ "AA${HOSTNAME}" = "AAsc0015" ]; then
         rm /dev/imuRawIns
         local imuRawIns=$(ls /dev/serial/by-path | grep "usb-0:4:1.0" | head -n1)
         if [ "AA${imuRawIns}" = "AA" ]; then

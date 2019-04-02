@@ -3,6 +3,8 @@
 CommTimer::CommTimer(const std::string &_serialName, const std::string &_imuPath) {
     LOG(INFO) << __FUNCTION__ << " start.";
     serialName_ = _serialName;
+    unixTimeMinusGpsTimeQueue_.clear();
+    unixTimeMinusGpsTime_ = -1;
 
     std::string imuFileNamePrefix("");
     (void)public_tools::PublicTools::generateFileName(_imuPath, imuFileNamePrefix);
@@ -206,8 +208,30 @@ void CommTimer::Parse5651GpfpdFrame(const std::string &_gpfpdFrame, double __uni
 
     const double GpsWeekTime = public_tools::ToolsNoRos::string2double(imu232Msg_.gps_time);
     imu232MsgMutex_.unlock();
-    unixTimeMinusGpsTime_ = __unixTime - GpsWeekTime;
+
+    unixTimeMinusGpsTimeQueue_.push_back(__unixTime - GpsWeekTime);
+    if (unixTimeMinusGpsTimeQueue_.size() > 50) {
+        unixTimeMinusGpsTimeQueue_.pop_front();
+    }
+    // else do nothing
+
+    unixTimeMinusGpsTime_ = FillerDeque(unixTimeMinusGpsTimeQueue_);
     return;
+}
+
+// do not use reference parameter, we do not want to modify the input deque
+double CommTimer::FillerDeque(std::deque<double> aDeque) {
+    DLOG(INFO) << __FUNCTION__ << " start, aDeque.size(): " << aDeque.size();
+
+    if (aDeque.size() < 50) {
+        return 0;
+    }
+
+    std::sort(aDeque.begin(), aDeque.end());
+    const double filteredResult = aDeque[aDeque.size() / 2];
+
+    DLOG(INFO) << __FUNCTION__ << " end, filteredResult: " << std::fixed << filteredResult;
+    return filteredResult;
 }
 
 double CommTimer::GetUnixTimeMinusGpsTime() {

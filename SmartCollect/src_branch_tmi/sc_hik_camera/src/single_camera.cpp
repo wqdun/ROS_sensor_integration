@@ -128,13 +128,13 @@ void __stdcall SingleCamera::ImageCB(unsigned char *pData, MV_FRAME_OUT_INFO_EX 
     struct timeval now;
     gettimeofday(&now, NULL);
     const double unixTime = now.tv_sec + now.tv_usec / 1000000.;
-    const double unixTimeMinusGpsTime = s_pManager_->GetUnixTimeMinusGpsTimeFromSerial();
+    const double unixTimeMinusGpsTime = s_pManager_->unixTimeMinusGpsTime_;
     LOG(INFO) << "unixTimeMinusGpsTime: " << std::fixed << unixTimeMinusGpsTime;
     const double gpsTime = unixTime - unixTimeMinusGpsTime;
 
     if(!pFrameInfo) {
         LOG(ERROR) << "pFrameInfo is NULL.";
-        return;
+        goto ByeBye;
     }
 
     SingleCamera *pSingleCamera = static_cast<SingleCamera *>(_pSingleCamera);
@@ -156,7 +156,7 @@ void __stdcall SingleCamera::ImageCB(unsigned char *pData, MV_FRAME_OUT_INFO_EX 
     int err = MV_CC_ConvertPixelType(handle, &convertParam);
     if(MV_OK != err) {
         LOG(ERROR) << "Failed to MV_CC_ConvertPixelType; err: " << err;
-        return;
+        goto ByeBye;
     }
 
     pSingleCamera->mat2PubMutex_.lock();
@@ -189,6 +189,12 @@ void __stdcall SingleCamera::ImageCB(unsigned char *pData, MV_FRAME_OUT_INFO_EX 
 
     const std::string picFileName(pSingleCamera->imagePath_ + triggerTimeDaySecCstr + "_" + std::to_string(pFrameInfo->nFrameNum) + "_" + std::to_string(deviceTimeStamp) + "_" + std::to_string(_cameraID) + ".jpg");
     LOG(INFO) << "picFileName: " << picFileName;
+
+    if (unixTimeMinusGpsTime < 0) {
+        LOG(WARNING) << "No save image before unixTimeMinusGpsTime be updated: " << unixTimeMinusGpsTime;
+        goto ByeBye;
+    }
+
     if(s_pManager_->isSaveImg_) {
         pSingleCamera->mat2PubMutex_.lock();
         SaveImageTask *pSaveImageTask = new SaveImageTask(pSingleCamera->mat2Pub_, *pFrameInfo, picFileName);
@@ -196,6 +202,7 @@ void __stdcall SingleCamera::ImageCB(unsigned char *pData, MV_FRAME_OUT_INFO_EX 
         s_pManager_->threadPool_.append_task(pSaveImageTask);
     }
 
+ByeBye:
     LOG_EVERY_N(INFO, 20) << __FUNCTION__ << " end.";
 }
 

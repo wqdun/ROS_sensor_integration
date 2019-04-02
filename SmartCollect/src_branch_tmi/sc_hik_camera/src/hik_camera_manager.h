@@ -35,6 +35,7 @@ private:
     ros::NodeHandle nh_;
     ros::Subscriber subMonitor_;
     struct SharedMem *sharedMem_;
+    double unixTimeMinusGpsTime_;
 
     void DoClean();
     void PressEnterToExit();

@@ -8,6 +8,7 @@ HikCameraManager::HikCameraManager(const std::string &_rawPath):
     pSingleCameras_.clear();
     memset(&deviceList_, 0, sizeof(MV_CC_DEVICE_INFO_LIST));
     isSaveImg_ = false;
+    unixTimeMinusGpsTime_ = -1;
 
     const std::string rawdataImuPath(_rawPath + "/IMU/");
 
@@ -38,6 +39,7 @@ HikCameraManager::~HikCameraManager() {
 void HikCameraManager::MonitorCB(const sc_msgs::MonitorMsg::ConstPtr& pMonitorMsg) {
     LOG_EVERY_N(INFO, 20) << __FUNCTION__ << " start, is_record Camera: " << (int)(pMonitorMsg->is_record);
     isSaveImg_ = (bool)pMonitorMsg->is_record;
+    unixTimeMinusGpsTime_ = pMonitorMsg->unix_time_minus_gps_time;
 }
 
 void HikCameraManager::RegisterCB() {

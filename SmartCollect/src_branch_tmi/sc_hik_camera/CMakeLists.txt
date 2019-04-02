@@ -150,7 +150,6 @@ add_executable(${PROJECT_NAME}_node
   src/hik_camera_manager.cpp
   src/save_image_task.cpp
   src/single_camera.cpp
-  src/comm_timer.cpp
 )
 
 ## Rename C++ executable without prefix

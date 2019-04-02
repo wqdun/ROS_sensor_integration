@@ -95,6 +95,7 @@ make_serial_softlink_by_path() {
             exit 1
         fi
         ln -s "/dev/serial/by-path/"${timeStamper} /dev/timeStamper
+
     elif [ "AA${HOSTNAME}" = "AAsc0009" ]; then
         rm /dev/imuRawIns
         local imuRawIns=$(ls /dev/serial/by-path | grep "usb-0:4:1.0" | head -n1)
@@ -142,6 +143,12 @@ start_smart_collector_server() {
     pkill "${task_keyword}"
     echo "pkill -INT ${task_keyword}; pkill ${task_keyword}" >>"/tmp/kill_smartc.sh"
     /opt/smartc/devel/lib/sc_images_timestamper/sc_images_timestamper_node "/dev/timeStamper" "${_absolute_record_path}/IMU/" &
+    sleep 0.2
+
+    local task_keyword="sc_rtimu_no"
+    pkill "${task_keyword}"
+    echo "pkill -INT ${task_keyword}; pkill ${task_keyword}" >>"/tmp/kill_smartc.sh"
+    /opt/smartc/devel/lib/sc_rtimu/sc_rtimu_node "/dev/imu5651RtData" &
     sleep 0.2
 
     local task_keyword="sc_hik_camer"

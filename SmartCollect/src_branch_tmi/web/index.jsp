@@ -46,6 +46,17 @@
         pubCmd_.publish(clientMsg);
     }
 
+    function SetDefaultDeviceId(hostName) {
+      console.log("SetDefaultDeviceId: " + hostName);
+      var idInHostname = hostName.replace(/[^0-9]/g, "");
+      for (var i = 0; i < deviceID.options.length; ++i) {
+        if (deviceID.options[i].text.indexOf(idInHostname) >= 0) {
+          deviceID.options[i].selected = true;
+          break;
+        }
+      }
+    }
+
   </script>
 </head>
 
@@ -177,7 +188,7 @@
                           <option>SC0012</option>
                           <option>SC0013</option>
                           <option>SC0014</option>
-                          <option selected>SC0015</option>
+                          <option>SC0015</option>
                           <option>SC0016</option>
                           <option>SC0017</option>
                         </select>
@@ -289,6 +300,7 @@
     });
 
     var doItOnce = 0;
+    var isDefaultDeviceIdSet = false;
     var serverListener_ = new ROSLIB.Topic({
       ros: ros_,
       name: '/sc_monitor',
@@ -298,6 +310,12 @@
       function(message) {
         console.log("I am listening " + serverListener_.name);
         console.log("Process status: " + message.process_num + "/" + message.total_file_num);
+
+        if (!isDefaultDeviceIdSet) {
+          SetDefaultDeviceId(message.host_name);
+          isDefaultDeviceIdSet = true;
+        }
+
         var fixPercent = message.process_num / (message.total_file_num + 0.00000001) * 100;
         fixPercent = fixPercent.toFixed(2);
         console.log("fixPercent: " + fixPercent);

@@ -40,6 +40,12 @@ ServerDaemon::ServerDaemon(ros::NodeHandle nh, ros::NodeHandle private_nh) {
 ServerDaemon::~ServerDaemon() {}
 
 void ServerDaemon::run() {
+    const size_t HOSTNAME_SIZE = 60;
+    char hostname[HOSTNAME_SIZE];
+    bzero(hostname, HOSTNAME_SIZE);
+    (void)gethostname(hostname, HOSTNAME_SIZE);
+    monitorMsg_.host_name = hostname;
+
     ros::Rate rate(2);
     size_t freqDivider = 0;
 

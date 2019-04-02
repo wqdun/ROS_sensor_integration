@@ -1,3 +1,4 @@
+string host_name
 float64 unix_time
 
 # below from 5651 RS232

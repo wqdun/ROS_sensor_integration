@@ -7,6 +7,7 @@
 #include <fcntl.h>
 #include <ros/ros.h>
 #include <mutex>
+#include <deque>
 #include <fstream>
 #include <boost/algorithm/string/split.hpp>
 #include "sc_msgs/imu5651.h"
@@ -29,6 +30,7 @@ private:
     void Parse5651GpggaFrame(const std::string &_gpggaFrame);
     void WriteRtImuFile(const std::string &_gpfpdFrame);
     void Parse5651GpfpdFrame(const std::string &_gpfpdFrame, double __unixTime);
+    double FillerDeque(std::deque<double> aDeque);
 
     ros::NodeHandle nh_;
     ros::Publisher pubImu5651_;
@@ -37,6 +39,7 @@ private:
     std::string rtImuFile_;
     double unixTimeMinusGpsTime_;
     std::mutex imu232MsgMutex_;
+    std::deque<double> unixTimeMinusGpsTimeQueue_;
 };
 
 #endif

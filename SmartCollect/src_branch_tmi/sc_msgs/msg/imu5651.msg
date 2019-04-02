@@ -22,3 +22,5 @@ string longitude_gpgga
 string no_sv
 string hdop
 
+# below customized
+float64 unix_time_minus_gps_time

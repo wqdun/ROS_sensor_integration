@@ -13,6 +13,8 @@ int32 status
 int32 no_sv
 float64 hdop
 
+float64 unix_time_minus_gps_time
+
 # below from velodyne
 string pps_status
 string is_gprmc_valid
@@ -67,5 +69,7 @@ int8 camera_HWcheck
 
 # DISK USAGE CHECK
 int32 disk_free_space_GB_HWcheck
+
+
 
 

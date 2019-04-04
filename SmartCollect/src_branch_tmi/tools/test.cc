@@ -1,47 +1,37 @@
 #include <iostream>
-#include <ctime>
+#include <deque>
+#include <algorithm>
 #include <string>
-#include <sys/time.h>
-#include <time.h>
+#include <map>
 
 using namespace std;
 
-// std::string unixTime2String(uint64_t unixTime) {
-//     tm tmNow = { 0 };
-//     localtime_r((time_t *)&unixTime, &tmNow);
 
 
-//     cout << tmNow.tm_hour * 100 + tmNow.tm_min;
-//     // strftime(strTime, bufLen - 1, "%Y-%m-%d %H:%M:%S", &tmNow);
-//     // strTime[bufLen - 1] = '\0';
-// }
+void sort_stdalg(deque<double> _dq) {
+    std::sort(_dq.begin(), _dq.end());
+}
 
-int main(void)
-{
-    struct timeval tv;
-    struct timezone tz;
-    gettimeofday (&tv, &tz);
+void print_deque(deque<double> &_dq) {
+    for(size_t i =0; i < _dq.size(); ++i) {
+        std::cout << i << ": " << _dq[i] << "\n";
+    }
+}
 
-    tv.tv_sec = 1546910000;
-    tv.tv_usec = 0;
 
-    settimeofday(&tv, NULL);
-
+int main(int argc, char const *argv[]) {
+    std::deque<double> dq {1, 3, 2, 4, 0, 3.2, 3.6};
+    std::deque<double> _dq(dq);
+    print_deque(dq);
+    sort_stdalg(dq);
+    print_deque(dq);
+    print_deque(_dq);
+    std::cout << _dq[dq.size() / 2] << "\n";
+    std::cout << dq[dq.size() / 2] << "\n";
     return 0;
 }
 
 
-// time_t tt = time(NULL);
-//     tm *t= localtime(&tt);
-//     char nowTime[50];
-//     (void)sprintf(nowTime, "%02d%02d%02d", t->tm_hour, t->tm_min, t->tm_sec);
-//     fileName += nowTime;
 
-//     time_t now = time(NULL);
-//   tm tmNow = { 0 };
-//   localtime_r(&now, &tmNow);
-//   const int nowMinute = tmNow.tm_hour * 100 + tmNow.tm_min;
-//   if(nowMinute != lastMinute_) {
-//     lastMinute_ = nowMinute;
-//     isGonnaCreateNewLidarFile = true;
-//   }
+
+

@@ -134,7 +134,7 @@ void __stdcall SingleCamera::ImageCB(unsigned char *pData, MV_FRAME_OUT_INFO_EX 
 
     if(!pFrameInfo) {
         LOG(ERROR) << "pFrameInfo is NULL.";
-        goto ByeBye;
+        return;
     }
 
     SingleCamera *pSingleCamera = static_cast<SingleCamera *>(_pSingleCamera);
@@ -156,7 +156,7 @@ void __stdcall SingleCamera::ImageCB(unsigned char *pData, MV_FRAME_OUT_INFO_EX 
     int err = MV_CC_ConvertPixelType(handle, &convertParam);
     if(MV_OK != err) {
         LOG(ERROR) << "Failed to MV_CC_ConvertPixelType; err: " << err;
-        goto ByeBye;
+        return;
     }
 
     pSingleCamera->mat2PubMutex_.lock();

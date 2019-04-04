@@ -13,13 +13,15 @@ ServerDaemon::ServerDaemon(ros::NodeHandle nh, ros::NodeHandle private_nh) {
     // below for composing monitor data
     isGpsUpdated_ = isVelodyneUpdated_ = isRawImuUpdated_ = isCameraUpdated_ = isDiskInfoUpdated_ = false;
     subSerial_ = nh.subscribe("imu_string", 10, &ServerDaemon::SerialCB, this);
-    subVelodyne_ = nh.subscribe("velodyne_pps_status", 0, &ServerDaemon::velodyneCB, this);
-    subCameraImg_ = nh.subscribe("cam_speed5555", 0, &ServerDaemon::cameraImgCB, this);
-    subProjectMonitor_ = nh.subscribe("sc_disk_info", 0, &ServerDaemon::projectMonitorCB, this);
-    subDataFixer_ = nh.subscribe("sc_data_fixer_progress", 0, &ServerDaemon::dataFixerCB, this);
+    subVelodyne_ = nh.subscribe("velodyne_pps_status", 10, &ServerDaemon::velodyneCB, this);
+    subCameraImg_ = nh.subscribe("cam_speed5555", 10, &ServerDaemon::cameraImgCB, this);
+    subProjectMonitor_ = nh.subscribe("sc_disk_info", 10, &ServerDaemon::projectMonitorCB, this);
+    subDataFixer_ = nh.subscribe("sc_data_fixer_progress", 10, &ServerDaemon::dataFixerCB, this);
 
-    pub2client_ = nh.advertise<sc_msgs::MonitorMsg>("sc_monitor", 0);
-    gpsTime_[0] = gpsTime_[1] = -1;
+    pub2client_ = nh.advertise<sc_msgs::MonitorMsg>("sc_monitor", 10);
+    gpsTime_[0].clear();
+    gpsTime_[1].clear();
+    projectInfo_.clear();
 
     pDiskMonitor_.reset(new DiskMonitor() );
 
@@ -151,7 +153,7 @@ void ServerDaemon::RestartSelf() {
     LOG(INFO) << __FUNCTION__ << " start.";
 
     const std::string launchScript("/opt/smartc/src/tools/launch_project.sh");
-    (void)public_tools::PublicTools::PopenWithoutReturn("bash " + launchScript + " restart_server &");
+    (void)public_tools::PublicTools::PopenWithoutReturn("bash " + launchScript + " restart_server " + projectInfo_ + " &");
 
     LOG(INFO) << __FUNCTION__ << " end.";
 }
@@ -193,7 +195,7 @@ void ServerDaemon::velodyneCB(const velodyne_msgs::Velodyne2Center::ConstPtr& pV
 }
 
 void ServerDaemon::SerialCB(const sc_msgs::imu5651::ConstPtr& pImu5651Msg) {
-    LOG_EVERY_N(INFO, 10) << __FUNCTION__ << " start.";
+    LOG(INFO) << __FUNCTION__ << " start: " << pImu5651Msg->gps_time;
     gpsTime_[0] = gpsTime_[1];
     gpsTime_[1] = pImu5651Msg->gps_time;
     if(gpsTime_[0] == gpsTime_[1]) {
@@ -230,6 +232,8 @@ void ServerDaemon::SerialCB(const sc_msgs::imu5651::ConstPtr& pImu5651Msg) {
 
     monitorMsg_.no_sv = public_tools::ToolsNoRos::string2int(pImu5651Msg->no_sv);
     monitorMsg_.hdop = public_tools::ToolsNoRos::string2double(pImu5651Msg->hdop);
+
+    monitorMsg_.unix_time_minus_gps_time = pImu5651Msg->unix_time_minus_gps_time;
 }
 
 void ServerDaemon::clientCB(const sc_msgs::ClientCmd::ConstPtr& pClientMsg) {
@@ -252,7 +256,7 @@ void ServerDaemon::clientCB(const sc_msgs::ClientCmd::ConstPtr& pClientMsg) {
         }
         case 3: {
             LOG(INFO) << "I am gonna cleanup server processes.";
-            (void)updateProjectInfo("");
+            (void)UpdateProjectInfo("");
             const std::string launchScript("/opt/smartc/src/tools/launch_project.sh");
             if(!(public_tools::PublicTools::isFileExist(launchScript) ) ) {
                 LOG(ERROR) << launchScript << " does not exist.";
@@ -296,7 +300,8 @@ void ServerDaemon::clientCB(const sc_msgs::ClientCmd::ConstPtr& pClientMsg) {
         }
         case 6: {
             LOG(INFO) << "I am gonna launch a new project: " << pClientMsg->cmd_arguments;
-            (void)updateProjectInfo(pClientMsg->cmd_arguments);
+            (void)UpdateProjectInfo(pClientMsg->cmd_arguments);
+            projectInfo_ = pClientMsg->cmd_arguments;
             const std::string launchScript("/opt/smartc/src/tools/launch_project.sh");
             if(!(public_tools::PublicTools::isFileExist(launchScript) ) ) {
                 LOG(ERROR) << launchScript << " does not exist.";
@@ -494,7 +499,7 @@ void ServerDaemon::projectMonitorCB(const sc_msgs::DiskInfo::ConstPtr& pDiskInfo
     monitorMsg_.timestamp_size = pDiskInfoMsg->timestamp_size;
 }
 
-void ServerDaemon::updateProjectInfo(const std::string &projectInfo) {
+void ServerDaemon::UpdateProjectInfo(const std::string &projectInfo) {
     LOG(INFO) << __FUNCTION__ << " start, projectInfo: " << projectInfo;
     if(projectInfo.empty() ) {
         LOG(INFO) << "Clear projectInfo message.";

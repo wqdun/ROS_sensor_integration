@@ -30,6 +30,7 @@ public:
     ServerDaemon(ros::NodeHandle node, ros::NodeHandle private_nh);
     ~ServerDaemon();
     void run();
+    void UpdateProjectInfo(const std::string &projectInfo);
 
 
 private:
@@ -53,6 +54,7 @@ private:
     struct SharedMem *sharedMem_;
 
     boost::shared_ptr<DiskMonitor> pDiskMonitor_;
+    std::string projectInfo_;
 
     void clientCB(const sc_msgs::ClientCmd::ConstPtr& pClientMsg);
 
@@ -72,8 +74,6 @@ private:
     bool IsGpsTimeGood();
     bool IsScTimeBad();
     void RestartSelf();
-
-    void updateProjectInfo(const std::string &projectInfo);
 };
 
 #endif // __SERVER_DAEMON_H

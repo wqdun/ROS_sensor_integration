@@ -148,7 +148,7 @@ start_smart_collector_server() {
     local task_keyword="sc_rtimu_no"
     pkill "${task_keyword}"
     echo "pkill -INT ${task_keyword}; pkill ${task_keyword}" >>"/tmp/kill_smartc.sh"
-    /opt/smartc/devel/lib/sc_rtimu/sc_rtimu_node "/dev/imu5651RtData" &
+    /opt/smartc/devel/lib/sc_rtimu/sc_rtimu_node "/dev/ttyS0" "${_absolute_record_path}/IMU/" &
     sleep 0.2
 
     local task_keyword="sc_hik_camer"
@@ -193,7 +193,7 @@ do_restart_server() {
     log_with_time "$FUNCNAME start, param: $*"
 
     pkill -INT sc_server_d; pkill sc_server_d
-    /opt/smartc/devel/lib/sc_server_daemon/sc_server_daemon_node &
+    /opt/smartc/devel/lib/sc_server_daemon/sc_server_daemon_node $1 &
     return 0
 }
 
@@ -234,7 +234,7 @@ main() {
     fi
 
     if [ "AA$1" = "AArestart_server" ]; then
-        do_restart_server
+        do_restart_server "$2"
         return
     fi
 }

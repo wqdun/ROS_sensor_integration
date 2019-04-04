@@ -37,7 +37,6 @@ private:
     sc_msgs::imu5651 imu232Msg_;
     std::string serialName_;
     std::string rtImuFile_;
-    double unixTimeMinusGpsTime_;
     std::mutex imu232MsgMutex_;
     std::deque<double> unixTimeMinusGpsTimeQueue_;
 };

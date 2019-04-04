@@ -203,8 +203,7 @@ void CommTimer::Parse5651GpfpdFrame(const std::string &_gpfpdFrame, double __uni
     imu232Msg_.status = gpfpdFrameParsed[15];
 
     const double GpsWeekTime = public_tools::ToolsNoRos::string2double(imu232Msg_.gps_time);
-    unixTimeMinusGpsTime_ = __unixTime - GpsWeekTime;
-    unixTimeMinusGpsTimeQueue_.push_back(unixTimeMinusGpsTime_);
+    unixTimeMinusGpsTimeQueue_.push_back(__unixTime - GpsWeekTime);
     if (unixTimeMinusGpsTimeQueue_.size() > 50) {
         unixTimeMinusGpsTimeQueue_.pop_front();
     }
@@ -227,10 +226,5 @@ double CommTimer::FillerDeque(std::deque<double> aDeque) {
 
     DLOG(INFO) << __FUNCTION__ << " end, filteredResult: " << std::fixed << filteredResult;
     return filteredResult;
-}
-
-double CommTimer::GetUnixTimeMinusGpsTime() {
-    DLOG(INFO) << __FUNCTION__ << " start.";
-    return unixTimeMinusGpsTime_;
 }
 

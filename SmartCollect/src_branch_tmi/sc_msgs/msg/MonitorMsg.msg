@@ -1,7 +1,7 @@
 string host_name
 float64 unix_time
 
-# below from 5651 RS232
+# below from 5651 GPFPD
 int32 GPSweek
 float64 GPStime
 Point3D lat_lon_hei
@@ -10,6 +10,7 @@ Point3D pitch_roll_heading
 float64 speed
 int32 status
 
+# below from 5651 GPGGA
 int32 no_sv
 float64 hdop
 

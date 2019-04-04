@@ -12,9 +12,6 @@ HikCameraManager::HikCameraManager(const std::string &_rawPath):
 
     const std::string rawdataImuPath(_rawPath + "/IMU/");
 
-    pSerialReader_.reset(new CommTimer("/dev/ttyS0", rawdataImuPath) );
-    pSerialReaderThread_ = boost::shared_ptr<boost::thread>(new boost::thread(boost::bind(&CommTimer::Run, pSerialReader_) ) );
-
     int shmid = shmget((key_t)1234, sizeof(struct SharedMem), 0666|IPC_CREAT);
     if(shmid < 0) {
         LOG(ERROR) << "shget failed.";
@@ -31,7 +28,6 @@ HikCameraManager::HikCameraManager(const std::string &_rawPath):
 
 HikCameraManager::~HikCameraManager() {
     LOG(INFO) << __FUNCTION__ << " start.";
-    pSerialReaderThread_->join();
     threadPool_.stop();
     LOG(INFO) << __FUNCTION__ << " end.";
 }
@@ -75,18 +71,12 @@ void HikCameraManager::Run() {
     while(ros::ok()) {
         ros::spinOnce();
         rate.sleep();
-        pSerialReader_->PublishMsg();
         if(0 != camNum) {
             ++i;
             i %= camNum;
             pSingleCameras_[i]->PublishImage();
         }
     }
-}
-
-double HikCameraManager::GetUnixTimeMinusGpsTimeFromSerial() {
-    LOG(INFO) << __FUNCTION__ << " start.";
-    return pSerialReader_->GetUnixTimeMinusGpsTime();
 }
 
 void HikCameraManager::PressEnterToExit() {

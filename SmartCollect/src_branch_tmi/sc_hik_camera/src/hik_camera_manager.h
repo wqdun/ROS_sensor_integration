@@ -20,22 +20,19 @@ public:
     HikCameraManager(const std::string &_rawPath);
     ~HikCameraManager();
     void Run();
-    double GetUnixTimeMinusGpsTimeFromSerial();
 
     threadpool<SaveImageTask> threadPool_;
     std::string rawDataPath_;
     bool isSaveImg_;
+    double unixTimeMinusGpsTime_;
 
 
 private:
     std::vector<boost::shared_ptr<SingleCamera>> pSingleCameras_;
     MV_CC_DEVICE_INFO_LIST deviceList_;
-    boost::shared_ptr<CommTimer> pSerialReader_;
-    boost::shared_ptr<boost::thread> pSerialReaderThread_;
     ros::NodeHandle nh_;
     ros::Subscriber subMonitor_;
     struct SharedMem *sharedMem_;
-    double unixTimeMinusGpsTime_;
 
     void DoClean();
     void PressEnterToExit();

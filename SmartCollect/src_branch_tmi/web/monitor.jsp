@@ -4,7 +4,7 @@
 <head>
     <%@ include file="include/header.jsp" %>
     <script>
-        function pubCtrlParams() {
+        function PubCtrlParams() {
             isRecordclicked_ = 5;
             var isRecord = document.getElementById("isRecordCheckBox").checked;
             var clientMsg = new ROSLIB.Message({
@@ -13,12 +13,232 @@
             });
             pubCmd_.publish(clientMsg);
         }
-    </script>
 
+        function UpdateImuStatus(_message) {
+            var _isImuError = false;
+
+            if (_message.GPStime < 0) {
+                _isImuError = true;
+                console.log("I got no IMU GPFPD frame.");
+                document.getElementById('heading').innerHTML = "<font color=red >\"\"</font>";
+                document.getElementById('location').innerHTML = "<font color=red >\"\"</font>";
+                document.getElementById('speed').innerHTML = "<font color=red >\"\"</font>";
+                document.getElementById('imu_status').innerHTML = "<font color=red >\"\"</font>";
+                document.getElementById('gps_time').innerHTML = "<font color=red >\"\"</font>";
+                document.getElementById('num').innerHTML = "<font color=red>\"\"</font>";
+                document.getElementById('hdop').innerHTML = "<font color=red>\"\"</font>";
+            }
+            else {
+                document.getElementById('heading').innerHTML = "<font color=green>" + _message.pitch_roll_heading.z.toFixed(2) + "</font>";
+                document.getElementById('location').innerHTML = "<font color=green>" + _message.lat_lon_hei.x.toFixed(8) + ", " + _message.lat_lon_hei.y.toFixed(8) + "</font>";
+                if (_message.speed > 120) {
+                    _isImuError = true;
+                    document.getElementById('speed').innerHTML = "<font color=red>" + _message.speed.toFixed(2) + "km/h</font>";
+                }
+                else {
+                    document.getElementById('speed').innerHTML = "<font color=green>" + _message.speed.toFixed(2) + "km/h</font>";
+                }
+                var imuStatus = _message.status & 0xF;
+                if (3 === imuStatus || 0xC === imu_status) {
+                    document.getElementById('imu_status').innerHTML = "<font color=green>" + _message.status.toString(16).toUpperCase() + "</font>";
+                }
+                else {
+                    _isImuError = true;
+                    document.getElementById('imu_status').innerHTML = "<font color=red>" + _message.status.toString(16) + "</font>";
+                }
+
+                var gpsDateObj = new Date(_message.GPStime * 1000);
+                var _gps_hour = gpsDateObj.getUTCHours();
+                var _gps_minute = gpsDateObj.getUTCMinutes();
+                var _gps_second = gpsDateObj.getUTCSeconds();
+                var errSecond = Math.abs(_message.unix_time - _message.GPStime);
+                errSecond = errSecond % (24 * 3600);
+                if (errSecond > 1000 && errSecond < 85400) {
+                    _isImuError = true;
+                    document.getElementById('gps_time').innerHTML = "<font color=red>" + _gps_hour + ":" + _gps_minute + ":" + _gps_second + "</font>";
+                }
+                else {
+                    document.getElementById('gps_time').innerHTML = "<font color=green>" + _gps_hour + ":" + _gps_minute + ":" + _gps_second + "</font>";
+                }
+
+                if (_message.no_sv < 0) {
+                    _isImuError = true;
+                    console.log("GPGGA contains no satellite number.");
+                    document.getElementById('num').innerHTML = "<font color=red>\"\"</font>";
+                    document.getElementById('hdop').innerHTML = "<font color=red>\"\"</font>";
+                }
+                else {
+                    if (0 === _message.no_sv) {
+                        _isImuError = true;
+                        document.getElementById('num').innerHTML = "<font color=red>0</font>";
+                    }
+                    else {
+                        document.getElementById('num').innerHTML = "<font color=green>" + _message.no_sv + "</font>";
+                    }
+                    document.getElementById('hdop').innerHTML = "<font color=green>" + _message.hdop.toFixed(2) + "</font>";
+                }
+            }
+
+            return _isImuError;
+        }
+
+        function UpdateCameraStatus(_message) {
+            var _isCameraError = false;
+
+            if (_message.camera_fps < 0.01) {
+                _isCameraError = true;
+                document.getElementById('fps').innerHTML = "<font color=red>" + _message.camera_fps.toFixed(2) + "</font>";
+            }
+            else {
+                document.getElementById('fps').innerHTML = "<font color=green>" + _message.camera_fps.toFixed(2) + "</font>";
+            }
+
+            return _isCameraError;
+        }
+
+        function UpdateLidarStatus(_message) {
+            var _isLidarError = false;
+
+            if (0 === _message.pps_status.length) {
+                _isLidarError = true;
+                console.log("I got no pps status.");
+                document.getElementById('pps').innerHTML = "<font color=red>\"\"</font>";
+                document.getElementById('gprmc').innerHTML = "<font color=red>\"\"</font>";
+                document.getElementById('velodyne_rpm').innerHTML = "<font color=red>\"\"</font>";
+            }
+            else {
+                if (_message.pps_status.indexOf("PPS locked") < 0) {
+                    _isLidarError = true;
+                    document.getElementById('pps').innerHTML = "<font color=red>" + _message.pps_status + "</font>";
+                }
+                else {
+                    document.getElementById('pps').innerHTML = "<font color=green>" + _message.pps_status + "</font>";
+                }
+
+                if ('A' !== _message.is_gprmc_valid) {
+                    _isLidarError = true;
+                    document.getElementById('gprmc').innerHTML = "<font color=red>" + _message.is_gprmc_valid + "</font>";
+                }
+                else {
+                    document.getElementById('gprmc').innerHTML = "<font color=green>" + _message.is_gprmc_valid + "</font>";
+                }
+
+                document.getElementById('velodyne_rpm').innerHTML = "<font color=green>" + _message.velodyne_rpm.toFixed(2) + "</font>";
+            }
+
+            return _isLidarError;
+        }
+
+        function UpdateFileSize(_message) {
+            console.log("_message.img_num: " + _message.img_num);
+            var _isFileSizeError = false;
+
+            if (0 === _message.project_info.city_code) {
+                _isFileSizeError = true;
+                document.getElementById('project_info').innerHTML = "<font color=red>\"\"</font>";
+                document.getElementById('lidarpkg').innerHTML = "<font color=red>\"\"</font>";
+                document.getElementById('piccounts').innerHTML = "<font color=red>\"\"</font>";
+                document.getElementById('raw_ins').innerHTML = "<font color=red>\"\"</font>";
+                document.getElementById('timestamp_size').innerHTML = "<font color=red>\"\"</font>";
+            }
+            else {
+                document.getElementById('project_info').innerHTML = "<font color=green>" + _message.project_info.city_code + "-"
+                                                                                         + _message.project_info.daynight_code + "-"
+                                                                                         + _message.project_info.task_id + "-"
+                                                                                         + _message.project_info.device_id + "</font>";
+                var lidarSize = (((_message.lidar_size - 1) < 0)? _message.lidar_size: (_message.lidar_size - 1)) + "M";
+                document.getElementById('lidarpkg').innerHTML = "<font color=green>" + lidarSize + "</font>";
+                var picCount = (_message.img_num < 0)? 0: _message.img_num;
+                document.getElementById('piccounts').innerHTML = "<font color=green>" + picCount + "</font>";
+
+                if(_message.raw_ins_size <= 0) {
+                    _isFileSizeError = true;
+                    document.getElementById('raw_ins').innerHTML = "<font color=red>0B</font>";
+                }
+                else {
+                    document.getElementById('raw_ins').innerHTML = "<font color=green>" + Byte2HumanReadable(_message.raw_ins_size) + "</font>";
+                }
+
+                if(_message.timestamp_size <= 0) {
+                    _isFileSizeError = true;
+                    document.getElementById('timestamp_size').innerHTML = "<font color=red>0B</font>";
+                }
+                else {
+                    document.getElementById('timestamp_size').innerHTML = "<font color=green>" + Byte2HumanReadable(_message.timestamp_size) + "</font>";
+                }
+            }
+
+            return _isFileSizeError;
+        }
+
+        function UpdateHardwareStatus(_message) {
+            var _isHardwareError = false;
+
+            if (3 === _message.sc_check_camera_num) {
+                document.getElementById('camera_num').innerHTML = "<font color=green>3</font>";
+            }
+            else {
+                _isHardwareError = true;
+                document.getElementById('camera_num').innerHTML = "<font color=red>" + _message.sc_check_camera_num + "( ≠ 3)</font>";
+            }
+
+            var diskUsageArr = _message.disk_usage.split(",");
+            var freePercentage = 100 - parseInt(diskUsageArr[1]);
+            if (freePercentage > 20) {
+                document.getElementById('diskspace').innerHTML = "<font color=green>" + diskUsageArr[0] + ", " + freePercentage + "%</font>";
+            }
+            else {
+                _isHardwareError = true;
+                document.getElementById('diskspace').innerHTML = "<font color=red>" + diskUsageArr[0] + ", " + freePercentage + "%</font>";
+            }
+
+            return _isHardwareError;
+        }
+
+        function Byte2HumanReadable(sizeInByte) {
+            if(sizeInByte <= 0) {
+                return "0B";
+            }
+
+            if(sizeInByte < 1024) {
+                return sizeInByte + "B";
+            }
+
+            if(sizeInByte < 1048576) {
+                return (sizeInByte / 1024).toFixed(2) + "KB";
+            }
+
+            return (sizeInByte / 1048576).toFixed(2) + "MB";
+        }
+
+    </script>
 
 </head>
 
 <body>
+    <div class="modal fade" id="optModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <button type="button" class="close" data-dismiss="modal" aria-hidden="true">
+            &times;
+          </button>
+
+        </div>
+        <div class="modal-body">
+          <label id="optname">Monitoring</label>
+        </div>
+        <div class="modal-footer">
+
+          <button type="button" class="btn btn-primary" data-dismiss="modal" id="cmtBtn" onclick="AlermOn();">
+            Start
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+
 <div class="subnavbar">
     <div class="subnavbar-inner">
         <div class="container">
@@ -56,8 +276,21 @@
                         <thead>
                         <tr>
                             <td>Connection: <br/><a href="#" id="connect" class="alert-link"></a></td>
-                            <td colspan="3">Location: <br/><a href="#" id="location" class="alert-link">"bbb", "cc"</a></td>
-                            <td colspan="2" rowspan="2"><p id="warning"></p></td>
+                            <td colspan="1">Project: <br/><a href="#" id="project_info" class="alert-link">""</a></td>
+                            <td colspan="1">Location: <br/><a href="#" id="location" class="alert-link">"bbb", "cc"</a></td>
+                            <td colspan="1">Camera Num: <br/><a href="#" id="camera_num" class="alert-link">""</a></td>
+                            <td colspan="2" rowspan="4" style="text-align:center;">
+                                <img src="http://<%=ip%>:8080/stream?topic=/camera/image6666" width="340px" alt="http://<%=ip%>:8080/stream?topic=/camera/image6666">
+                            </td>
+
+                            <!-- <td rowspan="5">
+                                <p id="voff" style="display: block;"><button id="voice_control" onclick="AddVoice();">AlermOn</button><i class="icon-volume-off" style="color:red;">×</i>
+                                </p>
+                                <p id="von"><i class="icon-volume-up" style="color:green;"></i></p>
+
+                                <p id="collect">COLLECT <input id="isRecordCheckBox" type="checkbox" onchange="PubCtrlParams();"></p>
+
+                            </td> -->
                         </tr>
                         <tr>
                             <td>Satellite:<br/> <a href="#" id="num" class="alert-link">""</a></td>
@@ -71,18 +304,7 @@
                             <td>GPRMC: <br/><a href="#" id="gprmc" class="alert-link">""</a></td>
                             <td>LIDAR Size: <br/><a href="#" id="lidarpkg" class="alert-link">""</a></td>
                             <td>Rawins Size: <br/><a href="#" id="raw_ins" class="alert-link">""</a></td>
-                            <td rowspan="3" style="text-align:center;">
-                                <img src="http://<%=ip%>:8080/stream?topic=/camera/image6666" width="160px" alt="http://<%=ip%>:8080/stream?topic=/camera/image6666">
-                            </td>
 
-                            <td  rowspan="3">
-                                <p id="voff" style="display: block;"><button id="voice_control" onclick="addVoice();">AlermOn</button><i class="icon-volume-off" style="color:red;">×</i>
-                                </p>
-                                <p id="von"><i class="icon-volume-up" style="color:green;"></i></p>
-
-                                <p id="collect">COLLECT <input id="isRecordCheckBox" type="checkbox" onchange="pubCtrlParams();"></p>
-
-                            </td>
                         </tr>
                         <tr>
                             <td>Camera FPS: <br/><a href="#" id="fps" class="alert-link">""</a></td>
@@ -92,9 +314,15 @@
 
                         </tr>
                         <tr>
-                            <td colspan="2">SC Time: <br/><a href="#" id="unix_time" class="alert-link">""</a></td>
+                            <td colspan="1">SC Time: <br/><a href="#" id="unix_time" class="alert-link">""</a></td>
+                            <td colspan="1">GPS Time: <br/><a href="#" id="gps_time" class="alert-link">""</a></td>
                             <td>Disk Free: <br/><a href="#" id="diskspace" class="alert-link">""</a></td>
                             <td>Image Stamp Size: <br/><a href="#" id="timestamp_size" class="alert-link">""</a></td>
+                             <td colspan="2"  style="text-align:center;">
+                                <p id="collect">COLLECT &nbsp;
+                                    <input id="isRecordCheckBox" type="checkbox" onchange="PubCtrlParams();" style="zoom:180%;" >
+                                </p>
+                            </td>
                         </tr>
 
                         </thead>
@@ -125,27 +353,23 @@
 <%@ include file="include/footer.jsp" %>
 <audio id="bgMusic" src="ring.mp3" autoplay></audio>
 <script>
-    function AddEvent(warningId, message) {
-        var warningMsg = '<div class="alert alert-error"><a href="#" class="close" data-dismiss="alert">&times;</a>【<b style="color:red">'
-            + warningId + '</b>】' + message + '</div>';
-        $('#warning').append(warningMsg);
-    }
-
-    $("#von").hide();
-    function addVoice() {
-        $("#von").show();
-        $("#voff").hide();
+    $('#optModal').modal({
+        show:true,
+        backdrop:'static'
+    })
+    function AlermOn(){
         bgMusic.play();
     }
+
 
     var url_ = window.location.host;
     console.log("window.location.host: " + url_);
 
     // waiting 5 s for modify take effect: ->server
     var isRecordclicked_ = 0;
+
     // Connecting to ROS
     var ros_ = new ROSLIB.Ros();
-
     // If there is an error on the backend, an 'error' emit will be emitted.
     ros_.on('error', function (error) {
         console.log(error);
@@ -175,164 +399,20 @@
         messageType: 'sc_msgs/MonitorMsg'
     });
 
-    var voiceCounter = -1;
-    var isWarningAdded = false;
-
-    var isStatusErrorWarningMessageAdded_ = false;
-
+    var gonnaRingCounter = 0;
+    var isGonnaRing = false;
     centerListener.subscribe(function (message) {
-        var isStatusError = false;
         var unixDateObj = new Date(message.unix_time * 1000);
         var _unix_hour = unixDateObj.getUTCHours();
         var _unix_minute = unixDateObj.getUTCMinutes();
         var _unix_second = unixDateObj.getUTCSeconds();
-        document.getElementById('unix_time').innerHTML = _unix_hour + ":" + _unix_minute + ":" + _unix_second;
+        document.getElementById('unix_time').innerHTML = "<font color=green>" + _unix_hour + ":" + _unix_minute + ":" + _unix_second + "</font>";
 
-        var warningMap = new Map();
-
-        // below is IMU related
-        if (message.GPStime < 0) {
-            console.log("I got no IMU frame.");
-            document.getElementById('heading').innerHTML = "<font color=red >\"\"</font>";
-            document.getElementById('location').innerHTML = "<font color=red >\"\"</font>";
-            document.getElementById('speed').innerHTML = "<font color=red >\"\"</font>";
-            document.getElementById('imu_status').innerHTML = "<font color=red >\"\"</font>";
-            document.getElementById('num').innerHTML = "<font color=red>\"\"</font>";
-            document.getElementById('hdop').innerHTML = "<font color=red>\"\"</font>";
-        }
-        else {
-            document.getElementById('heading').innerHTML = "<font color=green>" + message.pitch_roll_heading.z.toFixed(2) + "</font>";
-            document.getElementById('location').innerHTML = "<font color=green>" + message.lat_lon_hei.x.toFixed(8) + ", " + message.lat_lon_hei.y.toFixed(8) + "</font>";
-            if (message.speed > 120) {
-                document.getElementById('speed').innerHTML = "<font color=red>" + message.speed.toFixed(2) + "km/h</font>";
-            }
-            else {
-                document.getElementById('speed').innerHTML = "<font color=green>" + message.speed.toFixed(2) + "km/h</font>";
-            }
-            var imuStatus = message.status & 0xF;
-            if (8 === imuStatus) {
-                document.getElementById('imu_status').innerHTML = "<font color=#B8860B>" + message.status.toString(16) + "</font>";
-                isStatusError = true;
-            }
-            else if (3 === imuStatus) {
-                document.getElementById('imu_status').innerHTML = "<font color=green>" + message.status.toString(16) + "</font>";
-            }
-            else {
-                document.getElementById('imu_status').innerHTML = "<font color=red>" + message.status.toString(16) + "</font>";
-                isStatusError = true;
-            }
-
-            var errSecond = Math.abs(message.unix_time - message.GPStime);
-            errSecond = errSecond % (24 * 3600);
-            if (errSecond > 1000 && errSecond < 85400) {
-                warningMap.set(1003, "SC time error, please set SC time or check GPS time");
-            }
-
-            if (message.no_sv < 0) {
-                console.log("GPGGA contains null satellite number.");
-                document.getElementById('num').innerHTML = "<font color=red>\"\"</font>";
-                document.getElementById('hdop').innerHTML = "<font color=red>\"\"</font>";
-            }
-            else {
-                if (0 === message.no_sv) {
-                    document.getElementById('num').innerHTML = "<font color=red>0</font>";
-                }
-                else {
-                    document.getElementById('num').innerHTML = "<font color=green>" + message.no_sv + "</font>";
-                }
-                document.getElementById('hdop').innerHTML = "<font color=green>" + message.hdop.toFixed(2) + "</font>";
-            }
-        }
-
-        // below is camera related
-        if (message.camera_fps < 0.01) {
-            document.getElementById('fps').innerHTML = "<font color=red>" + message.camera_fps.toFixed(2) + "</font>";
-        }
-        else {
-            document.getElementById('fps').innerHTML = "<font color=green>" + message.camera_fps.toFixed(2) + "</font>";
-        }
-
-        // below is velodyne related
-        if (0 === message.pps_status.length) {
-            console.log("I got no pps status.");
-            document.getElementById('pps').innerHTML = "<font color=red>Absent</font>";
-            document.getElementById('gprmc').innerHTML = "<font color=red>Absent</font>";
-            document.getElementById('velodyne_rpm').innerHTML = "<font color=red>\"\"</font>";
-        }
-        else {
-            if (message.pps_status.indexOf("PPS locked") < 0) {
-                document.getElementById('pps').innerHTML = "<font color=red>" + message.pps_status + "</font>";
-            }
-            else {
-                document.getElementById('pps').innerHTML = "<font color=green>" + message.pps_status + "</font>";
-            }
-
-            if ('A' !== message.is_gprmc_valid) {
-                document.getElementById('gprmc').innerHTML = "<font color=red>" + message.is_gprmc_valid + "</font>";
-            }
-            else {
-                document.getElementById('gprmc').innerHTML = "<font color=green>" + message.is_gprmc_valid + "</font>";
-            }
-
-            document.getElementById('velodyne_rpm').innerHTML = "<font color=green>" + message.velodyne_rpm.toFixed(2) + "</font>";
-        }
-
-        // below is project monitor related
-        console.log("message.img_num: " + message.img_num);
-        if (0 === message.project_info.city_code) {
-            warningMap.set(1001, "No active project");
-            $("#piccounts")[0].innerHTML = $("#lidarpkg")[0].innerHTML = "<font color=red>\"\"</font>";
-        }
-        else {
-            $("#piccounts")[0].innerHTML = (message.img_num < 0)? 0: message.img_num;
-            $("#lidarpkg")[0].innerHTML = (((message.lidar_size - 1) < 0)? message.lidar_size: (message.lidar_size - 1)) + "M";
-        }
-
-        if(message.raw_ins_size < 1024) {
-            document.getElementById('raw_ins').innerHTML = message.raw_ins_size + "B";
-        }
-        else if(message.raw_ins_size < 1048576) {
-            document.getElementById('raw_ins').innerHTML = (message.raw_ins_size / 1024).toFixed(2) + "KB";
-        }
-        else {
-            document.getElementById('raw_ins').innerHTML = (message.raw_ins_size / 1048576).toFixed(2) + "MB";
-        }
-
-        if(message.timestamp_size <= 0) {
-            document.getElementById('timestamp_size').innerHTML = "<font color=red>" + message.timestamp_size + "B</font>";
-        }
-        else
-        if(message.timestamp_size < 1024) {
-            document.getElementById('timestamp_size').innerHTML = message.timestamp_size + "B";
-        }
-        else
-        if(message.timestamp_size < 1048576) {
-            document.getElementById('timestamp_size').innerHTML = (message.timestamp_size / 1024).toFixed(2) + "KB";
-        }
-        else {
-            document.getElementById('timestamp_size').innerHTML = (message.timestamp_size / 1048576).toFixed(2) + "MB";
-        }
-
-        // below is sc check
-        if (3 !== message.sc_check_camera_num) {
-            warningMap.set(1005, "Camera number is " + message.sc_check_camera_num + ", should be 3");
-        }
-
-        if (message.speed > 120) {
-            warningMap.set(1002, "Speed > 120km/h, please restart IMU");
-        }
-
-        var diskUsageArr = message.disk_usage.split(",");
-        var freePercentage = 100 - parseInt(diskUsageArr[1]);
-        if (freePercentage > 20) {
-            document.getElementById('diskspace').innerHTML = "<font color=green>" + diskUsageArr[0] + ", " + freePercentage + "%</font>";
-        }
-        else {
-            document.getElementById('diskspace').innerHTML = "<font color=red>" + diskUsageArr[0] + ", " + freePercentage + "%</font>";
-        }
-        if (freePercentage < 10) {
-            warningMap.set(1004, "Disk free space is not enough: " + freePercentage);
-        }
+        var isImuError = UpdateImuStatus(message);
+        var isCameraError = UpdateCameraStatus(message);
+        var isLidarError = UpdateLidarStatus(message);
+        var isFileSizeError = UpdateFileSize(message);
+        var isHardwareError = UpdateHardwareStatus(message);
 
         $('#isRecordCheckBox').prop('disabled', ('A' !== message.is_gprmc_valid));
         if (isRecordclicked_ !== 0) {
@@ -343,24 +423,24 @@
             $("#isRecordCheckBox").prop("checked", message.is_record);
         }
 
-        if (!isWarningAdded) {
-            warningMap.forEach(function (value, key, map) {
-                AddEvent(key, value);
-            });
-            isWarningAdded = true;
+        if (isImuError || isCameraError || isLidarError || isFileSizeError || isHardwareError) {
+            ++gonnaRingCounter;
+            gonnaRingCounter %= 10;
+            if (0 === gonnaRingCounter) {
+                isGonnaRing = true;
+            }
+            // else do nothing
+        }
+        else {
+            gonnaRingCounter = 0;
+            isGonnaRing = false;
         }
 
-        if (0 !== warningMap.size || isStatusError) {
-            ++voiceCounter;
-            voiceCounter %= 10;
-            console.log("NOISE!");
+        if (isGonnaRing) {
+            console.log("FIX ME!!! " + gonnaRingCounter);
             bgMusic.play();
         }
 
-        if(isStatusError && !isStatusErrorWarningMessageAdded_) {
-            AddEvent(1006, "IMU loses lock");
-            isStatusErrorWarningMessageAdded_ = true;
-        }
     });
 </script>
 </body>

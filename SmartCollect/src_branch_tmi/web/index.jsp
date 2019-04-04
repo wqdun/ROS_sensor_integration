@@ -226,9 +226,7 @@
 
                     <br/>
                     <div class="form-actions">
-                      <button class="btn btn-inverse" id="removeData" data-toggle="modal"
-                          data-target="#optModal">Delete Data
-                      </button>
+
                       <button class="btn btn-inverse" id="fixData" data-toggle="modal"
                           data-target="#optModal">Collate Data
                       </button>
@@ -237,6 +235,9 @@
                       </button>
                       <button class="btn btn-inverse" id="shutdown" data-toggle="modal"
                           data-target="#optModal">Shutdown OS
+                      </button>
+                      <button class="btn btn-danger" id="removeData" data-toggle="modal"
+                              data-target="#optModal">Delete Data
                       </button>
                     </div>
                     </div>

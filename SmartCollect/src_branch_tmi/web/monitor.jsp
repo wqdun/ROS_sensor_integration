@@ -41,7 +41,7 @@
                 document.getElementById('location').innerHTML = "<font color=red>\"\"</font>";
                 document.getElementById('speed').innerHTML = "<font color=red>\"\"</font>";
                 document.getElementById('imu_status').innerHTML = "<font color=red>\"\"</font>";
-                document.getElementById('gps_time').innerHTML = "<font color=red>\"\"</font>";
+                // document.getElementById('gps_time').innerHTML = "<font color=red>\"\"</font>";
                 document.getElementById('num').innerHTML = "<font color=red>\"\"</font>";
                 document.getElementById('hdop').innerHTML = "<font color=red>\"\"</font>";
             }
@@ -72,10 +72,10 @@
                 errSecond = errSecond % (24 * 3600);
                 if (errSecond > 1000 && errSecond < 85400) {
                     _isImuError = true;
-                    document.getElementById('gps_time').innerHTML = "<font color=red>" + _gps_hour + ":" + _gps_minute + ":" + _gps_second + "</font>";
+                    // document.getElementById('gps_time').innerHTML = "<font color=red>" + _gps_hour + ":" + _gps_minute + ":" + _gps_second + "</font>";
                 }
                 else {
-                    document.getElementById('gps_time').innerHTML = "<font color=green>" + _gps_hour + ":" + _gps_minute + ":" + _gps_second + "</font>";
+                    // document.getElementById('gps_time').innerHTML = "<font color=green>" + _gps_hour + ":" + _gps_minute + ":" + _gps_second + "</font>";
                 }
 
                 if (_message.no_sv < 0) {
@@ -104,7 +104,13 @@
 
             if (_message.camera_fps < 0.01) {
                 _isCameraError = true;
-                document.getElementById('fps').innerHTML = "<font color=red>" + _message.camera_fps.toFixed(2) + "</font>";
+                if (0 === _message.project_info.city_code) {
+                    console.log("There is no active project.");
+                    document.getElementById('fps').innerHTML = "<font color=red>\"\"</font>";
+                }
+                else {
+                    document.getElementById('fps').innerHTML = "<font color=red>" + _message.camera_fps.toFixed(2) + "</font>";
+                }
             }
             else {
                 document.getElementById('fps').innerHTML = "<font color=green>" + _message.camera_fps.toFixed(2) + "</font>";
@@ -159,10 +165,13 @@
                 document.getElementById('timestamp_size').innerHTML = "<font color=red>\"\"</font>";
             }
             else {
-                document.getElementById('project_info').innerHTML = "<font color=green>" + _message.project_info.city_code + "-"
-                                                                                         + _message.project_info.daynight_code + "-"
-                                                                                         + _message.project_info.task_id + "-"
-                                                                                         + _message.project_info.device_id + "</font>";
+                document.getElementById('project_info').innerHTML =
+                    "<font color=green>"
+                        + _message.project_info.city_code + "-"
+                        + _message.project_info.daynight_code + "-"
+                        + _message.project_info.task_id + _message.project_info.device_id + "-"
+                        + _message.project_info.date +
+                    "</font>";
                 var lidarSize = (((_message.lidar_size - 1) < 0)? _message.lidar_size: (_message.lidar_size - 1)) + "M";
                 document.getElementById('lidarpkg').innerHTML = "<font color=green>" + lidarSize + "</font>";
                 var picCount = (_message.img_num < 0)? 0: _message.img_num;
@@ -229,7 +238,6 @@
         }
 
     </script>
-
 </head>
 
 <body>
@@ -285,9 +293,8 @@
                     <table class="table table-bordered table-striped">
                         <thead>
                         <tr>
-                            <td>Connection: <br/><a href="#" id="connect" class="alert-link"></a></td>
-                            <td colspan="1">Project: <br/><a href="#" id="project_info" class="alert-link">""</a></td>
-                            <td colspan="1">Location: <br/><a href="#" id="location" class="alert-link">"bbb", "cc"</a></td>
+                            <td colspan="1">Connection: <br/><a href="#" id="connect" class="alert-link"></a></td>
+                            <td colspan="2">Location: <br/><a href="#" id="location" class="alert-link">"bbb", "cc"</a></td>
                             <td colspan="1">Camera Num: <br/><a href="#" id="camera_num" class="alert-link">""</a></td>
                             <td colspan="2" rowspan="4" style="text-align:center;">
                                 <img src="http://<%=ip%>:8080/stream?topic=/camera/image6666" width="340px" alt="http://<%=ip%>:8080/stream?topic=/camera/image6666">
@@ -303,23 +310,22 @@
                         <tr>
                             <td>PPS: <br/><a href="#" id="pps" class="alert-link">""</a></td>
                             <td>GPRMC: <br/><a href="#" id="gprmc" class="alert-link">""</a></td>
-                            <td>LIDAR Size: <br/><a href="#" id="lidarpkg" class="alert-link">""</a></td>
-                            <td>Rawins Size: <br/><a href="#" id="raw_ins" class="alert-link">""</a></td>
-
+                            <td>LiDAR Size: <br/><a href="#" id="lidarpkg" class="alert-link">""</a></td>
+                            <td>LiDAR RPM: <br/><a href="#" id="velodyne_rpm" class="alert-link">""</a></td>
                         </tr>
                         <tr>
                             <td>Camera FPS: <br/><a href="#" id="fps" class="alert-link">""</a></td>
-                            <td>IMU Status: <br/><a href="#" id="imu_status" class="alert-link">""</a></td>
                             <td>Image Num: <br/><a href="#" id="piccounts" class="alert-link">""</a></td>
-                            <td>LIDAR Rpm: <br/><a href="#" id="velodyne_rpm" class="alert-link">""</a></td>
-
+                            <td>IMU Status: <br/><a href="#" id="imu_status" class="alert-link">""</a></td>
+                            <td>Rawins Size: <br/><a href="#" id="raw_ins" class="alert-link">""</a></td>
                         </tr>
                         <tr>
-                            <td colspan="1">SC Time: <br/><a href="#" id="unix_time" class="alert-link">""</a></td>
-                            <td colspan="1">GPS Time: <br/><a href="#" id="gps_time" class="alert-link">""</a></td>
+                            <td colspan="1">UTC Time: <br/><a href="#" id="unix_time" class="alert-link">""</a></td>
+                            <!-- <td colspan="1">GPS Time: <br/><a href="#" id="gps_time" class="alert-link">""</a></td> -->
                             <td>Disk Free: <br/><a href="#" id="diskspace" class="alert-link">""</a></td>
-                            <td>Image Stamp Size: <br/><a href="#" id="timestamp_size" class="alert-link">""</a></td>
-                            <td colspan="2" style="text-align:center;">
+                            <td colspan="2">Timestamp Size: <br/><a href="#" id="timestamp_size" class="alert-link">""</a></td>
+                            <td colspan="1">Project Name: <br/><a href="#" id="project_info" class="alert-link">""</a></td>
+                            <td colspan="1" style="text-align:center;">
                                 <button class="btn btn-large btn-success" id="collect_button" onclick="PubCtrlParams();">Start</button>
                             </td>
                         </tr>
@@ -408,7 +414,7 @@
         var isFileSizeError = UpdateFileSize(message);
         var isHardwareError = UpdateHardwareStatus(message);
 
-        // document.getElementById("collect_button").disabled = ('A' !== message.is_gprmc_valid);
+        document.getElementById("collect_button").disabled = ('A' !== message.is_gprmc_valid);
         if (recordClickedDelayCounter_ !== 0) {
             --recordClickedDelayCounter_;
             console.log("Waiting modify take effect: " + recordClickedDelayCounter_);

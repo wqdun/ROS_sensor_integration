@@ -506,6 +506,7 @@ void ServerDaemon::UpdateProjectInfo(const std::string &projectInfo) {
         monitorMsg_.project_info.city_code = monitorMsg_.project_info.daynight_code = 0;
         monitorMsg_.project_info.task_id.clear();
         monitorMsg_.project_info.device_id.clear();
+        monitorMsg_.project_info.date.clear();
 
         monitorMsg_.is_record = 0;
         monitorMsg_.cam_gain = 20;
@@ -523,6 +524,7 @@ void ServerDaemon::UpdateProjectInfo(const std::string &projectInfo) {
     monitorMsg_.project_info.daynight_code = public_tools::PublicTools::string2num(parsedProjectInfo[1], 0);
     monitorMsg_.project_info.task_id = parsedProjectInfo[2].substr(0, parsedProjectInfo[2].size() - 4);
     monitorMsg_.project_info.device_id = parsedProjectInfo[2].substr(parsedProjectInfo[2].size() - 4);
+    monitorMsg_.project_info.date = parsedProjectInfo[3];
     return;
 }
 

@@ -156,7 +156,6 @@
             console.log("_message.img_num: " + _message.img_num);
             var _isFileSizeError = false;
 
-
             if (0 === _message.project_info.city_code) {
                 _isFileSizeError = true;
                 document.getElementById('project_info').innerHTML = "<font color=red>\"\"</font>";

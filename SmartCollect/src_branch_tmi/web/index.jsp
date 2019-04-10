@@ -29,7 +29,7 @@
         $("#projname").html(projectNameWithDate);
     }
 
-    function smartcCheck_onclick() {
+    function SmartcCheck_OnClick() {
         var scCheckProjectName = "9999-1-T0001-000001";
         console.log('scCheckProjectName: ' + scCheckProjectName);
         $("#projname").html(scCheckProjectName);
@@ -198,7 +198,7 @@
                       <label class="control-label"></label>
                       <div class="controls">
                         <button class="btn btn-inverse" id="smartcCheck" data-toggle="modal"
-                            data-target="#myModal" onclick="smartcCheck_onclick();">SmartC Check
+                            data-target="#myModal" onclick="SmartcCheck_OnClick();">SmartC Check
                         </button>
                         <button type="button" class="btn btn-inverse" id="newProject" data-toggle="modal"
                             data-target="#myModal" onclick="projlayer();">Build Project
@@ -235,7 +235,7 @@
                       </button>
                       <button class="btn btn-inverse" id="shutdown" data-toggle="modal"
                           data-target="#optModal">Shutdown OS
-                      </button>
+                      </button>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
                       <button class="btn btn-danger" id="removeData" data-toggle="modal"
                               data-target="#optModal">Delete Data
                       </button>

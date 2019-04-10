@@ -5,11 +5,21 @@
     <%@ include file="include/header.jsp" %>
     <script>
         function PubCtrlParams() {
-            isRecordclicked_ = 5;
-            var isRecord = document.getElementById("isRecordCheckBox").checked;
+            recordClickedDelayCounter_ = 5;
+            // var isRecord = document.getElementById("isRecordCheckBox").checked;
+            isStartRecord_ = !isStartRecord_;
+            if (isStartRecord_) {
+                document.getElementById("collect_button").innerHTML = "Pause";
+                document.getElementById("collect_button").setAttribute("class","btn  btn-large btn-danger");
+            }
+            else {
+                document.getElementById("collect_button").innerHTML = "Start";
+                document.getElementById("collect_button").setAttribute("class","btn btn-large btn-success");
+            }
+
             var clientMsg = new ROSLIB.Message({
                 system_cmd: 7,
-                cmd_arguments: Number(isRecord) + ",20",
+                cmd_arguments: Number(isStartRecord_) + ",20",
             });
             pubCmd_.publish(clientMsg);
         }
@@ -20,11 +30,11 @@
             if (_message.GPStime < 0) {
                 _isImuError = true;
                 console.log("I got no IMU GPFPD frame.");
-                document.getElementById('heading').innerHTML = "<font color=red >\"\"</font>";
-                document.getElementById('location').innerHTML = "<font color=red >\"\"</font>";
-                document.getElementById('speed').innerHTML = "<font color=red >\"\"</font>";
-                document.getElementById('imu_status').innerHTML = "<font color=red >\"\"</font>";
-                document.getElementById('gps_time').innerHTML = "<font color=red >\"\"</font>";
+                document.getElementById('heading').innerHTML = "<font color=red>\"\"</font>";
+                document.getElementById('location').innerHTML = "<font color=red>\"\"</font>";
+                document.getElementById('speed').innerHTML = "<font color=red>\"\"</font>";
+                document.getElementById('imu_status').innerHTML = "<font color=red>\"\"</font>";
+                document.getElementById('gps_time').innerHTML = "<font color=red>\"\"</font>";
                 document.getElementById('num').innerHTML = "<font color=red>\"\"</font>";
                 document.getElementById('hdop').innerHTML = "<font color=red>\"\"</font>";
             }
@@ -220,18 +230,20 @@
     <div class="modal-dialog">
       <div class="modal-content">
         <div class="modal-header">
-          <button type="button" class="close" data-dismiss="modal" aria-hidden="true">
-            &times;
-          </button>
+
 
         </div>
         <div class="modal-body">
-          <label id="optname">Monitoring</label>
+          <label id="optname" align="center" ><font size=4>Open the audio alarm ?</font></label>
         </div>
         <div class="modal-footer">
 
+            <button type="button" class="btn btn-inverse" data-dismiss="modal" id="cancel" >
+            OFF
+          </button>
+
           <button type="button" class="btn btn-primary" data-dismiss="modal" id="cmtBtn" onclick="AlermOn();">
-            Start
+            ON
           </button>
         </div>
       </div>
@@ -282,15 +294,6 @@
                             <td colspan="2" rowspan="4" style="text-align:center;">
                                 <img src="http://<%=ip%>:8080/stream?topic=/camera/image6666" width="340px" alt="http://<%=ip%>:8080/stream?topic=/camera/image6666">
                             </td>
-
-                            <!-- <td rowspan="5">
-                                <p id="voff" style="display: block;"><button id="voice_control" onclick="AddVoice();">AlermOn</button><i class="icon-volume-off" style="color:red;">×</i>
-                                </p>
-                                <p id="von"><i class="icon-volume-up" style="color:green;"></i></p>
-
-                                <p id="collect">COLLECT <input id="isRecordCheckBox" type="checkbox" onchange="PubCtrlParams();"></p>
-
-                            </td> -->
                         </tr>
                         <tr>
                             <td>Satellite:<br/> <a href="#" id="num" class="alert-link">""</a></td>
@@ -318,10 +321,12 @@
                             <td colspan="1">GPS Time: <br/><a href="#" id="gps_time" class="alert-link">""</a></td>
                             <td>Disk Free: <br/><a href="#" id="diskspace" class="alert-link">""</a></td>
                             <td>Image Stamp Size: <br/><a href="#" id="timestamp_size" class="alert-link">""</a></td>
-                             <td colspan="2"  style="text-align:center;">
-                                <p id="collect">COLLECT &nbsp;
-                                    <input id="isRecordCheckBox" type="checkbox" onchange="PubCtrlParams();" style="zoom:180%;" >
-                                </p>
+                            <td colspan="2" style="text-align:center;">
+                                <!-- <p id="collect_button">COLLECT_button &nbsp;
+                                    <input id="isRecordCheckBox" type="button" onchange="PubCtrlParams();" style="zoom:180%;" >
+                                </p> -->
+                                <button class="btn btn-large btn-success" id="collect_button" onclick="PubCtrlParams();">Start</button>
+
                             </td>
                         </tr>
 
@@ -366,7 +371,8 @@
     console.log("window.location.host: " + url_);
 
     // waiting 5 s for modify take effect: ->server
-    var isRecordclicked_ = 0;
+    var recordClickedDelayCounter_ = 0;
+    var isStartRecord_ = false;
 
     // Connecting to ROS
     var ros_ = new ROSLIB.Ros();
@@ -414,13 +420,20 @@
         var isFileSizeError = UpdateFileSize(message);
         var isHardwareError = UpdateHardwareStatus(message);
 
-        $('#isRecordCheckBox').prop('disabled', ('A' !== message.is_gprmc_valid));
-        if (isRecordclicked_ !== 0) {
-            --isRecordclicked_;
-            console.log("Waiting modify take effect: " + isRecordclicked_);
+        // document.getElementById("collect_button").disabled = ('A' !== message.is_gprmc_valid);
+        if (recordClickedDelayCounter_ !== 0) {
+            --recordClickedDelayCounter_;
+            console.log("Waiting modify take effect: " + recordClickedDelayCounter_);
         }
         else {
-            $("#isRecordCheckBox").prop("checked", message.is_record);
+            if (message.is_record) {
+                document.getElementById("collect_button").innerHTML = "Pause";
+                document.getElementById("collect_button").setAttribute("class","btn btn-large  btn-danger");
+            }
+            else {
+                document.getElementById("collect_button").innerHTML = "Start";
+                document.getElementById("collect_button").setAttribute("class","btn btn-large  btn-success");
+            }
         }
 
         if (isImuError || isCameraError || isLidarError || isFileSizeError || isHardwareError) {

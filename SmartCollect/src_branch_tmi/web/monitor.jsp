@@ -18,11 +18,11 @@
 
         function SetCollectButton(isRecording) {
             if (isRecording) {
-                document.getElementById("collect_button").innerHTML = "Pause";
+                document.getElementById("collect_button").innerHTML = "Pause Connection";
                 document.getElementById("collect_button").setAttribute("class","btn btn-large btn-danger");
             }
             else {
-                document.getElementById("collect_button").innerHTML = "Start";
+                document.getElementById("collect_button").innerHTML = "Start  Connection";
                 document.getElementById("collect_button").setAttribute("class","btn btn-large btn-success");
             }
         }
@@ -172,7 +172,7 @@
                         + _message.project_info.task_id + _message.project_info.device_id + "-"
                         + _message.project_info.date +
                     "</font>";
-                var lidarSize = (((_message.lidar_size - 1) < 0)? _message.lidar_size: (_message.lidar_size - 1)) + "M";
+                var lidarSize = (((_message.lidar_size - 1) < 0)? 0: (_message.lidar_size - 1)) + "M";
                 document.getElementById('lidarpkg').innerHTML = "<font color=green>" + lidarSize + "</font>";
                 var picCount = (_message.img_num < 0)? 0: _message.img_num;
                 document.getElementById('piccounts').innerHTML = "<font color=green>" + picCount + "</font>";
@@ -326,7 +326,7 @@
                             <td colspan="2">Timestamp Size: <br/><a href="#" id="timestamp_size" class="alert-link">""</a></td>
                             <td colspan="1">Project Name: <br/><a href="#" id="project_info" class="alert-link">""</a></td>
                             <td colspan="1" style="text-align:center;">
-                                <button class="btn btn-large btn-success" id="collect_button" onclick="PubCtrlParams();">Start</button>
+                                <button class="btn btn-large btn-success" id="collect_button" onclick="PubCtrlParams();">Start  Collection</button>
                             </td>
                         </tr>
                         </thead>

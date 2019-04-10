@@ -6,23 +6,29 @@
     <script>
         function PubCtrlParams() {
             recordClickedDelayCounter_ = 5;
-            // var isRecord = document.getElementById("isRecordCheckBox").checked;
             isStartRecord_ = !isStartRecord_;
-            if (isStartRecord_) {
-                document.getElementById("collect_button").innerHTML = "Pause";
-                document.getElementById("collect_button").setAttribute("class","btn  btn-large btn-danger");
-            }
-            else {
-                document.getElementById("collect_button").innerHTML = "Start";
-                document.getElementById("collect_button").setAttribute("class","btn btn-large btn-success");
-            }
-
+            SetCollectButton(isStartRecord_);
 
             var clientMsg = new ROSLIB.Message({
                 system_cmd: 7,
                 cmd_arguments: Number(isStartRecord_) + ",20",
             });
             pubCmd_.publish(clientMsg);
+        }
+
+        function SetCollectButton(isRecording) {
+            if (isRecording) {
+                document.getElementById("collect_button").innerHTML = "Pause";
+                document.getElementById("collect_button").setAttribute("class","btn btn-large btn-danger");
+            }
+            else {
+                document.getElementById("collect_button").innerHTML = "Start";
+                document.getElementById("collect_button").setAttribute("class","btn btn-large btn-success");
+            }
+        }
+
+        function AlermOn(){
+            bgMusic.play();
         }
 
         function UpdateImuStatus(_message) {
@@ -227,30 +233,21 @@
 </head>
 
 <body>
-    <div class="modal fade" id="optModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+<div class="modal fade" id="optModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
     <div class="modal-dialog">
       <div class="modal-content">
         <div class="modal-header">
-
-
         </div>
         <div class="modal-body">
           <label id="optname" align="center" ><font size=4>Open the audio alarm ?</font></label>
         </div>
         <div class="modal-footer">
-
-            <button type="button" class="btn btn-inverse" data-dismiss="modal" id="cancel" >
-            OFF
-          </button>
-
-          <button type="button" class="btn btn-primary" data-dismiss="modal" id="cmtBtn" onclick="AlermOn();">
-            ON
-          </button>
+            <button type="button" class="btn btn-inverse" data-dismiss="modal" id="cancel" >OFF</button>
+            <button type="button" class="btn btn-primary" data-dismiss="modal" id="cmtBtn" onclick="AlermOn();">ON</button>
         </div>
       </div>
     </div>
-  </div>
-
+</div>
 
 <div class="subnavbar">
     <div class="subnavbar-inner">
@@ -298,7 +295,7 @@
                         </tr>
                         <tr>
                             <td>Satellite:<br/> <a href="#" id="num" class="alert-link">""</a></td>
-                            <td>Hdop: <br/><a href="#" id="hdop" class="alert-link">""</a></td>
+                            <td>HDOP: <br/><a href="#" id="hdop" class="alert-link">""</a></td>
                             <td>Speed: <br/><a href="#" id="speed" class="alert-link">""km/h</a></td>
                             <td>Heading: <br/><a href="#" id="heading" class="alert-link">""km/h</a></td>
 
@@ -323,19 +320,13 @@
                             <td>Disk Free: <br/><a href="#" id="diskspace" class="alert-link">""</a></td>
                             <td>Image Stamp Size: <br/><a href="#" id="timestamp_size" class="alert-link">""</a></td>
                             <td colspan="2" style="text-align:center;">
-                                <!-- <p id="collect_button">COLLECT_button &nbsp;
-                                    <input id="isRecordCheckBox" type="button" onchange="PubCtrlParams();" style="zoom:180%;" >
-                                </p> -->
                                 <button class="btn btn-large btn-success" id="collect_button" onclick="PubCtrlParams();">Start</button>
-
                             </td>
                         </tr>
-
                         </thead>
                     </table>
                 </div>
             </div>
-
         </div>
 
         <div class="row">
@@ -362,11 +353,7 @@
     $('#optModal').modal({
         show:true,
         backdrop:'static'
-    })
-    function AlermOn(){
-        bgMusic.play();
-    }
-
+    });
 
     var url_ = window.location.host;
     console.log("window.location.host: " + url_);
@@ -427,14 +414,7 @@
             console.log("Waiting modify take effect: " + recordClickedDelayCounter_);
         }
         else {
-            if (message.is_record) {
-                document.getElementById("collect_button").innerHTML = "Pause";
-                document.getElementById("collect_button").setAttribute("class","btn btn-large  btn-danger");
-            }
-            else {
-                document.getElementById("collect_button").innerHTML = "Start";
-                document.getElementById("collect_button").setAttribute("class","btn btn-large  btn-success");
-            }
+            SetCollectButton(message.is_record);
         }
 
         if (isImuError || isCameraError || isLidarError || isFileSizeError || isHardwareError) {

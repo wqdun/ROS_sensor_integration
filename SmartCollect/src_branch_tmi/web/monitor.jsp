@@ -17,6 +17,7 @@
                 document.getElementById("collect_button").setAttribute("class","btn btn-large btn-success");
             }
 
+
             var clientMsg = new ROSLIB.Message({
                 system_cmd: 7,
                 cmd_arguments: Number(isStartRecord_) + ",20",

@@ -1,6 +1,0 @@
-# sc0009
-SUBSYSTEMS=="usb", ATTRS{idVendor}=="0403", ATTRS{serial}=="FTDVNCEB", ATTRS{idProduct}=="6001", SYMLINK+="timeStamper"
-SUBSYSTEMS=="usb", ATTRS{idVendor}=="1a86", ATTRS{bcdDevice}=="0263", ATTRS{idProduct}=="7523", SYMLINK+="imuRawIns"
-# sc0010
-KERNELS=="1-2*", SYMLINK+="timeStamper"
-KERNELS=="1-4*", SYMLINK+="imuRawIns"

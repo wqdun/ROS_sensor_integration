@@ -4,41 +4,93 @@
 <head>
     <%@ include file="include/header.jsp" %>
     <script>
+
         function pubCtrlParams() {
             isRecordclicked_ = 5;
             var isRecord = document.getElementById("isRecordCheckBox").checked;
+            console.log("typeof(isRecord): " + typeof(isRecord) + ", isRecord: " + isRecord);
+            var camGain = $("#ex1").val();
+            console.log("typeof(camGain): " + typeof(camGain) + ", camGain: " + camGain);
+
             var clientMsg = new ROSLIB.Message({
                 system_cmd: 7,
-                cmd_arguments: Number(isRecord) + ",20",
+                cmd_arguments: Number(isRecord) + "," + camGain,
             });
+
             pubCmd_.publish(clientMsg);
         }
+
     </script>
-
-
 </head>
 
 <body>
+
+<div class="modal fade" id="myModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+    <input type="hidden" id="position" />
+    <input type="hidden" id="pinfo" />
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal" aria-hidden="true">
+                    &times;
+                </button>
+                <h4 class="modal-title" id="myModalLabel">
+                    记录车道变化信息
+                </h4>
+            </div>
+            <div class="modal-body">
+                <select class="form-control"  style = "width:60px;" id='startLane'>
+                    <option>1</option>
+                    <option selected>2</option>
+                    <option>3</option>
+                    <option>4</option>
+                    <option>5</option>
+                    <option>6</option>
+                    <option>7</option>
+                </select>
+                变
+                <select class="form-control"  style = "width:60px;" id='endLane'>
+                    <option>1</option>
+                    <option>2</option>
+                    <option selected>3</option>
+                    <option>4</option>
+                    <option>5</option>
+                    <option>6</option>
+                    <option>7</option>
+                </select>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-default" data-dismiss="modal">
+                    取消
+                </button>
+                <button type="button" class="btn btn-primary" data-dismiss="modal" id="laneupdate">
+                    提交
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
 <div class="subnavbar">
     <div class="subnavbar-inner">
         <div class="container">
             <ul class="mainnav">
                 <li>
                     <a href="index.jsp">
-                        <i class="icon-edit"></i>
-                        <span>Setting</span>
+                        <i class="icon-th-large"></i>
+                        <span>系统设置</span>
                     </a>
                 </li>
                 <li class="active">
                     <a href="monitor.jsp">
-                        <i class="icon-bar-chart"></i>
-                        <span>Monitor</span>
+                        <i class="icon-facetime-video"></i>
+                        <span>运行监控</span>
                     </a>
                 </li>
                 <li>
                     <a href="camera.jsp">
                         <i class="icon-facetime-video"></i>
-                        <span>Image</span>
+                        <span>全景相机</span>
                     </a>
                 </li>
             </ul>
@@ -48,95 +100,102 @@
 
 <div class="main-inner">
     <div class="container">
-
         <div class="row">
             <div class="span12">
                 <div class="widget big-stats-container">
                     <table class="table table-bordered table-striped">
                         <thead>
                         <tr>
-                            <td>Connection: <br/><a href="#" id="connect" class="alert-link"></a></td>
-                            <td colspan="3">Location: <br/><a href="#" id="location" class="alert-link">"bbb", "cc"</a></td>
-                            <td colspan="2" rowspan="2"><p id="warning"></p></td>
+                            <th>连接状态:<a href="#" id="connect" class="alert-link"></a></th>
+                            <th>经纬度：<a href="#" id="location" class="alert-link">"bbb", "cc"</a></th>
+                            <th>卫星数：<a href="#" id="num" class="alert-link">""</a></th>
+                            <th>卫星水平定位精度：<a href="#" id="hdop" class="alert-link">""</a></th>
+                            <th>磁盘空间：<a href="#" id="diskspace" class="alert-link">""</a></th>
                         </tr>
                         <tr>
-                            <td>Satellite:<br/> <a href="#" id="num" class="alert-link">""</a></td>
-                            <td>Hdop: <br/><a href="#" id="hdop" class="alert-link">""</a></td>
-                            <td>Speed: <br/><a href="#" id="speed" class="alert-link">""km/h</a></td>
-                            <td>Heading: <br/><a href="#" id="heading" class="alert-link">""km/h</a></td>
-
+                            <th>方向：<a href="#" id="heading" class="alert-link">""</a></th>
+                            <th>速度：<a href="#" id="speed" class="alert-link">""公里/小时</a></th>
+                            <th>相机存储频率：<a href="#" id="fps" class="alert-link">""</a></th>
+                            <th>PPS：<a href="#" id="pps" class="alert-link">""</a></th>
+                            <th>GPRMC：<a href="#" id="gprmc" class="alert-link">""</a></th>
                         </tr>
+
                         <tr>
-                            <td>PPS: <br/><a href="#" id="pps" class="alert-link">""</a></td>
-                            <td>GPRMC: <br/><a href="#" id="gprmc" class="alert-link">""</a></td>
-                            <td>LIDAR Size: <br/><a href="#" id="lidarpkg" class="alert-link">""</a></td>
-                            <td>Rawins Size: <br/><a href="#" id="raw_ins" class="alert-link">""</a></td>
-                            <td rowspan="3" style="text-align:center;">
-                                <img src="http://<%=ip%>:8080/stream?topic=/camera/image0" width="160px" alt="http://<%=ip%>:8080/stream?topic=/camera/image0">
-                            </td>
-
-                            <td  rowspan="3">
-                                <p id="voff" style="display: block;"><button id="voice_control" onclick="addVoice();">AlermOn</button><i class="icon-volume-off" style="color:red;">×</i>
-                                </p>
-                                <p id="von"><i class="icon-volume-up" style="color:green;"></i></p>
-
-                                <p id="collect">COLLECT <input id="isRecordCheckBox" type="checkbox" onchange="pubCtrlParams();"></p>
-
-                            </td>
+                            <th>照片数量：<a href="#" id="piccounts" class="alert-link">""</a></th>
+                            <th>激光包大小：<a href="#" id="lidarpkg" class="alert-link">""</a></th>
+                            <th>&nbsp;</th>
+                            <th></th>
+                            <th>
+                                <button type="button" class="btn btn-inverse" id="mark" data-toggle="modal"
+                                        data-target="#myModal" onclick="marklane();">mark
+                                </button>
+                            </th>
                         </tr>
-                        <tr>
-                            <td>Camera FPS: <br/><a href="#" id="fps" class="alert-link">""</a></td>
-                            <td>IMU Status: <br/><a href="#" id="imu_status" class="alert-link">""</a></td>
-                            <td>Image Num: <br/><a href="#" id="piccounts" class="alert-link">""</a></td>
-                            <td>LIDAR Rpm: <br/><a href="#" id="velodyne_rpm" class="alert-link">""</a></td>
-
-                        </tr>
-                        <tr>
-                            <td colspan="2">SC Time: <br/><a href="#" id="unix_time" class="alert-link">""</a></td>
-                            <td>Disk Free: <br/><a href="#" id="diskspace" class="alert-link">""</a></td>
-                            <td>Image Stamp Size: <br/><a href="#" id="timestamp_size" class="alert-link">""</a></td>
-                        </tr>
-
                         </thead>
                     </table>
                 </div>
             </div>
-
         </div>
-
         <div class="row">
             <div class="span12">
                 <div class="widget">
                     <div class="widget-header">
                         <i class="icon-star"></i>
-                        <h3>Map</h3>
+                        <h3>地图</h3>
                     </div>
                     <div class="widget-content">
-                        <iframe src="scmap.jsp" frameborder="0" scrolling="no" id="maplayer"
+                        <iframe src="minemap.jsp" frameborder="0" scrolling="no" id="maplayer"
                                 onload="this.height='450px'; this.width='100%'"></iframe>
                     </div>
                 </div>
             </div>
         </div>
 
+            <div class="row">
+            <div class="span12">
+                <div class="widget">
+                    <div class="widget-header">
+                        <i class="icon-list-alt"></i>
+                        <h3>相机</h3>
+                    </div>
+                    <div class="widget-content">
+                        <table class="table table-bordered table-striped">
+                            <thead>
+                            <tr>
+                                <th style="text-align:center;"><label class="checkbox">
+                                    <input id="isRecordCheckBox" type="checkbox"
+                                           onchange="pubCtrlParams();">采集</label></th>
+                                <th style="text-align:center;">1<input id="ex1" type="text"
+                                                                       data-slider-min="1"
+                                                                       data-slider-max="50" data-slider-step="1"
+                                                                       data-slider-value='20'/>50
+                                </th>
+                            </tr>
+                            </thead>
+                        </table>
+                        <img src="http://<%=ip%>:8080/stream?topic=/camera/image" height="100%" width="100%"
+                             alt="http://<%=ip%>:8080/stream?topic=/camera/image">
+
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
 </div>
 
 <%@ include file="include/footer.jsp" %>
-<audio id="bgMusic" src="ring.mp3" autoplay></audio>
 <script>
-    function AddEvent(warningId, message) {
-        var warningMsg = '<div class="alert alert-error"><a href="#" class="close" data-dismiss="alert">&times;</a>【<b style="color:red">'
-            + warningId + '</b>】' + message + '</div>';
-        $('#warning').append(warningMsg);
-    }
 
-    $("#von").hide();
-    function addVoice() {
-        $("#von").show();
-        $("#voff").hide();
-        bgMusic.play();
+
+    var pinfo = "";
+    var markposition = "";
+    function marklane() {
+        $('#position').val(markposition);
+        $('#pinfo').val(pinfo);
     }
+    $('#laneupdate').click(function () {
+        $.post("http://10.42.0.1/log.jsp", {"pinfo":$('#pinfo').val(),"position":$('#position').val(),"type":"updateLane","startLane":$('#startLane').val(),"endLane":$('#endLane').val()});
+    })
 
     var url_ = window.location.host;
     console.log("window.location.host: " + url_);
@@ -153,12 +212,12 @@
     });
     // Find out exactly when we made a connection.
     ros_.on('connection', function () {
+        document.getElementById('connect').innerHTML = '<font color=green>连接成功</font>';
         console.log('Connection made!');
-        document.getElementById('connect').innerHTML = '<font color=green>Established</font>';
     });
     ros_.on('close', function () {
         console.log('Connection closed.');
-        document.getElementById('connect').innerHTML = '<font color=red>Closed</font>';
+        document.getElementById('connect').innerHTML = '<font color=red>连接关闭</font>';
     });
 
     // Create a connection to the rosbridge WebSocket server.
@@ -174,187 +233,91 @@
         name: '/sc_monitor',
         messageType: 'sc_msgs/MonitorMsg'
     });
-
-    var voiceCounter = -1;
-    var isWarningAdded = false;
-
     centerListener.subscribe(function (message) {
-        var isStatusError = false;
-        var unixDateObj = new Date(message.unix_time * 1000);
-        var _unix_hour = unixDateObj.getUTCHours();
-        var _unix_minute = unixDateObj.getUTCMinutes();
-        var _unix_second = unixDateObj.getUTCSeconds();
-        document.getElementById('unix_time').innerHTML = _unix_hour + ":" + _unix_minute + ":" + _unix_second;
 
-        var warningMap = new Map();
+        markposition = message.lat_lon_hei.y+","+message.lat_lon_hei.x+","+message.lat_lon_hei.z;
+        pinfo = message.project_info.city_code + "-" + message.project_info.daynight_code + "-" + message.project_info.task_id + "" + message.project_info.device_id;
+        console.log(centerListener.name + '::heading: ' + message.pitch_roll_heading.z);
 
-        // below is IMU related
-        if (message.GPStime < 0) {
-            console.log("I got no IMU frame.");
-            document.getElementById('heading').innerHTML = "<font color=red >\"\"</font>";
-            document.getElementById('location').innerHTML = "<font color=red >\"\"</font>";
-            document.getElementById('speed').innerHTML = "<font color=red >\"\"</font>";
-            document.getElementById('imu_status').innerHTML = "<font color=red >\"\"</font>";
-            document.getElementById('num').innerHTML = "<font color=red>\"\"</font>";
-            document.getElementById('hdop').innerHTML = "<font color=red>\"\"</font>";
+        // text is "sc_integrate_imu_recorder node not running"
+        if (message.hdop.indexOf("not") > 0) {
+            var errMsg = 'IMU组合解算数据采集节点未运行！';
+            document.getElementById('location').innerHTML = "<font color=red >" + errMsg + "</font>";
+            document.getElementById('num').innerHTML = "<font color=red >" + errMsg + "</font>";
+            document.getElementById('hdop').innerHTML = "<font color=red >" + errMsg + "</font>";
         }
         else {
-            document.getElementById('heading').innerHTML = "<font color=green>" + message.pitch_roll_heading.z.toFixed(2) + "</font>";
-            document.getElementById('location').innerHTML = "<font color=green>" + message.lat_lon_hei.x.toFixed(8) + ", " + message.lat_lon_hei.y.toFixed(8) + "</font>";
-            if (message.speed > 120) {
-                document.getElementById('speed').innerHTML = "<font color=red>" + message.speed.toFixed(2) + "km/h</font>";
-            }
-            else {
-                document.getElementById('speed').innerHTML = "<font color=green>" + message.speed.toFixed(2) + "km/h</font>";
-            }
-            var imuStatus = message.status & 0xF;
-            if (8 === imuStatus) {
-                document.getElementById('imu_status').innerHTML = "<font color=#B8860B>" + message.status.toString(16) + "</font>";
-                isStatusError = true;
-            }
-            else if (3 === imuStatus) {
-                document.getElementById('imu_status').innerHTML = "<font color=green>" + message.status.toString(16) + "</font>";
-            }
-            else {
-                document.getElementById('imu_status').innerHTML = "<font color=red>" + message.status.toString(16) + "</font>";
-                isStatusError = true;
-            }
-
-            var errSecond = Math.abs(message.unix_time - message.GPStime);
-            errSecond = errSecond % (24 * 3600);
-            if (errSecond > 1000 && errSecond < 85400) {
-                warningMap.set(1003, "SC time error, please set SC time or check GPS time");
-            }
-
-            if (message.no_sv < 0) {
-                console.log("GPGGA contains null satellite number.");
-                document.getElementById('num').innerHTML = "<font color=red>\"\"</font>";
-                document.getElementById('hdop').innerHTML = "<font color=red>\"\"</font>";
-            }
-            else {
-                if (0 === message.no_sv) {
-                    document.getElementById('num').innerHTML = "<font color=red>0</font>";
-                }
-                else {
-                    document.getElementById('num').innerHTML = "<font color=green>" + message.no_sv + "</font>";
-                }
-                document.getElementById('hdop').innerHTML = "<font color=green>" + message.hdop.toFixed(2) + "</font>";
-            }
+            document.getElementById('location').innerHTML = message.latitude + ", " + message.longitude;
+            document.getElementById('num').innerHTML = message.noSV_422;
+            document.getElementById('hdop').innerHTML = message.hdop;
         }
-
-        // below is camera related
-        if (message.camera_fps < 0.01) {
-            document.getElementById('fps').innerHTML = "<font color=red>" + message.camera_fps.toFixed(2) + "</font>";
+        // -2 means not running
+        if (message.speed <= -1.6) {
+            var errMsg = 'IMU实时数据采集节点未运行！';
+            document.getElementById('heading').innerHTML = "<font color=red >" + errMsg + "</font>";
+            document.getElementById('speed').innerHTML = "<font color=red >" + errMsg + "</font>";
         }
         else {
-            document.getElementById('fps').innerHTML = "<font color=green>" + message.camera_fps.toFixed(2) + "</font>";
+            document.getElementById('heading').innerHTML = message.pitch_roll_heading.z;
+            document.getElementById('speed').innerHTML = message.speed.toFixed(2) + "公里/小时";
         }
 
-        // below is velodyne related
-        if (0 === message.pps_status.length) {
-            console.log("I got no pps status.");
-            document.getElementById('pps').innerHTML = "<font color=red>Absent</font>";
-            document.getElementById('gprmc').innerHTML = "<font color=red>Absent</font>";
-            document.getElementById('velodyne_rpm').innerHTML = "<font color=red>\"\"</font>";
+        if (message.camera_fps <= -1.6) {
+            var errMsg = '相机节点未运行！';
+            document.getElementById('fps').innerHTML = "<font color=red >" + errMsg + "</font>";
         }
         else {
-            if (message.pps_status.indexOf("PPS locked") < 0) {
-                document.getElementById('pps').innerHTML = "<font color=red>" + message.pps_status + "</font>";
-            }
-            else {
-                document.getElementById('pps').innerHTML = "<font color=green>" + message.pps_status + "</font>";
-            }
-
-            if ('A' !== message.is_gprmc_valid) {
-                document.getElementById('gprmc').innerHTML = "<font color=red>" + message.is_gprmc_valid + "</font>";
-            }
-            else {
-                document.getElementById('gprmc').innerHTML = "<font color=green>" + message.is_gprmc_valid + "</font>";
-            }
-
-            document.getElementById('velodyne_rpm').innerHTML = "<font color=green>" + message.velodyne_rpm.toFixed(2) + "</font>";
+            document.getElementById('fps').innerHTML = message.camera_fps.toFixed(2);
         }
 
-        // below is project monitor related
-        console.log("message.img_num: " + message.img_num);
-        if (0 === message.project_info.city_code) {
-            warningMap.set(1001, "No active project");
-            $("#piccounts")[0].innerHTML = $("#lidarpkg")[0].innerHTML = "<font color=red>\"\"</font>";
+        if (message.pps_status.indexOf("not") > 0) {
+            var errMsg = '激光雷达数据采集节点未运行！';
+            document.getElementById('pps').innerHTML = "<font color=red >" + errMsg + "</font>";
+            document.getElementById('gprmc').innerHTML = "<font color=red >" + errMsg + "</font>";
         }
         else {
-            $("#piccounts")[0].innerHTML = (message.img_num < 0)? 0: message.img_num;
-            $("#lidarpkg")[0].innerHTML = (((message.lidar_size - 1) < 0)? message.lidar_size: (message.lidar_size - 1)) + "M";
+            document.getElementById('pps').innerHTML = message.pps_status;
+            document.getElementById('gprmc').innerHTML = message.is_gprmc_valid;
         }
 
-        if(message.raw_ins_size < 1024) {
-            document.getElementById('raw_ins').innerHTML = message.raw_ins_size + "B";
-        }
-        else if(message.raw_ins_size < 1048576) {
-            document.getElementById('raw_ins').innerHTML = (message.raw_ins_size / 1024).toFixed(2) + "KB";
+        if ('A' == message.is_gprmc_valid) {
+            $('#isRecordCheckBox').prop('disabled', false);
         }
         else {
-            document.getElementById('raw_ins').innerHTML = (message.raw_ins_size / 1048576).toFixed(2) + "MB";
+            $('#isRecordCheckBox').prop('disabled', true);
         }
 
-        if(message.timestamp_size <= 0) {
-            document.getElementById('timestamp_size').innerHTML = "<font color=red>" + message.timestamp_size + "B</font>";
-        }
-        else
-        if(message.timestamp_size < 1024) {
-            document.getElementById('timestamp_size').innerHTML = message.timestamp_size + "B";
-        }
-        else
-        if(message.timestamp_size < 1048576) {
-            document.getElementById('timestamp_size').innerHTML = (message.timestamp_size / 1024).toFixed(2) + "KB";
+        $("#diskspace")[0].innerHTML = message.disk_usage;
+        if (-2 == message.img_num) {
+            var errMsg = '没有活动工程！';
+            $("#piccounts")[0].innerHTML = $("#lidarpkg")[0].innerHTML = "<font color=red >" + errMsg + "</font>";
         }
         else {
-            document.getElementById('timestamp_size').innerHTML = (message.timestamp_size / 1048576).toFixed(2) + "MB";
+            $("#piccounts")[0].innerHTML = message.img_num;
+            $("#lidarpkg")[0].innerHTML = message.lidar_size + "M";
         }
 
-        // below is sc check
-        // if (3 !== message.sc_check_camera_num) {
-        //     warningMap.set(1005, "Camera number is " + message.sc_check_camera_num + ", should be 3");
-        // }
-
-        if (message.speed > 120) {
-            warningMap.set(1002, "Speed > 120km/h, please restart IMU");
-        }
-
-        var diskUsageArr = message.disk_usage.split(",");
-        var freePercentage = 100 - parseInt(diskUsageArr[1]);
-        if (freePercentage > 20) {
-            document.getElementById('diskspace').innerHTML = "<font color=green>" + diskUsageArr[0] + ", " + freePercentage + "%</font>";
-        }
-        else {
-            document.getElementById('diskspace').innerHTML = "<font color=red>" + diskUsageArr[0] + ", " + freePercentage + "%</font>";
-        }
-        if (freePercentage < 10) {
-            warningMap.set(1004, "Disk free space is not enough: " + freePercentage);
-        }
-
-        $('#isRecordCheckBox').prop('disabled', ('A' !== message.is_gprmc_valid));
-        if (isRecordclicked_ !== 0) {
+        console.log("is_record: " + message.is_record);
+        console.log("cam_gain: " + typeof(message.cam_gain) + ", " + message.cam_gain);
+        if (isRecordclicked_ != 0) {
             --isRecordclicked_;
             console.log("Waiting modify take effect: " + isRecordclicked_);
         }
         else {
             $("#isRecordCheckBox").prop("checked", message.is_record);
-        }
-
-        if (!isWarningAdded) {
-            warningMap.forEach(function (value, key, map) {
-                AddEvent(key, value);
-            });
-            isWarningAdded = true;
-        }
-
-        if (0 !== warningMap.size || isStatusError) {
-            ++voiceCounter;
-            voiceCounter %= 10;
-            console.log("NOISE!");
-            bgMusic.play();
+            $("#ex1").slider("setValue", message.cam_gain);
+            console.log("cam_gain on server is: " + $("#ex1").slider("getValue"));
         }
     });
+
+    $('#ex1').slider({
+        tooltip: 'always'
+    }).on('change', function (e) {
+        console.log(e.value.oldValue + '--' + e.value.newValue);
+        pubCtrlParams();
+    });
+
 </script>
 </body>
+
 </html>

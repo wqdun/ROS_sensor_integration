@@ -1,7 +1,6 @@
 #ifndef PUBLIC_TOOLS_H
 #define PUBLIC_TOOLS_H
 
-#include <glog/logging.h>
 #include <ros/ros.h>
 #include <iostream>
 #include <sstream>
@@ -44,11 +43,10 @@ public:
     static void generateFileName(const std::string &path, std::string &fileName, bool isAppendTime = true);
     static void getFilesInDir(const std::string &baseDir, const std::string &keyWord, std::vector<std::string> &files);
     static void getFilesWithExtensionInDir(const std::string &baseDir, const std::string &extension, std::vector<std::string> &files);
-    static void GetFilesCountInDir(const std::string &baseDir, const std::string &keyWord, int &numOfFileWithKeyWord);
     static std::string safeReadlink(const std::string& filename);
     static bool isFileExist(const std::string& fileName);
-    static int PopenWithoutReturn(const std::string &cmd);
-    static int PopenWithReturn(const std::string &cmd, std::vector<std::string> &cmdReturn);
+    static void runShellCmd(const std::string &cmd);
+    static int popenWithReturn(const std::string &cmd, std::vector<std::string> &cmdReturn);
     static bool isInChina(double lat, double lon);
 
 
@@ -78,7 +76,7 @@ void PublicTools::multiply_matrix(const T &in_xyz, const double tf_matrix[][3], 
     out_xyz.x = tf_matrix[0][0] * in_xyz.x + tf_matrix[0][1] * in_xyz.y + tf_matrix[0][2] * in_xyz.z;
     out_xyz.y = tf_matrix[1][0] * in_xyz.x + tf_matrix[1][1] * in_xyz.y + tf_matrix[1][2] * in_xyz.z;
     out_xyz.z = tf_matrix[2][0] * in_xyz.x + tf_matrix[2][1] * in_xyz.y + tf_matrix[2][2] * in_xyz.z;
-}
+  }
 
 template <typename T>
 void PublicTools::tf_rotate(const T &in_xyz, const pointXYZ_t &angle_xyz, const pointXYZ_t &offset, T &out_xyz) {

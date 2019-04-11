@@ -1,4 +1,7 @@
 #include "base_map.h"
+#define NDEBUG
+// #undef NDEBUG
+#include <glog/logging.h>
 
 BaseMap::BaseMap(ros::NodeHandle nh, ros::NodeHandle private_nh, const std::string &rawdataDir) {
     LOG(INFO) << __FUNCTION__ << " start.";

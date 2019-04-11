@@ -14,12 +14,14 @@ log_with_time() {
     echo "$now_time: $*" >>$result_log
 }
 
-_date=$(date +%Y%m%d%H%M%S)
-_date=${_date:2}
-_absolute_record_path="/opt/smartc/record/1001-1-RFANS32-${_date}/Rawdata/"
-mkdir -p "${_absolute_record_path}"
-mkdir -p "${_absolute_record_path}/Lidar/"
-mkdir -p "${_absolute_record_path}/IMU/"
+_absolute_record_path="/opt/smartc/record/1001-1-RFANS32-180726/Rawdata/"
+mv "${_absolute_record_path}" "/opt/smartc/record/1001-1-RFANS32-180726/Rawdata_$(date +%Y%m%d_%H_%M_%S)"
+if [ "${_absolute_record_path}AA" == "AA" ]; then
+    echo "[ERROR] Need a path of Rawdata."
+    exit 1
+fi
+
+mkdir -p ${_absolute_record_path}/IMU/
 
 get_sudo_permission() {
     echo 123 | sudo -S su >/dev/null 2>&1
@@ -33,17 +35,6 @@ source_ROS_Env() {
         exit 1
     fi
     source ${ROS_setup} >/dev/null 2>&1
-}
-
-add_path_to_launch() {
-    log_with_time "$FUNCNAME start, param: $*"
-    local _absolute_record_path=$1
-    local absolute_launch="/opt/smartc/src/ROSDriver/launch/node_manager.launch"
-    local parse_xml_script="/opt/smartc/src/tools/parse_xml.py"
-    chmod +x "${parse_xml_script}"
-    "${parse_xml_script}" "${absolute_launch}" "calculation_node" "data_save_path" "${_absolute_record_path}/Lidar/" "${absolute_launch%.*}_with_data_save_path.launch"
-
-    log_with_time "Add record path ${_absolute_record_path} to launch file: ${absolute_launch}."
 }
 
 source_ROS_Env
@@ -65,7 +56,8 @@ sleep 0.2
 
 pkill calculation_
 pkill driver_node
-add_path_to_launch "${_absolute_record_path}"
+mv /opt/smartc/record/lidar.dat /opt/smartc/record/lidar_$(date +%Y%m%d_%H_%M_%S).dat
 roslaunch rfans_driver node_manager_with_data_save_path.launch
 
-# to monitor: _date=$(date +%Y%m%d); _date=${_date:2}; watch -n1 -d "ls -l /opt/smartc/record/lidar.dat; ls -l /opt/smartc/record/1001-1-RFANS32-${_date}/Rawdata/IMU; ls -l /opt/smartc/record/1001-1-RFANS32-${_date}/Rawdata/Image | wc -l;"
+
+# to monitor: watch -n1 -d "ls -l /opt/smartc/record/lidar.dat; ls -l /opt/smartc/record/1001-1-RFANS32-180726/Rawdata/IMU; ls -l /opt/smartc/record/1001-1-RFANS32-180726/Rawdata/Image | wc -l;"

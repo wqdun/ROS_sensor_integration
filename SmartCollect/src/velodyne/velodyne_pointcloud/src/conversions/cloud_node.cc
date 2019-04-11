@@ -11,6 +11,11 @@
 
 */
 
+#include <ros/ros.h>
+#define NDEBUG
+// #undef NDEBUG
+#include <glog/logging.h>
+
 #include "convert.h"
 
 /** Main node entry point. */

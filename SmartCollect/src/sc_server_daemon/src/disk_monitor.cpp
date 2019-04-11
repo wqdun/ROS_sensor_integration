@@ -21,10 +21,10 @@ void DiskMonitor::run(const std::string &_projectPath, sc_msgs::MonitorMsg &_mon
 }
 
 void DiskMonitor::getProjects(const std::string &_projectPath, sc_msgs::MonitorMsg &_monitorMsg) {
-    DLOG(INFO) << __FUNCTION__ << " start, to monitor " << _projectPath;
+    LOG(INFO) << __FUNCTION__ << " start, to monitor " << _projectPath;
 
     std::string lsCmd("ls -t " + _projectPath);
-    if(public_tools::PublicTools::PopenWithReturn(lsCmd, _monitorMsg.projects) < 0) {
+    if(public_tools::PublicTools::popenWithReturn(lsCmd, _monitorMsg.projects) < 0) {
         LOG(ERROR) << "Failed to " << lsCmd;
         exit(1);
     }
@@ -36,7 +36,7 @@ void DiskMonitor::getDiskUsage(const std::string &_projectPath, sc_msgs::Monitor
     LOG(INFO) << __FUNCTION__ << " start.";
     std::vector<std::string> diskUsage;
     const std::string getDiskUsageCmd("df -BG /opt/smartc/record/ | tail -n1 | awk '{print $2\", \"$5}'");
-    (void)public_tools::PublicTools::PopenWithReturn(getDiskUsageCmd, diskUsage);
+    (void)public_tools::PublicTools::popenWithReturn(getDiskUsageCmd, diskUsage);
     _monitorMsg.disk_usage = (1 == diskUsage.size())? diskUsage[0]: "error: I got !1 lines";
 }
 

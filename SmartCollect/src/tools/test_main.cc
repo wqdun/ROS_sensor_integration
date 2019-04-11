@@ -1,49 +1,49 @@
+#include <iostream>
 #include <stdio.h>
- #include <sys/socket.h>
- #include <sys/types.h>
- #include <stdlib.h>
- #include <netinet/in.h>
- #include <errno.h>
- #include <string.h>
- #include <arpa/inet.h>
- #include <unistd.h>
- #define MAXLINE 1024
- int main(int argc,char **argv)
- {
- char *servInetAddr = "127.0.0.1";
- int socketfd;
- struct sockaddr_in sockaddr;
- char recvline[MAXLINE], sendline[MAXLINE];
- int n;
+#include <vector>
+#include <string>
 
- if(argc != 2)
- {
- printf("client <ipaddress> \n");
- exit(0);
- }
+#define LOG(ERROR) std::cout
 
- socketfd = socket(AF_INET,SOCK_STREAM,0);
- memset(&sockaddr,0,sizeof(sockaddr));
- sockaddr.sin_family = AF_INET;
- sockaddr.sin_port = htons(10004);
- inet_pton(AF_INET,servInetAddr,&sockaddr.sin_addr);
- if((connect(socketfd,(struct sockaddr*)&sockaddr,sizeof(sockaddr))) < 0 )
- {
- printf("connect error %s errno: %d\n",strerror(errno),errno);
- exit(0);
- }
 
- printf("send message to server\n");
 
- fgets(sendline,1024,stdin);
+int popenWithReturn(const std::string &cmd, std::vector<std::string> &cmdReturn) {
+    const size_t maxByte = 1000;
+    char result[maxByte];
+    FILE *fpin;
 
- if((send(socketfd,sendline,strlen(sendline),0)) < 0)
- {
- printf("send mes error: %s errno : %d",strerror(errno),errno);
- exit(0);
- }
+    if(NULL == (fpin = popen(cmd.c_str(), "r") ) ) {
+        LOG(ERROR) << "Failed to open " << cmd;
+        return -1;
+    }
 
- close(socketfd);
- printf("exit\n");
- exit(0);
- }
+    while(fgets(result, maxByte, fpin) ) {
+        cmdReturn.push_back(result);
+    }
+
+    if(0 != pclose(fpin) ) {
+        LOG(WARNING) << "Failed to close " << cmd;
+        return -2;
+    }
+
+    return 0;
+}
+
+
+int main()
+{
+    const std::string lscmd("ls");
+
+    std::vector<std::string> reses;
+    popenWithReturn(lscmd, reses);
+
+    for(auto &res: reses) {
+        std::cout << res << "\n";
+    }
+
+
+    return 0;
+}
+
+
+

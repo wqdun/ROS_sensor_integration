@@ -1,4 +1,7 @@
 #include "public_tools.h"
+#define NDEBUG
+// #undef NDEBUG
+#include <glog/logging.h>
 
 namespace public_tools
 {
@@ -180,48 +183,9 @@ void PublicTools::getFilesWithExtensionInDir(const std::string &baseDir, const s
     return;
 }
 
-void PublicTools::GetFilesCountInDir(const std::string &baseDir, const std::string &keyWord, int &numOfFileWithKeyWord) {
-    DIR *dir;
-    dirent *ptr;
 
-    // if dir == NULL
-    if( !(dir = opendir(baseDir.c_str())) ) {
-        LOG(WARNING) << "Failed to open " << baseDir;
-        return;
-    }
 
-    // while ptr != NULL
-    while(ptr = readdir(dir)) {
-        // ignore . and ..
-        if( !(strcmp(ptr->d_name, ".")) ||
-            !(strcmp(ptr->d_name, "..")) ) {
-            continue;
-        }
-
-        // regular file
-        if(8 == ptr->d_type) {
-            const std::string fileName(ptr->d_name);
-            if(std::string::npos != fileName.find(keyWord) ) {
-                ++numOfFileWithKeyWord;
-            }
-            // else do nothing
-        }
-        // directory
-        else
-        if(4 == ptr->d_type) {
-            const std::string subDir(baseDir + "/" + ptr->d_name);
-            GetFilesCountInDir(subDir, keyWord, numOfFileWithKeyWord);
-        }
-        // else {
-        //     // ignore links(10) & others
-        // }
-    }
-
-    closedir(dir);
-    return;
-}
-
-int PublicTools::PopenWithReturn(const std::string &cmd, std::vector<std::string> &cmdReturn) {
+int PublicTools::popenWithReturn(const std::string &cmd, std::vector<std::string> &cmdReturn) {
     const size_t maxByte = 1000;
     char result[maxByte];
     FILE *fpin;
@@ -240,24 +204,6 @@ int PublicTools::PopenWithReturn(const std::string &cmd, std::vector<std::string
         return -2;
     }
 
-    return 0;
-}
-
-int PublicTools::PopenWithoutReturn(const std::string &cmd) {
-    LOG(INFO) << __FUNCTION__ << " start, run " << cmd;
-
-    FILE *fpin;
-    if(NULL == (fpin = popen(cmd.c_str(), "r") ) ) {
-        LOG(ERROR) << "Failed to " << cmd;
-        return -1;
-    }
-    int err = 0;
-    if(0 != (err = pclose(fpin) ) ) {
-        LOG(ERROR) << "Failed to close " << cmd << ", returns: " << err;
-        return -2;
-    }
-
-    LOG(INFO) << "Run: " << cmd << " end.";
     return 0;
 }
 
@@ -326,10 +272,27 @@ std::string PublicTools::safeReadlink(const std::string& filename) {
 }
 
 bool PublicTools::isFileExist(const std::string& fileName) {
-    return (access(fileName.c_str(), 0) >= 0);
+    std::fstream _file;
+    _file.open(fileName.c_str(), std::ios::in);
+    return (bool)(_file);
 }
 
+void PublicTools::runShellCmd(const std::string &cmd) {
+    LOG(INFO) << __FUNCTION__ << " start, run " << cmd;
 
+    FILE *fpin;
+    if(NULL == (fpin = popen(cmd.c_str(), "r") ) ) {
+        LOG(ERROR) << "Failed to " << cmd;
+        exit(1);
+    }
+    int err = 0;
+    if(0 != (err = pclose(fpin) ) ) {
+        LOG(ERROR) << "Failed to run " << cmd << ", returns: " << err;
+        exit(1);
+    }
+    LOG(INFO) << "Run: " << cmd << " end.";
+    return;
+}
 
 bool PublicTools::isInChina(double lat, double lon) {
     LOG(INFO) << __FUNCTION__ << " start.";

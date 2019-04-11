@@ -271,6 +271,93 @@ remove_older_cv_bridge() {
     return
 }
 
+install_FlyCapture2() {
+    clear
+    echo "$FUNCNAME start."
+    local err=0
+    which FlyCap2 >/dev/null 2>&1
+    if [ $? -eq 0 ]; then
+        echo "FlyCapture2 already installed."
+        write_result $FUNCNAME" returns "$err.
+        return
+    fi
+
+    (
+        for (( i=0; i<2; i++ ))
+        do
+            echo ${passphrase} | sudo -S su >/dev/null 2>&1
+            sudo apt-get install libgtkglextmm-x11-1.2-dev
+            if [ $? -eq 0 ]; then
+                echo "Install libgtkglextmm successfully."
+                return 0
+            fi
+            echo ${passphrase} | sudo -S su >/dev/null 2>&1
+            sudo apt-get install -f
+        done
+        echo "[ERROR] Failed to install libgtkglextmm."
+        return 1
+    )
+    let err+=$?
+
+    if [ $err -ne 0 ]; then
+        write_result $FUNCNAME" returns "$err.
+        return
+    fi
+
+    tar zxvf ${absolute_script_path}"/3rd/flycapture2-2.9.3.43-amd64-pkg.tgz" -C /tmp/
+    (
+        cd /tmp/flycapture2-2.9.3.43-amd64/
+        for (( i=0; i<2; i++ ))
+        do
+            bash install_flycapture.sh
+            if [ $? -eq 0 ]; then
+                echo "bash install_flycapture.sh successfully."
+                return 0
+            fi
+            echo ${passphrase} | sudo -S su >/dev/null 2>&1
+            sudo apt-get install -f
+        done
+        echo "[ERROR] Failed to install_flycapture.sh."
+        return 1
+    )
+    let err+=$?
+
+    write_result $FUNCNAME" returns "$err.
+    return
+}
+
+install_teamviewer() {
+    clear
+    echo "$FUNCNAME start."
+    local err=0
+    which teamviewer >/dev/null 2>&1
+    if [ $? -eq 0 ]; then
+        echo "teamviewer already installed."
+        write_result $FUNCNAME" returns "$err.
+        return
+    fi
+
+    (
+        for (( i=0; i<4; i++ ))
+        do
+            echo ${passphrase} | sudo -S su >/dev/null 2>&1
+            sudo dpkg -i ${absolute_script_path}/3rd/teamviewer_12.0.85001_i386.deb
+            if [ $? -eq 0 ]; then
+                echo "Install teamviewer_12 successfully."
+                return 0
+            fi
+            echo ${passphrase} | sudo -S su >/dev/null 2>&1
+            sudo apt-get install -f
+        done
+        echo "[ERROR] Failed to install teamviewer_12."
+        return 1
+    )
+    let err+=$?
+
+    write_result $FUNCNAME" returns "$err.
+    return
+}
+
 install_rs422_driver() {
     clear
     echo "$FUNCNAME start."
@@ -358,19 +445,19 @@ roscore_startup() {
     local err=0
 
     echo ${passphrase} | sudo -S su >/dev/null 2>&1
-    sed -i 's/\r//' ${absolute_script_path}"/src/tools/ros_daemon.sh" \
-        && sudo cp ${absolute_script_path}"/src/tools/ros_daemon.sh" /etc/init.d/ \
-        && sudo chmod +x /etc/init.d/ros_daemon.sh
+    sed -i 's/\r//' ${absolute_script_path}"/src/tools/ros_daemon.bash" \
+        && sudo cp ${absolute_script_path}"/src/tools/ros_daemon.bash" /etc/init.d/ \
+        && sudo chmod +x /etc/init.d/ros_daemon.bash
     let err+=$?
     if [ $err -ne 0 ]; then
-        echo "[ERROR] Failed to cp && chmod ros_daemon.sh."
+        echo "[ERROR] Failed to cp && chmod ros_daemon.bash."
         write_result $FUNCNAME" returns "$err.
         return
     fi
 
     echo ${passphrase} | sudo -S su >/dev/null 2>&1
-    sudo update-rc.d -f ros_daemon.sh remove
-    sudo update-rc.d ros_daemon.sh defaults 90 10
+    sudo update-rc.d -f ros_daemon.bash remove
+    sudo update-rc.d ros_daemon.bash defaults 90 10
     let err+=$?
 
     write_result $FUNCNAME" returns "$err.
@@ -388,8 +475,8 @@ install_tomcat() {
 
     # sudo sh -c echo "TOMCAT_HOME=/opt/apache-tomcat-9.0.6"  >>/opt/apache-tomcat-9.0.6/bin/startup.sh
     # test BELOW
-    # sudo /opt/apache-tomcat-9.0.6/bin/startup.sh
-    # sudo /opt/apache-tomcat-9.0.6/bin/shutdown.sh
+    sudo /opt/apache-tomcat-9.0.6/bin/startup.sh
+    sudo /opt/apache-tomcat-9.0.6/bin/shutdown.sh
 
     # in front of *.sh, add JAVA_HOME
 
@@ -446,14 +533,13 @@ main() {
     install_ros_indigo
     install_velodyne_essential
     install_opencv
-    # remove_older_cv_bridge
+    remove_older_cv_bridge
     install_FlyCapture2
 
     install_glog
     install_rs422_driver
     install_sqlite3
     install_gdal
-    install_cutecom
 
     install_rosbridge
     install_web_video_server

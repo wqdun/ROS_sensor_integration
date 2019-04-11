@@ -1,25 +1,13 @@
 cmake_minimum_required(VERSION 2.8.3)
 project(sc_hik_camera)
 
-message("PROJECT_SOURCE_DIR: " ${PROJECT_SOURCE_DIR})
-message("OpenCV_DIR: " ${OpenCV_DIR})
-set(OpenCV_DIR /usr/local/share/OpenCV)
-message("OpenCV_DIR: " ${OpenCV_DIR})
-
 ## Compile as C++11, supported in ROS Kinetic and newer
-add_compile_options(-std=c++11)
+# add_compile_options(-std=c++11)
 
 ## Find catkin macros and libraries
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages
-find_package(catkin REQUIRED COMPONENTS
-  roscpp
-  std_msgs
-  image_transport
-  cv_bridge
-  sc_msgs
-)
-# find_package(OpenCV REQUIRED)
+find_package(catkin REQUIRED)
 
 ## System dependencies are found with CMake's conventions
 # find_package(Boost REQUIRED COMPONENTS system)
@@ -40,10 +28,10 @@ find_package(catkin REQUIRED COMPONENTS
 ##   your messages/services/actions (e.g. std_msgs, actionlib_msgs, ...).
 ## * In the file package.xml:
 ##   * add a build_depend tag for "message_generation"
-##   * add a build_depend and a exec_depend tag for each package in MSG_DEP_SET
+##   * add a build_depend and a run_depend tag for each package in MSG_DEP_SET
 ##   * If MSG_DEP_SET isn't empty the following dependency has been pulled in
 ##     but can be declared for certainty nonetheless:
-##     * add a exec_depend tag for "message_runtime"
+##     * add a run_depend tag for "message_runtime"
 ## * In this file (CMakeLists.txt):
 ##   * add "message_generation" and every package in MSG_DEP_SET to
 ##     find_package(catkin REQUIRED COMPONENTS ...)
@@ -78,7 +66,7 @@ find_package(catkin REQUIRED COMPONENTS
 ## Generate added messages and services with any dependencies listed here
 # generate_messages(
 #   DEPENDENCIES
-#   std_msgs
+#   std_msgs  # Or other packages containing msgs
 # )
 
 ################################################
@@ -88,7 +76,7 @@ find_package(catkin REQUIRED COMPONENTS
 ## To declare and build dynamic reconfigure parameters within this
 ## package, follow these steps:
 ## * In the file package.xml:
-##   * add a build_depend and a exec_depend tag for "dynamic_reconfigure"
+##   * add a build_depend and a run_depend tag for "dynamic_reconfigure"
 ## * In this file (CMakeLists.txt):
 ##   * add "dynamic_reconfigure" to
 ##     find_package(catkin REQUIRED COMPONENTS ...)
@@ -113,7 +101,7 @@ find_package(catkin REQUIRED COMPONENTS
 catkin_package(
 #  INCLUDE_DIRS include
 #  LIBRARIES sc_hik_camera
-#  CATKIN_DEPENDS roscpp std_msgs
+#  CATKIN_DEPENDS other_catkin_pkg
 #  DEPENDS system_lib
 )
 
@@ -123,13 +111,9 @@ catkin_package(
 
 ## Specify additional locations of header files
 ## Your package locations should be listed before other locations
-message("catkin_INCLUDE_DIRS: " ${catkin_INCLUDE_DIRS})
-message("OpenCV_INCLUDE_DIRS: " ${OpenCV_INCLUDE_DIRS})
 include_directories(
-# include
-  ${catkin_INCLUDE_DIRS}
-  /usr/local/include
-  /usr/local/include/opencv
+  include
+# ${catkin_INCLUDE_DIRS}
 )
 
 ## Declare a C++ library
@@ -145,13 +129,7 @@ include_directories(
 ## Declare a C++ executable
 ## With catkin_make all packages are built within a single CMake context
 ## The recommended prefix ensures that target names across packages don't collide
-add_executable(${PROJECT_NAME}_node
-  src/hik_camera_node.cpp
-  src/hik_camera_manager.cpp
-  src/save_image_task.cpp
-  src/single_camera.cpp
-  src/comm_timer.cpp
-)
+# add_executable(${PROJECT_NAME}_node src/hik_node.cpp)
 
 ## Rename C++ executable without prefix
 ## The above recommended prefix causes long target names, the following renames the
@@ -164,28 +142,8 @@ add_executable(${PROJECT_NAME}_node
 # add_dependencies(${PROJECT_NAME}_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
 ## Specify libraries to link a library or executable target against
-message("catkin_LIBRARIES: " ${catkin_LIBRARIES})
-message("OpenCV_LIBS: " ${OpenCV_LIBS})
-target_link_libraries(${PROJECT_NAME}_node
-  ${catkin_LIBRARIES}
-  /usr/local/lib/libopencv_core.so
-  /usr/local/lib/libopencv_imgcodecs.so
-  /usr/local/lib/libopencv_imgproc.so
-  glog
-  /opt/MVS/bin/libMvCameraControl.so
-  sc_lib_public_tools
-)
-
-# Below for test serial reader
-# add_executable(serial_reader_test
-#   src/serial_reader.cpp
-#   src/serial_reader_test.cpp
-# )
-# target_link_libraries(serial_reader_test
+# target_link_libraries(${PROJECT_NAME}_node
 #   ${catkin_LIBRARIES}
-#   glog
-#   sc_lib_public_tools
-#   boost_system
 # )
 
 #############

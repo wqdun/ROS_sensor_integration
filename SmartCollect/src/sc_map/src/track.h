@@ -1,7 +1,6 @@
 #ifndef __TRACK_H__
 #define __TRACK_H__
 
-#include <glog/logging.h>
 #include <fstream>
 #include "sc_msgs/Lines2D.h"
 #include "../../sc_lib_public_tools/src/public_tools.h"

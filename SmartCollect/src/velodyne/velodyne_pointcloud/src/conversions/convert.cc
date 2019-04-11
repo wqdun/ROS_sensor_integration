@@ -14,7 +14,11 @@
 */
 
 #include "convert.h"
+
 #include <pcl_conversions/pcl_conversions.h>
+#define NDEBUG
+// #undef NDEBUG
+#include <glog/logging.h>
 
 namespace velodyne_pointcloud
 {

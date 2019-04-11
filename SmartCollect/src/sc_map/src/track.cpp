@@ -1,4 +1,7 @@
 #include "track.h"
+#define NDEBUG
+// #undef NDEBUG
+#include <glog/logging.h>
 
 Track::Track(const std::string &_rawdataDir) {
     LOG(INFO) << __FUNCTION__ << " start, _rawdataDir: " << _rawdataDir;

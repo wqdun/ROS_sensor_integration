@@ -1,4 +1,7 @@
 #include "server_daemon.h"
+#define NDEBUG
+// #undef NDEBUG
+#include <glog/logging.h>
 
 int main(int argc, char **argv) {
     // server node glog path:

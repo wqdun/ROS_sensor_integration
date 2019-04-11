@@ -20,6 +20,8 @@
 
 #include "driver.h"
 #include "center_subscriber.h"
+// #define NDEBUG
+#undef NDEBUG
 #include <glog/logging.h>
 
 namespace velodyne_driver

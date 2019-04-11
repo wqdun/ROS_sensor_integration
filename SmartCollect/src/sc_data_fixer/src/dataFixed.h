@@ -1,8 +1,6 @@
 #ifndef DATAFIXED_H
 #define DATAFIXED_H
 #pragma GCC diagnostic error "-std=c++11"
-
-#include <glog/logging.h>
 #include <ros/ros.h>
 #include "sc_msgs/DataFixerProgress.h"
 #include <string>
@@ -20,8 +18,6 @@
 #include <boost/algorithm/string/classification.hpp>
 #include <boost/algorithm/string/split.hpp>
 #include <ogrsf_frmts.h>
-#include "../../sc_lib_public_tools/src/public_tools.h"
-
 #pragma pack(1)
 struct ImageStruct
 {
@@ -30,6 +26,7 @@ struct ImageStruct
 };
 
 struct ontimeDataFormat{
+    int GPSWeek;
     double GPSWeekTime;
     double Heading;
     double Pitch;
@@ -40,6 +37,8 @@ struct ontimeDataFormat{
     double Ve;
     double Vn;
     double Vu;
+    double Baseline;
+    int NSV1;
     int NSV2;
 };
 
@@ -58,7 +57,6 @@ struct imageTraceDataFormat{
     double Roll;
     double Pitch;
     double Heading;
-	std::string addPicName;
 };
 
 class dataFixed{

@@ -1,37 +1,30 @@
 #include <iostream>
-#include <deque>
-#include <algorithm>
+#include <fstream>
+#include <vector>
 #include <string>
-#include <map>
+#include <stdio.h>
 
+#include <boost/algorithm/string/classification.hpp>
+#include <boost/algorithm/string/split.hpp>
 using namespace std;
 
+int main(int argv,char *arg[]) {
 
+    const std::string allFixedIndicator("/tmp/data_fixer_progress_100%");
+    int i = remove(allFixedIndicator.c_str());
+    cout << i << "\n";
 
-void sort_stdalg(deque<double> _dq) {
-    std::sort(_dq.begin(), _dq.end());
-}
-
-void print_deque(deque<double> &_dq) {
-    for(size_t i =0; i < _dq.size(); ++i) {
-        std::cout << i << ": " << _dq[i] << "\n";
+    ofstream out(allFixedIndicator);
+    if(out) {
+        cout << "Success.\n";
     }
-}
+    else {
+        cout << "Failed.\n";
+    }
+    cout << out << " end.\n";
 
 
-int main(int argc, char const *argv[]) {
-    std::deque<double> dq {1, 3, 2, 4, 0, 3.2, 3.6};
-    std::deque<double> _dq(dq);
-    print_deque(dq);
-    sort_stdalg(dq);
-    print_deque(dq);
-    print_deque(_dq);
-    std::cout << _dq[dq.size() / 2] << "\n";
-    std::cout << dq[dq.size() / 2] << "\n";
+
+
     return 0;
 }
-
-
-
-
-

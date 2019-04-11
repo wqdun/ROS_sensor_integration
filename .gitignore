@@ -26,3 +26,4 @@ build/
 a.out
 /SmartCollect/.catkin_workspace
 /SmartCollect/src/CMakeLists.txt
+/FromGithub_*/

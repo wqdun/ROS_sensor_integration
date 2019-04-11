@@ -32,6 +32,7 @@ create_record_path() {
     log_with_time "$FUNCNAME start, param: $*"
     local _absolute_record_path=$1
     mkdir -p "${_absolute_record_path}/Image/"
+    mkdir -p "${_absolute_record_path}/Image/panoramas/"
     mkdir -p "${_absolute_record_path}/IMU/"
     mkdir -p "${_absolute_record_path}/Lidar/"
 }
@@ -42,7 +43,7 @@ add_path_to_veledyne_launch() {
     local absolute_velodyne_launch="${absolute_catkin_path}/src/velodyne/velodyne_driver/launch/nodelet_manager.launch"
     local parse_xml_script="${absolute_script_path}/parse_xml.py"
     chmod +x "${parse_xml_script}"
-    "${parse_xml_script}" "${_absolute_record_path}" "${absolute_velodyne_launch}"
+    "${parse_xml_script}" "${absolute_velodyne_launch}" "\$(arg manager)_driver" "record_path" "${_absolute_record_path}/Lidar/" "${absolute_velodyne_launch%.*}.xml"
 
     log_with_time "Add record path ${_absolute_record_path} to launch file: ${absolute_velodyne_launch}."
 }
@@ -54,50 +55,147 @@ redirect_glog_path() {
     export GLOG_log_dir="${_absolute_record_path}/Log/"
 }
 
+make_tty_softlink() {
+    log_with_time "$FUNCNAME start, param: $*"
+
+    local ls_res=$(ls /dev/ttyUSB*)
+    local usb_num=$(echo ${ls_res} | awk '{print NF}')
+    if [ "${usb_num}" -lt 3 ]; then
+        log_with_time "usb_num should >= 3: ${usb_num}"
+        exit ${usb_num}
+    fi
+
+    rm /dev/novatel_usb*
+    local novatel_usb3=$(echo ${ls_res} | awk '{print $NF}')
+    local novatel_usb2=$(echo ${ls_res} | awk '{print $(NF-1)}')
+    local novatel_usb1=$(echo ${ls_res} | awk '{print $(NF-2)}')
+
+    ln -s ${novatel_usb3} /dev/novatel_usb3
+    ln -s ${novatel_usb2} /dev/novatel_usb2
+    ln -s ${novatel_usb1} /dev/novatel_usb1
+}
+
+make_serial_softlink_by_path() {
+    log_with_time "$FUNCNAME start, param: $*; HOSTNAME: ${HOSTNAME}"
+
+    # sc0010 differ from sc0009
+    if [ "AA${HOSTNAME}" = "AAsc0010" ]; then
+        rm /dev/imuRawIns
+        local imuRawIns=$(ls /dev/serial/by-path | grep "usb-0:4:1.0" | head -n1)
+        if [ "AA${imuRawIns}" = "AA" ]; then
+            log_with_time "Failed to find usb-0:4:1.0 in /dev/serial/by-path."
+            exit 1
+        fi
+        ln -s "/dev/serial/by-path/"${imuRawIns} /dev/imuRawIns
+
+        rm /dev/timeStamper
+        local timeStamper=$(ls /dev/serial/by-path | grep "usb-0:3:1.0" | head -n1)
+        if [ "AA${timeStamper}" = "AA" ]; then
+            log_with_time "Failed to find usb-0:3:1.0 in /dev/serial/by-path."
+            exit 1
+        fi
+        ln -s "/dev/serial/by-path/"${timeStamper} /dev/timeStamper
+
+    elif [ "AA${HOSTNAME}" = "AAsc0009" ]; then
+        rm /dev/imuRawIns
+        local imuRawIns=$(ls /dev/serial/by-path | grep "usb-0:4:1.0" | head -n1)
+        if [ "AA${imuRawIns}" = "AA" ]; then
+            log_with_time "Failed to find usb-0:4:1.0 in /dev/serial/by-path."
+            exit 1
+        fi
+        ln -s "/dev/serial/by-path/"${imuRawIns} /dev/imuRawIns
+
+        rm /dev/timeStamper
+        local timeStamper=$(ls /dev/serial/by-path | grep "usb-0:2:1.0" | head -n1)
+        if [ "AA${timeStamper}" = "AA" ]; then
+            log_with_time "Failed to find usb-0:2:1.0 in /dev/serial/by-path."
+            exit 1
+        fi
+        ln -s "/dev/serial/by-path/"${timeStamper} /dev/timeStamper
+
+    elif [ "AA${HOSTNAME}" = "AAtegra-ubuntu" ]; then
+        rm /dev/imuRawIns
+        local imuRawIns=$(ls /dev/serial/by-path | grep "usb-0:2.4" | head -n1)
+        if [ "AA${imuRawIns}" = "AA" ]; then
+            log_with_time "Failed to find usb-0:2.4 in /dev/serial/by-path."
+            exit 1
+        fi
+        ln -s "/dev/serial/by-path/"${imuRawIns} /dev/imuRawIns
+
+        rm /dev/timeStamper
+        local timeStamper=$(ls /dev/serial/by-path | grep "usb-0:2.3" | head -n1)
+        if [ "AA${timeStamper}" = "AA" ]; then
+            log_with_time "Failed to find usb-0:2.3 in /dev/serial/by-path."
+            exit 1
+        fi
+        ln -s "/dev/serial/by-path/"${timeStamper} /dev/timeStamper
+
+        rm /dev/imu5651RtData
+        local imu5651RtData=$(ls /dev/serial/by-path | grep "usb-0:2.2" | head -n1)
+        if [ "AA${imu5651RtData}" = "AA" ]; then
+            log_with_time "Failed to find usb-0:2.1 in /dev/serial/by-path."
+            exit 1
+        fi
+        ln -s "/dev/serial/by-path/"${imu5651RtData} /dev/imu5651RtData
+    else
+        log_with_time "Unknown HOSTNAME: ${HOSTNAME}"
+    fi
+}
+
 start_smart_collector_server() {
     log_with_time "$FUNCNAME start, param: $*"
     log_with_time "ROS_PACKAGE_PATH: ${ROS_PACKAGE_PATH}"
     local _absolute_record_path=$1
 
+    log_with_time "sysctl -a start."
+    sysctl -a >>$result_log 2>&1
+    log_with_time "ulimit start."
+    ulimit -c >>$result_log 2>&1
+
     get_sudo_permission
-    sudo chmod +r /dev/ttyUSB0
-    pkill sc_integrate_
-    rosrun sc_integrate_imu_recorder sc_integrate_imu_recorder_node "${_absolute_record_path}/IMU/" &
+    # make_tty_softlink
+    make_serial_softlink_by_path
+
+    get_sudo_permission
+    sudo chmod +r /dev/imuRawIns
+    local task_keyword="sc_rawimu_rec"
+    pkill "${task_keyword}"
+    echo "pkill -INT ${task_keyword}; pkill ${task_keyword}" >"/tmp/kill_smartc.sh"
+    /opt/smartc/devel/lib/sc_rawimu_recorder/sc_rawimu_recorder_node "/dev/imuRawIns" "${_absolute_record_path}/IMU/" &
     sleep 0.2
 
-    get_sudo_permission
-    sudo chmod +r /dev/ttyS0
+    local task_keyword="sc_images_time"
+    pkill "${task_keyword}"
+    echo "pkill -INT ${task_keyword}; pkill ${task_keyword}" >>"/tmp/kill_smartc.sh"
+    /opt/smartc/devel/lib/sc_images_timestamper/sc_images_timestamper_node "/dev/timeStamper" "${_absolute_record_path}/IMU/" &
+    sleep 0.2
 
-    /sbin/ifconfig eth0 | /bin/grep -w inet >>$result_log 2>&1
-    if [ $? -ne 0 ]; then
-        log_with_time "sc_camera_ip_forcer_node has not been executed, gonna run it."
-        bash /opt/smartc/src/tools/force_ip_per_minute.sh
-    fi
-    log_with_time "sc_camera_ip_forcer_node already been executed."
+    local task_keyword="sc_rtimu_no"
+    pkill "${task_keyword}"
+    echo "pkill -INT ${task_keyword}; pkill ${task_keyword}" >>"/tmp/kill_smartc.sh"
+    /opt/smartc/devel/lib/sc_rtimu/sc_rtimu_node "/dev/imu5651RtData" &
+    sleep 0.2
 
-    for i in $(seq 30)
-    do
-        pidof sc_camera_ip_forcer_node
-        if [ $? -eq 0 ]; then
-            log_with_time "sc_camera_ip_forcer_node is running, waiting..."
-            sleep 1
-            continue
-        fi
-        pkill sc_camera_ip_
-        pkill sc_camera
-        /opt/smartc/devel/lib/sc_camera/sc_camera jpg "${_absolute_record_path}/" &
-        break
-    done
+    local task_keyword="sc_ptgrey_ca"
+    pkill "${task_keyword}"
+    echo "pkill -INT ${task_keyword}; pkill ${task_keyword}" >>"/tmp/kill_smartc.sh"
+    sysctl -w net.core.rmem_max=33554432 net.core.rmem_default=33554432 net.core.wmem_max=33554432 net.core.wmem_default=33554432 >>$result_log 2>&1
+    /opt/smartc/devel/lib/sc_ptgrey_camera/sc_ptgrey_camera_node "${_absolute_record_path}/" &
 
     killall nodelet
+    echo "killall nodelet" >>"/tmp/kill_smartc.sh"
     roslaunch velodyne_pointcloud VLP16_points.launch &
     sleep 0.2
 
-    pkill sc_project_mon
+    local task_keyword="sc_project_mon"
+    pkill "${task_keyword}"
+    echo "pkill -INT ${task_keyword}; pkill ${task_keyword}" >>"/tmp/kill_smartc.sh"
     /opt/smartc/devel/lib/sc_project_monitor/sc_project_monitor_node "${_absolute_record_path}/" &
     sleep 0.2
 
-    pkill sc_map_node
+    local task_keyword="sc_map_node"
+    pkill "${task_keyword}"
+    echo "pkill -INT ${task_keyword}; pkill ${task_keyword}" >>"/tmp/kill_smartc.sh"
     /opt/smartc/devel/lib/sc_map/sc_map_node "${_absolute_record_path}/" &
     sleep 0.2
 }
@@ -105,11 +203,7 @@ start_smart_collector_server() {
 do_kill() {
     log_with_time "$FUNCNAME start."
 
-    pkill sc_integrate_
-    pkill sc_camera
-    killall nodelet
-    pkill sc_project_mon
-    pkill sc_map_node
+    bash "/tmp/kill_smartc.sh"
     return 0
 }
 
@@ -121,13 +215,29 @@ do_fixdata() {
     return 0
 }
 
+do_restart_server() {
+    log_with_time "$FUNCNAME start, param: $*"
+
+    pkill -INT sc_server_d; pkill sc_server_d
+    /opt/smartc/devel/lib/sc_server_daemon/sc_server_daemon_node &
+    return 0
+}
 
 main() {
     if [ "AA$1" = "AAserver" ]; then
         task_name=$2
-        local absolute_record_path=${absolute_catkin_path}"/record/"${task_name}"/Rawdata/"
-        mkdir -p "${absolute_record_path}"
-        local absolute_glog_path=${absolute_catkin_path}"/record/"${task_name}"/Rawdata/Log"
+        echo "${task_name}" | grep "9999" >/dev/null 2>&1
+        if [ $? -eq 0 ]; then
+            local absolute_record_path="/tmp/${task_name}/Rawdata/"
+        else
+            local absolute_record_path="${absolute_catkin_path}/record/${task_name}/Rawdata/"
+        fi
+
+        sysctl -w kernel.core_pattern=/var/crash/core.%u.%e.%p.%t
+        sysctl -w fs.suid_dumpable=1
+        ulimit -c unlimited >>result_log 2>&1
+
+        local absolute_glog_path="${absolute_record_path}/Log"
         mkdir -p "${absolute_glog_path}"
 
         source_ROS_Env
@@ -146,6 +256,11 @@ main() {
     if [ "AA$1" = "AAfixdata" ]; then
         local projects=$2
         do_fixdata "${projects}"
+        return
+    fi
+
+    if [ "AA$1" = "AArestart_server" ]; then
+        do_restart_server
         return
     fi
 }

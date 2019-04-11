@@ -1,0 +1,157 @@
+%YAML:1.0
+
+#common parameters
+imu_topic: "/imu0"
+image_topic: "/cam0/image_raw"
+output_path: "/config/euroc/vins_result.csv"         # vins outputs will be wrttento vins_folder_path + output_path
+
+#camera calibration
+model_type: PINHOLE
+camera_name: camera
+image_width: 960
+image_height: 600
+distortion_parameters:
+   k1: -2.424e-01
+   k2: 4.378e-01
+   p1: -2.760e-04
+   p2: -1.870e-03
+projection_parameters:
+   fx: 1.377e+03
+   fy: 1.377e+03
+   cx: 4.715e+02
+   cy: 3.149e+02
+
+# Extrinsic parameter between IMU and Camera.
+estimate_extrinsic: 1   # 0  Have an accurate extrinsic parameters. We will trust the following imu^R_cam, imu^T_cam, don't change it.
+                        # 1  Have an initial guess about extrinsic parameters. We will optimize around your initial guess.
+                        # 2  Don't know anything about extrinsic parameters. You don't need to give R,T. We will try to calibrate it. Do some rotation movement at beginning.
+ex_calib_result_path: "/config/euroc/ex_calib_result.yaml"  # If you choose 1 or 2, the extrinsic calibration result will be written vins_folder_path + ex_calib_result_path.
+#If you choose 0 or 1, you should write down the following matrix.
+#Rotation from camera frame to imu frame, imu^R_cam
+extrinsicRotation: !!opencv-matrix
+   rows: 3
+   cols: 3
+   dt: d
+   data: [1, 0, 0,
+           0, 0, 1,
+           0, -1, 0]
+#Translation from camera frame to imu frame, imu^T_cam
+extrinsicTranslation: !!opencv-matrix
+   rows: 3
+   cols: 1
+   dt: d
+   data: [0.0944,0.0405, 0.0055]
+
+#   data: [-0.02,-0.06, 0.01]
+
+#GravityinIMUframe
+GravityinIMU: !!opencv-matrix
+   rows: 3
+   cols: 1
+   dt: d
+   data: [0.0659, -0.7077, 9.7821]
+#Translation from imu frame to vehicle frame, car^T_imu
+IMUvehicleTranslation: !!opencv-matrix
+   rows: 3
+   cols: 1
+   dt: d
+   data: [1.172, 1.281, 1.44]
+
+#feature traker paprameters
+max_cnt: 150            # max feature number in feature tracking
+min_dist: 30            # min distance between two features
+freq: 10                # frequence (Hz) of publish tracking result. At least 10Hz for good estimation. If set 0, the frequence will be same as raw image
+F_threshold: 1.0        # ransac threshold (pixel)
+show_track: 1           # publish tracking image as topic
+equalize: 1             # if image is too dark or light, trun on equalize to find enough features
+fisheye: 0              # if using fisheye, trun on it. A circle mask will be loaded to remove edge noisy points
+
+#optimization parameters
+max_solver_time: 0.04  # max solver itration time (ms), to guarantee real time
+max_num_iterations: 8   # max solver itrations, to guarantee real time
+keyframe_parallax: 10.0 # keyframe selection threshold (pixel)
+
+#imu parameters       The more accurate parameters you provide, the better performance
+acc_n: 0.05          # accelerometer measurement noise standard deviation. #0.2
+gyr_n: 0.02         # gyroscope measurement noise standard deviation.     #0.05
+acc_w: 0.0002         # accelerometer bias random work noise standard deviation.  #0.02
+gyr_w: 2.0e-5      # gyroscope bias random work noise standard deviation.     #4.0e-5
+env_n: 10000        # encoder velocity noise
+g_norm: 9.81007     # gravity magnitude
+
+
+#loop closure parameters
+loop_closure: 1   #if you want to use loop closure to minimize the drift, set loop_closure true and give your brief pattern file path and vocabulary file path accordingly;
+                     #also give the camera calibration file same as feature_tracker node
+pattern_file: "/support_files/brief_pattern.yml"
+voc_file: "/support_files/brief_k10L6.bin"
+min_loop_num: 25
+
+
+
+# accurate extrinsic parameter
+# extrinsicRotation: !!opencv-matrix
+#    rows: 3
+#    cols: 3
+#    dt: d
+#    data: [0.0148655429818, -0.999880929698, 0.00414029679422,
+#            0.999557249008, 0.0149672133247, 0.025715529948,
+#            -0.0257744366974, 0.00375618835797, 0.999660727178]
+
+# extrinsicTranslation: !!opencv-matrix
+#    rows: 3
+#    cols: 1
+#    dt: d
+#    data: [-0.0216401454975,-0.064676986768, 0.00981073058949]
+
+
+
+# Camera frames per second
+Camera.fps: 20.0
+
+# Color order of the images (0: BGR, 1: RGB. It is ignored if images are grayscale)
+Camera.RGB: 1
+
+#--------------------------------------------------------------------------------------------
+# ORB Parameters
+#--------------------------------------------------------------------------------------------
+
+# ORB Extractor: Number of features per image
+ORBextractor.nFeatures: 1000
+
+# ORB Extractor: Scale factor between levels in the scale pyramid
+ORBextractor.scaleFactor: 1.2
+
+# ORB Extractor: Number of levels in the scale pyramid
+ORBextractor.nLevels: 8
+
+# ORB Extractor: Fast threshold
+# Image is divided in a grid. At each cell FAST are extracted imposing a minimum response.
+# Firstly we impose iniThFAST. If no corners are detected we impose a lower value minThFAST
+# You can lower these values if your images have low contrast
+ORBextractor.iniThFAST: 20
+ORBextractor.minThFAST: 7
+
+#--------------------------------------------------------------------------------------------
+# Viewer Parameters
+#---------------------------------------------------------------------------------------------
+Viewer.KeyFrameSize: 0.05
+Viewer.KeyFrameLineWidth: 1
+Viewer.GraphLineWidth: 0.9
+Viewer.PointSize:2
+Viewer.CameraSize: 0.08
+Viewer.CameraLineWidth: 3
+Viewer.ViewpointX: 0
+Viewer.ViewpointY: -0.7
+Viewer.ViewpointZ: 1.8
+Viewer.ViewpointF: 500
+Viewer.Scale: 20
+
+ImageScale: 0.4
+DetectMovingObjects: 0
+dtbig: 0  #259200 for siweidiku #432000 for GM
+datafolder: "/home/nvidia/Documents/S-L-A-M3/Rawdata/scale/" #/home/ljx/Documents/1028_yongfeng/Worknew/scale/ /home/ljx/Documents/siweidikunew/Image/scale/ /home/ljx/Documents/GMWork/scale/
+usegps: 0
+dtgps: -432000 #0 for GM
+
+

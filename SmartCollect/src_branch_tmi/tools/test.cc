@@ -1,78 +1,52 @@
-#include <iostream>
+#include <iostream>     // std::cout
+#include <algorithm>    // std::remove_if
 #include <vector>
 
-
-struct NodeList {
-    int data;
-    NodeList *next;
-
-    NodeList(): data(0), next(NULL) {
-    }
-    NodeList(int i): data(i), next(NULL) {
-    }
-};
+bool IsOdd (int i) { return ((i%2)==1); }
 
 
-int GetMinIndex(const std::vector<int> &inArr, int startIndex, int endIndex) {
-    int minIndex = startIndex;
-    for (int i = startIndex + 1; i <= endIndex; ++i) {
-        if (inArr[i] < inArr[minIndex]) {
-            minIndex = i;
-        }
-    }
 
-    return minIndex;
-}
-
-void swap(int &a, int &b) {
-    int temp = a;
-    a = b;
-    b = temp;
-}
-
-NodeList *ReverseList(NodeList *pHead) {
-    NodeList *pList = pHead;
-
-    NodeList *previous = NULL;
-    while (pList) {
-        NodeList *next = pList->next;
-        pList->next = previous;
-        previous = pList;
-
-        pList = next;
-    }
-
-    return previous;
+bool IsWhiteSpace(char c) {
+  return std::isspace(c);
 }
 
 
-int main() {
-    std::vector<int> inArr {5, 4, 2, 6, 1, -6, 8, 9, 4};
+int main () {
+    std::string str2 = "Text\n with\tsome \t  whitespaces\n\n";
+    std::cout << str2.size() << str2 << "\n";
+    str2.erase(std::remove_if (str2.begin(), str2.end(), IsWhiteSpace), str2.end());
+    std::cout << str2.size() << str2 << "\n";
 
-    NodeList *pNodeList = NULL;
 
-    pNodeList = new NodeList();
-    NodeList *ROOT = pNodeList;
-    for (int i = 0; i < inArr.size(); ++i) {
-        pNodeList->next = new NodeList(inArr[i]);
-        pNodeList = pNodeList->next;
-    }
 
-    pNodeList = ROOT->next;
-    while (pNodeList) {
-        std::cout << pNodeList->data << " ";
-        pNodeList = pNodeList->next;
-    }
-    std::cout << "\n";
 
-    NodeList *newRoot = ReverseList(ROOT);
-    pNodeList = newRoot->next;
-    while (pNodeList) {
-        std::cout << pNodeList->data << " ";
-        pNodeList = pNodeList->next;
-    }
 
-    std::cout << "\n";
-    return 0;
+
+
+
+  // int myints[] = {};            // 1 2 3 4 5 6 7 8 9
+  std::vector<int> myints {2,3,4,4,5,6,7,8,9};
+
+  // // bounds of range:
+  // int* pbegin = myints;                          // ^
+  // int* pend = myints+sizeof(myints)/sizeof(int); // ^                 ^
+
+  /*std::vector<int> pend = */
+  myints.erase(std::remove_if (myints.begin(), myints.end(), IsOdd), myints.end());   // 2 4 6 8 ? ? ? ? ?
+                                                 // ^       ^
+  std::cout << "the range contains:";
+  // for (int* p=pbegin; p!=pend; ++p)
+  //   std::cout << ' ' << *p;
+  for (auto i: myints) {
+    std::cout << i << " ";
+  }
+
+
+  std::cout << '\n';
+
+
+
+
+
+  return 0;
 }
-

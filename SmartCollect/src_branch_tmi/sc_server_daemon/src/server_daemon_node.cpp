@@ -7,15 +7,12 @@ int main(int argc, char **argv) {
     LOG(INFO) << "Got " << argc << " parameters.";
 
     ros::init(argc, argv, "server_daemon_node");
-    ros::NodeHandle node;
-    ros::NodeHandle private_nh("~");
 
-    ServerDaemon serverDaemoner(node, private_nh);
+    ServerDaemon serverDaemoner;
     if (2 == argc) {
         serverDaemoner.UpdateProjectInfo(argv[1]);
     }
 
-    serverDaemoner.run();
-
+    serverDaemoner.Run();
     return 0;
 }

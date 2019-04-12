@@ -102,7 +102,7 @@
         function UpdateCameraStatus(_message) {
             var _isCameraError = false;
 
-            if (_message.camera_fps < 0.01) {
+            if (!_message.is_cameras_good) {
                 _isCameraError = true;
                 if (0 === _message.project_info.city_code) {
                     console.log("There is no active project.");

@@ -1,31 +1,25 @@
 #include "server_daemon.h"
 
-ServerDaemon::ServerDaemon(ros::NodeHandle nh, ros::NodeHandle private_nh) {
+ServerDaemon::ServerDaemon() {
     gpsTime_.resize(2);
+    gpsTime_[0].clear();
+    gpsTime_[1].clear();
+
     // below for SC control
-    subClient_ = nh.subscribe("sc_client_cmd", 1, &ServerDaemon::clientCB, this);
     monitorMsg_.is_record = 0;
     monitorMsg_.cam_gain = 20;
     monitorMsg_.pps_HWcheck = -1;
     monitorMsg_.gprmc_HWcheck = -1;
     monitorMsg_.imu_HWcheck = -1;
 
-    // below for composing monitor data
-    isGpsUpdated_ = isVelodyneUpdated_ = isRawImuUpdated_ = isCameraUpdated_ = isDiskInfoUpdated_ = false;
-    subSerial_ = nh.subscribe("imu_string", 10, &ServerDaemon::SerialCB, this);
-    subVelodyne_ = nh.subscribe("velodyne_pps_status", 10, &ServerDaemon::velodyneCB, this);
-    subCameraImg_ = nh.subscribe("cam_speed5555", 10, &ServerDaemon::cameraImgCB, this);
-    subProjectMonitor_ = nh.subscribe("sc_disk_info", 10, &ServerDaemon::projectMonitorCB, this);
-    subDataFixer_ = nh.subscribe("sc_data_fixer_progress", 10, &ServerDaemon::dataFixerCB, this);
+    isGpsUpdated_ = isVelodyneUpdated_ = isRawImuUpdated_
+        = isCamera0FpsUpdated_ = isCamera1FpsUpdated_ = isCamera2FpsUpdated_
+        = isDiskInfoUpdated_ = false;
 
-    pub2client_ = nh.advertise<sc_msgs::MonitorMsg>("sc_monitor", 10);
-    gpsTime_[0].clear();
-    gpsTime_[1].clear();
     projectInfo_.clear();
-
     pDiskMonitor_.reset(new DiskMonitor() );
 
-    int shmid = shmget((key_t)1234, sizeof(struct SharedMem), 0666|IPC_CREAT);
+    int shmid = shmget((key_t)1234, sizeof(struct SharedMem), 0666 | IPC_CREAT);
     if(shmid < 0) {
         LOG(ERROR) << "shget failed.";
         exit(1);
@@ -41,22 +35,37 @@ ServerDaemon::ServerDaemon(ros::NodeHandle nh, ros::NodeHandle private_nh) {
 
 ServerDaemon::~ServerDaemon() {}
 
-void ServerDaemon::run() {
+void ServerDaemon::RegisterCBs() {
+    subClient_ = nh_.subscribe("sc_client_cmd", 1, &ServerDaemon::clientCB, this);
+    subSerial_ = nh_.subscribe("imu_string", 10, &ServerDaemon::SerialCB, this);
+    subVelodyne_ = nh_.subscribe("velodyne_pps_status", 10, &ServerDaemon::velodyneCB, this);
+    subCamera0Fps_ = nh_.subscribe("cam_speed5555", 10, &ServerDaemon::Camera0FpsCB, this);
+    subCamera1Fps_ = nh_.subscribe("cam_speed6666", 10, &ServerDaemon::Camera1FpsCB, this);
+    subCamera2Fps_ = nh_.subscribe("cam_speed7777", 10, &ServerDaemon::Camera2FpsCB, this);
+    subProjectMonitor_ = nh_.subscribe("sc_disk_info", 10, &ServerDaemon::projectMonitorCB, this);
+    subDataFixer_ = nh_.subscribe("sc_data_fixer_progress", 10, &ServerDaemon::dataFixerCB, this);
+
+    pub2client_ = nh_.advertise<sc_msgs::MonitorMsg>("sc_monitor", 10);
+}
+
+void ServerDaemon::Run() {
     const size_t HOSTNAME_SIZE = 60;
     char hostname[HOSTNAME_SIZE];
     bzero(hostname, HOSTNAME_SIZE);
     (void)gethostname(hostname, HOSTNAME_SIZE);
     monitorMsg_.host_name = hostname;
+    RegisterCBs();
 
     ros::Rate rate(2);
     size_t freqDivider = 0;
-
     bool isScTimeCalibrated = false;
     while(ros::ok() ) {
         ++freqDivider;
         freqDivider %= 256;
         ros::spinOnce();
         rate.sleep();
+
+
 
         // 0.5Hz
         if(0 == (freqDivider % 4) ) {
@@ -79,12 +88,29 @@ void ServerDaemon::run() {
 
         // 0.5Hz
         if(0 == (freqDivider % 4) ) {
-            if(!isCameraUpdated_) {
-                DLOG(INFO) << "camera node not running.";
-                monitorMsg_.camera_fps = 0;
+            monitorMsg_.camera_fps = (camera0Fps_ + camera1Fps_ + camera2Fps_) / 3.;
+            monitorMsg_.is_cameras_good = (isCamera0FpsUpdated_ && isCamera1FpsUpdated_ && isCamera2FpsUpdated_);
+
+            if(!isCamera0FpsUpdated_) {
+                DLOG(INFO) << "Failed to get camera 0 fps.";
+                camera0Fps_ = 0;
             }
-            isCameraUpdated_ = false;
+            isCamera0FpsUpdated_ = false;
+
+            if(!isCamera1FpsUpdated_) {
+                DLOG(INFO) << "Failed to get camera 1 fps.";
+                camera1Fps_ = 0;
+            }
+            isCamera1FpsUpdated_ = false;
+
+            if(!isCamera2FpsUpdated_) {
+                DLOG(INFO) << "Failed to get camera 2 fps.";
+                camera2Fps_ = 0;
+            }
+            isCamera2FpsUpdated_ = false;
         }
+
+
 
         // 0.25Hz
         if(0 == (freqDivider % 8) ) {
@@ -171,11 +197,22 @@ void ServerDaemon::dataFixerCB(const sc_msgs::DataFixerProgress::ConstPtr& pData
     monitorMsg_.process_num = pDataFixerProgressMsg->processNum;
 }
 
-void ServerDaemon::cameraImgCB(const std_msgs::Float64::ConstPtr& pCameraImgMsg) {
+void ServerDaemon::Camera0FpsCB(const std_msgs::Float64::ConstPtr& pCameraImgMsg) {
     DLOG(INFO) << __FUNCTION__ << " start in ?Hz, camera_fps: " << pCameraImgMsg->data;
-    isCameraUpdated_ = true;
+    isCamera0FpsUpdated_ = true;
+    camera0Fps_ = pCameraImgMsg->data;
+}
 
-    monitorMsg_.camera_fps = pCameraImgMsg->data;
+void ServerDaemon::Camera1FpsCB(const std_msgs::Float64::ConstPtr& pCameraImgMsg) {
+    DLOG(INFO) << __FUNCTION__ << " start in ?Hz, camera_fps: " << pCameraImgMsg->data;
+    isCamera1FpsUpdated_ = true;
+    camera1Fps_ = pCameraImgMsg->data;
+}
+
+void ServerDaemon::Camera2FpsCB(const std_msgs::Float64::ConstPtr& pCameraImgMsg) {
+    DLOG(INFO) << __FUNCTION__ << " start in ?Hz, camera_fps: " << pCameraImgMsg->data;
+    isCamera2FpsUpdated_ = true;
+    camera2Fps_ = pCameraImgMsg->data;
 }
 
 void ServerDaemon::velodyneCB(const velodyne_msgs::Velodyne2Center::ConstPtr& pVelodyneMsg) {

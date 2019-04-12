@@ -23,6 +23,7 @@ float64 velodyne_rpm
 
 # below from camera
 float64 camera_fps
+int8 is_cameras_good
 
 # below from data fixer
 int32 total_file_num

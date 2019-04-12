@@ -63,7 +63,6 @@ void CommTimer::PublishMsg() {
     pubImu5651_.publish(imu232Msg_);
 }
 
-
 void CommTimer::ReadSerial(int _fd) {
     LOG(INFO) << __FUNCTION__ << " start.";
 

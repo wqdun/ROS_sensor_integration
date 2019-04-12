@@ -1,52 +1,58 @@
-#include <iostream>     // std::cout
-#include <algorithm>    // std::remove_if
+// 3 6
+// 10 15 12
+// 1 9 12 23 26 37
+
+
+#include <iostream>
 #include <vector>
 
-bool IsOdd (int i) { return ((i%2)==1); }
-
-
-
-bool IsWhiteSpace(char c) {
-  return std::isspace(c);
+void GetBoundary(const std::vector<int> &numOfRooms, std::vector<int> &boundaries) {
+    int sum = 0;
+    for (int i = 0; i < numOfRooms.size(); ++i) {
+        sum += numOfRooms[i];
+        boundaries.push_back(sum);
+    }
 }
 
 
-int main () {
-    std::string str2 = "Text\n with\tsome \t  whitespaces\n\n";
-    std::cout << str2.size() << str2 << "\n";
-    str2.erase(std::remove_if (str2.begin(), str2.end(), IsWhiteSpace), str2.end());
-    std::cout << str2.size() << str2 << "\n";
 
 
+int GetBuildingId(int roomId, const std::vector<int> &boundaries) {
+    if (roomId > boundaries.back()) {
+        exit(1);
+    }
 
-
-
-
-
-
-  // int myints[] = {};            // 1 2 3 4 5 6 7 8 9
-  std::vector<int> myints {2,3,4,4,5,6,7,8,9};
-
-  // // bounds of range:
-  // int* pbegin = myints;                          // ^
-  // int* pend = myints+sizeof(myints)/sizeof(int); // ^                 ^
-
-  /*std::vector<int> pend = */
-  myints.erase(std::remove_if (myints.begin(), myints.end(), IsOdd), myints.end());   // 2 4 6 8 ? ? ? ? ?
-                                                 // ^       ^
-  std::cout << "the range contains:";
-  // for (int* p=pbegin; p!=pend; ++p)
-  //   std::cout << ' ' << *p;
-  for (auto i: myints) {
-    std::cout << i << " ";
-  }
-
-
-  std::cout << '\n';
-
-
-
-
-
-  return 0;
+    for (int i = 0; i < boundaries.size(); ++i) {
+        if (roomId < boundaries[i]) {
+            return (i + 1);
+        }
+    }
+    return 0;
 }
+
+int main() {
+    std::vector<int> numOfRooms {10, 15, 12};
+    std::vector<int> boundaries;
+    boundaries.clear();
+    GetBoundary(numOfRooms, boundaries);
+
+    for (auto i: boundaries) {
+        std::cout << i << " ";
+    }
+
+    std::vector<int> roomId {37};
+    for (int i = 0; i < roomId.size(); ++i) {
+        int buildingId = GetBuildingId(roomId[i], boundaries);
+        std::cout << roomId[i] << ": " << buildingId << "\n";
+        int roomIdOfBuilding = -1;
+        if (1 == buildingId) {
+            roomIdOfBuilding = roomId[i];
+        }
+        roomIdOfBuilding = roomId[i] - boundaries[buildingId - 1];
+
+        std::cout << roomId[i] << " is " <<  roomIdOfBuilding << " roomIdOfBuilding; " << roomIdOfBuilding  << " roomIdOfBuilding.\n";
+    }
+
+}
+
+

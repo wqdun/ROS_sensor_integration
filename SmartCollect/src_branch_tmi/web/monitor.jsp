@@ -102,6 +102,7 @@
         function UpdateCameraStatus(_message) {
             var _isCameraError = false;
 
+            var _fps = _message.camera0_fps.toFixed(2) + "," + _message.camera1_fps.toFixed(2) + "," + _message.camera2_fps.toFixed(2);
             if (!_message.is_cameras_good) {
                 _isCameraError = true;
                 if (0 === _message.project_info.city_code) {
@@ -109,11 +110,11 @@
                     document.getElementById('fps').innerHTML = "<font color=red>\"\"</font>";
                 }
                 else {
-                    document.getElementById('fps').innerHTML = "<font color=red>" + _message.camera_fps.toFixed(2) + "</font>";
+                    document.getElementById('fps').innerHTML = "<font color=red>" + _fps + "</font>";
                 }
             }
             else {
-                document.getElementById('fps').innerHTML = "<font color=green>" + _message.camera_fps.toFixed(2) + "</font>";
+                document.getElementById('fps').innerHTML = "<font color=green>" + _fps + "</font>";
             }
 
             return _isCameraError;

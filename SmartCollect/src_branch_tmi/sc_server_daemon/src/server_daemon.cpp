@@ -86,8 +86,6 @@ void ServerDaemon::Run() {
 
         // 0.5Hz
         if(0 == (freqDivider % 4) ) {
-            monitorMsg_.camera_fps = (camera0Fps_ + camera1Fps_ + camera2Fps_) / 3.;
-
             monitorMsg_.is_cameras_good = (
                 isCamera0FpsUpdated_
                 && isCamera1FpsUpdated_
@@ -112,6 +110,11 @@ void ServerDaemon::Run() {
                 camera2Fps_ = 0;
             }
             isCamera2FpsUpdated_ = false;
+
+            monitorMsg_.camera_fps = (camera0Fps_ + camera1Fps_ + camera2Fps_) / 3.;
+            monitorMsg_.camera0_fps = camera0Fps_;
+            monitorMsg_.camera1_fps = camera1Fps_;
+            monitorMsg_.camera2_fps = camera2Fps_;
         }
 
         // 0.25Hz

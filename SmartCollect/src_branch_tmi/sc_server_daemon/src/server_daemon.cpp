@@ -65,8 +65,6 @@ void ServerDaemon::Run() {
         ros::spinOnce();
         rate.sleep();
 
-
-
         // 0.5Hz
         if(0 == (freqDivider % 4) ) {
             if(!isGpsUpdated_) {
@@ -89,7 +87,13 @@ void ServerDaemon::Run() {
         // 0.5Hz
         if(0 == (freqDivider % 4) ) {
             monitorMsg_.camera_fps = (camera0Fps_ + camera1Fps_ + camera2Fps_) / 3.;
-            monitorMsg_.is_cameras_good = (isCamera0FpsUpdated_ && isCamera1FpsUpdated_ && isCamera2FpsUpdated_);
+
+            monitorMsg_.is_cameras_good = (
+                isCamera0FpsUpdated_
+                && isCamera1FpsUpdated_
+                && isCamera2FpsUpdated_
+                && IsFpsGood(camera0Fps_, camera1Fps_, camera2Fps_)
+            );
 
             if(!isCamera0FpsUpdated_) {
                 DLOG(INFO) << "Failed to get camera 0 fps.";
@@ -109,8 +113,6 @@ void ServerDaemon::Run() {
             }
             isCamera2FpsUpdated_ = false;
         }
-
-
 
         // 0.25Hz
         if(0 == (freqDivider % 8) ) {
@@ -154,6 +156,19 @@ void ServerDaemon::Run() {
 
         pub2client_.publish(monitorMsg_);
     }
+}
+
+bool ServerDaemon::IsFpsGood(double a, double b, double c) {
+    return (
+        (IsFpsEqual(a, b))
+        && (IsFpsEqual(a, c))
+        && (IsFpsEqual(b, c))
+    );
+}
+
+bool ServerDaemon::IsFpsEqual(double a, double b) {
+    const double FACTOR = 0.4;
+    return (((a - b) > -FACTOR) && ((a - b) < FACTOR));
 }
 
 int ServerDaemon::SetScTimeByGpsTime() {

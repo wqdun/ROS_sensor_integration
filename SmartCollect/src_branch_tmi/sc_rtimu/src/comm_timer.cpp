@@ -212,18 +212,9 @@ void CommTimer::Parse5651GpfpdFrame(const std::string &_gpfpdFrame, double __uni
     return;
 }
 
-// do not use reference parameter, we do not want to modify the input deque
-double CommTimer::FillerDeque(std::deque<double> aDeque) {
+// we do not want to modify the input deque
+double CommTimer::FillerDeque(const std::deque<double> &aDeque) {
     DLOG(INFO) << __FUNCTION__ << " start, aDeque.size(): " << aDeque.size();
-
-    if (aDeque.size() < 50) {
-        return 0;
-    }
-
-    std::sort(aDeque.begin(), aDeque.end());
-    const double filteredResult = aDeque[aDeque.size() / 2];
-
-    DLOG(INFO) << __FUNCTION__ << " end, filteredResult: " << std::fixed << filteredResult;
-    return filteredResult;
+    return (*std::min_element(dintaDeque.cbegin(), aDeque.cend()));
 }
 

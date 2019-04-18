@@ -215,6 +215,6 @@ void CommTimer::Parse5651GpfpdFrame(const std::string &_gpfpdFrame, double __uni
 // we do not want to modify the input deque
 double CommTimer::FillerDeque(const std::deque<double> &aDeque) {
     DLOG(INFO) << __FUNCTION__ << " start, aDeque.size(): " << aDeque.size();
-    return (*std::min_element(dintaDeque.cbegin(), aDeque.cend()));
+    return (*std::min_element(aDeque.cbegin(), aDeque.cend()));
 }
 

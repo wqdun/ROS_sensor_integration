@@ -28,3 +28,4 @@ a.out
 /SmartCollect/src/CMakeLists.txt
 /FromGithub_*/
 /SmartCollect/src_sc0010_20190417/
+*.gitmodules

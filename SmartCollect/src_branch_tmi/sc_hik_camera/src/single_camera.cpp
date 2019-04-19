@@ -142,7 +142,7 @@ void __stdcall SingleCamera::ImageCB(unsigned char *pData, MV_FRAME_OUT_INFO_EX 
     LOG_EVERY_N(INFO, 20) << "GetOneFrame[" << pFrameInfo->nFrameNum << "]: " << pFrameInfo->nWidth << " * " << pFrameInfo->nHeight << " from " << _cameraID;
 
     void *handle = pSingleCamera->GetHandle();
-    unsigned char *pDataForRGB = (unsigned char*)malloc(pFrameInfo->nWidth * pFrameInfo->nHeight * 4 + 2048);
+    unsigned char *pDataForRGB = (unsigned char *)malloc(pFrameInfo->nWidth * pFrameInfo->nHeight * 4 + 2048);
     assert(pDataForRGB);
     MV_CC_PIXEL_CONVERT_PARAM convertParam = {0};
     convertParam.nWidth = pFrameInfo->nWidth;
@@ -159,9 +159,10 @@ void __stdcall SingleCamera::ImageCB(unsigned char *pData, MV_FRAME_OUT_INFO_EX 
         return;
     }
 
+    cv::Mat mat2Save(pFrameInfo->nHeight, pFrameInfo->nWidth, CV_8UC3);
+    memcpy(mat2Save.data, pDataForRGB, pFrameInfo->nWidth * pFrameInfo->nHeight * 3);
     pSingleCamera->mat2PubMutex_.lock();
-    pSingleCamera->mat2Pub_.create(pFrameInfo->nHeight, pFrameInfo->nWidth, CV_8UC3);
-    memcpy(pSingleCamera->mat2Pub_.data, pDataForRGB, pFrameInfo->nWidth * pFrameInfo->nHeight * 3);
+    pSingleCamera->mat2Pub_ = mat2Save;
     pSingleCamera->mat2PubMutex_.unlock();
     if(pDataForRGB) {
         free(pDataForRGB);
@@ -196,9 +197,7 @@ void __stdcall SingleCamera::ImageCB(unsigned char *pData, MV_FRAME_OUT_INFO_EX 
     }
 
     if(s_pManager_->isSaveImg_) {
-        pSingleCamera->mat2PubMutex_.lock();
-        SaveImageTask *pSaveImageTask = new SaveImageTask(pSingleCamera->mat2Pub_, *pFrameInfo, picFileName);
-        pSingleCamera->mat2PubMutex_.unlock();
+        SaveImageTask *pSaveImageTask = new SaveImageTask(mat2Save, *pFrameInfo, picFileName);
         s_pManager_->threadPool_.append_task(pSaveImageTask);
     }
 

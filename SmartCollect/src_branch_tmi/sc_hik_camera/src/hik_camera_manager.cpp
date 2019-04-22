@@ -75,6 +75,7 @@ void HikCameraManager::Run() {
             ++i;
             i %= camNum;
             pSingleCameras_[i]->PublishImage();
+            // pSingleCameras_[i]->AdaptNightMode();
         }
     }
 }

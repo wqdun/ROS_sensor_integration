@@ -8,6 +8,8 @@ mat2Pub_(1200, 1920, CV_8UC3, cv::Scalar::all(0) ) {
     LOG(INFO) << __FUNCTION__ << " start.";
     s_pManager_ = pManager;
     imageFreq_ = 0;
+    isNightMode_ = false;
+    currentImageExposureTime_ = 0;
 }
 
 SingleCamera::~SingleCamera() {
@@ -139,7 +141,13 @@ void __stdcall SingleCamera::ImageCB(unsigned char *pData, MV_FRAME_OUT_INFO_EX 
 
     SingleCamera *pSingleCamera = static_cast<SingleCamera *>(_pSingleCamera);
     const int _cameraID(pSingleCamera->GetCameraID());
-    LOG_EVERY_N(INFO, 20) << "GetOneFrame[" << pFrameInfo->nFrameNum << "]: " << pFrameInfo->nWidth << " * " << pFrameInfo->nHeight << " from " << _cameraID;
+    LOG_EVERY_N(INFO, 20) << "GetOneFrame[" << pFrameInfo->nFrameNum << "]: "
+        << pFrameInfo->nWidth << " * " << pFrameInfo->nHeight
+        << " from " << _cameraID
+        << "; ExposureTime: " << pFrameInfo->fExposureTime
+        << "; fGain: " << pFrameInfo->fGain;
+
+    pSingleCamera->currentImageExposureTime_ = pFrameInfo->fExposureTime;
 
     void *handle = pSingleCamera->GetHandle();
     unsigned char *pDataForRGB = (unsigned char *)malloc(pFrameInfo->nWidth * pFrameInfo->nHeight * 4 + 2048);
@@ -231,6 +239,59 @@ void *SingleCamera::GetHandle() {
     return cameraHandle_;
 }
 
+void SingleCamera::AdaptNightMode() {
+    DLOG(INFO) << __FUNCTION__ << " start.";
+    if (currentImageExposureTime_ > 14999) {
+        if (!isNightMode_) {
+            EnterNightMode();
+            isNightMode_ = true;
+        }
+        // else nothing
+    }
+    else {
+        if (isNightMode_) {
+            ExitNightMode();
+            isNightMode_ = false;
+        }
+        // else nothing
+    }
+}
+
+void SingleCamera::EnterNightMode() {
+    LOG(INFO) << __FUNCTION__ << " start.";
+    int err = MV_OK;
+
+    err = MV_CC_SetEnumValue(cameraHandle_, "GainAuto", 0);
+    assert(MV_OK == err);
+    err = MV_CC_SetFloatValue(cameraHandle_, "Gain", 20);
+    assert(MV_OK == err);
+}
+
+void SingleCamera::ExitNightMode() {
+    LOG(INFO) << __FUNCTION__ << " start.";
+    int err = MV_OK;
+    int configValue1 = -1;
+    int configValue2 = -1;
+
+    MVCC_ENUMVALUE currentGainMode = {0};
+    err = MV_CC_GetGainMode(cameraHandle_, &currentGainMode);
+    assert(MV_OK == err);
+    err = MV_CC_SetEnumValue(cameraHandle_, "GainAuto", 2);
+    assert(MV_OK == err);
+    LOG(INFO) << "GainAuto: " << currentGainMode.nCurValue << " --> " << 2;
+    MVCC_FLOATVALUE currentAutoGainLowerLimit = {0};
+    err = MV_CC_GetFloatValue(cameraHandle_, "AutoGainLowerLimit", &currentAutoGainLowerLimit);
+    assert(MV_OK == err);
+    MVCC_FLOATVALUE currentAutoGainUpperLimit = {0};
+    err = MV_CC_GetFloatValue(cameraHandle_, "AutoGainUpperLimit", &currentAutoGainUpperLimit);
+    assert(MV_OK == err);
+    err = MV_CC_SetFloatValue(cameraHandle_, "AutoGainLowerLimit", 0);
+    err = MV_CC_SetFloatValue(cameraHandle_, "AutoGainUpperLimit", 20);
+    assert(MV_OK == err);
+    LOG(INFO) << "AutoGain [" << currentAutoGainLowerLimit.fCurValue << ", " << currentAutoGainUpperLimit.fCurValue << "] --> [" << 0 << ", " << 20 << "]";
+
+    return;
+}
 
 void SingleCamera::ConfigDevices() {
     LOG(INFO) << __FUNCTION__ << " start.";
@@ -240,7 +301,7 @@ void SingleCamera::ConfigDevices() {
     int configValue1 = -1;
     int configValue2 = -1;
 
-    bool currentAcquisitionFrameRateEnable = {0};
+    bool currentAcquisitionFrameRateEnable = false;
     err = MV_CC_GetBoolValue(cameraHandle_, "AcquisitionFrameRateEnable", &currentAcquisitionFrameRateEnable);
     assert(MV_OK == err);
     fs["AcquisitionFrameRateEnable"] >> configValue1;
@@ -275,7 +336,7 @@ void SingleCamera::ConfigDevices() {
     assert(MV_OK == err);
     LOG(INFO) << "Set GevSCPD: " << currentGevSCPD.nCurValue << " --> " << configValue1;
 
-    bool currentGevPAUSEFrameReception = {};
+    bool currentGevPAUSEFrameReception = false;
     err = MV_CC_GetBoolValue(cameraHandle_, "GevPAUSEFrameReception", &currentGevPAUSEFrameReception);
     assert(MV_OK == err);
     fs["GevPAUSEFrameReception"] >> configValue1;
@@ -306,25 +367,8 @@ void SingleCamera::ConfigDevices() {
     assert(MV_OK == err);
     LOG(INFO) << "PixelFormat: " << currentPixel.nCurValue << " --> " << pixel;
 
-    MVCC_ENUMVALUE currentGainMode = {0};
-    err = MV_CC_GetGainMode(cameraHandle_, &currentGainMode);
-    assert(MV_OK == err);
-    fs["GainAuto"] >> configValue1;
-    err = MV_CC_SetEnumValue(cameraHandle_, "GainAuto", configValue1);
-    assert(MV_OK == err);
-    LOG(INFO) << "GainAuto: " << currentGainMode.nCurValue << " --> " << configValue1;
-    MVCC_FLOATVALUE currentAutoGainLowerLimit = {0};
-    err = MV_CC_GetFloatValue(cameraHandle_, "AutoGainLowerLimit", &currentAutoGainLowerLimit);
-    assert(MV_OK == err);
-    MVCC_FLOATVALUE currentAutoGainUpperLimit = {0};
-    err = MV_CC_GetFloatValue(cameraHandle_, "AutoGainUpperLimit", &currentAutoGainUpperLimit);
-    assert(MV_OK == err);
-    fs["AutoGainLowerLimit"] >> configValue1;
-    fs["AutoGainUpperLimit"] >> configValue2;
-    err = MV_CC_SetFloatValue(cameraHandle_, "AutoGainLowerLimit", configValue1);
-    err = MV_CC_SetFloatValue(cameraHandle_, "AutoGainUpperLimit", configValue2);
-    assert(MV_OK == err);
-    LOG(INFO) << "AutoGain [" << currentAutoGainLowerLimit.fCurValue << ", " << currentAutoGainUpperLimit.fCurValue << "] --> [" << configValue1 << ", " << configValue2 << "]";
+    ExitNightMode();
+
 
     MVCC_ENUMVALUE currentExposureAuto = {0};
     err = MV_CC_GetEnumValue(cameraHandle_, "ExposureAuto", &currentExposureAuto);
@@ -345,8 +389,28 @@ void SingleCamera::ConfigDevices() {
     assert(MV_OK == err);
     LOG(INFO) << "AutoExposureTime [" << currentAutoExposureTimeLowerLimit.nCurValue << ", " << currentAutoExposureTimeUpperLimit.nCurValue << "] --> [" << configValue1 << ", " << configValue2 << "]";
 
+    TurnOnFrameSpecInfo(FrameSpecInfoSelector::Timestamp);
+    TurnOnFrameSpecInfo(FrameSpecInfoSelector::Gain);
+    TurnOnFrameSpecInfo(FrameSpecInfoSelector::Exposure);
+    TurnOnFrameSpecInfo(FrameSpecInfoSelector::BrightnessInfo);
+
     fs.release();
     return;
 }
 
 
+void SingleCamera::TurnOnFrameSpecInfo(FrameSpecInfoSelector frameSpecInfoSelector) {
+    LOG(INFO) << __FUNCTION__ << " start.";
+    int err = MV_OK;
+
+    err = MV_CC_SetEnumValue(cameraHandle_, "FrameSpecInfoSelector", frameSpecInfoSelector);
+    assert(MV_OK == err);
+    bool isOnBefore = false;
+    err = MV_CC_GetBoolValue(cameraHandle_, "FrameSpecInfo", &isOnBefore);
+    assert(MV_OK == err);
+    err = MV_CC_SetBoolValue(cameraHandle_, "FrameSpecInfo", true);
+    assert(MV_OK == err);
+    bool isOnNow = false;
+    err = MV_CC_GetBoolValue(cameraHandle_, "FrameSpecInfo", &isOnNow);
+    LOG(INFO) << "Set FrameSpecInfo: " << isOnBefore << "-->" << isOnNow;
+}

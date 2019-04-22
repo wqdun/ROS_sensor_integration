@@ -27,11 +27,24 @@ public:
     int GetCameraID();
     void *GetHandle();
     void PublishImage();
+    void AdaptNightMode();
 
 
 private:
     static void __stdcall ImageCB(unsigned char * pData, MV_FRAME_OUT_INFO_EX* pFrameInfo, void* pUser);
     static HikCameraManager *s_pManager_;
+
+    enum FrameSpecInfoSelector {
+        Timestamp = 0,
+        Gain,
+        Exposure,
+        BrightnessInfo,
+        WhiteBalance,
+        Framecounter,
+        ExtTriggerCount,
+        LineInputOutput,
+        ROIPosition
+    };
 
     void SetHandle(const MV_CC_DEVICE_INFO_LIST &deviceInfoList, size_t index);
     void SetIndex_Ip(const MV_CC_DEVICE_INFO_LIST &deviceInfoList, size_t index);
@@ -41,6 +54,9 @@ private:
     size_t GetCameraIndex();
     void SetAdvertiseTopic();
     void PublishCamFps();
+    void EnterNightMode();
+    void ExitNightMode();
+    void TurnOnFrameSpecInfo(FrameSpecInfoSelector frameSpecInfoSelector);
 
     void *cameraHandle_;
     // e.g., "6666"
@@ -55,6 +71,8 @@ private:
     cv::Mat mat2Pub_;
     ros::Publisher pubCamSpeed_;
     double imageFreq_;
+    bool isNightMode_;
+    double currentImageExposureTime_;
 };
 
 #endif

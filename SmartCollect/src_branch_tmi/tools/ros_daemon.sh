@@ -14,7 +14,7 @@ script_name=$(basename $0)
 mkdir -p /opt/smartc/log/
 result_log=/opt/smartc/log/${script_name}".log"
 
-ros_version="kinetic"
+[ -d "/opt/ros/kinetic/" ] && ros_version="kinetic" || ros_version="indigo"
 
 log_with_time() {
     local now_time=$(date +%Y/%m/%d-%H:%M:%S)
@@ -117,34 +117,6 @@ run_rosbridge() {
     log_with_time "$FUNCNAME return $?."
 }
 
-run_minemap_service() {
-    log_with_time "$FUNCNAME start."
-
-    service redis start >>$result_log 2>&1
-    sleep 5
-    service postgresql start >>$result_log 2>&1
-    sleep 5
-    service nginx start >>$result_log 2>&1
-    sleep 5
-    (
-        log_with_time "Run authorization script."
-        cd /data/minemap/program/minemap-business/authorization/ && ./start.sh || log_with_time "Failed to run authorization script."
-        sleep 5
-
-        log_with_time "Run minemap-data script."
-        cd /data/minemap/program/minemap-data/ && ./start.sh || log_with_time "Failed to run minemap-data script."
-        sleep 5
-
-        log_with_time "PATH: ${PATH}."
-        log_with_time "Run minemap-business script."
-        export PATH=/opt/ros/${ros_version}/bin:/data/minemap/program/postgres/bin:/opt/java/jdk1.8.0_144/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games
-        cd /data/minemap/program/minemap-business/minemap/ && ./start.sh || log_with_time "Failed to run minemap-business script."
-        sleep 5
-        log_with_time "Now PATH is ${PATH}."
-    )
-    log_with_time "$FUNCNAME return $?."
-}
-
 kill_rosbridge() {
     log_with_time "$FUNCNAME start."
 
@@ -162,28 +134,37 @@ kill_tomcat() {
     log_with_time "$FUNCNAME return $?."
 }
 
-do_start() {
+set_networks() {
     log_with_time "$FUNCNAME start."
+    local networks=$(/sbin/ip -s link | grep "^[0-9]" | grep -E "eth|enp" | awk -F: '{print $2}')
+    for network in ${networks}; do
+        /sbin/ethtool -G ${network} rx 2048
+        /sbin/ethtool -G ${network} rx 4096
+        /sbin/ethtool -g ${network} >>$result_log 2>&1
+    done
+}
+
+do_start() {
+    log_with_time "$FUNCNAME start; ros_version: ${ros_version}."
 
     mount_data_disk
+    set_networks
 
     . /opt/ros/${ros_version}/setup.bash
     /opt/ros/${ros_version}/bin/roscore >>$result_log 2>&1 &
     sleep 2
     mkdir -p /opt/smartc/record/
     run_sc_server_daemon_node
-    sleep 10
+    sleep 4
     run_tomcat
-    sleep 10
+    sleep 4
     run_rosbridge
-    # sleep 10
-    # run_minemap_service
 
     log_with_time "$FUNCNAME return $?."
 }
 
 do_stop() {
-    log_with_time "$FUNCNAME start."
+    log_with_time "$FUNCNAME start; ros_version: ${ros_version}."
 
     kill_rosbridge
     kill_tomcat

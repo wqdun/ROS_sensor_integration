@@ -41,6 +41,8 @@ ProjectInfoMsg project_info
 string disk_usage
 string[] projects
 
+int8 is_disk_error
+
 # below from project monitor
 int32 img_num
 # unit: MB

@@ -26,7 +26,7 @@ void DiskMonitor::GetProjects(const std::string &_projectPath, sc_msgs::MonitorM
     std::string lsCmd("ls -t " + _projectPath);
     if(public_tools::PublicTools::PopenWithReturn(lsCmd, _monitorMsg.projects) < 0) {
         LOG(ERROR) << "Failed to " << lsCmd;
-        exit(1);
+        _monitorMsg.is_disk_error = true;
     }
 
     for (auto &dir: _monitorMsg.projects) {

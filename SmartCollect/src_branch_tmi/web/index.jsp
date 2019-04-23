@@ -229,7 +229,7 @@
 
                       <button class="btn btn-inverse" id="fixData" data-toggle="modal"
                           data-target="#optModal">Collate Data
-                      </button>
+                      </button>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
                       <button class="btn btn-inverse" id="reboot" data-toggle="modal"
                           data-target="#optModal">Reboot OS
                       </button>
@@ -252,6 +252,7 @@
   </div>
 
   <script>
+    document.getElementById("removeData").style.display = "none";
     console.log("Task ID should not empty or contains -.");
     $('#newProject').prop('disabled', true);
 
@@ -342,7 +343,7 @@
             $('#deviceID').prop('disabled', false);
             $('#smartcCheck').prop('disabled', false);
             // $('#newProject').prop('disabled', false);
-            $('#removeData').prop('disabled', false);
+            // $('#removeData').prop('disabled', false);
             $('#reboot').prop('disabled', false);
             $('#shutdown').prop('disabled', false);
         }
@@ -354,7 +355,7 @@
             $('#deviceID').prop('disabled', true);
             $('#smartcCheck').prop('disabled', true);
             $('#newProject').prop('disabled', true);
-            $('#removeData').prop('disabled', true);
+            // $('#removeData').prop('disabled', true);
             $('#reboot').prop('disabled', true);
             $('#shutdown').prop('disabled', true);
 

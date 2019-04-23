@@ -85,7 +85,7 @@ run_tomcat() {
 
     export_java_env
     /opt/apache-tomcat-*/bin/startup.sh >>$result_log 2>&1
-    sleep 5
+    sleep 2
     log_with_time "$FUNCNAME return $?."
 }
 
@@ -108,12 +108,12 @@ run_rosbridge() {
     . /opt/smartc/devel/setup.bash
     log_with_time "roslaunch start."
     roslaunch /opt/ros/${ros_version}/share/rosbridge_server/launch/rosbridge_websocket.launch >>$result_log 2>&1 &
-    sleep 5
+    sleep 2
     log_with_time "roslaunch end."
 
     . /opt/ros/${ros_version}/setup.bash
     /opt/ros/${ros_version}/lib/web_video_server/web_video_server >>$result_log 2>&1 &
-    sleep 5
+    sleep 2
     log_with_time "$FUNCNAME return $?."
 }
 
@@ -144,6 +144,24 @@ set_networks() {
     done
 }
 
+check_WiFi_network() {
+    log_with_time "$FUNCNAME start."
+
+    for (( i = 1; i < 5; ++i )); do
+        /sbin/ip -s link | grep "^[0-9]" | grep -E "wl" | head -n1 | grep "NO-CARRIER" >>$result_log 2>&1
+        if [ $? -eq 0 ]; then
+            log_with_time "Failed to setup WiFi network, gonna restart NetworkManager ${i} time."
+            /usr/sbin/service NetworkManager restart
+            sleep 10
+        else
+            log_with_time "Setup WiFi network successfully ${i} time."
+            break
+        fi
+    done
+
+    log_with_time "$FUNCNAME end."
+}
+
 do_start() {
     log_with_time "$FUNCNAME start; ros_version: ${ros_version}."
 
@@ -155,10 +173,12 @@ do_start() {
     sleep 2
     mkdir -p /opt/smartc/record/
     run_sc_server_daemon_node
-    sleep 4
+    sleep 2
     run_tomcat
-    sleep 4
+    sleep 2
     run_rosbridge
+
+    check_WiFi_network
 
     log_with_time "$FUNCNAME return $?."
 }

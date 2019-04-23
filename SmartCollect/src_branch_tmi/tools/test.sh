@@ -1,16 +1,22 @@
 #!/bin/bash
 
-add_path_to_veledyne_launch() {
-    echo "$FUNCNAME start, param: $*"
-    local _absolute_record_path="/opt/"
-    local absolute_velodyne_launch="${absolute_catkin_path}/src/velodyne/velodyne_driver/launch/nodelet_manager.launch"
-    local parse_xml_script="${absolute_script_path}/parse_xml.py"
-    chmod +x "${parse_xml_script}"
-    "${parse_xml_script}" "/opt/smartc/src/velodyne/velodyne_driver/launch/nodelet_manager.launch" "$(arg manager)_driver" "record_path" "/opt/" "/opt/smartc/src/velodyne/velodyne_driver/launch/nodelet_manager.xml"
+result_log=/tmp/tmp.log
+check_WiFi_network() {
+    echo "$FUNCNAME start."
 
-    echo "Add record path ${_absolute_record_path} to launch file: ${absolute_velodyne_launch}."
+    for (( i = 1; i < 5; ++i )); do
+        /sbin/ip -s link | grep "^[0-9]" | grep -E "wl" | head -n1 | grep "UP" >>$result_log 2>&1
+        if [ $? -eq 0 ]; then
+            echo "Failed to setup WiFi network, gonna restart NetworkManager ${i} time."
+            /usr/sbin/service NetworkManager restart
+            sleep 20
+        else
+            echo "Setup WiFi network successfully ${i} time."
+            break
+        fi
+    done
+
+    echo "$FUNCNAME end."
 }
 
-
-add_path_to_veledyne_launch
-
+check_WiFi_network

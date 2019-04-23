@@ -127,15 +127,18 @@ start_smart_collector_server() {
     log_with_time "ulimit start."
     ulimit -c >>$result_log 2>&1
 
-    get_sudo_permission
     # make_tty_softlink
     make_serial_softlink_by_path
 
-    get_sudo_permission
-    sudo chmod +r /dev/imuRawIns
-    local task_keyword="sc_rawimu_rec"
+    local task_keyword="sc_hik_camer"
     pkill "${task_keyword}"
     echo "pkill -INT ${task_keyword}; pkill ${task_keyword}" >"/tmp/kill_smartc.sh"
+    /opt/smartc/devel/lib/sc_hik_camera/sc_hik_camera_node "${_absolute_record_path}/" &
+
+    chmod +r /dev/imuRawIns
+    local task_keyword="sc_rawimu_rec"
+    pkill "${task_keyword}"
+    echo "pkill -INT ${task_keyword}; pkill ${task_keyword}" >>"/tmp/kill_smartc.sh"
     /opt/smartc/devel/lib/sc_rawimu_recorder/sc_rawimu_recorder_node "/dev/imuRawIns" "${_absolute_record_path}/IMU/" &
     sleep 0.2
 
@@ -150,11 +153,6 @@ start_smart_collector_server() {
     echo "pkill -INT ${task_keyword}; pkill ${task_keyword}" >>"/tmp/kill_smartc.sh"
     /opt/smartc/devel/lib/sc_rtimu/sc_rtimu_node "/dev/ttyS0" "${_absolute_record_path}/IMU/" &
     sleep 0.2
-
-    local task_keyword="sc_hik_camer"
-    pkill "${task_keyword}"
-    echo "pkill -INT ${task_keyword}; pkill ${task_keyword}" >>"/tmp/kill_smartc.sh"
-    /opt/smartc/devel/lib/sc_hik_camera/sc_hik_camera_node "${_absolute_record_path}/" &
 
     killall nodelet
     echo "killall nodelet" >>"/tmp/kill_smartc.sh"

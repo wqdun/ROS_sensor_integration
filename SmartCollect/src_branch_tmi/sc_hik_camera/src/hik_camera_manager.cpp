@@ -69,14 +69,15 @@ void HikCameraManager::Run() {
     int i = -1;
     ros::Rate rate(2);
     while(ros::ok()) {
-        ros::spinOnce();
-        rate.sleep();
         if(0 != camNum) {
             ++i;
             i %= camNum;
             pSingleCameras_[i]->PublishImage();
             // pSingleCameras_[i]->AdaptNightMode();
         }
+
+        ros::spinOnce();
+        rate.sleep();
     }
 }
 

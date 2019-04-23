@@ -209,17 +209,39 @@
                 document.getElementById('camera_num').innerHTML = "<font color=red>" + _message.sc_check_camera_num + "( ≠ 3)</font>";
             }
 
+            return _isHardwareError;
+        }
+
+        function UpdateDiskStatus(_message) {
+            var RING_FOREVER = 2;
+            var RING_FOR_3 = 1;
+            var NO_RING = 0;
+            var ret = NO_RING;
+
             var diskUsageArr = _message.disk_usage.split(",");
             var freePercentage = 100 - parseInt(diskUsageArr[1]);
             if (freePercentage > 20) {
-                document.getElementById('diskspace').innerHTML = "<font color=green>" + diskUsageArr[0] + ", " + freePercentage + "%</font>";
+                if (!_message.is_disk_error) {
+                    document.getElementById('diskspace').innerHTML = "<font color=green>" + diskUsageArr[0] + ", " + freePercentage + "%</font>";
+                    ret = NO_RING;
+                }
+                else {
+                    document.getElementById('diskspace').innerHTML = "<font color=red>ERROR- " + diskUsageArr[0] + ", " + freePercentage + "%</font>";
+                    ret = RING_FOREVER;
+                }
             }
             else {
-                _isHardwareError = true;
-                document.getElementById('diskspace').innerHTML = "<font color=red>" + diskUsageArr[0] + ", " + freePercentage + "%</font>";
+                if (!_message.is_disk_error) {
+                    document.getElementById('diskspace').innerHTML = "<font color=red>" + diskUsageArr[0] + ", " + freePercentage + "%</font>";
+                    ret = RING_FOR_3;
+                }
+                else {
+                    document.getElementById('diskspace').innerHTML = "<font color=red>ERROR- " + diskUsageArr[0] + ", " + freePercentage + "%</font>";
+                    ret = RING_FOREVER;
+                }
             }
 
-            return _isHardwareError;
+            return ret;
         }
 
         function Byte2HumanReadable(sizeInByte) {
@@ -402,6 +424,7 @@
 
     var gonnaRingCounter = 0;
     var isGonnaRing = false;
+    var ringCounter_ = 0;
     centerListener.subscribe(function (message) {
         var unixDateObj = new Date(message.unix_time * 1000);
         var _unix_hour = unixDateObj.getUTCHours();
@@ -414,6 +437,7 @@
         var isLidarError = UpdateLidarStatus(message);
         var isFileSizeError = UpdateFileSize(message);
         var isHardwareError = UpdateHardwareStatus(message);
+        var diskRingStatus = UpdateDiskStatus(message);
 
         document.getElementById("collect_button").disabled = ('A' !== message.is_gprmc_valid);
         if (recordClickedDelayCounter_ !== 0) {
@@ -424,7 +448,7 @@
             SetCollectButton(message.is_record);
         }
 
-        if (isImuError || isCameraError || isLidarError || isFileSizeError || isHardwareError) {
+        if (isImuError || isCameraError || isLidarError || isFileSizeError || isHardwareError || (2 === diskRingStatus)) {
             ++gonnaRingCounter;
             gonnaRingCounter %= 10;
             if (0 === gonnaRingCounter) {
@@ -440,6 +464,20 @@
         if (isGonnaRing) {
             console.log("FIX ME!!! " + gonnaRingCounter);
             bgMusic.play();
+        }
+        else
+        if (1 === diskRingStatus) {
+            if (ringCounter_ < 4) {
+                ++ringCounter_;
+                console.log("Shout for " + ringCounter_ + " time." );
+                bgMusic.play();
+            }
+            else {
+                console.log("I am gonna shut up now: " + ringCounter_);
+            }
+        }
+        else {
+            console.log("I am gonna shut up.");
         }
 
     });

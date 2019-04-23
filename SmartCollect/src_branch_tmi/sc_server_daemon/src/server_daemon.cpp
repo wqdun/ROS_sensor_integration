@@ -11,6 +11,7 @@ ServerDaemon::ServerDaemon() {
     monitorMsg_.pps_HWcheck = -1;
     monitorMsg_.gprmc_HWcheck = -1;
     monitorMsg_.imu_HWcheck = -1;
+    monitorMsg_.is_disk_error = false;
 
     isGpsUpdated_ = isVelodyneUpdated_ = isRawImuUpdated_
         = isCamera0FpsUpdated_ = isCamera1FpsUpdated_ = isCamera2FpsUpdated_

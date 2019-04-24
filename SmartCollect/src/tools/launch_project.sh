@@ -14,6 +14,33 @@ log_with_time() {
     echo "$now_time: $*" >>$result_log
 }
 
+mount_tx2_data_disk() {
+    log_with_time "$FUNCNAME start."
+
+    local disk_num=$(grep -v [0-9]$ /proc/partitions | grep -v ^$ | grep -v name | grep -c sd)
+    if [ $disk_num -ne 1 ]; then
+        log_with_time "I have $disk_num disk, not 1."
+        return
+    fi
+
+    log_with_time "I have 1 sd disks."
+    local data_disk=$(grep -v [0-9]$ /proc/partitions | grep -v ^$ | grep -v name | grep sd | awk '{print $NF}')
+
+    local data_disk_partition_num=$(ls /dev/* | grep "$data_disk" | grep -vc "$data_disk$")
+    if [ $data_disk_partition_num -ne 1 ]; then
+        log_with_time "I have ${data_disk_partition_num} disk partitions in ${data_disk}, not 1."
+        return
+    fi
+    local data_disk_partition=$(ls /dev/* | grep "$data_disk" | grep -v "$data_disk$")
+    log_with_time "I have ${data_disk_partition_num} disk partition: ${data_disk_partition} in ${data_disk}."
+
+    mkdir -p /opt/smartc/record/
+    umount "$data_disk_partition" >>$result_log 2>&1
+    mount "$data_disk_partition" /opt/smartc/record/ >>$result_log 2>&1
+    log_with_time "$FUNCNAME return $?."
+    return
+}
+
 get_sudo_permission() {
     echo 123 | sudo -S su >/dev/null 2>&1
 }
@@ -225,6 +252,7 @@ do_restart_server() {
 
 main() {
     if [ "AA$1" = "AAserver" ]; then
+        mount_tx2_data_disk
         task_name=$2
         echo "${task_name}" | grep "9999" >/dev/null 2>&1
         if [ $? -eq 0 ]; then

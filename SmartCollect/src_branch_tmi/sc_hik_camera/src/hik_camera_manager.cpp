@@ -60,13 +60,17 @@ void HikCameraManager::Run() {
         sharedMem_->imuSerialPortStatus = -1;
     }
 
+    int mainCameraIndex = 0;
     for(size_t i = 0; i < camNum; ++i) {
         boost::shared_ptr<SingleCamera> pSingleCamera(new SingleCamera(this));
         pSingleCamera->SetCamera(deviceList_, i);
+        if (1 == pSingleCamera->GetCameraID()) {
+            mainCameraIndex = i;
+        }
         pSingleCameras_.push_back(pSingleCamera);
     }
 
-    int i = -1;
+    int i = mainCameraIndex - 1;
     ros::Rate rate(2);
     while(ros::ok()) {
         if(0 != camNum) {

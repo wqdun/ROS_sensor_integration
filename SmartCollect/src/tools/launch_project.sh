@@ -200,7 +200,7 @@ start_smart_collector_server() {
     local task_keyword="sc_rtimu_no"
     pkill "${task_keyword}"
     echo "pkill -INT ${task_keyword}; pkill ${task_keyword}" >>"/tmp/kill_smartc.sh"
-    /opt/smartc/devel/lib/sc_rtimu/sc_rtimu_node "/dev/imu5651RtData" &
+    /opt/smartc/devel/lib/sc_rtimu/sc_rtimu_node "/dev/imu5651RtData" "${_absolute_record_path}/IMU/" &
     sleep 0.2
 
     local task_keyword="sc_ptgrey_ca"

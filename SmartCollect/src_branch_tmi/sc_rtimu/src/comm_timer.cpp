@@ -126,8 +126,12 @@ void CommTimer::Parse5651Frame(const std::string &_frame, double _unixTime) {
     assert(!_frame.empty() );
 
     if("$GPFPD" == _frame.substr(0, 6)) {
-        WriteRtImuFile(_frame);
-        Parse5651GpfpdFrame(_frame, _unixTime);
+        if (Parse5651GpfpdFrame(_frame, _unixTime)) {
+            WriteRtImuFile(_frame);
+        }
+        else {
+            LOG(ERROR) << "Failed to parse " << _frame << ", no write it to " << rtImuFile_;
+        }
     }
     else
     if("$GPGGA" == _frame.substr(0, 6)) {
@@ -174,14 +178,14 @@ void CommTimer::WriteRtImuFile(const std::string &_gpfpdFrame) {
     return;
 }
 
-void CommTimer::Parse5651GpfpdFrame(const std::string &_gpfpdFrame, double __unixTime) {
+bool CommTimer::Parse5651GpfpdFrame(const std::string &_gpfpdFrame, double __unixTime) {
     DLOG(INFO) << __FUNCTION__ << " start.";
 
     std::vector<std::string> gpfpdFrameParsed;
     boost::split(gpfpdFrameParsed, _gpfpdFrame, boost::is_any_of(",*") );
     if(17 != gpfpdFrameParsed.size()) {
         LOG(ERROR) << "Error parsing " << _gpfpdFrame << "; gpfpdFrameParsed.size(): " << gpfpdFrameParsed.size();
-        return;
+        return false;
     }
 
     // e.g. "279267.900"
@@ -209,7 +213,7 @@ void CommTimer::Parse5651GpfpdFrame(const std::string &_gpfpdFrame, double __uni
     // else do nothing
 
     imu232Msg_.unix_time_minus_gps_time = FillerDeque(unixTimeMinusGpsTimeQueue_);
-    return;
+    return true;
 }
 
 // we do not want to modify the input deque

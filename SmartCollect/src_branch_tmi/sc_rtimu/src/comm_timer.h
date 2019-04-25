@@ -29,7 +29,7 @@ private:
     void Parse5651Frame(const std::string &_frame, double _unixTime);
     void Parse5651GpggaFrame(const std::string &_gpggaFrame);
     void WriteRtImuFile(const std::string &_gpfpdFrame);
-    void Parse5651GpfpdFrame(const std::string &_gpfpdFrame, double __unixTime);
+    bool Parse5651GpfpdFrame(const std::string &_gpfpdFrame, double __unixTime);
     double FillerDeque(const std::deque<double> &aDeque);
 
     ros::NodeHandle nh_;

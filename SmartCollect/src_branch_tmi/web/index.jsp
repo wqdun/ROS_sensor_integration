@@ -35,7 +35,7 @@
         $("#projname").html(scCheckProjectName);
     }
 
-    function createProject() {
+    function createProject(obj) {
         console.log("Submit a new project.");
         var projectNameWithDate = $('#projname').text();
         var clientMsg = new ROSLIB.Message({
@@ -44,6 +44,7 @@
         });
 
         pubCmd_.publish(clientMsg);
+        countDown(obj,3);
     }
 
     function SetDefaultDeviceId(hostName) {
@@ -57,6 +58,29 @@
       }
     }
 
+
+    function countDown(obj, second) {
+        // 如果秒数还是大于0，则表示倒计时还没结束
+        if (second >= 0) {
+            // 按钮置为不可点击状态
+            obj.disabled = true;
+            // 按钮里的内容呈现倒计时状态
+            obj.innerHTML = "<font color=red><b>"+second+"</b></font>s to close";
+            // 时间减一
+            second--;
+            // 一秒后重复执行
+            setTimeout(function () {
+                countDown(obj, second);
+            }, 1000);
+            // 否则，按钮重置为初始状态
+        }else{
+          obj.innerHTML = "Submit";
+          obj.disabled = false;
+          $("#myModal").modal('hide');
+        }
+
+    }
+
   </script>
 </head>
 
@@ -65,9 +89,7 @@
     <div class="modal-dialog">
       <div class="modal-content">
         <div class="modal-header">
-          <button type="button" class="close" data-dismiss="modal" aria-hidden="true">
-            &times;
-          </button>
+
           <h4 class="modal-title" id="myModalLabel">
               New Project
           </h4>
@@ -76,10 +98,10 @@
           Submit Project: <label id="projname"></label>
         </div>
         <div class="modal-footer">
-          <button type="button" class="btn btn-default" data-dismiss="modal">
+          <button type="button" class="btn btn-large btn-default" data-dismiss="modal">
             Cancel
           </button>
-          <button type="button" class="btn btn-primary" onclick="createProject();" data-dismiss="modal">
+          <button type="button" class="btn btn-large btn-primary" onclick="createProject(this);" data-dismiss="modal">
             Submit
           </button>
         </div>
@@ -91,9 +113,7 @@
     <div class="modal-dialog">
       <div class="modal-content">
         <div class="modal-header">
-          <button type="button" class="close" data-dismiss="modal" aria-hidden="true">
-            &times;
-          </button>
+
           <h4 class="modal-title" id="optModalLabel">
             Submit
           </h4>
@@ -103,10 +123,10 @@
           <input type="hidden" id="optid" value="0"/>
         </div>
         <div class="modal-footer">
-          <button type="button" class="btn btn-default" data-dismiss="modal">
+          <button type="button" class="btn btn-large btn-default" data-dismiss="modal">
             Cancel
           </button>
-          <button type="button" class="btn btn-primary" data-dismiss="modal" id="cmtBtn">
+          <button type="button" class="btn btn-large btn-primary" data-dismiss="modal" id="cmtBtn">
             Submit
           </button>
         </div>

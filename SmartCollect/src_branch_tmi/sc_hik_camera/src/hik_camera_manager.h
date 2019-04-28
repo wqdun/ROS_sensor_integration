@@ -38,6 +38,7 @@ private:
     void PressEnterToExit();
     void MonitorCB(const sc_msgs::MonitorMsg::ConstPtr& pMonitorMsg);
     void RegisterCB();
+    int GetCameraIndexByID(int cameraId);
 };
 
 #endif

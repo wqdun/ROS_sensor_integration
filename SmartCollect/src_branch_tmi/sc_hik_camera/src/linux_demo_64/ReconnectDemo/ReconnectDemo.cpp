@@ -9,12 +9,12 @@ void* g_hHandle = NULL;
 bool  g_bConnect = false;
 char  g_strSerialNumber[64] = {0};
 
-// µÈ´ıÓÃ»§ÊäÈëenter¼üÀ´½áÊøÈ¡Á÷»ò½áÊø³ÌĞò
+// ç­‰å¾…ç”¨æˆ·è¾“å…¥enteré”®æ¥ç»“æŸå–æµæˆ–ç»“æŸç¨‹åº
 // wait for user to input enter to stop grabbing or end the sample program
 void PressEnterToExit(void)
 {
-	int c;
-	while ( (c = getchar()) != '\n' && c != EOF );
+    int c;
+    while ( (c = getchar()) != '\n' && c != EOF );
     fprintf( stderr, "\nPress enter to exit.\n");
     while( getchar() != '\n');
 }
@@ -28,10 +28,10 @@ bool PrintDeviceInfo(MV_CC_DEVICE_INFO* pstMVDevInfo)
     }
     if (pstMVDevInfo->nTLayerType == MV_GIGE_DEVICE)
     {
-		// ´òÓ¡µ±Ç°Ïà»úipºÍÓÃ»§×Ô¶¨ÒåÃû×Ö
-		// print current ip and user defined name
-        printf("%s %x\n" , "nCurrentIp:" , pstMVDevInfo->SpecialInfo.stGigEInfo.nCurrentIp);                   //µ±Ç°IP
-        printf("%s %s\n\n" , "chUserDefinedName:" , pstMVDevInfo->SpecialInfo.stGigEInfo.chUserDefinedName);     //ÓÃ»§¶¨ÒåÃû
+        // æ‰“å°å½“å‰ç›¸æœºipå’Œç”¨æˆ·è‡ªå®šä¹‰åå­—
+        // print current ip and user defined name
+        printf("%s %x\n" , "nCurrentIp:" , pstMVDevInfo->SpecialInfo.stGigEInfo.nCurrentIp);                   //å½“å‰IP
+        printf("%s %s\n\n" , "chUserDefinedName:" , pstMVDevInfo->SpecialInfo.stGigEInfo.chUserDefinedName);     //ç”¨æˆ·å®šä¹‰å
     }
     else if (pstMVDevInfo->nTLayerType == MV_USB_DEVICE)
     {
@@ -46,125 +46,125 @@ bool PrintDeviceInfo(MV_CC_DEVICE_INFO* pstMVDevInfo)
 
 void __stdcall cbException(unsigned int nMsgType, void* pUser)
 {
-	printf("Device disconnect!\n");
-	g_bConnect = false;
+    printf("Device disconnect!\n");
+    g_bConnect = false;
 }
 
 static void* ReconnectProcess(void* pUser)
 {
-	int nRet = MV_OK;
-	MV_CC_DEVICE_INFO_LIST stDeviceList = {0};
+    int nRet = MV_OK;
+    MV_CC_DEVICE_INFO_LIST stDeviceList = {0};
 
-	while(1)
-	{
-		if (true == g_bConnect)
-		{
-			sleep(1);
-			continue;
-		}
-		
-		nRet = MV_CC_CloseDevice(g_hHandle);
-		nRet = MV_CC_DestroyHandle(g_hHandle);
-		g_hHandle = NULL;
+    while(1)
+    {
+        if (true == g_bConnect)
+        {
+            sleep(1);
+            continue;
+        }
 
-		printf("connecting...\n");
-		// Ã¶¾ÙÉè±¸
-		// enum device
-		nRet = MV_CC_EnumDevices(MV_GIGE_DEVICE | MV_USB_DEVICE, &stDeviceList);
-		if (MV_OK != nRet)
-		{
-			printf("MV_CC_EnumDevices fail! nRet [%x]\n", nRet);
-			continue;
-		}
-		
-		// ¸ù¾İĞòÁĞºÅÑ¡ÔñÏà»ú
-		unsigned int nIndex = -1;
-		if (stDeviceList.nDeviceNum > 0)
-		{
-			for (int i = 0; i < stDeviceList.nDeviceNum; i++)
-			{
-				MV_CC_DEVICE_INFO* pDeviceInfo = stDeviceList.pDeviceInfo[i];
-				if (NULL == pDeviceInfo)
-				{
-					continue;
-				} 
+        nRet = MV_CC_CloseDevice(g_hHandle);
+        nRet = MV_CC_DestroyHandle(g_hHandle);
+        g_hHandle = NULL;
 
-				
-				if (pDeviceInfo->nTLayerType == MV_GIGE_DEVICE) 
-				{
-					if (!strcmp((char*)(pDeviceInfo->SpecialInfo.stGigEInfo.chSerialNumber), g_strSerialNumber))
-					{
-						nIndex = i;
-						break;
-					}
-				}
-				else if (pDeviceInfo->nTLayerType == MV_USB_DEVICE)
-				{
-					if (!strcmp((char*)(pDeviceInfo->SpecialInfo.stUsb3VInfo.chSerialNumber), g_strSerialNumber))
-					{
-						nIndex = i;
-						break;
-					}
-				}
+        printf("connecting...\n");
+        // æšä¸¾è®¾å¤‡
+        // enum device
+        nRet = MV_CC_EnumDevices(MV_GIGE_DEVICE | MV_USB_DEVICE, &stDeviceList);
+        if (MV_OK != nRet)
+        {
+            printf("MV_CC_EnumDevices fail! nRet [%x]\n", nRet);
+            continue;
+        }
 
-			}  
-		} 
-		else
-		{
-			continue;
-		}
-		
-		if (-1 == nIndex)
-		{
-			continue;
-		}
+        // æ ¹æ®åºåˆ—å·é€‰æ‹©ç›¸æœº
+        unsigned int nIndex = -1;
+        if (stDeviceList.nDeviceNum > 0)
+        {
+            for (int i = 0; i < stDeviceList.nDeviceNum; i++)
+            {
+                MV_CC_DEVICE_INFO* pDeviceInfo = stDeviceList.pDeviceInfo[i];
+                if (NULL == pDeviceInfo)
+                {
+                    continue;
+                }
 
-		// Ñ¡ÔñÉè±¸²¢´´½¨¾ä±ú
-		// select device and create handle
-		nRet = MV_CC_CreateHandle(&g_hHandle, stDeviceList.pDeviceInfo[nIndex]);
-		if (MV_OK != nRet)
-		{
-			printf("MV_CC_CreateHandle fail! nRet [%x]\n", nRet);
-			continue;
-		}
 
-		// ´ò¿ªÉè±¸
-		// open device
-		nRet = MV_CC_OpenDevice(g_hHandle);
-		if (MV_OK != nRet)
-		{
-			printf("MV_CC_OpenDevice fail! nRet [%x]\n", nRet);
-			continue;
-		}
-		
-		g_bConnect = true;
-		
-		// ×¢²áÒì³£»Øµ÷
-		// register exception callback
-		nRet = MV_CC_RegisterExceptionCallBack(g_hHandle, cbException, NULL);
-		if (MV_OK != nRet)
-		{
-			printf("MV_CC_RegisterExceptionCallBack fail! nRet [%x]\n", nRet);
-			continue;
-		}
-		printf("connect succeed\n");
-	}
-	return 0;
+                if (pDeviceInfo->nTLayerType == MV_GIGE_DEVICE)
+                {
+                    if (!strcmp((char*)(pDeviceInfo->SpecialInfo.stGigEInfo.chSerialNumber), g_strSerialNumber))
+                    {
+                        nIndex = i;
+                        break;
+                    }
+                }
+                else if (pDeviceInfo->nTLayerType == MV_USB_DEVICE)
+                {
+                    if (!strcmp((char*)(pDeviceInfo->SpecialInfo.stUsb3VInfo.chSerialNumber), g_strSerialNumber))
+                    {
+                        nIndex = i;
+                        break;
+                    }
+                }
+
+            }
+        }
+        else
+        {
+            continue;
+        }
+
+        if (-1 == nIndex)
+        {
+            continue;
+        }
+
+        // é€‰æ‹©è®¾å¤‡å¹¶åˆ›å»ºå¥æŸ„
+        // select device and create handle
+        nRet = MV_CC_CreateHandle(&g_hHandle, stDeviceList.pDeviceInfo[nIndex]);
+        if (MV_OK != nRet)
+        {
+            printf("MV_CC_CreateHandle fail! nRet [%x]\n", nRet);
+            continue;
+        }
+
+        // æ‰“å¼€è®¾å¤‡
+        // open device
+        nRet = MV_CC_OpenDevice(g_hHandle);
+        if (MV_OK != nRet)
+        {
+            printf("MV_CC_OpenDevice fail! nRet [%x]\n", nRet);
+            continue;
+        }
+
+        g_bConnect = true;
+
+        // æ³¨å†Œå¼‚å¸¸å›è°ƒ
+        // register exception callback
+        nRet = MV_CC_RegisterExceptionCallBack(g_hHandle, cbException, NULL);
+        if (MV_OK != nRet)
+        {
+            printf("MV_CC_RegisterExceptionCallBack fail! nRet [%x]\n", nRet);
+            continue;
+        }
+        printf("connect succeed\n");
+    }
+    return 0;
 }
 
 int main()
 {
     int nRet = MV_OK;
-	MV_CC_DEVICE_INFO_LIST stDeviceList = {0};
-	unsigned int nSelectNum = 0;
-	// Ã¶¾ÙÉè±¸
-	// enum device
-	nRet = MV_CC_EnumDevices(MV_GIGE_DEVICE | MV_USB_DEVICE, &stDeviceList);
-	if (MV_OK != nRet)
-	{
-		printf("MV_CC_EnumDevices fail! nRet [%x]\n", nRet);
-		return -1;
-	}
+    MV_CC_DEVICE_INFO_LIST stDeviceList = {0};
+    unsigned int nSelectNum = 0;
+    // æšä¸¾è®¾å¤‡
+    // enum device
+    nRet = MV_CC_EnumDevices(MV_GIGE_DEVICE | MV_USB_DEVICE, &stDeviceList);
+    if (MV_OK != nRet)
+    {
+        printf("MV_CC_EnumDevices fail! nRet [%x]\n", nRet);
+        return -1;
+    }
     if (stDeviceList.nDeviceNum > 0)
     {
         for (int i = 0; i < stDeviceList.nDeviceNum; i++)
@@ -174,10 +174,10 @@ int main()
             if (NULL == pDeviceInfo)
             {
                 break;
-            } 
-            PrintDeviceInfo(pDeviceInfo);            
-        }  
-    } 
+            }
+            PrintDeviceInfo(pDeviceInfo);
+        }
+    }
     else
     {
         printf("Find No Devices!\n");
@@ -187,35 +187,35 @@ int main()
 
     scanf("%d", &nSelectNum);
 
-	if (stDeviceList.pDeviceInfo[nSelectNum]->nTLayerType == MV_GIGE_DEVICE) 
-	{
-		memcpy(g_strSerialNumber, stDeviceList.pDeviceInfo[nSelectNum]->SpecialInfo.stGigEInfo.chSerialNumber, 
-			sizeof(stDeviceList.pDeviceInfo[nSelectNum]->SpecialInfo.stGigEInfo.chSerialNumber));
-	}
-	else if (stDeviceList.pDeviceInfo[nSelectNum]->nTLayerType == MV_USB_DEVICE)
-	{
-		memcpy(g_strSerialNumber, stDeviceList.pDeviceInfo[nSelectNum]->SpecialInfo.stUsb3VInfo.chSerialNumber, 
-			sizeof(stDeviceList.pDeviceInfo[nSelectNum]->SpecialInfo.stUsb3VInfo.chSerialNumber));
-	}
-	
+    if (stDeviceList.pDeviceInfo[nSelectNum]->nTLayerType == MV_GIGE_DEVICE)
+    {
+        memcpy(g_strSerialNumber, stDeviceList.pDeviceInfo[nSelectNum]->SpecialInfo.stGigEInfo.chSerialNumber,
+            sizeof(stDeviceList.pDeviceInfo[nSelectNum]->SpecialInfo.stGigEInfo.chSerialNumber));
+    }
+    else if (stDeviceList.pDeviceInfo[nSelectNum]->nTLayerType == MV_USB_DEVICE)
+    {
+        memcpy(g_strSerialNumber, stDeviceList.pDeviceInfo[nSelectNum]->SpecialInfo.stUsb3VInfo.chSerialNumber,
+            sizeof(stDeviceList.pDeviceInfo[nSelectNum]->SpecialInfo.stUsb3VInfo.chSerialNumber));
+    }
 
-	pthread_t nThreadID;
-	nRet = pthread_create(&nThreadID, NULL, ReconnectProcess, NULL);
-	if (nRet != 0)
-	{
-		printf("thread create failed nRet = %d\n",nRet);
-		return -1;
-	}
-	
-	PressEnterToExit();
-	
-    // ¹Ø±ÕÉè±¸
-	// close device
+
+    pthread_t nThreadID;
+    nRet = pthread_create(&nThreadID, NULL, ReconnectProcess, NULL);
+    if (nRet != 0)
+    {
+        printf("thread create failed nRet = %d\n",nRet);
+        return -1;
+    }
+
+    PressEnterToExit();
+
+    // å…³é—­è®¾å¤‡
+    // close device
     nRet = MV_CC_CloseDevice(g_hHandle);
-    // Ïú»Ù¾ä±ú
-	// destroy handle
+    // é”€æ¯å¥æŸ„
+    // destroy handle
     nRet = MV_CC_DestroyHandle(g_hHandle);
-	
-	printf("exit\n");
+
+    printf("exit\n");
     return 0;
 }

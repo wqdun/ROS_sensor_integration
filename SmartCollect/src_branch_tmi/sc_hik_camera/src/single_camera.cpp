@@ -4,7 +4,11 @@
 HikCameraManager* SingleCamera::s_pManager_;
 
 SingleCamera::SingleCamera(HikCameraManager *pManager):
-mat2Pub_(1200, 1920, CV_8UC3, cv::Scalar::all(0) ) {
+    mat2Pub_(1200, 1920, CV_8UC3, cv::Scalar::all(0) ),
+    cameraHandle_(NULL),
+    cameraStartupCounter_(-1),
+    isCallbackOK_(false)
+{
     LOG(INFO) << __FUNCTION__ << " start.";
     s_pManager_ = pManager;
     imageFreq_ = 0;
@@ -43,7 +47,7 @@ void SingleCamera::SetCamera(const MV_CC_DEVICE_INFO_LIST &deviceInfoList, size_
     SetAdvertiseTopic();
     SetImagePath();
 
-    StartCamera();
+    (void)StartCamera();
 }
 
 void SingleCamera::SetImagePath() {
@@ -103,27 +107,47 @@ void SingleCamera::SetIndex_Ip(const MV_CC_DEVICE_INFO_LIST &deviceInfoList, siz
 
 void SingleCamera::SetHandle(const MV_CC_DEVICE_INFO_LIST &deviceInfoList, size_t index) {
     LOG(INFO) << __FUNCTION__ << " start.";
-    void *handle = NULL;
-    int err = MV_CC_CreateHandle(&handle, deviceInfoList.pDeviceInfo[index]);
+    int err = MV_CC_CreateHandle(&cameraHandle_, deviceInfoList.pDeviceInfo[index]);
     assert(MV_OK == err);
-
-    cameraHandle_ = handle;
 }
 
-void SingleCamera::StartCamera() {
+bool SingleCamera::StartCamera() {
     LOG(INFO) << __FUNCTION__ << " start.";
     int err = MV_OK;
 
     err = MV_CC_OpenDevice(cameraHandle_);
-    assert(MV_OK == err);
+    if (MV_OK != err) {
+        LOG(ERROR) << "Failed to MV_CC_OpenDevice.";
+        return false;
+    }
 
     (void)ConfigDevices();
-
     err = MV_CC_RegisterImageCallBackEx(cameraHandle_, ImageCB, this);
     assert(MV_OK == err);
-
     err = MV_CC_StartGrabbing(cameraHandle_);
     assert(MV_OK == err);
+
+    return true;
+}
+
+void SingleCamera::CheckAndRestartCamera(const MV_CC_DEVICE_INFO_LIST &deviceInfoList, size_t index) {
+    DLOG(INFO) << __FUNCTION__ << " start, cameraStartupCounter_: " << cameraStartupCounter_;
+
+    const int WAITING_FOR_STARTUP_COUNTER = 3;
+    if (cameraStartupCounter_ < WAITING_FOR_STARTUP_COUNTER) {
+        ++cameraStartupCounter_;
+        LOG(INFO) << "cameraStartupCounter_: " << cameraStartupCounter_;
+        return;
+    }
+
+    LOG_FIRST_N(INFO, 1) << "Gonna monitor cameras status.";
+    if (!isCallbackOK_) {
+        if (RestartCamera(deviceInfoList, index)) {
+            cameraStartupCounter_ = 0;
+        } // else do nothing
+    } // else do nothing
+
+    isCallbackOK_ = false;
 }
 
 void __stdcall SingleCamera::ImageCB(unsigned char *pData, MV_FRAME_OUT_INFO_EX *pFrameInfo, void *_pSingleCamera) {
@@ -134,12 +158,14 @@ void __stdcall SingleCamera::ImageCB(unsigned char *pData, MV_FRAME_OUT_INFO_EX 
     LOG(INFO) << "unixTimeMinusGpsTime: " << std::fixed << unixTimeMinusGpsTime;
     const double gpsTime = unixTime - unixTimeMinusGpsTime;
 
+    SingleCamera *pSingleCamera = static_cast<SingleCamera *>(_pSingleCamera);
+    pSingleCamera->isCallbackOK_ = true;
+
     if(!pFrameInfo) {
         LOG(ERROR) << "pFrameInfo is NULL.";
         return;
     }
 
-    SingleCamera *pSingleCamera = static_cast<SingleCamera *>(_pSingleCamera);
     const int _cameraID(pSingleCamera->GetCameraID());
     LOG_EVERY_N(INFO, 20) << "GetOneFrame[" << pFrameInfo->nFrameNum << "]: "
         << pFrameInfo->nWidth << " * " << pFrameInfo->nHeight
@@ -278,7 +304,7 @@ void SingleCamera::ExitNightMode() {
     assert(MV_OK == err);
     err = MV_CC_SetEnumValue(cameraHandle_, "GainAuto", 2);
     assert(MV_OK == err);
-    LOG(INFO) << "GainAuto: " << currentGainMode.nCurValue << " --> " << 2;
+    LOG(INFO) << "GainAuto: " << currentGainMode.nCurValue << " --> 2";
     MVCC_FLOATVALUE currentAutoGainLowerLimit = {0};
     err = MV_CC_GetFloatValue(cameraHandle_, "AutoGainLowerLimit", &currentAutoGainLowerLimit);
     assert(MV_OK == err);
@@ -288,7 +314,7 @@ void SingleCamera::ExitNightMode() {
     err = MV_CC_SetFloatValue(cameraHandle_, "AutoGainLowerLimit", 0);
     err = MV_CC_SetFloatValue(cameraHandle_, "AutoGainUpperLimit", 20);
     assert(MV_OK == err);
-    LOG(INFO) << "AutoGain [" << currentAutoGainLowerLimit.fCurValue << ", " << currentAutoGainUpperLimit.fCurValue << "] --> [" << 0 << ", " << 20 << "]";
+    LOG(INFO) << "AutoGain [" << currentAutoGainLowerLimit.fCurValue << ", " << currentAutoGainUpperLimit.fCurValue << "] --> [0, 20]";
 
     return;
 }
@@ -369,7 +395,6 @@ void SingleCamera::ConfigDevices() {
 
     ExitNightMode();
 
-
     MVCC_ENUMVALUE currentExposureAuto = {0};
     err = MV_CC_GetEnumValue(cameraHandle_, "ExposureAuto", &currentExposureAuto);
     assert(MV_OK == err);
@@ -398,6 +423,30 @@ void SingleCamera::ConfigDevices() {
     return;
 }
 
+bool SingleCamera::RestartCamera(const MV_CC_DEVICE_INFO_LIST &deviceInfoList, size_t index) {
+    LOG(INFO) << __FUNCTION__ << " start.";
+    int err = MV_OK;
+
+    if (cameraHandle_) {
+        err = MV_CC_CloseDevice(cameraHandle_);
+        (MV_OK == err)? (LOG(INFO) << "Success."): (LOG(ERROR) << "Failed: " << err);
+        err = MV_CC_DestroyHandle(cameraHandle_);
+        (MV_OK == err)? (LOG(INFO) << "Success."): (LOG(ERROR) << "Failed: " << err);
+        cameraHandle_ = NULL;
+    }
+
+    SetHandle(deviceInfoList, index);
+    if (!StartCamera()) {
+        LOG(ERROR) << "Failed to StartCamera.";
+        err = MV_CC_DestroyHandle(cameraHandle_);
+        (MV_OK == err)? (LOG(INFO) << "Success."): (LOG(ERROR) << "Failed: " << err);
+        cameraHandle_ = NULL;
+        return false;
+    }
+
+    LOG(INFO) << "StartCamera successfully.";
+    return true;
+}
 
 void SingleCamera::TurnOnFrameSpecInfo(FrameSpecInfoSelector frameSpecInfoSelector) {
     LOG(INFO) << __FUNCTION__ << " start.";

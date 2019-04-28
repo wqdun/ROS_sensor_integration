@@ -28,6 +28,7 @@ public:
     void *GetHandle();
     void PublishImage();
     void AdaptNightMode();
+    void CheckAndRestartCamera(const MV_CC_DEVICE_INFO_LIST &deviceInfoList, size_t index);
 
 
 private:
@@ -49,7 +50,7 @@ private:
     void SetHandle(const MV_CC_DEVICE_INFO_LIST &deviceInfoList, size_t index);
     void SetIndex_Ip(const MV_CC_DEVICE_INFO_LIST &deviceInfoList, size_t index);
     void SetImagePath();
-    void StartCamera();
+    bool StartCamera();
     void ConfigDevices();
     size_t GetCameraIndex();
     void SetAdvertiseTopic();
@@ -57,6 +58,7 @@ private:
     void EnterNightMode();
     void ExitNightMode();
     void TurnOnFrameSpecInfo(FrameSpecInfoSelector frameSpecInfoSelector);
+    bool RestartCamera(const MV_CC_DEVICE_INFO_LIST &deviceInfoList, size_t index);
 
     void *cameraHandle_;
     // e.g., "6666"
@@ -73,6 +75,8 @@ private:
     double imageFreq_;
     bool isNightMode_;
     double currentImageExposureTime_;
+    bool isCallbackOK_;
+    int cameraStartupCounter_;
 };
 
 #endif

@@ -42,6 +42,17 @@ void HikCameraManager::RegisterCB() {
     subMonitor_ = nh_.subscribe("sc_monitor", 10, &HikCameraManager::MonitorCB, this);
 }
 
+int HikCameraManager::GetCameraIndexByID(int cameraId) {
+    for(int index = 0; index < pSingleCameras_.size(); ++index) {
+        if (cameraId == pSingleCameras_[index]->GetCameraID()) {
+            return index;
+        }
+    }
+
+    LOG(ERROR) << "Failed to find camera " << cameraId;
+    return -1;
+}
+
 void HikCameraManager::Run() {
     LOG(INFO) << __FUNCTION__ << " start.";
     (void)RegisterCB();
@@ -49,9 +60,9 @@ void HikCameraManager::Run() {
     threadPool_.start();
     err = MV_CC_EnumDevices(MV_GIGE_DEVICE, &deviceList_);
     assert(MV_OK == err);
-    const size_t camNum = deviceList_.nDeviceNum;
-    LOG(INFO) << "Find " << camNum << " Devices.";
-    sharedMem_->cameraNum = camNum;
+    const size_t CAM_NUM = deviceList_.nDeviceNum;
+    LOG(INFO) << "Find " << CAM_NUM << " Devices.";
+    sharedMem_->cameraNum = CAM_NUM;
 
     if(public_tools::PublicTools::isFileExist("/dev/ttyS0")) {
         sharedMem_->imuSerialPortStatus = 0;
@@ -60,24 +71,26 @@ void HikCameraManager::Run() {
         sharedMem_->imuSerialPortStatus = -1;
     }
 
-    int mainCameraIndex = 0;
-    for(size_t i = 0; i < camNum; ++i) {
+    for(size_t i = 0; i < CAM_NUM; ++i) {
         boost::shared_ptr<SingleCamera> pSingleCamera(new SingleCamera(this));
         pSingleCamera->SetCamera(deviceList_, i);
-        if (1 == pSingleCamera->GetCameraID()) {
-            mainCameraIndex = i;
-        }
+
         pSingleCameras_.push_back(pSingleCamera);
     }
 
-    int i = mainCameraIndex - 1;
-    ros::Rate rate(2);
+    ros::Rate rate(1);
+    size_t freqDivider = 0;
     while(ros::ok()) {
-        if(0 != camNum) {
-            ++i;
-            i %= camNum;
+        ++freqDivider;
+        freqDivider %= 256;
+
+        for (size_t i = 0; i < CAM_NUM; ++i) {
             pSingleCameras_[i]->PublishImage();
-            // pSingleCameras_[i]->AdaptNightMode();
+
+            // 0.25Hz
+            if (0 == (freqDivider % 4) ) {
+                pSingleCameras_[i]->CheckAndRestartCamera(deviceList_, i);
+            }
         }
 
         ros::spinOnce();

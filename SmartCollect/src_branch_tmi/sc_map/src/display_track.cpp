@@ -1,8 +1,6 @@
 #include "display_track.h"
 #include "../../roscameragps_rviz/src/myviz.h"
 
-// #define NDEBUG
-#undef NDEBUG
 #include <glog/logging.h>
 
 TrackDisplayer::TrackDisplayer() {

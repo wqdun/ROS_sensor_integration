@@ -1,6 +1,4 @@
 #include "mif_read.h"
-#define NDEBUG
-// #undef NDEBUG
 #include <glog/logging.h>
 
 int main(int argc, char **argv) {

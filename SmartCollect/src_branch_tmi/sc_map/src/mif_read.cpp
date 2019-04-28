@@ -1,7 +1,5 @@
 #include "mif_read.h"
 #include "../../roscameragps_rviz/src/myviz.h"
-// #define NDEBUG
-#undef NDEBUG
 #include <glog/logging.h>
 
 MifReader::MifReader(ros::NodeHandle nh, ros::NodeHandle private_nh) {

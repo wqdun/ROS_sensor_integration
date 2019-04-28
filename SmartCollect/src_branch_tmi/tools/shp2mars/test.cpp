@@ -1,7 +1,5 @@
 #include "test.h"
 
-#define NDEBUG
-// #undef NDEBUG
 #include <glog/logging.h>
 
 using namespace std;

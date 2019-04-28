@@ -1,6 +1,4 @@
 #include "disk_monitor.h"
-// #define NDEBUG
-#undef NDEBUG
 #include <glog/logging.h>
 
 DiskMonitor::DiskMonitor() {

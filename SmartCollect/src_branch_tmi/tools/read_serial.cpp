@@ -17,8 +17,6 @@
 #include <boost/algorithm/string/classification.hpp>
 #include <boost/algorithm/string/split.hpp>
 
-#define NDEBUG
-// #undef NDEBUG
 #include <glog/logging.h>
 
 void GetPositionFromGpfpd(const std::string &gpfpd, std::string &position) {

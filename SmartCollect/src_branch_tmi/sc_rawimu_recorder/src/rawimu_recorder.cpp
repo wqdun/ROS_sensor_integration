@@ -10,7 +10,7 @@ RawimuRecorder::~RawimuRecorder() {
     LOG(INFO) << __FUNCTION__ << " start.";
 }
 
-int RawimuRecorder::Run() {
+int RawimuRecorder::Run(int baudrate) {
     LOG(INFO) << __FUNCTION__ << " start.";
 
     fd_ = open(serialName_.c_str(), O_RDWR);
@@ -19,7 +19,7 @@ int RawimuRecorder::Run() {
         return -1;
     }
 
-    if(public_tools::ToolsNoRos::SetSerialOption(fd_, 230400, 8, 'N', 1) < 0) {
+    if(public_tools::ToolsNoRos::SetSerialOption(fd_, baudrate, 8, 'N', 1) < 0) {
         LOG(ERROR) << "Failed to setup " << ttyname(fd_);
         return -1;
     }

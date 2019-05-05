@@ -139,7 +139,7 @@ start_smart_collector_server() {
     local task_keyword="sc_rawimu_rec"
     pkill "${task_keyword}"
     echo "pkill -INT ${task_keyword}; pkill ${task_keyword}" >>"/tmp/kill_smartc.sh"
-    /opt/smartc/devel/lib/sc_rawimu_recorder/sc_rawimu_recorder_node "/dev/imuRawIns" "${_absolute_record_path}/IMU/" &
+    /opt/smartc/devel/lib/sc_rawimu_recorder/sc_rawimu_recorder_node "/dev/imuRawIns" 460800 "${_absolute_record_path}/IMU/" &
     sleep 0.2
 
     local task_keyword="sc_images_time"

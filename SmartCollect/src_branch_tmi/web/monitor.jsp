@@ -467,7 +467,7 @@
         }
         else
         if (1 === diskRingStatus) {
-            if (ringCounter_ < 4) {
+            if (ringCounter_ < 15) {
                 ++ringCounter_;
                 console.log("Shout for " + ringCounter_ + " time." );
                 bgMusic.play();

@@ -20,6 +20,8 @@ TriggerSource: 0
 # 2.LevelHigh
 # 3.LevelLow
 TriggerActivation: 0
+# us
+LineDebouncerTime: 50
 
 # To avoid frame loss
 GevSCPD: 2000

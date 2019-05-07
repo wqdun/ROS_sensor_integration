@@ -414,6 +414,14 @@ void SingleCamera::ConfigDevices() {
     assert(MV_OK == err);
     LOG(INFO) << "AutoExposureTime [" << currentAutoExposureTimeLowerLimit.nCurValue << ", " << currentAutoExposureTimeUpperLimit.nCurValue << "] --> [" << configValue1 << ", " << configValue2 << "]";
 
+    MVCC_INTVALUE currentLineDebouncerTime = {}; // LineDebouncerTime
+    err = MV_CC_GetIntValue(cameraHandle_, "LineDebouncerTime", &currentLineDebouncerTime);
+    assert(MV_OK == err);
+    fs["LineDebouncerTime"] >> configValue1;
+    err = MV_CC_SetIntValue(cameraHandle_, "LineDebouncerTime", configValue1);
+    assert(MV_OK == err);
+    LOG(INFO) << "Set LineDebouncerTime: " << currentLineDebouncerTime.nCurValue << " --> " << configValue1;
+
     TurnOnFrameSpecInfo(FrameSpecInfoSelector::Timestamp);
     TurnOnFrameSpecInfo(FrameSpecInfoSelector::Gain);
     TurnOnFrameSpecInfo(FrameSpecInfoSelector::Exposure);

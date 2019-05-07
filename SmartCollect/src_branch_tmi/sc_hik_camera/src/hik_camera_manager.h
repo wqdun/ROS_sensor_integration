@@ -10,9 +10,9 @@
 #include "include/MvCameraControl.h"
 #include "../../sc_lib_public_tools/src/thread_pool.h"
 #include "../../sc_lib_public_tools/src/shm_data.h"
+#include "../../sc_lib_public_tools/src/public_tools.h"
 #include "save_image_task.h"
 #include "single_camera.h"
-#include "comm_timer.h"
 #include "sc_msgs/MonitorMsg.h"
 
 class HikCameraManager {

@@ -68,18 +68,18 @@ def ReadFileToSerial(_inputFileName, _serial, _isGonnaSet5651):
             continue
 
         if not "cmd" in line:
-            print("Illegal line: ", line, end = "")
+            print("Illegal line: ", line.rstrip())
             continue
 
         if _isGonnaSet5651:
-            print("Send: ", line, end = "")
+            print("Send: ", line.rstrip())
             n = _serial.write(line)
             time.sleep(0.2)
         else:
             if isSetter:
-                print("No set: ", line, end = "")
+                print("No set: ", line.rstrip())
             else:
-                print("Get: ", line, end = "")
+                print("Get: ", line.rstrip())
                 n = _serial.write(line)
                 time.sleep(0.2)
 
@@ -101,7 +101,7 @@ def PrintOutput(_fileName):
             # print()
             continue
 
-        print(line, end = "")
+        print(line.rstrip())
 
     file.close()
 

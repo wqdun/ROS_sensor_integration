@@ -134,8 +134,10 @@ include_directories(
 ## With catkin_make all packages are built within a single CMake context
 ## The recommended prefix ensures that target names across packages don't collide
 add_executable(${PROJECT_NAME}_node
-    src/comm_timer_node.cpp
-    src/comm_timer.cpp
+    src/serial_node.cpp
+    src/serial_factory.cpp
+    src/serial_a1.cpp
+    src/base_serial.cpp
 )
 
 ## Rename C++ executable without prefix

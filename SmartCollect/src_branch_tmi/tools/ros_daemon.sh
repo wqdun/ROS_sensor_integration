@@ -73,7 +73,8 @@ export_java_env() {
     log_with_time "$FUNCNAME start."
     log_with_time "JRE_HOME: $JRE_HOME"
 
-    export JAVA_HOME=/opt/java/jdk1.8.0_144/
+    local java_home=$(echo /opt/java/jdk*)
+    export JAVA_HOME=${java_home}
     export JRE_HOME=${JAVA_HOME}/jre
     export CLASSPATH=.:${JAVA_HOME}/lib:${JRE_HOME}/lib
     export PATH=${JAVA_HOME}/bin:$PATH
@@ -138,6 +139,7 @@ set_networks() {
     log_with_time "$FUNCNAME start."
     local networks=$(/sbin/ip -s link | grep "^[0-9]" | grep -E "eth|enp" | awk -F: '{print $2}')
     for network in ${networks}; do
+        log_with_time "Set ${network} RX."
         /sbin/ethtool -G ${network} rx 2048
         /sbin/ethtool -G ${network} rx 4096
         /sbin/ethtool -g ${network} >>$result_log 2>&1
@@ -186,15 +188,15 @@ do_start() {
 do_stop() {
     log_with_time "$FUNCNAME start; ros_version: ${ros_version}."
 
-    kill_rosbridge
-    kill_tomcat
+    # kill_rosbridge
+    # kill_tomcat
 
-    log_with_time "kill sc_server_daemon_node by key word."
-    pkill sc_server_d
-    kill $(pgrep roscore) >>$result_log 2>&1
+    # log_with_time "kill sc_server_daemon_node by key word."
+    # pkill sc_server_d
+    # kill $(pgrep roscore) >>$result_log 2>&1
 
-    log_with_time "umount /opt/smartc/record/ start."
-    umount /opt/smartc/record/ >>$result_log 2>&1
+    # log_with_time "umount /opt/smartc/record/ start."
+    # umount /opt/smartc/record/ >>$result_log 2>&1
 
     log_with_time "$FUNCNAME return $?."
 }

@@ -183,14 +183,15 @@ start_smart_collector_server() {
     log_with_time "ulimit start."
     ulimit -c >>$result_log 2>&1
 
-    make_serial_softlink_by_path
+    make_tty_softlink
 
     cp /dev/null "/tmp/kill_smartc.sh"
 
-    local task_keyword="sc_hik_camer"
+    local task_keyword="sc_ptgrey_ca"
     pkill "${task_keyword}"
     echo "pkill -INT ${task_keyword}; pkill ${task_keyword}" >>"/tmp/kill_smartc.sh"
-    /opt/smartc/devel/lib/sc_hik_camera/sc_hik_camera_node "${_absolute_record_path}/" &
+    sysctl -w net.core.rmem_max=33554432 net.core.rmem_default=33554432 net.core.wmem_max=33554432 net.core.wmem_default=33554432 >>$result_log 2>&1
+    /opt/smartc/devel/lib/sc_ptgrey_camera/sc_ptgrey_camera_node "${_absolute_record_path}/" &
 
     chmod +r /dev/imuRawIns
     local task_keyword="sc_rawimu_rec"

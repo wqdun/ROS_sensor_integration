@@ -19,3 +19,8 @@ void BaseSerial::SetOutputPath(const std::string &outputPath) {
     rtImuFile_ = outputPath_ + imuFileNamePrefix + "_rt_track.txt";
 }
 
+double BaseSerial::FillerDeque(const std::deque<double> &aDeque) {
+    DLOG(INFO) << __FUNCTION__ << " start, aDeque.size(): " << aDeque.size();
+    return (*std::min_element(aDeque.cbegin(), aDeque.cend()));
+}
+

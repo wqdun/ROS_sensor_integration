@@ -1,49 +1,8 @@
 #include "serial_a1.h"
 
-
-// SerialA1::SerialA1() {
-//     LOG(INFO) << __FUNCTION__ << " start.";
-//     // serialName_ = _serialName;
-
-//     // std::string imuFileNamePrefix("");
-//     // (void)public_tools::PublicTools::generateFileName(_imuPath, imuFileNamePrefix);
-//     // rtImuFile_ = _imuPath + imuFileNamePrefix + "_rt_track.txt";
-
-//     // pubNovatelMsg_ = nh_.advertise<sc_msgs::Novatel>("sc_novatel", 10);
-// }
-
 void SerialA1::Run() {
     LOG(INFO) << __FUNCTION__ << " start.";
-
-    pubNovatelMsg_ = nh_.advertise<sc_msgs::Novatel>("sc_novatel", 10);
-
-    Write();
-    Read();
-}
-
-
-// void SerialA1::PublishMsg() {
-//     LOG(INFO) << __FUNCTION__ << " start.";
-//     pubNovatelMsg_.publish(novatelMsg_);
-// }
-
-// SerialA1::SerialA1(const std::string &_serialName, const std::string &_imuPath) {
-//     LOG(INFO) << __FUNCTION__ << " start.";
-//     serialName_ = _serialName;
-
-//     std::string imuFileNamePrefix("");
-//     (void)public_tools::PublicTools::generateFileName(_imuPath, imuFileNamePrefix);
-//     rtImuFile_ = _imuPath + imuFileNamePrefix + "_rt_track.txt";
-
-//     pubNovatelMsg_ = nh_.advertise<sc_msgs::Novatel>("sc_novatel", 10);
-// }
-
-// SerialA1::~SerialA1() {
-//     LOG(INFO) << __FUNCTION__ << " start.";
-// }
-
-int SerialA1::Read() {
-    LOG(INFO) << __FUNCTION__ << " start.";
+    pubNovatelMsg_ = nh_.advertise<sc_msgs::Novatel>("sc_novatel", 1);
 
     fd_ = open(serialName_.c_str(), O_RDWR | O_NOCTTY);
     if(fd_ < 0) {
@@ -55,24 +14,19 @@ int SerialA1::Read() {
         exit(1);
     }
 
-    (void)ReadSerial();
+    WriteSerial();
+    ReadSerial();
 
     close(fd_);
-    return 0;
 }
 
-int SerialA1::Write() {
+void SerialA1::PublishMsg() {
     LOG(INFO) << __FUNCTION__ << " start.";
+    pubNovatelMsg_.publish(novatelMsg_);
+}
 
-    fd_ = open(serialName_.c_str(), O_RDWR | O_NOCTTY);
-    if(fd_ < 0) {
-        LOG(ERROR) << "Failed to open device, try change permission...";
-        exit(1);
-    }
-    if(public_tools::ToolsNoRos::SetSerialOption(fd_, baudRate_, 8, 'N', 1) < 0) {
-        LOG(ERROR) << "Failed to setup " << ttyname(fd_);
-        exit(1);
-    }
+int SerialA1::WriteSerial() {
+    LOG(INFO) << __FUNCTION__ << " start.";
 
     int err = -1;
     const std::vector<std::string> cmds = {
@@ -100,7 +54,6 @@ int SerialA1::Write() {
         LOG(INFO) << "Send " << data2Send << " successfully, bytes: " << err;
     }
 
-    close(fd_);
     return 0;
 }
 
@@ -135,6 +88,10 @@ void SerialA1::ReadSerial() {
         if(framesBuf.size() < 100) {
             continue;
         }
+
+        struct timeval now;
+        gettimeofday(&now, NULL);
+        double unixTimeWhenIGetTheFrame = now.tv_sec + now.tv_usec / 1000000.;
 #ifndef NDEBUG
         for(size_t i = 0; i < framesBuf.size(); ++i) {
             LOG(INFO) << i << ":" << std::hex << (int)framesBuf[i];
@@ -166,8 +123,17 @@ void SerialA1::ReadSerial() {
             DLOG(INFO) << "GPS time updated: " << latestGpsTime;
             novatelMsg_.seconds_into_week = latestGpsTime;
         }
+
+        unixTimeMinusGpsTimeQueue_.push_back(unixTimeWhenIGetTheFrame - novatelMsg_.GPS_week_sec);
+        if (unixTimeMinusGpsTimeQueue_.size() > 50) {
+            unixTimeMinusGpsTimeQueue_.pop_front();
+        }
+        novatelMsg_.unix_time_minus_gps_time = FillerDeque(unixTimeMinusGpsTimeQueue_);
+
         DLOG(INFO) << "novatelMsg_.seconds_into_week: " << std::fixed << novatelMsg_.seconds_into_week;
         framesBuf.erase(0, save4NextFrameIndex);
+
+        PublishMsg();
     }
 }
 
@@ -249,8 +215,6 @@ void SerialA1::ParseInspvax(const std::string &inspvaxFrame, size_t _headerLengt
         uchar2int32.uCharData[i] = inspvaxFrame[16 + i];
     }
     novatelMsg_.GPS_week_sec =  static_cast<double>(uchar2int32.int32Data) / 1000.;
-    unixTimeMinusGpsTime_ = CalcUnixTimeMinusGpsTime(novatelMsg_.GPS_week_sec);
-    DLOG(INFO) << "unixTimeMinusGpsTime_: " << std::fixed << unixTimeMinusGpsTime_;
 
     for(size_t i = 0; i < 4; ++i) {
         uchar2int32.uCharData[i] = inspvaxFrame[_headerLength + i];

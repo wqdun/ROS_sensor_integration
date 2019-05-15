@@ -1,7 +1,7 @@
 #include <glog/logging.h>
 #include "serial_factory.h"
 
-int main(int argc, char const *argv[]) {
+int main(int argc, char *argv[]) {
     google::InitGoogleLogging(argv[0]);
     LOG(INFO) << "Got " << argc << " parameters.";
     if (argc < 5) {

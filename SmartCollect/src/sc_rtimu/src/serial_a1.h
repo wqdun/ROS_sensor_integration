@@ -26,7 +26,6 @@ typedef union {
 } uchar2Double_t;
 
 
-
 class SerialA1: public BaseSerial {
 public:
     void Run();
@@ -41,8 +40,7 @@ private:
     ros::Publisher pubNovatelMsg_;
     double unixTimeMinusGpsTime_;
 
-    int Write();
-    int Read();
+    int WriteSerial();
     void ReadSerial();
 
     void PublishMsg();

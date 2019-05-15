@@ -3,6 +3,8 @@
 
 #include <glog/logging.h>
 #include <string>
+#include <deque>
+
 #include "../../sc_lib_public_tools/src/public_tools.h"
 #include "../../sc_lib_public_tools/src/tools_no_ros.h"
 
@@ -11,7 +13,6 @@ public:
     void SetSerialDevice(const std::string &serialDevice);
     void SetBaudRate(const std::string &baudRate);
     void SetOutputPath(const std::string &outputPath);
-
     virtual void Run() = 0;
 
 
@@ -20,6 +21,12 @@ protected:
     int baudRate_;
     std::string outputPath_;
     std::string rtImuFile_;
+    std::deque<double> unixTimeMinusGpsTimeQueue_;
+
+    double FillerDeque(const std::deque<double> &aDeque);
+
+
+private:
 };
 
 #endif

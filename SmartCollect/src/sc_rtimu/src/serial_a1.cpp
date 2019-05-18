@@ -4,7 +4,7 @@ void SerialA1::Run() {
     LOG(INFO) << __FUNCTION__ << " start.";
     pubNovatelMsg_ = nh_.advertise<sc_msgs::Novatel>("sc_novatel", 1);
 
-    fd_ = open(serialName_.c_str(), O_RDWR | O_NOCTTY);
+    fd_ = open(serialDevice_.c_str(), O_RDWR | O_NOCTTY);
     if(fd_ < 0) {
         LOG(ERROR) << "Failed to open device, try change permission...";
         exit(1);
@@ -31,14 +31,18 @@ int SerialA1::WriteSerial() {
     int err = -1;
     const std::vector<std::string> cmds = {
         // "freset\r",
-        "unlogall usb1\r",
-        "unlogall usb2\r",
-        "unlogall usb3\r",
+        // "unlogall usb1\r",
+        // "unlogall usb2\r",
+        // "unlogall usb3\r",
         "log usb1 rangecmpb ontime 1\r",
         "log usb1 rawephemb onchanged\r",
         "log usb1 gloephemerisb onchanged\r",
         "log usb1 bdsephemerisb onchanged\r",
         "log usb1 rawimub onnew\r",
+        "SETWHEELPARAMETERS 2048 1.95 0.001\r",
+        "log usb1 timedwheeldataa onnew\r",
+        "log usb1 wheelsizea onnew\r",
+        "log usb2 rawimub onnew\r",
         "log usb2 bestgnssposb ontime 1\r",
         "log usb2 psrdopb onchanged\r",
         "log usb2 inspvaxb ontime 1\r",
@@ -188,21 +192,6 @@ void SerialA1::ParseRawimu(const std::string &inspvaxFrame, size_t _headerLength
     }
     _gpsTime2update = uchar2Double.doubleData;
     DLOG(INFO) << std::fixed << "_gpsTime2update: " << _gpsTime2update;
-}
-
-double SerialA1::GetUnixTimeMinusGpsTime() {
-    LOG(INFO) << __FUNCTION__ << " start.";
-    return unixTimeMinusGpsTime_;
-}
-
-double SerialA1::CalcUnixTimeMinusGpsTime(double gpsWeekSec) {
-    DLOG(INFO) << __FUNCTION__ << " start.";
-
-    struct timeval now;
-    gettimeofday(&now, NULL);
-    double unixTime = now.tv_sec + now.tv_usec / 1000000.;
-
-    return (unixTime - gpsWeekSec);
 }
 
 void SerialA1::ParseInspvax(const std::string &inspvaxFrame, size_t _headerLength) {

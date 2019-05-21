@@ -44,7 +44,7 @@
             <h3>Camera 1</h3>
           </div>
           <div class="widget-content">
-            <img src="http://<%=ip%>:8080/stream?topic=/camera/image5555" height="100%" width="100%" alt="http://<%=ip%>:8080/stream?topic=/camera/image5555">
+            <img src="http://<%=ip%>:8080/stream?topic=/camera/image0" height="100%" width="100%" alt="http://<%=ip%>:8080/stream?topic=/camera/image0">
           </div>
         </div>
       </div>

@@ -85,25 +85,49 @@ redirect_glog_path() {
 make_tty_softlink() {
     log_with_time "$FUNCNAME start, param: $*"
 
-    local ls_res=$(ls /dev/ttyUSB*)
-    local usb_num=$(echo ${ls_res} | awk '{print NF}')
-    if [ "${usb_num}" -lt 3 ]; then
-        log_with_time "usb_num should >= 3: ${usb_num}"
-        exit ${usb_num}
-    fi
+    # local ls_res=$(ls /dev/ttyUSB*)
+    # local usb_num=$(echo ${ls_res} | awk '{print NF}')
+    # if [ "${usb_num}" -lt 3 ]; then
+    #     log_with_time "usb_num should >= 3: ${usb_num}"
+    #     exit ${usb_num}
+    # fi
 
-    rm /dev/novatel_usb*
-    local novatel_usb3=$(echo ${ls_res} | awk '{print $NF}')
-    local novatel_usb2=$(echo ${ls_res} | awk '{print $(NF-1)}')
-    local novatel_usb1=$(echo ${ls_res} | awk '{print $(NF-2)}')
+    # rm /dev/novatel_usb*
+    # local novatel_usb3=$(echo ${ls_res} | awk '{print $NF}')
+    # local novatel_usb2=$(echo ${ls_res} | awk '{print $(NF-1)}')
+    # local novatel_usb1=$(echo ${ls_res} | awk '{print $(NF-2)}')
 
-    ln -s ${novatel_usb3} /dev/novatel_usb3
-    ln -s ${novatel_usb2} /dev/novatel_usb2
+    # ln -s ${novatel_usb3} /dev/novatel_usb3
+    # ln -s ${novatel_usb2} /dev/novatel_usb2
 
     # ln -s ${novatel_usb1} /dev/novatel_usb1
-    rm /dev/imuRawIns
-    ln -s ${novatel_usb1} /dev/imuRawIns
+    # rm /dev/imuRawIns
+    # ln -s ${novatel_usb1} /dev/imuRawIns
 
+
+    rm /dev/imuRawIns
+    local imuRawIns=$(ls /dev/serial/by-path | grep "usb-0:2.3:1.0-port0" | head -n1)
+    if [ "AA${imuRawIns}" = "AA" ]; then
+        log_with_time "Failed to find usb-0:2.3 in /dev/serial/by-path."
+        exit 1
+    fi
+    ln -s "/dev/serial/by-path/"${imuRawIns} /dev/imuRawIns
+
+    rm /dev/timeStamper
+    local timeStamper=$(ls /dev/serial/by-path | grep "usb-0:2.1" | head -n1)
+    if [ "AA${timeStamper}" = "AA" ]; then
+        log_with_time "Failed to find usb-0:2.3 in /dev/serial/by-path."
+        exit 1
+    fi
+    ln -s "/dev/serial/by-path/"${timeStamper} /dev/timeStamper
+
+    rm /dev/imuRtData
+    local imuRtData=$(ls /dev/serial/by-path | grep "usb-0:2.3:1.0-port1" | head -n1)
+    if [ "AA${imuRtData}" = "AA" ]; then
+        log_with_time "Failed to find usb-0:2.1 in /dev/serial/by-path."
+        exit 1
+    fi
+    ln -s "/dev/serial/by-path/"${imuRtData} /dev/imuRtData
 }
 
 make_serial_softlink_by_path() {
@@ -197,7 +221,7 @@ start_smart_collector_server() {
     local task_keyword="sc_rawimu_rec"
     pkill "${task_keyword}"
     echo "pkill -INT ${task_keyword}; pkill ${task_keyword}" >>"/tmp/kill_smartc.sh"
-    /opt/smartc/devel/lib/sc_rawimu_recorder/sc_rawimu_recorder_node "/dev/imuRawIns" "460800" "${_absolute_record_path}/IMU/" &
+    /opt/smartc/devel/lib/sc_rawimu_recorder/sc_rawimu_recorder_node "/dev/imuRawIns" "115200" "${_absolute_record_path}/IMU/" &
     sleep 0.2
 
     local task_keyword="sc_images_time"
@@ -209,7 +233,7 @@ start_smart_collector_server() {
     local task_keyword="sc_rtimu_no"
     pkill "${task_keyword}"
     echo "pkill -INT ${task_keyword}; pkill ${task_keyword}" >>"/tmp/kill_smartc.sh"
-    /opt/smartc/devel/lib/sc_rtimu/sc_rtimu_node "a1" "/dev/ttyS0" "460800" "${_absolute_record_path}/IMU/" &
+    /opt/smartc/devel/lib/sc_rtimu/sc_rtimu_node "a1" "/dev/imuRtData" "115200" "${_absolute_record_path}/IMU/" &
     sleep 0.2
 
     killall nodelet

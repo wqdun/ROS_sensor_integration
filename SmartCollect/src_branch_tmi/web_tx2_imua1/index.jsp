@@ -56,6 +56,7 @@
           break;
         }
       }
+      console.log("Unknown host: " + hostName);
     }
 
 

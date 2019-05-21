@@ -14,7 +14,7 @@ void SerialA1::Run() {
         exit(1);
     }
 
-    WriteSerial();
+    // WriteSerial();
     ReadSerial();
 
     close(fd_);
@@ -46,6 +46,16 @@ int SerialA1::WriteSerial() {
         "log usb2 bestgnssposb ontime 1\r",
         "log usb2 psrdopb onchanged\r",
         "log usb2 inspvaxb ontime 1\r",
+        "SETWHEELSOURCE IMU\r",
+        "SETIMUORIENTATION 5\r",
+        "VEHICLEBODYROTATION 0 0 0 1 1 1\r",
+        "APPLYVEHICLEBODYROTATION disable\r",
+        "SETIMUTOANTOFFSET 0.06 -1.95 0 0.01 0.01 0.01\r",
+        // "SETIMUTOANTOFFSET2 X Y Z x y z\r",
+        "SETINSOFFSET 0 0 0\r",
+        "ALIGNMENTMODE AUTOMATIC\r",
+        // "auth 4JH7RG,G4J3D7,KX6D2D,6MMDG7,FC8XHM,D2SR0RTT0S1\r",
+        "SAVECONFIG\r",
     };
     for(const auto &data2Send: cmds) {
         err = write(fd_, data2Send.c_str(), data2Send.size() );

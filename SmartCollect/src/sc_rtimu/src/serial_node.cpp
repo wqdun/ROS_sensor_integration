@@ -1,5 +1,8 @@
 #include <glog/logging.h>
+#include <ros/ros.h>
+
 #include "serial_factory.h"
+#include "base_serial.h"
 
 int main(int argc, char *argv[]) {
     google::InitGoogleLogging(argv[0]);
@@ -16,8 +19,10 @@ int main(int argc, char *argv[]) {
     pSerial->SetSerialDevice(argv[2]);
     pSerial->SetBaudRate(argv[3]);
     pSerial->SetOutputPath(argv[4]);
-
     pSerial->Run();
+
+    delete pSerial;
+    pSerial = NULL;
     return 0;
 }
 

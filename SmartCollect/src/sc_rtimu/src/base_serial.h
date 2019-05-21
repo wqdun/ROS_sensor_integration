@@ -10,6 +10,9 @@
 
 class BaseSerial {
 public:
+    virtual ~BaseSerial() {
+        LOG(INFO) << "Goodbye BaseSerial..";
+    }
     void SetSerialDevice(const std::string &serialDevice);
     void SetBaudRate(const std::string &baudRate);
     void SetOutputPath(const std::string &outputPath);
@@ -19,7 +22,6 @@ public:
 protected:
     std::string serialDevice_;
     int baudRate_;
-    std::string outputPath_;
     std::string rtImuFile_;
     std::deque<double> unixTimeMinusGpsTimeQueue_;
 
@@ -27,6 +29,7 @@ protected:
 
 
 private:
+    std::string outputPath_;
 };
 
 #endif

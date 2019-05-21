@@ -137,6 +137,7 @@ add_executable(${PROJECT_NAME}_node
     src/serial_node.cpp
     src/serial_factory.cpp
     src/serial_a1.cpp
+    src/serial_5651.cpp
     src/base_serial.cpp
 )
 

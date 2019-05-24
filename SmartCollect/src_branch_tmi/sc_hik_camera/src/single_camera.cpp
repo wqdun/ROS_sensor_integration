@@ -150,6 +150,18 @@ void SingleCamera::CheckAndRestartCamera(const MV_CC_DEVICE_INFO_LIST &deviceInf
     isCallbackOK_ = false;
 }
 
+void SingleCamera::LogDeviceStatus() {
+    DLOG(INFO) << __FUNCTION__ << " start.";
+    int err = MV_OK;
+
+    MVCC_INTVALUE currentDeviceLinkSpeed = {};
+    err = MV_CC_GetIntValue(cameraHandle_, "DeviceLinkSpeed", &currentDeviceLinkSpeed);
+    assert(MV_OK == err);
+    LOG(INFO) << "Get DeviceLinkSpeed: " << currentDeviceLinkSpeed.nCurValue;
+
+    return;
+}
+
 void __stdcall SingleCamera::ImageCB(unsigned char *pData, MV_FRAME_OUT_INFO_EX *pFrameInfo, void *_pSingleCamera) {
     struct timeval now;
     gettimeofday(&now, NULL);
@@ -347,6 +359,19 @@ void SingleCamera::ConfigDevices() {
     err = MV_CC_SetEnumValue(cameraHandle_, "TriggerActivation", configValue1);
     assert(MV_OK == err);
     LOG(INFO) << "Set TriggerActivation: " << configValue1;
+
+    bool currentTriggerCacheEnable = false;
+    err = MV_CC_GetBoolValue(cameraHandle_, "TriggerCacheEnable", &currentTriggerCacheEnable);
+    assert(MV_OK == err);
+    fs["TriggerCacheEnable"] >> configValue1;
+    err = MV_CC_SetBoolValue(cameraHandle_, "TriggerCacheEnable", configValue1);
+    assert(MV_OK == err);
+    LOG(INFO) << "Current TriggerCacheEnable: " << currentTriggerCacheEnable << "-->" << configValue1;
+
+    MVCC_INTVALUE currentDeviceLinkSpeed = {};
+    err = MV_CC_GetIntValue(cameraHandle_, "DeviceLinkSpeed", &currentDeviceLinkSpeed);
+    assert(MV_OK == err);
+    LOG(INFO) << "Get DeviceLinkSpeed: " << currentDeviceLinkSpeed.nCurValue;
 
     const int nPacketSize = MV_CC_GetOptimalPacketSize(cameraHandle_);
     LOG(INFO) << "Detection network optimal package size, nPacketSize: " << nPacketSize;

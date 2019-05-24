@@ -172,7 +172,7 @@ target_link_libraries(${PROJECT_NAME}_node
   /usr/local/lib/libopencv_imgproc.so
   glog
   /opt/MVS/bin/libMvCameraControl.so
-  sc_lib_public_tools
+  ${PROJECT_SOURCE_DIR}/../../devel/lib/libsc_lib_public_tools.so
 )
 
 # Below for test serial reader

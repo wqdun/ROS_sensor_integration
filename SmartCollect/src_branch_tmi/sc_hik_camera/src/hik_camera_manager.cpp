@@ -86,7 +86,7 @@ void HikCameraManager::Run() {
 
         for (size_t i = 0; i < CAM_NUM; ++i) {
             pSingleCameras_[i]->PublishImage();
-
+            pSingleCameras_[i]->LogDeviceStatus();
             // 0.25Hz
             if (0 == (freqDivider % 4) ) {
                 pSingleCameras_[i]->CheckAndRestartCamera(deviceList_, i);

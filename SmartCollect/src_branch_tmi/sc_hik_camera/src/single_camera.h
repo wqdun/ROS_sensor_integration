@@ -29,6 +29,7 @@ public:
     void PublishImage();
     void AdaptNightMode();
     void CheckAndRestartCamera(const MV_CC_DEVICE_INFO_LIST &deviceInfoList, size_t index);
+    void LogDeviceStatus();
 
 
 private:

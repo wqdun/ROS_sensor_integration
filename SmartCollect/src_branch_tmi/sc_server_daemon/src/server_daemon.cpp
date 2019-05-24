@@ -158,7 +158,30 @@ void ServerDaemon::Run() {
         monitorMsg_.sc_check_camera_num = sharedMem_->cameraNum;
         monitorMsg_.sc_check_imu_serial_port = sharedMem_->imuSerialPortStatus;
 
+        // 1Hz
+        if(0 == (freqDivider % 2) ) {
+            LogSystemStatus();
+        }
+
         pub2client_.publish(monitorMsg_);
+    }
+}
+
+void ServerDaemon::LogSystemStatus() {
+    std::vector<std::string> memCpuStatus;
+    memCpuStatus.clear();
+    const std::string getMemCpuStatusCmd("/usr/bin/vmstat -w");
+    (void)public_tools::PublicTools::PopenWithReturn(getMemCpuStatusCmd, memCpuStatus);
+    for (const auto &memCpu: memCpuStatus) {
+        LOG(INFO) << "memCpuStatus: " << memCpu;
+    }
+
+    std::vector<std::string> netStatus;
+    netStatus.clear();
+    const std::string getNetStatusCmd("/sbin/ifconfig");
+    (void)public_tools::PublicTools::PopenWithReturn(getNetStatusCmd, netStatus);
+    for (const auto &net: netStatus) {
+        LOG(INFO) << "netStatus: " << net;
     }
 }
 

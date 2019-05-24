@@ -264,7 +264,7 @@ void ServerDaemon::ImuA1CB(const sc_msgs::Novatel::ConstPtr& pNovatelMsg) {
     // std::stringstream iss(pNovatelMsg->status);
     // int _status = 0;
     // iss >> std::hex >> _status;
-    // monitorMsg_.status = _status;
+    monitorMsg_.status = pNovatelMsg->ins_status;
 
     monitorMsg_.unix_time_minus_gps_time = pNovatelMsg->unix_time_minus_gps_time;
 }

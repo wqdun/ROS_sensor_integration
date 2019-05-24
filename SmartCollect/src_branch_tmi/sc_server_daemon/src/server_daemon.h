@@ -81,6 +81,7 @@ private:
     void RegisterCBs();
     bool IsFpsEqual(double a, double b);
     bool IsFpsGood(double a, double b, double c);
+    void LogSystemStatus();
 };
 
 #endif // __SERVER_DAEMON_H

@@ -405,7 +405,8 @@ install_jdk() {
     sudo mkdir -p /opt/java/
     sudo tar zxvf jdk-8u144-linux-x64.tar.gz -C /opt/java/
 
-    echo 'export JAVA_HOME=/opt/java/jdk1.8.0_144' >>${HOME}/.bashrc
+    local java_home=$(echo /opt/java/jdk* | awk '{print $1}')
+    echo "export JAVA_HOME=${java_home}" >>${HOME}/.bashrc
     echo 'export JRE_HOME=${JAVA_HOME}/jre' >>${HOME}/.bashrc
     echo 'export CLASSPATH=.:${JAVA_HOME}/lib:${JRE_HOME}/lib' >>${HOME}/.bashrc
     echo 'export PATH=${JAVA_HOME}/bin:$PATH' >>${HOME}/.bashrc

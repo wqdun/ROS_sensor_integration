@@ -19,12 +19,12 @@
 log/
 roadmap/
 devel/
-build/
 .idea/
 .settings/
 
 a.out
 /SmartCollect/.catkin_workspace
+/SmartCollect/build/
 /SmartCollect/src/CMakeLists.txt
 /FromGithub_*/
 /SmartCollect/src_sc0010_20190417/

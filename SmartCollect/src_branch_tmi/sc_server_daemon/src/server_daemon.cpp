@@ -273,6 +273,49 @@ void ServerDaemon::velodyneCB(const velodyne_msgs::Velodyne2Center::ConstPtr& pV
     monitorMsg_.velodyne_rpm = pVelodyneMsg->velodyne_rpm;
 }
 
+// void ServerDaemon::ImuA1CB(const sc_msgs::Novatel::ConstPtr& pNovatelMsg) {
+//     // 100Hz
+//     gpsTime_[0] = gpsTime_[1];
+//     gpsTime_[1] = pNovatelMsg->GPS_week_sec;
+//     // do nothing if receive same frame
+//     if(gpsTime_[0] == gpsTime_[1]) {
+//         LOG_EVERY_N(INFO, 10) << "Same frame received, GPStime: " << pNovatelMsg->GPS_week_sec;
+//         return;
+//     }
+//     isGpsUpdated_ = true;
+
+//     monitorMsg_.GPStime = gpsTime_[1];
+//     monitorMsg_.hdop = pNovatelMsg->hdop;
+
+//     sc_msgs::Point3D p;
+//     // lat: 1 degree is about 100000 m
+//     p.x = pNovatelMsg->latitude;
+//     // lon: 1 degree is about 100000 m
+//     p.y = pNovatelMsg->longitude;
+//     p.z = pNovatelMsg->height;
+//     monitorMsg_.lat_lon_hei = p;
+
+//     p.x = pNovatelMsg->pitch;
+//     p.y = pNovatelMsg->roll;
+//     p.z = pNovatelMsg->azimuth;
+//     monitorMsg_.pitch_roll_heading = p;
+
+//     // const double vEast = pNovatelMsg->east_vel;
+//     // const double vNorth = pNovatelMsg->north_vel;
+//     // const double vUp = pNovatelMsg->up_vel;
+//     // monitorMsg_.speed = sqrt(vEast * vEast + vNorth * vNorth + vUp * vUp) * 3.6;
+//     monitorMsg_.speed = pNovatelMsg->abs_vel * 3.6;
+
+//     monitorMsg_.no_sv = pNovatelMsg->sv_num;
+
+//     // std::stringstream iss(pNovatelMsg->status);
+//     // int _status = 0;
+//     // iss >> std::hex >> _status;
+//     monitorMsg_.status = pNovatelMsg->ins_status;
+
+//     monitorMsg_.unix_time_minus_gps_time = pNovatelMsg->unix_time_minus_gps_time;
+// }
+
 void ServerDaemon::SerialCB(const sc_msgs::imu5651::ConstPtr& pImu5651Msg) {
     LOG(INFO) << __FUNCTION__ << " start: " << pImu5651Msg->gps_time;
     gpsTime_[0] = gpsTime_[1];

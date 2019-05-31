@@ -17,6 +17,7 @@
 #include "sc_msgs/ProjectInfoMsg.h"
 #include "sc_msgs/DiskInfo.h"
 #include "sc_msgs/imu5651.h"
+#include "sc_msgs/Novatel.h"
 #include "velodyne_msgs/Velodyne2Center.h"
 #include "sc_msgs/scIntegrateImu.h"
 #include "sc_msgs/DataFixerProgress.h"
@@ -61,6 +62,7 @@ private:
     void clientCB(const sc_msgs::ClientCmd::ConstPtr& pClientMsg);
 
     bool isGpsUpdated_, isVelodyneUpdated_, isRawImuUpdated_, isCamera0FpsUpdated_, isCamera1FpsUpdated_, isCamera2FpsUpdated_, isDiskInfoUpdated_;
+    void ImuA1CB(const sc_msgs::Novatel::ConstPtr& pNovatelMsg);
     void SerialCB(const sc_msgs::imu5651::ConstPtr& pImu5651Msg);
     void velodyneCB(const velodyne_msgs::Velodyne2Center::ConstPtr& pVelodyneMsg);
     void Camera0FpsCB(const std_msgs::Float64::ConstPtr& pCameraImgMsg);

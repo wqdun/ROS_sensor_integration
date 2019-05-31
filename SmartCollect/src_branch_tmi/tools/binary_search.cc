@@ -19,7 +19,6 @@ int main() {
     int smallIndex = 0;
     int i = (bigIndex + smallIndex) / 2;
 
-
     while ( (i < bigIndex) && (i > smallIndex) ) {
         if (KEY > intArr[i]) {
             smallIndex = i;

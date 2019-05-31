@@ -155,7 +155,7 @@ add_executable(${PROJECT_NAME}_node
 target_link_libraries(${PROJECT_NAME}_node
   ${catkin_LIBRARIES}
   glog
-  sc_lib_public_tools
+  ${PROJECT_SOURCE_DIR}/../../devel/lib/libsc_lib_public_tools.so
 )
 
 #############

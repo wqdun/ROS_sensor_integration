@@ -4,9 +4,9 @@ void Serial5651::Run() {
     LOG(INFO) << __FUNCTION__ << " start.";
     pubImu5651_ = nh_.advertise<sc_msgs::imu5651>("imu_string", 10);
 
-    const int fd = open(serialName_.c_str(), O_RDWR | O_NOCTTY);
+    const int fd = open(serialDevice_.c_str(), O_RDWR | O_NOCTTY);
     if(fd < 0) {
-        LOG(ERROR) << "Failed to open " << serialName_ << ", try change permission...";
+        LOG(ERROR) << "Failed to open " << serialDevice_ << ", try change permission...";
         return;
     }
 

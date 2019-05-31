@@ -35,7 +35,7 @@ private:
     ros::Publisher pubImu5651_;
     sc_msgs::imu5651 imu232Msg_;
     std::string serialName_;
-    std::string rtImuFile_;
+    // std::string rtImuFile_;
 };
 
 #endif

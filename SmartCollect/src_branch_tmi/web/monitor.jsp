@@ -320,7 +320,9 @@
                             <td colspan="2">Location: <br/><a href="#" id="location" class="alert-link">"bbb", "cc"</a></td>
                             <td colspan="1">Camera Num: <br/><a href="#" id="camera_num" class="alert-link">""</a></td>
                             <td colspan="2" rowspan="4" style="text-align:center;">
+                                <a href="img.jsp?camerid=6666">
                                 <img src="http://<%=ip%>:8080/stream?topic=/camera/image6666" width="340px" alt="http://<%=ip%>:8080/stream?topic=/camera/image6666">
+                                </a>
                             </td>
                         </tr>
                         <tr>

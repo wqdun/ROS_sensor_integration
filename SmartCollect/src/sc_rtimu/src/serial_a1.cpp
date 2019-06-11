@@ -21,7 +21,7 @@ void SerialA1::Run() {
 }
 
 void SerialA1::PublishMsg() {
-    LOG(INFO) << __FUNCTION__ << " start.";
+    LOG_EVERY_N(INFO, 100) << __FUNCTION__ << " start.";
     pubNovatelMsg_.publish(novatelMsg_);
 }
 
@@ -47,10 +47,10 @@ int SerialA1::WriteSerial() {
         "log usb2 psrdopb onchanged\r",
         "log usb2 inspvaxb ontime 1\r",
         "SETWHEELSOURCE IMU negative\r",
-        "SETIMUORIENTATION 6\r",
-        "VEHICLEBODYROTATION 0 0 90 1 1 1\r",
-        "APPLYVEHICLEBODYROTATION ENABLE\r",
-        "SETIMUTOANTOFFSET 0.06 -1.95 0 0.01 0.01 0.01\r",
+        "SETIMUORIENTATION 5\r",
+        "VEHICLEBODYROTATION 0 0 0 1 1 1\r",
+        "APPLYVEHICLEBODYROTATION DISABLE\r",
+        "SETIMUTOANTOFFSET 0.114 -0.084 0.498 0.01 0.01 0.01\r",
         "ENCLOSUREWHEELSENSOR ENABLE\r",
         // "SETIMUTOANTOFFSET2 X Y Z x y z\r",
         "SETINSOFFSET 0 0 0\r",
@@ -112,7 +112,7 @@ void SerialA1::ReadSerial() {
             LOG(INFO) << i << ":" << std::hex << (int)framesBuf[i];
         }
 #endif
-        LOG(INFO) << "framesBuf.size(): " << framesBuf.size();
+        LOG_EVERY_N(INFO, 100) << "framesBuf.size(): " << framesBuf.size();
         size_t save4NextFrameIndex = framesBuf.size();
         double latestGpsTime = -1;
         for(size_t bufIndex = 0; bufIndex < framesBuf.size() - 8; ++bufIndex) {

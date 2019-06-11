@@ -46,7 +46,7 @@ void DiskMonitor::GetDiskUsage(const std::string &_projectPath, sc_msgs::Monitor
 }
 
 bool DiskMonitor::IsNotProject(const std::string &_dirName) {
-    LOG(INFO) << __FUNCTION__ << " start, param: " << _dirName;
+    DLOG(INFO) << __FUNCTION__ << " start, param: " << _dirName;
 
     std::vector<std::string> splitDirName;
     (void)boost::split(splitDirName, _dirName, boost::is_any_of( "-" ));
@@ -60,7 +60,7 @@ bool DiskMonitor::IsNotProject(const std::string &_dirName) {
 }
 
 bool DiskMonitor::IsProjectCollated(const std::string &_dirName) {
-    LOG(INFO) << __FUNCTION__ << " start, param: " << _dirName;
+    DLOG(INFO) << __FUNCTION__ << " start, param: " << _dirName;
 
     const std::string fullProjectPath("/opt/smartc/record/" + _dirName);
     return public_tools::PublicTools::isFileExist(fullProjectPath + "/Process/");
@@ -74,7 +74,7 @@ void DiskMonitor::FilterProjects(std::vector<std::string> &dirs) {
 }
 
 void DiskMonitor::SortProjects(std::vector<std::string> &projects) {
-    LOG(INFO) << __FUNCTION__ << " start.";
+    DLOG(INFO) << __FUNCTION__ << " start.";
 
     std::vector<std::string> collatedProjects;
     collatedProjects.clear();
@@ -83,11 +83,11 @@ void DiskMonitor::SortProjects(std::vector<std::string> &projects) {
 
     for (const auto &project: projects) {
         if(IsProjectCollated(project)) {
-            LOG(INFO) << project << " has been collated.";
+            DLOG(INFO) << project << " has been collated.";
             collatedProjects.push_back(project + "(√)");
         }
         else {
-            LOG(INFO) << project << " has not been collated.";
+            DLOG(INFO) << project << " has not been collated.";
             uncollatedProjects.push_back(project);
         }
     }
@@ -96,7 +96,7 @@ void DiskMonitor::SortProjects(std::vector<std::string> &projects) {
     projects.insert(projects.end(), collatedProjects.begin(), collatedProjects.end());
 
     for (const auto &project: projects) {
-        LOG(INFO) << "project: " << project;
+        DLOG(INFO) << "project: " << project;
     }
 
 }

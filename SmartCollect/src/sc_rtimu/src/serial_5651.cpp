@@ -108,7 +108,7 @@ void Serial5651::ReadSerial(int _fd) {
 }
 
 void Serial5651::Parse5651Frame(const std::string &_frame, double _unixTime) {
-    LOG(INFO) << __FUNCTION__ << " start.";
+    DLOG(INFO) << __FUNCTION__ << " start.";
     assert(!_frame.empty() );
 
     if("$GPFPD" == _frame.substr(0, 6)) {
@@ -131,7 +131,7 @@ void Serial5651::Parse5651Frame(const std::string &_frame, double _unixTime) {
 }
 
 void Serial5651::Parse5651GpggaFrame(const std::string &_gpggaFrame) {
-    LOG(INFO) << __FUNCTION__ << " start.";
+    DLOG(INFO) << __FUNCTION__ << " start.";
 
     std::vector<std::string> gpggaFrameParsed;
     boost::split(gpggaFrameParsed, _gpggaFrame, boost::is_any_of(",*") );
@@ -151,7 +151,7 @@ void Serial5651::Parse5651GpggaFrame(const std::string &_gpggaFrame) {
 }
 
 void Serial5651::WriteRtImuFile(const std::string &_gpfpdFrame) {
-    LOG(INFO) << __FUNCTION__ << " start.";
+    DLOG(INFO) << __FUNCTION__ << " start.";
 
     std::fstream file(rtImuFile_, std::ios::out | std::ios::app);
     if(!file) {

@@ -1,6 +1,4 @@
 #include "center_subscriber.h"
-// #define NDEBUG
-#undef NDEBUG
 #include <glog/logging.h>
 
 CenterSubscriber::CenterSubscriber(ros::NodeHandle node, ros::NodeHandle private_nh) {

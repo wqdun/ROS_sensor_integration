@@ -1,29 +1,26 @@
 #include "server_daemon.h"
 
-ServerDaemon::ServerDaemon(ros::NodeHandle nh, ros::NodeHandle private_nh) {
+ServerDaemon::ServerDaemon() {
     gpsTime_.resize(2);
+    gpsTime_[0].clear();
+    gpsTime_[1].clear();
+
     // below for SC control
-    subClient_ = nh.subscribe("sc_client_cmd", 1, &ServerDaemon::clientCB, this);
     monitorMsg_.is_record = 0;
     monitorMsg_.cam_gain = 20;
     monitorMsg_.pps_HWcheck = -1;
     monitorMsg_.gprmc_HWcheck = -1;
     monitorMsg_.imu_HWcheck = -1;
+    monitorMsg_.is_disk_error = false;
 
-    // below for composing monitor data
-    isGpsUpdated_ = isVelodyneUpdated_ = isRawImuUpdated_ = isCameraUpdated_ = isDiskInfoUpdated_ = false;
-    subSerial_ = nh.subscribe("imu_string", 10, &ServerDaemon::SerialCB, this);
-    subVelodyne_ = nh.subscribe("velodyne_pps_status", 0, &ServerDaemon::velodyneCB, this);
-    subCameraImg_ = nh.subscribe("cam_speed0", 0, &ServerDaemon::cameraImgCB, this);
-    subProjectMonitor_ = nh.subscribe("sc_disk_info", 0, &ServerDaemon::projectMonitorCB, this);
-    subDataFixer_ = nh.subscribe("sc_data_fixer_progress", 0, &ServerDaemon::dataFixerCB, this);
+    isGpsUpdated_ = isVelodyneUpdated_ = isRawImuUpdated_
+        = isCamera0FpsUpdated_ = isCamera1FpsUpdated_ = isCamera2FpsUpdated_
+        = isDiskInfoUpdated_ = false;
 
-    pub2client_ = nh.advertise<sc_msgs::MonitorMsg>("sc_monitor", 0);
-    gpsTime_[0] = gpsTime_[1] = -1;
-
+    projectInfo_.clear();
     pDiskMonitor_.reset(new DiskMonitor() );
 
-    int shmid = shmget((key_t)1234, sizeof(struct SharedMem), 0666|IPC_CREAT);
+    int shmid = shmget((key_t)1234, sizeof(struct SharedMem), 0666 | IPC_CREAT);
     if(shmid < 0) {
         LOG(ERROR) << "shget failed.";
         exit(1);
@@ -39,10 +36,29 @@ ServerDaemon::ServerDaemon(ros::NodeHandle nh, ros::NodeHandle private_nh) {
 
 ServerDaemon::~ServerDaemon() {}
 
-void ServerDaemon::run() {
+void ServerDaemon::RegisterCBs() {
+    subClient_ = nh_.subscribe("sc_client_cmd", 1, &ServerDaemon::clientCB, this);
+    subSerial_ = nh_.subscribe("imu_string", 10, &ServerDaemon::SerialCB, this);
+    subVelodyne_ = nh_.subscribe("velodyne_pps_status", 10, &ServerDaemon::velodyneCB, this);
+    subCamera0Fps_ = nh_.subscribe("cam_speed5555", 10, &ServerDaemon::Camera0FpsCB, this);
+    subCamera1Fps_ = nh_.subscribe("cam_speed6666", 10, &ServerDaemon::Camera1FpsCB, this);
+    subCamera2Fps_ = nh_.subscribe("cam_speed7777", 10, &ServerDaemon::Camera2FpsCB, this);
+    subProjectMonitor_ = nh_.subscribe("sc_disk_info", 10, &ServerDaemon::projectMonitorCB, this);
+    subDataFixer_ = nh_.subscribe("sc_data_fixer_progress", 10, &ServerDaemon::dataFixerCB, this);
+
+    pub2client_ = nh_.advertise<sc_msgs::MonitorMsg>("sc_monitor", 10);
+}
+
+void ServerDaemon::Run() {
+    const size_t HOSTNAME_SIZE = 60;
+    char hostname[HOSTNAME_SIZE];
+    bzero(hostname, HOSTNAME_SIZE);
+    (void)gethostname(hostname, HOSTNAME_SIZE);
+    monitorMsg_.host_name = hostname;
+    RegisterCBs();
+
     ros::Rate rate(2);
     size_t freqDivider = 0;
-
     bool isScTimeCalibrated = false;
     while(ros::ok() ) {
         ++freqDivider;
@@ -71,11 +87,35 @@ void ServerDaemon::run() {
 
         // 0.5Hz
         if(0 == (freqDivider % 4) ) {
-            if(!isCameraUpdated_) {
-                DLOG(INFO) << "camera node not running.";
-                monitorMsg_.camera_fps = 0;
+            monitorMsg_.is_cameras_good = (
+                isCamera0FpsUpdated_
+                && isCamera1FpsUpdated_
+                && isCamera2FpsUpdated_
+                && IsFpsGood(camera0Fps_, camera1Fps_, camera2Fps_)
+            );
+
+            if(!isCamera0FpsUpdated_) {
+                DLOG(INFO) << "Failed to get camera 0 fps.";
+                camera0Fps_ = 0;
             }
-            isCameraUpdated_ = false;
+            isCamera0FpsUpdated_ = false;
+
+            if(!isCamera1FpsUpdated_) {
+                DLOG(INFO) << "Failed to get camera 1 fps.";
+                camera1Fps_ = 0;
+            }
+            isCamera1FpsUpdated_ = false;
+
+            if(!isCamera2FpsUpdated_) {
+                DLOG(INFO) << "Failed to get camera 2 fps.";
+                camera2Fps_ = 0;
+            }
+            isCamera2FpsUpdated_ = false;
+
+            monitorMsg_.camera_fps = (camera0Fps_ + camera1Fps_ + camera2Fps_) / 3.;
+            monitorMsg_.camera0_fps = camera0Fps_;
+            monitorMsg_.camera1_fps = camera1Fps_;
+            monitorMsg_.camera2_fps = camera2Fps_;
         }
 
         // 0.25Hz
@@ -89,7 +129,7 @@ void ServerDaemon::run() {
 
         monitorMsg_.projects.clear();
         monitorMsg_.disk_usage.clear();
-        (void)pDiskMonitor_->run("/opt/smartc/record/", monitorMsg_);
+        (void)pDiskMonitor_->Run("/opt/smartc/record/", monitorMsg_);
 
         if(public_tools::PublicTools::isFileExist("/tmp/data_fixer_progress_100%") ) {
             monitorMsg_.process_num = monitorMsg_.total_file_num;
@@ -118,8 +158,44 @@ void ServerDaemon::run() {
         monitorMsg_.sc_check_camera_num = sharedMem_->cameraNum;
         monitorMsg_.sc_check_imu_serial_port = sharedMem_->imuSerialPortStatus;
 
+        // 1Hz
+        if(0 == (freqDivider % 2) ) {
+            LogSystemStatus();
+        }
+
         pub2client_.publish(monitorMsg_);
     }
+}
+
+void ServerDaemon::LogSystemStatus() {
+    std::vector<std::string> memCpuStatus;
+    memCpuStatus.clear();
+    const std::string getMemCpuStatusCmd("/usr/bin/vmstat -w");
+    (void)public_tools::PublicTools::PopenWithReturn(getMemCpuStatusCmd, memCpuStatus);
+    for (const auto &memCpu: memCpuStatus) {
+        LOG(INFO) << "memCpuStatus: " << memCpu;
+    }
+
+    std::vector<std::string> netStatus;
+    netStatus.clear();
+    const std::string getNetStatusCmd("/sbin/ifconfig");
+    (void)public_tools::PublicTools::PopenWithReturn(getNetStatusCmd, netStatus);
+    for (const auto &net: netStatus) {
+        LOG(INFO) << "netStatus: " << net;
+    }
+}
+
+bool ServerDaemon::IsFpsGood(double a, double b, double c) {
+    return (
+        (IsFpsEqual(a, b))
+        && (IsFpsEqual(a, c))
+        && (IsFpsEqual(b, c))
+    );
+}
+
+bool ServerDaemon::IsFpsEqual(double a, double b) {
+    const double FACTOR = 0.4;
+    return (((a - b) > -FACTOR) && ((a - b) < FACTOR));
 }
 
 int ServerDaemon::SetScTimeByGpsTime() {
@@ -145,7 +221,7 @@ void ServerDaemon::RestartSelf() {
     LOG(INFO) << __FUNCTION__ << " start.";
 
     const std::string launchScript("/opt/smartc/src/tools/launch_project.sh");
-    (void)public_tools::PublicTools::PopenWithoutReturn("bash " + launchScript + " restart_server &");
+    (void)public_tools::PublicTools::PopenWithoutReturn("bash " + launchScript + " restart_server " + projectInfo_ + " &");
 
     LOG(INFO) << __FUNCTION__ << " end.";
 }
@@ -163,11 +239,22 @@ void ServerDaemon::dataFixerCB(const sc_msgs::DataFixerProgress::ConstPtr& pData
     monitorMsg_.process_num = pDataFixerProgressMsg->processNum;
 }
 
-void ServerDaemon::cameraImgCB(const std_msgs::Float64::ConstPtr& pCameraImgMsg) {
+void ServerDaemon::Camera0FpsCB(const std_msgs::Float64::ConstPtr& pCameraImgMsg) {
     DLOG(INFO) << __FUNCTION__ << " start in ?Hz, camera_fps: " << pCameraImgMsg->data;
-    isCameraUpdated_ = true;
+    isCamera0FpsUpdated_ = true;
+    camera0Fps_ = pCameraImgMsg->data;
+}
 
-    monitorMsg_.camera_fps = pCameraImgMsg->data;
+void ServerDaemon::Camera1FpsCB(const std_msgs::Float64::ConstPtr& pCameraImgMsg) {
+    DLOG(INFO) << __FUNCTION__ << " start in ?Hz, camera_fps: " << pCameraImgMsg->data;
+    isCamera1FpsUpdated_ = true;
+    camera1Fps_ = pCameraImgMsg->data;
+}
+
+void ServerDaemon::Camera2FpsCB(const std_msgs::Float64::ConstPtr& pCameraImgMsg) {
+    DLOG(INFO) << __FUNCTION__ << " start in ?Hz, camera_fps: " << pCameraImgMsg->data;
+    isCamera2FpsUpdated_ = true;
+    camera2Fps_ = pCameraImgMsg->data;
 }
 
 void ServerDaemon::velodyneCB(const velodyne_msgs::Velodyne2Center::ConstPtr& pVelodyneMsg) {
@@ -186,8 +273,51 @@ void ServerDaemon::velodyneCB(const velodyne_msgs::Velodyne2Center::ConstPtr& pV
     monitorMsg_.velodyne_rpm = pVelodyneMsg->velodyne_rpm;
 }
 
+// void ServerDaemon::ImuA1CB(const sc_msgs::Novatel::ConstPtr& pNovatelMsg) {
+//     // 100Hz
+//     gpsTime_[0] = gpsTime_[1];
+//     gpsTime_[1] = pNovatelMsg->GPS_week_sec;
+//     // do nothing if receive same frame
+//     if(gpsTime_[0] == gpsTime_[1]) {
+//         LOG_EVERY_N(INFO, 10) << "Same frame received, GPStime: " << pNovatelMsg->GPS_week_sec;
+//         return;
+//     }
+//     isGpsUpdated_ = true;
+
+//     monitorMsg_.GPStime = gpsTime_[1];
+//     monitorMsg_.hdop = pNovatelMsg->hdop;
+
+//     sc_msgs::Point3D p;
+//     // lat: 1 degree is about 100000 m
+//     p.x = pNovatelMsg->latitude;
+//     // lon: 1 degree is about 100000 m
+//     p.y = pNovatelMsg->longitude;
+//     p.z = pNovatelMsg->height;
+//     monitorMsg_.lat_lon_hei = p;
+
+//     p.x = pNovatelMsg->pitch;
+//     p.y = pNovatelMsg->roll;
+//     p.z = pNovatelMsg->azimuth;
+//     monitorMsg_.pitch_roll_heading = p;
+
+//     // const double vEast = pNovatelMsg->east_vel;
+//     // const double vNorth = pNovatelMsg->north_vel;
+//     // const double vUp = pNovatelMsg->up_vel;
+//     // monitorMsg_.speed = sqrt(vEast * vEast + vNorth * vNorth + vUp * vUp) * 3.6;
+//     monitorMsg_.speed = pNovatelMsg->abs_vel * 3.6;
+
+//     monitorMsg_.no_sv = pNovatelMsg->sv_num;
+
+//     // std::stringstream iss(pNovatelMsg->status);
+//     // int _status = 0;
+//     // iss >> std::hex >> _status;
+//     monitorMsg_.status = pNovatelMsg->ins_status;
+
+//     monitorMsg_.unix_time_minus_gps_time = pNovatelMsg->unix_time_minus_gps_time;
+// }
+
 void ServerDaemon::SerialCB(const sc_msgs::imu5651::ConstPtr& pImu5651Msg) {
-    LOG_EVERY_N(INFO, 10) << __FUNCTION__ << " start.";
+    LOG(INFO) << __FUNCTION__ << " start: " << pImu5651Msg->gps_time;
     gpsTime_[0] = gpsTime_[1];
     gpsTime_[1] = pImu5651Msg->gps_time;
     if(gpsTime_[0] == gpsTime_[1]) {
@@ -248,7 +378,7 @@ void ServerDaemon::clientCB(const sc_msgs::ClientCmd::ConstPtr& pClientMsg) {
         }
         case 3: {
             LOG(INFO) << "I am gonna cleanup server processes.";
-            (void)updateProjectInfo("");
+            (void)UpdateProjectInfo("");
             const std::string launchScript("/opt/smartc/src/tools/launch_project.sh");
             if(!(public_tools::PublicTools::isFileExist(launchScript) ) ) {
                 LOG(ERROR) << launchScript << " does not exist.";
@@ -292,7 +422,8 @@ void ServerDaemon::clientCB(const sc_msgs::ClientCmd::ConstPtr& pClientMsg) {
         }
         case 6: {
             LOG(INFO) << "I am gonna launch a new project: " << pClientMsg->cmd_arguments;
-            (void)updateProjectInfo(pClientMsg->cmd_arguments);
+            (void)UpdateProjectInfo(pClientMsg->cmd_arguments);
+            projectInfo_ = pClientMsg->cmd_arguments;
             const std::string launchScript("/opt/smartc/src/tools/launch_project.sh");
             if(!(public_tools::PublicTools::isFileExist(launchScript) ) ) {
                 LOG(ERROR) << launchScript << " does not exist.";
@@ -490,13 +621,14 @@ void ServerDaemon::projectMonitorCB(const sc_msgs::DiskInfo::ConstPtr& pDiskInfo
     monitorMsg_.timestamp_size = pDiskInfoMsg->timestamp_size;
 }
 
-void ServerDaemon::updateProjectInfo(const std::string &projectInfo) {
+void ServerDaemon::UpdateProjectInfo(const std::string &projectInfo) {
     LOG(INFO) << __FUNCTION__ << " start, projectInfo: " << projectInfo;
     if(projectInfo.empty() ) {
         LOG(INFO) << "Clear projectInfo message.";
         monitorMsg_.project_info.city_code = monitorMsg_.project_info.daynight_code = 0;
         monitorMsg_.project_info.task_id.clear();
         monitorMsg_.project_info.device_id.clear();
+        monitorMsg_.project_info.date.clear();
 
         monitorMsg_.is_record = 0;
         monitorMsg_.cam_gain = 20;
@@ -514,6 +646,7 @@ void ServerDaemon::updateProjectInfo(const std::string &projectInfo) {
     monitorMsg_.project_info.daynight_code = public_tools::PublicTools::string2num(parsedProjectInfo[1], 0);
     monitorMsg_.project_info.task_id = parsedProjectInfo[2].substr(0, parsedProjectInfo[2].size() - 4);
     monitorMsg_.project_info.device_id = parsedProjectInfo[2].substr(parsedProjectInfo[2].size() - 4);
+    monitorMsg_.project_info.date = parsedProjectInfo[3];
     return;
 }
 

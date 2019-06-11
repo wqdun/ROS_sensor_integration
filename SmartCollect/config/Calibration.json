@@ -1,0 +1,42 @@
+{
+    "canlibration": {
+        "start_time":"2017-10-19 09:32:00",
+        "sensor": {
+            "ISJanPanData":-1,
+            "lidar_pos": {
+                "R": [
+                    29.9611,
+                    -0.482069,
+                    0.449294
+                ],
+                "T": [
+                     -0.119753,
+                    0.100595,
+                   0.00445492
+                ]
+            },
+            "laser_format": 0,
+            "laser_filepath": "D:\\svn\\trunk\\Tools\\GussToLidar\\",
+            "imu_type": 0,
+            "post_processing":true,
+            "pos_format": 10,
+            "pos_filepath": "D:\\svn\\trunk\\Tools\\GussToLidar\\GussToLidar\\"
+
+        },
+	    "camera":{
+            "cameraMatrix":[ 4711.9483, 0, 2049.84, 0, 4720.23, 1094.76, 0, 0, 1],
+            "tvec":[0.16472,-0.157404,-0.166497],
+            "rvec":[0.000316329,-0.00858682,-0.00545941],
+            "ipm":[1.0,0.0,0.0,0.0,1.0,0.0,0.0,0.0,1.0]
+	    },
+        "param": {
+            "jump_second": 18
+        },
+        "data": {
+            "auto_split": false,
+            "auto_data_reduce": false,
+            "data_format":0,
+            "output_path": "D:\\svn\\trunk\\Tools\\GussToLidar\\GussToLidar\\"
+        }
+    }
+}

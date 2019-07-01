@@ -11,11 +11,11 @@ DiskMonitor::~DiskMonitor() {
 }
 
 void DiskMonitor::Run(const std::string &_projectPath, sc_msgs::MonitorMsg &_monitorMsg) {
-    LOG(INFO) << __FUNCTION__ << " start.";
+    DLOG(INFO) << __FUNCTION__ << " start.";
 
     (void)GetDiskUsage(_projectPath, _monitorMsg);
     (void)GetProjects(_projectPath, _monitorMsg);
-    LOG(INFO) << __FUNCTION__ << " end.";
+    DLOG(INFO) << __FUNCTION__ << " end.";
 }
 
 void DiskMonitor::GetProjects(const std::string &_projectPath, sc_msgs::MonitorMsg &_monitorMsg) {
@@ -38,7 +38,7 @@ void DiskMonitor::GetProjects(const std::string &_projectPath, sc_msgs::MonitorM
 }
 
 void DiskMonitor::GetDiskUsage(const std::string &_projectPath, sc_msgs::MonitorMsg &_monitorMsg) {
-    LOG(INFO) << __FUNCTION__ << " start.";
+    DLOG(INFO) << __FUNCTION__ << " start.";
     std::vector<std::string> diskUsage;
     const std::string getDiskUsageCmd("df -BG /opt/smartc/record/ | tail -n1 | awk '{print $2\", \"$5}'");
     (void)public_tools::PublicTools::PopenWithReturn(getDiskUsageCmd, diskUsage);
@@ -53,7 +53,7 @@ bool DiskMonitor::IsNotProject(const std::string &_dirName) {
 
     const size_t numOfDash = splitDirName.size() - 1;
     if(3 != numOfDash) {
-        LOG(INFO) << _dirName << " has " << numOfDash << " -, not a project.";
+        LOG_EVERY_N(INFO, 50) << _dirName << " has " << numOfDash << " -, not a project.";
         return true;
     }
     return false;
@@ -67,7 +67,7 @@ bool DiskMonitor::IsProjectCollated(const std::string &_dirName) {
 }
 
 void DiskMonitor::FilterProjects(std::vector<std::string> &dirs) {
-    LOG(INFO) << __FUNCTION__ << " start.";
+    DLOG(INFO) << __FUNCTION__ << " start.";
 
     dirs.erase(std::remove_if(dirs.begin(), dirs.end(), IsNotProject), dirs.end());
     return;

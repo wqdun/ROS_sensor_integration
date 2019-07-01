@@ -158,8 +158,8 @@ void ServerDaemon::Run() {
         monitorMsg_.sc_check_camera_num = sharedMem_->cameraNum;
         monitorMsg_.sc_check_imu_serial_port = sharedMem_->imuSerialPortStatus;
 
-        // 1Hz
-        if(0 == (freqDivider % 2) ) {
+        // 0.5Hz
+        if(0 == (freqDivider % 4) ) {
             LogSystemStatus();
         }
 
@@ -233,7 +233,7 @@ bool ServerDaemon::IsScTimeBad() {
 }
 
 void ServerDaemon::dataFixerCB(const sc_msgs::DataFixerProgress::ConstPtr& pDataFixerProgressMsg) {
-    LOG(INFO) << __FUNCTION__ << " start: " << pDataFixerProgressMsg->processNum << "/" << pDataFixerProgressMsg->totalFileNum;
+    DLOG(INFO) << __FUNCTION__ << " start: " << pDataFixerProgressMsg->processNum << "/" << pDataFixerProgressMsg->totalFileNum;
 
     monitorMsg_.total_file_num = pDataFixerProgressMsg->totalFileNum;
     monitorMsg_.process_num = pDataFixerProgressMsg->processNum;
@@ -317,11 +317,11 @@ void ServerDaemon::velodyneCB(const velodyne_msgs::Velodyne2Center::ConstPtr& pV
 // }
 
 void ServerDaemon::SerialCB(const sc_msgs::imu5651::ConstPtr& pImu5651Msg) {
-    LOG(INFO) << __FUNCTION__ << " start: " << pImu5651Msg->gps_time;
+    DLOG(INFO) << __FUNCTION__ << " start: " << pImu5651Msg->gps_time;
     gpsTime_[0] = gpsTime_[1];
     gpsTime_[1] = pImu5651Msg->gps_time;
     if(gpsTime_[0] == gpsTime_[1]) {
-        LOG(INFO) << "Same frame received, GPStime: " << pImu5651Msg->gps_time;
+        DLOG(INFO) << "Same frame received, GPStime: " << pImu5651Msg->gps_time;
         return;
     }
     isGpsUpdated_ = true;
@@ -445,8 +445,19 @@ void ServerDaemon::clientCB(const sc_msgs::ClientCmd::ConstPtr& pClientMsg) {
             break;
         }
         case 8: {
-            LOG(INFO) << "I am gonna check hardware.";
-            (void)CheckHardware();
+            LOG(INFO) << "I am gonna do SLAM: " << pClientMsg->cmd_arguments;
+            LOG(INFO) << "Is cmd_arguments empty?: " << std::boolalpha << pClientMsg->cmd_arguments.empty();
+            if(pClientMsg->cmd_arguments.empty() ) {
+                break;
+            }
+            const std::string launchScript("/opt/smartc/src/tools/launch_project.sh");
+            if(!(public_tools::PublicTools::isFileExist(launchScript) ) ) {
+                LOG(ERROR) << launchScript << " does not exist.";
+                exit(1);
+            }
+            const std::string doSlamCmd("bash " + launchScript + " doSlam " + pClientMsg->cmd_arguments);
+            LOG(INFO) << "doSlamCmd: " << doSlamCmd;
+            (void)public_tools::PublicTools::PopenWithoutReturn(doSlamCmd);
             break;
         }
 
@@ -458,161 +469,161 @@ void ServerDaemon::clientCB(const sc_msgs::ClientCmd::ConstPtr& pClientMsg) {
     return;
 }
 
-void ServerDaemon::CheckHardware() {
-    LOG(INFO) << __FUNCTION__ << " start.";
-    CheckLidar();
-    CheckCamera();
-    CheckImu();
-    CheckDiskCapacity();
-}
+// void ServerDaemon::CheckHardware() {
+//     LOG(INFO) << __FUNCTION__ << " start.";
+//     CheckLidar();
+//     CheckCamera();
+//     CheckImu();
+//     CheckDiskCapacity();
+// }
 
-void ServerDaemon::CheckCamera() {
-    LOG(INFO) << __FUNCTION__ << " start.";
-    if( (0 != public_tools::PublicTools::PopenWithoutReturn("ifconfig | grep '5.5.5.5'")) || (0 != public_tools::PublicTools::PopenWithoutReturn("ifconfig | grep '6.6.6.6'")) || (0 != public_tools::PublicTools::PopenWithoutReturn("ifconfig | grep '7.7.7.7'")) ) {
-        monitorMsg_.camera_HWcheck = -2;
-    }
-    else {
-        monitorMsg_.camera_HWcheck = 3;
-    }
-}
+// void ServerDaemon::CheckCamera() {
+//     LOG(INFO) << __FUNCTION__ << " start.";
+//     if( (0 != public_tools::PublicTools::PopenWithoutReturn("ifconfig | grep '5.5.5.5'")) || (0 != public_tools::PublicTools::PopenWithoutReturn("ifconfig | grep '6.6.6.6'")) || (0 != public_tools::PublicTools::PopenWithoutReturn("ifconfig | grep '7.7.7.7'")) ) {
+//         monitorMsg_.camera_HWcheck = -2;
+//     }
+//     else {
+//         monitorMsg_.camera_HWcheck = 3;
+//     }
+// }
 
-void ServerDaemon::CheckImu() {
-    LOG(INFO) << __FUNCTION__ << " start.";
+// void ServerDaemon::CheckImu() {
+//     LOG(INFO) << __FUNCTION__ << " start.";
 
-    if(public_tools::PublicTools::isFileExist("/dev/ttyUSB0") && public_tools::PublicTools::isFileExist("/dev/ttyUSB1") && public_tools::PublicTools::isFileExist("/dev/ttyUSB2")) {
-        monitorMsg_.imu_HWcheck = 3;
-    }
-    else {
-        monitorMsg_.imu_HWcheck = -2;
-    }
-}
+//     if(public_tools::PublicTools::isFileExist("/dev/ttyUSB0") && public_tools::PublicTools::isFileExist("/dev/ttyUSB1") && public_tools::PublicTools::isFileExist("/dev/ttyUSB2")) {
+//         monitorMsg_.imu_HWcheck = 3;
+//     }
+//     else {
+//         monitorMsg_.imu_HWcheck = -2;
+//     }
+// }
 
-void ServerDaemon::CheckDiskCapacity() {
-    LOG(INFO) << __FUNCTION__ << " start.";
-    std::vector<std::string> diskFreeSpaceInGB;
-    const std::string getDiskFreeSpaceInGBCmd("df -BG /opt/smartc/record/ | tail -n1 | awk '{print $4}'");
-    (void)public_tools::PublicTools::PopenWithReturn(getDiskFreeSpaceInGBCmd, diskFreeSpaceInGB);
-    LOG(INFO) << "diskFreeSpaceInGB: " << diskFreeSpaceInGB[0];
-    assert(1 == diskFreeSpaceInGB.size());
-    monitorMsg_.disk_free_space_GB_HWcheck = public_tools::ToolsNoRos::string2int(diskFreeSpaceInGB[0]);
-}
+// void ServerDaemon::CheckDiskCapacity() {
+//     LOG(INFO) << __FUNCTION__ << " start.";
+//     std::vector<std::string> diskFreeSpaceInGB;
+//     const std::string getDiskFreeSpaceInGBCmd("df -BG /opt/smartc/record/ | tail -n1 | awk '{print $4}'");
+//     (void)public_tools::PublicTools::PopenWithReturn(getDiskFreeSpaceInGBCmd, diskFreeSpaceInGB);
+//     LOG(INFO) << "diskFreeSpaceInGB: " << diskFreeSpaceInGB[0];
+//     assert(1 == diskFreeSpaceInGB.size());
+//     monitorMsg_.disk_free_space_GB_HWcheck = public_tools::ToolsNoRos::string2int(diskFreeSpaceInGB[0]);
+// }
 
-void ServerDaemon::CheckLidar() {
-    LOG(INFO) << __FUNCTION__ << " start.";
-    const size_t MAXLINE = 1024;
-    const size_t POSITION_PACKET_SIZE = 512;
-    const uint16_t POSITION_PORT_NUMBER = 8308; // default position port
+// void ServerDaemon::CheckLidar() {
+//     LOG(INFO) << __FUNCTION__ << " start.";
+//     const size_t MAXLINE = 1024;
+//     const size_t POSITION_PACKET_SIZE = 512;
+//     const uint16_t POSITION_PORT_NUMBER = 8308; // default position port
 
-    sockaddr_in sockaddr;
-    bzero(&sockaddr, sizeof(sockaddr));
-    sockaddr.sin_family = AF_INET;
-    sockaddr.sin_addr.s_addr = htonl(INADDR_ANY);
-    sockaddr.sin_port = htons(POSITION_PORT_NUMBER);
+//     sockaddr_in sockaddr;
+//     bzero(&sockaddr, sizeof(sockaddr));
+//     sockaddr.sin_family = AF_INET;
+//     sockaddr.sin_addr.s_addr = htonl(INADDR_ANY);
+//     sockaddr.sin_port = htons(POSITION_PORT_NUMBER);
 
-    int listenfd = -1;
-    if((listenfd = socket(AF_INET, SOCK_DGRAM, 0)) < 0) {
-        LOG(ERROR) << "Create socket error: " << strerror(errno);
-        monitorMsg_.pps_HWcheck = -1;
-        monitorMsg_.gprmc_HWcheck = -1;
-        return;
-    }
-    if(bind(listenfd, (struct sockaddr *)&sockaddr, sizeof(sockaddr)) < 0) {
-        LOG(ERROR) << "Bind socket error: " << strerror(errno);
-        monitorMsg_.pps_HWcheck = -1;
-        monitorMsg_.gprmc_HWcheck = -1;
-        close(listenfd);
-        return;
-    }
-    if (fcntl(listenfd, F_SETFL, O_NONBLOCK|FASYNC) < 0) {
-        LOG(ERROR) << "SockfdPosition non-block.";
-        monitorMsg_.pps_HWcheck = -1;
-        monitorMsg_.gprmc_HWcheck = -1;
-        close(listenfd);
-        return;
-    }
+//     int listenfd = -1;
+//     if((listenfd = socket(AF_INET, SOCK_DGRAM, 0)) < 0) {
+//         LOG(ERROR) << "Create socket error: " << strerror(errno);
+//         monitorMsg_.pps_HWcheck = -1;
+//         monitorMsg_.gprmc_HWcheck = -1;
+//         return;
+//     }
+//     if(bind(listenfd, (struct sockaddr *)&sockaddr, sizeof(sockaddr)) < 0) {
+//         LOG(ERROR) << "Bind socket error: " << strerror(errno);
+//         monitorMsg_.pps_HWcheck = -1;
+//         monitorMsg_.gprmc_HWcheck = -1;
+//         close(listenfd);
+//         return;
+//     }
+//     if (fcntl(listenfd, F_SETFL, O_NONBLOCK|FASYNC) < 0) {
+//         LOG(ERROR) << "SockfdPosition non-block.";
+//         monitorMsg_.pps_HWcheck = -1;
+//         monitorMsg_.gprmc_HWcheck = -1;
+//         close(listenfd);
+//         return;
+//     }
 
-    LOG(INFO) << "Please wait for the client information...";
-    struct pollfd fds;
-    fds.fd = listenfd;
-    fds.events = POLLIN;
-    const int POLL_TIMEOUT = 1000; // one second (in msec)
-    do {
-        int retval = poll(&fds, 1, POLL_TIMEOUT);
-        if(retval < 0) {
-            if(errno != EINTR) {
-                LOG(ERROR) << "poll() error: " << strerror(errno);
-                monitorMsg_.pps_HWcheck = -1;
-                monitorMsg_.gprmc_HWcheck = -1;
-                close(listenfd);
-                return;
-            }
-        }
-        if(retval == 0) {
-            LOG(ERROR) << "Velodyne poll() timeout, go check IP configuration.";
-            monitorMsg_.pps_HWcheck = -2;
-            monitorMsg_.gprmc_HWcheck = -2;
-            close(listenfd);
-            return;
-        }
-        if((fds.revents & POLLERR) || (fds.revents & POLLHUP) || (fds.revents & POLLNVAL)) {
-            LOG(ERROR) << "poll() reports Velodyne error.";
-            monitorMsg_.pps_HWcheck = -1;
-            monitorMsg_.gprmc_HWcheck = -1;
-            close(listenfd);
-            return;
-        }
-    }
-    while((fds.revents & POLLIN) == 0);
+//     LOG(INFO) << "Please wait for the client information...";
+//     struct pollfd fds;
+//     fds.fd = listenfd;
+//     fds.events = POLLIN;
+//     const int POLL_TIMEOUT = 1000; // one second (in msec)
+//     do {
+//         int retval = poll(&fds, 1, POLL_TIMEOUT);
+//         if(retval < 0) {
+//             if(errno != EINTR) {
+//                 LOG(ERROR) << "poll() error: " << strerror(errno);
+//                 monitorMsg_.pps_HWcheck = -1;
+//                 monitorMsg_.gprmc_HWcheck = -1;
+//                 close(listenfd);
+//                 return;
+//             }
+//         }
+//         if(retval == 0) {
+//             LOG(ERROR) << "Velodyne poll() timeout, go check IP configuration.";
+//             monitorMsg_.pps_HWcheck = -2;
+//             monitorMsg_.gprmc_HWcheck = -2;
+//             close(listenfd);
+//             return;
+//         }
+//         if((fds.revents & POLLERR) || (fds.revents & POLLHUP) || (fds.revents & POLLNVAL)) {
+//             LOG(ERROR) << "poll() reports Velodyne error.";
+//             monitorMsg_.pps_HWcheck = -1;
+//             monitorMsg_.gprmc_HWcheck = -1;
+//             close(listenfd);
+//             return;
+//         }
+//     }
+//     while((fds.revents & POLLIN) == 0);
 
-    char buff[MAXLINE];
-    const size_t nbytes = recvfrom(listenfd, buff, POSITION_PACKET_SIZE, 0, NULL, NULL);
+//     char buff[MAXLINE];
+//     const size_t nbytes = recvfrom(listenfd, buff, POSITION_PACKET_SIZE, 0, NULL, NULL);
 
 
-    LOG(INFO) << nbytes;
-#ifndef NDEBUG
-    for(size_t i = 0; i < nbytes; ++i) {
-        LOG(INFO) << i << ": " << std::hex << (int)buff[i];
-    }
-#endif
-    LOG(INFO) << buff[206] << " should be $";
+//     LOG(INFO) << nbytes;
+// #ifndef NDEBUG
+//     for(size_t i = 0; i < nbytes; ++i) {
+//         LOG(INFO) << i << ": " << std::hex << (int)buff[i];
+//     }
+// #endif
+//     LOG(INFO) << buff[206] << " should be $";
 
-    ParsePositionPkt(buff);
+//     ParsePositionPkt(buff);
 
-    close(listenfd);
-    return;
-}
+//     close(listenfd);
+//     return;
+// }
 
-void ServerDaemon::ParsePositionPkt(const char *pkt) {
-    LOG(INFO) << __FUNCTION__ << " start.";
-    if('$' != pkt[206]) {
-        LOG(ERROR) << "No position packet received: " << std::hex << (int)pkt[206];
-        monitorMsg_.pps_HWcheck = -1;
-        // A validity - A-ok, V-invalid, refer VLP-16 manual
-        monitorMsg_.gprmc_HWcheck = -1;
-        return;
-    }
+// void ServerDaemon::ParsePositionPkt(const char *pkt) {
+//     LOG(INFO) << __FUNCTION__ << " start.";
+//     if('$' != pkt[206]) {
+//         LOG(ERROR) << "No position packet received: " << std::hex << (int)pkt[206];
+//         monitorMsg_.pps_HWcheck = -1;
+//         // A validity - A-ok, V-invalid, refer VLP-16 manual
+//         monitorMsg_.gprmc_HWcheck = -1;
+//         return;
+//     }
 
-    // 00 .. 03
-    // "No PPS", "Synchronizing PPS", "PPS locked", "PPS Error"
-    monitorMsg_.pps_HWcheck = pkt[202];
-    // $GPRMC,,V,,,,,,,,,,N*53
-    size_t dotCnt = 0;
-    for(size_t i = 210; i < 230; ++i) {
-        if(',' == pkt[i]) {
-            ++dotCnt;
-        }
-        if(2 == dotCnt) {
-            monitorMsg_.gprmc_HWcheck = pkt[i + 1];
-            return;
-        }
-    }
+//     // 00 .. 03
+//     // "No PPS", "Synchronizing PPS", "PPS locked", "PPS Error"
+//     monitorMsg_.pps_HWcheck = pkt[202];
+//     // $GPRMC,,V,,,,,,,,,,N*53
+//     size_t dotCnt = 0;
+//     for(size_t i = 210; i < 230; ++i) {
+//         if(',' == pkt[i]) {
+//             ++dotCnt;
+//         }
+//         if(2 == dotCnt) {
+//             monitorMsg_.gprmc_HWcheck = pkt[i + 1];
+//             return;
+//         }
+//     }
 
-    monitorMsg_.gprmc_HWcheck = -1;
-    return;
-}
+//     monitorMsg_.gprmc_HWcheck = -1;
+//     return;
+// }
 
 void ServerDaemon::projectMonitorCB(const sc_msgs::DiskInfo::ConstPtr& pDiskInfoMsg) {
-    LOG(INFO) << __FUNCTION__ << " start, disk image number: " << pDiskInfoMsg->img_num;
+    DLOG(INFO) << __FUNCTION__ << " start, disk image number: " << pDiskInfoMsg->img_num;
     isDiskInfoUpdated_ = true;
     monitorMsg_.img_num = pDiskInfoMsg->img_num;
     monitorMsg_.lidar_size = pDiskInfoMsg->lidar_size;

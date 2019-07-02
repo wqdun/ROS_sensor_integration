@@ -3,7 +3,7 @@ project(sc_hik_camera)
 
 message("PROJECT_SOURCE_DIR: " ${PROJECT_SOURCE_DIR})
 message("OpenCV_DIR: " ${OpenCV_DIR})
-set(OpenCV_DIR /usr/local/share/OpenCV)
+# set(OpenCV_DIR /usr/local/share/OpenCV)
 message("OpenCV_DIR: " ${OpenCV_DIR})
 
 ## Compile as C++11, supported in ROS Kinetic and newer
@@ -164,12 +164,14 @@ add_executable(${PROJECT_NAME}_node
 
 ## Specify libraries to link a library or executable target against
 message("catkin_LIBRARIES: " ${catkin_LIBRARIES})
+set(OpenCV_LIBS /usr/local/lib)
 message("OpenCV_LIBS: " ${OpenCV_LIBS})
 target_link_libraries(${PROJECT_NAME}_node
   ${catkin_LIBRARIES}
   /usr/local/lib/libopencv_core.so
   /usr/local/lib/libopencv_imgcodecs.so
   /usr/local/lib/libopencv_imgproc.so
+  # ${OpenCV_LIBS}
   glog
   /opt/MVS/bin/libMvCameraControl.so
   ${PROJECT_SOURCE_DIR}/../../devel/lib/libsc_lib_public_tools.so

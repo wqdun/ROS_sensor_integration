@@ -25,6 +25,7 @@ devel/
 a.out
 /SmartCollect/.catkin_workspace
 /SmartCollect/build/
+/SmartCollect/src/cv_bridge/build/
 /SmartCollect/src/CMakeLists.txt
 /FromGithub_*/
 /SmartCollect/src_sc0010_20190417/

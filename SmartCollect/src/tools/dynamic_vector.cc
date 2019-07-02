@@ -9,14 +9,24 @@ public:
 
 
 private:
-    int __size_;
+    int size_;
+    int *pVec_;
 };
 
+DynamicVector::DynamicVector() {
+    pVec_ = new int[10];
+    capacity_ = 10;
+    size_ = 0;
+}
 
 
 
-void push_back() {
 
+void DynamicVector::push_back(int num) {
+    ++size_;
+    if (size_ > capacity_) {
+
+    }
 
 
 
@@ -25,4 +35,8 @@ void push_back() {
 
 
 
-
+int main(int argc, char const *argv[])
+{
+    /* code */
+    return 0;
+}

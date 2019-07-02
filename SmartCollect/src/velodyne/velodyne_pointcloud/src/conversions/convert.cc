@@ -74,7 +74,7 @@ namespace velodyne_pointcloud
         data_->unpack_vlp16(scanMsg->packets[i], *outMsg, *pPcImuCoord, pPcVecMsg_->pc_vec);
       }
 
-    LOG(INFO) << "pPcVecMsg_->pc_vec.size(): " << pPcVecMsg_->pc_vec.size();
+    DLOG(INFO) << "pPcVecMsg_->pc_vec.size(): " << pPcVecMsg_->pc_vec.size();
     // ~~760/s
     if(pPcVecMsg_->pc_vec.size() >= 10000) {
       // process and clear

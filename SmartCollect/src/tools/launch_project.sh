@@ -104,9 +104,8 @@ make_tty_softlink() {
     # rm /dev/imuRawIns
     # ln -s ${novatel_usb1} /dev/imuRawIns
 
-
     rm /dev/imuRawIns
-    local imuRawIns=$(ls /dev/serial/by-path | grep "usb-0:2:1.0-port0" | head -n1)
+    local imuRawIns=$(ls /dev/serial/by-path | grep "usb-0:2.1:1.0-port0" | head -n1)
     if [ "AA${imuRawIns}" = "AA" ]; then
         log_with_time "Failed to find usb-0:2.3 in /dev/serial/by-path."
         exit 1
@@ -114,7 +113,7 @@ make_tty_softlink() {
     ln -s "/dev/serial/by-path/"${imuRawIns} /dev/imuRawIns
 
     rm /dev/timeStamper
-    local timeStamper=$(ls /dev/serial/by-path | grep "usb-0:3:1.0" | head -n1)
+    local timeStamper=$(ls /dev/serial/by-path | grep "usb-0:2.3:1.0" | head -n1)
     if [ "AA${timeStamper}" = "AA" ]; then
         log_with_time "Failed to find usb-0:2.3 in /dev/serial/by-path."
         exit 1
@@ -122,9 +121,9 @@ make_tty_softlink() {
     ln -s "/dev/serial/by-path/"${timeStamper} /dev/timeStamper
 
     rm /dev/imuRtData
-    local imuRtData=$(ls /dev/serial/by-path | grep "usb-0:2:1.0-port1" | head -n1)
+    local imuRtData=$(ls /dev/serial/by-path | grep "usb-0:2.1:1.0-port1" | head -n1)
     if [ "AA${imuRtData}" = "AA" ]; then
-        log_with_time "Failed to find usb-0:2.1 in /dev/serial/by-path."
+        log_with_time "Failed to find usb-0:2.1:1.0-port0 in /dev/serial/by-path."
         exit 1
     fi
     ln -s "/dev/serial/by-path/"${imuRtData} /dev/imuRtData
@@ -133,6 +132,7 @@ make_tty_softlink() {
 make_serial_softlink_by_path() {
     log_with_time "$FUNCNAME start, param: $*; HOSTNAME: ${HOSTNAME}"
 
+    rm /dev/imuRtData; ln -s "/dev/ttyS0" /dev/imuRtData
     # sc0010 differ from sc0009
     if [ "AA${HOSTNAME}" = "AAsc0010" ] || [ "AA${HOSTNAME}" = "AAsc0011" ] || [ "AA${HOSTNAME}" = "AAsc0012" ] || [ "AA${HOSTNAME}" = "AAsc0013" ] || [ "AA${HOSTNAME}" = "AAsc0014" ] || [ "AA${HOSTNAME}" = "AAsc0015" ]; then
         rm /dev/imuRawIns
@@ -212,10 +212,16 @@ start_smart_collector_server() {
 
     cp /dev/null "/tmp/kill_smartc.sh"
 
-    local task_keyword="sc_hik_camer"
+    local task_keyword="sc_ptgrey_ca"
     pkill "${task_keyword}"
     echo "pkill -INT ${task_keyword}; pkill ${task_keyword}" >>"/tmp/kill_smartc.sh"
-    /opt/smartc/devel/lib/sc_hik_camera/sc_hik_camera_node "${_absolute_record_path}/" &
+    sysctl -w net.core.rmem_max=33554432 net.core.rmem_default=33554432 net.core.wmem_max=33554432 net.core.wmem_default=33554432 >>$result_log 2>&1
+    /opt/smartc/devel/lib/sc_ptgrey_camera/sc_ptgrey_camera_node "${_absolute_record_path}/" &
+
+    # local task_keyword="sc_hik_camer"
+    # pkill "${task_keyword}"
+    # echo "pkill -INT ${task_keyword}; pkill ${task_keyword}" >>"/tmp/kill_smartc.sh"
+    # /opt/smartc/devel/lib/sc_hik_camera/sc_hik_camera_node "${_absolute_record_path}/" &
 
     chmod +r /dev/imuRawIns
     local task_keyword="sc_rawimu_rec"
@@ -233,7 +239,7 @@ start_smart_collector_server() {
     local task_keyword="sc_rtimu_no"
     pkill "${task_keyword}"
     echo "pkill -INT ${task_keyword}; pkill ${task_keyword}" >>"/tmp/kill_smartc.sh"
-    /opt/smartc/devel/lib/sc_rtimu/sc_rtimu_node "a1" "/dev/imuRtData" "460800" "${_absolute_record_path}/IMU/" &
+    /opt/smartc/devel/lib/sc_rtimu/sc_rtimu_node "a1" "/dev/imuRtData" "115200" "${_absolute_record_path}/IMU/" &
     sleep 0.2
 
     killall nodelet
@@ -266,6 +272,48 @@ do_fixdata() {
 
     local _projects=$1
     /opt/smartc/devel/lib/sc_data_fixer/sc_data_fixer_node "${_projects}" &
+    return 0
+}
+
+do_slam() {
+    log_with_time "$FUNCNAME start, param: $*"
+    local _projects="/opt/smartc/record/"$1
+
+    (
+        killall multiScanRegistration
+        cd /opt/LidarSlam/velodyneSlam/multiScanRegistrationPackage \
+            && chmod +x multiScanRegistration \
+            && bash multiScanRegistration.sh &
+    )
+
+    (
+        killall laserOdometry
+        cd /opt/LidarSlam/velodyneSlam/laserOdometryPackage \
+            && chmod +x laserOdometry \
+            && bash laserOdometry.sh "${_projects}" >>$result_log 2>&1 &
+    )
+
+    (
+        killall laserMapping
+        cd /opt/LidarSlam/velodyneSlam/laserMappingPackage \
+            && chmod +x laserMapping \
+            && bash laserMapping.sh "${_projects}" >>$result_log 2>&1 &
+    )
+
+    (
+        killall transformMaintenance
+        cd /opt/LidarSlam/velodyneSlam/transforMaintenancePackage \
+            && chmod +x transformMaintenance \
+            && bash transformMaintenance.sh >>$result_log 2>&1 &
+    )
+
+    (
+        killall advertisePointcloud
+        cd /opt/LidarSlam/velodyneSlam/advertisePointCloudPackage \
+            && chmod +x advertisePointcloud \
+            && bash advertisePointcloud.sh "${_projects}" >>$result_log 2>&1 &
+    )
+
     return 0
 }
 
@@ -314,6 +362,12 @@ main() {
     if [ "AA$1" = "AAfixdata" ]; then
         local projects=$2
         do_fixdata "${projects}"
+        return
+    fi
+
+    if [ "AA$1" = "AAdoSlam" ]; then
+        local projects=$2
+        do_slam "${projects}"
         return
     fi
 

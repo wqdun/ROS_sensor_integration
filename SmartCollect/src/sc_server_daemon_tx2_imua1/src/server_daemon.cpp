@@ -173,7 +173,7 @@ bool ServerDaemon::IsGpsTimeGood() {
 void ServerDaemon::RestartSelf() {
     LOG(INFO) << __FUNCTION__ << " start.";
 
-    const std::string launchScript("/opt/smartc/src/tools/launch_project_tx2_imua1.sh");
+    const std::string launchScript("/opt/smartc/src/tools/launch_project.sh");
     (void)public_tools::PublicTools::PopenWithoutReturn("bash " + launchScript + " restart_server " + projectInfo_ + " &");
 
     LOG(INFO) << __FUNCTION__ << " end.";
@@ -290,7 +290,7 @@ void ServerDaemon::clientCB(const sc_msgs::ClientCmd::ConstPtr& pClientMsg) {
         case 3: {
             LOG(INFO) << "I am gonna cleanup server processes.";
             (void)UpdateProjectInfo("");
-            const std::string launchScript("/opt/smartc/src/tools/launch_project_tx2_imua1.sh");
+            const std::string launchScript("/opt/smartc/src/tools/launch_project.sh");
             if(!(public_tools::PublicTools::isFileExist(launchScript) ) ) {
                 LOG(ERROR) << launchScript << " does not exist.";
                 exit(1);
@@ -305,7 +305,7 @@ void ServerDaemon::clientCB(const sc_msgs::ClientCmd::ConstPtr& pClientMsg) {
             if(pClientMsg->cmd_arguments.empty() ) {
                 break;
             }
-            const std::string launchScript("/opt/smartc/src/tools/launch_project_tx2_imua1.sh");
+            const std::string launchScript("/opt/smartc/src/tools/launch_project.sh");
             if(!(public_tools::PublicTools::isFileExist(launchScript) ) ) {
                 LOG(ERROR) << launchScript << " does not exist.";
                 exit(1);
@@ -335,7 +335,7 @@ void ServerDaemon::clientCB(const sc_msgs::ClientCmd::ConstPtr& pClientMsg) {
             LOG(INFO) << "I am gonna launch a new project: " << pClientMsg->cmd_arguments;
             (void)UpdateProjectInfo(pClientMsg->cmd_arguments);
             projectInfo_ = pClientMsg->cmd_arguments;
-            const std::string launchScript("/opt/smartc/src/tools/launch_project_tx2_imua1.sh");
+            const std::string launchScript("/opt/smartc/src/tools/launch_project.sh");
             if(!(public_tools::PublicTools::isFileExist(launchScript) ) ) {
                 LOG(ERROR) << launchScript << " does not exist.";
                 exit(1);

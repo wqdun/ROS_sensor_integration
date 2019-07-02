@@ -1,38 +1,52 @@
-#include <stdio.h>
 #include <iostream>
-
 using namespace std;
-int binary_search(int key,int a[],int n) //自定义函数binary_search()
+
+class A
 {
-    int low,high,mid,count=0,count1=0;
-    low=0;
-    high=n-1;
-    while(low<high)    //査找范围不为0时执行循环体语句
+public:
+    virtual void out1()=0;  ///由子类实现
+    virtual ~A(){};
+    virtual void out2() ///默认实现
     {
-        count++;    //count记录査找次数
-        mid=(low+high)/2;    //求中间位置
-        if(key<a[mid])    //key小于中间值时
-            high=mid-1;    //确定左子表范围
-        else if(key>a[mid])    //key 大于中间值时
-            low=mid+1;    //确定右子表范围
-        else if(key==a[mid])    //当key等于中间值时，证明查找成功
-        {
-            printf("查找成功!\n 查找 %d 次!a[%d]=%d",count,mid,key);    //输出査找次数及所査找元素在数组中的位置
-            count1++;    //count1记录查找成功次数
-            break;
-        }
+        cout<<"A(out2)"<<endl;
     }
-    if(count1==0)    //判断是否查找失敗
-        printf("查找失敗!");    //査找失敗输出no found
-    return 0;
-}
+    // void out3() ///强制实现
+    // {
+    //     cout<<"A(out3)"<<endl;
+    // }
+};
+
+class B:public A
+{
+public:
+    virtual ~B(){};
+    void out1()
+    {
+        cout<<"B(out1)"<<endl;
+    }
+    void out2()
+    {
+        cout<<"B(out2)"<<endl;
+    }
+    void out3()
+    {
+        cout<<"B(out3)"<<endl;
+    }
+};
+
 int main()
 {
-    int i;
-    int key = 98;
-    int a[] = {11, 13, 18, 28, 39, 56, 69, 89, 98, 122};
-    int n = 10;
-    binary_search(key,a,n);    //调用自定义函数
-    cout << "\n";
+    A *ab=new B;
+    ab->out1();
+    ab->out2();
+    ab->out3();
+    cout<<"************************"<<endl;
+    B *bb=new B;
+    bb->out1();
+    bb->out2();
+    bb->out3();
+
+    delete ab;
+    delete bb;
     return 0;
 }

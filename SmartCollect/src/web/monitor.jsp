@@ -200,13 +200,13 @@
 
         function UpdateHardwareStatus(_message) {
             var _isHardwareError = false;
-
-            if (3 === _message.sc_check_camera_num) {
-                document.getElementById('camera_num').innerHTML = "<font color=green>3</font>";
+            var expected_cam_num = 3;
+            if (expected_cam_num === _message.sc_check_camera_num) {
+                document.getElementById('camera_num').innerHTML = "<font color=green>" + expected_cam_num + "</font>";
             }
             else {
                 _isHardwareError = true;
-                document.getElementById('camera_num').innerHTML = "<font color=red>" + _message.sc_check_camera_num + "( ≠ 3)</font>";
+                document.getElementById('camera_num').innerHTML = "<font color=red>" + _message.sc_check_camera_num + "( ≠ " + expected_cam_num + ")</font>";
             }
 
             return _isHardwareError;

@@ -118,6 +118,7 @@ catkin_package(
 include_directories(
 # include
   ${catkin_INCLUDE_DIRS}
+  /usr/local/include/opencv/
 )
 
 ## Declare a C++ library
@@ -133,7 +134,15 @@ include_directories(
 ## Declare a C++ executable
 ## With catkin_make all packages are built within a single CMake context
 ## The recommended prefix ensures that target names across packages don't collide
-add_executable(${PROJECT_NAME}_node src/server_daemon_node.cpp src/server_daemon.cpp src/disk_monitor.cpp)
+add_executable(${PROJECT_NAME}_node
+    src/server_daemon_node.cpp
+    src/server_factory.cpp
+    src/base_server.cpp
+    src/server_a1.cpp
+    src/server_5651.cpp
+
+    src/disk_monitor.cpp
+)
 
 ## Rename C++ executable without prefix
 ## The above recommended prefix causes long target names, the following renames the
@@ -149,6 +158,7 @@ add_executable(${PROJECT_NAME}_node src/server_daemon_node.cpp src/server_daemon
 target_link_libraries(${PROJECT_NAME}_node
   ${catkin_LIBRARIES}
   glog
+  /usr/local/lib/libopencv_core.so
   ${PROJECT_SOURCE_DIR}/../../devel/lib/libsc_lib_public_tools.so
   gdal
 )

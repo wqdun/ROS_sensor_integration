@@ -19,4 +19,8 @@ float32 azimuth_deviation
 float64 seconds_into_week
 
 
+# below customized
+float64 unix_time_minus_gps_time
+
+
 

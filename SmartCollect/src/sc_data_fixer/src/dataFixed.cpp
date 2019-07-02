@@ -1,4 +1,7 @@
 #include "dataFixed.h"
+#define NDEBUG
+// #undef NDEBUG
+#include <glog/logging.h>
 
 dataFixed::dataFixed(ros::NodeHandle nh, ros::NodeHandle private_nh, int cinValue)
 {
@@ -40,6 +43,9 @@ void dataFixed::touchFile(const std::string &file) {
 
     return;
 }
+
+
+
 
 void dataFixed::fixProjectsData(const std::string &_projects)
 {
@@ -226,8 +232,6 @@ void dataFixed::fixProjectsData(const std::string &_projects)
         }
         LOG(INFO) << "start to fix Project: " << projectArr[i];
         this->initMemberVar();
-        this->markPointGeo2Gauss(projectArr[i]);
-        // this->panoramasSort(projectArr[i]);
         returnValue = this->readOntimeTraceData(projectArr[i], imuData);
         if( 0 != returnValue )
         {
@@ -270,7 +274,7 @@ int dataFixed::mkImageTraceData(double imageTime,std::string &projectName,std::v
     }
     else
     {
-        imuDataSubMark = (unsigned long)((imageTime-beganGPSTime)/hzTime_) + minGPSTimeMark;
+        imuDataSubMark = (unsigned long)((imageTime-minGPSTime)/hzTime_) + minGPSTimeMark;
     }
     if(imuDataSubMark >= imuData.size())
     {
@@ -289,7 +293,8 @@ int dataFixed::mkImageTraceData(double imageTime,std::string &projectName,std::v
     double mSeconds = leftSeconds-seconds;
     std::string beijingTime;
     std::string dateString;
-    hour = hour + 8;
+    //hour = hour + 8;
+    hour = hour + 9;
     if(hour > 23)
     {
         hour = hour - 24;
@@ -390,7 +395,7 @@ int dataFixed::mkLostImageTraceData(double imageTime,std::string &projectName,st
     }
     else
     {
-        imuDataSubMark=(unsigned long)((imageTime-beganGPSTime)/hzTime_) + minGPSTimeMark;
+        imuDataSubMark=(unsigned long)((imageTime-minGPSTime)/hzTime_) + minGPSTimeMark;
     }
     int beltNumber = (imuData[imuDataSubMark].Longitude + 1.5)/3;
     std::string beltString = std::to_string(beltNumber);
@@ -404,7 +409,8 @@ int dataFixed::mkLostImageTraceData(double imageTime,std::string &projectName,st
     double mSeconds = leftSeconds - seconds;
     std::string beijingTime;
     std::string dateString;
-    hour = hour + 8;
+    //hour = hour + 8;
+    hour = hour + 9;
     if(hour > 23)
         hour = hour - 24;
     std::string hourString = std::to_string(hour);
@@ -479,14 +485,11 @@ int dataFixed::mkLostImageTraceData(double imageTime,std::string &projectName,st
     oneLostImageTraceData.Roll = imuData[imuDataSubMark].Roll;
     oneLostImageTraceData.Pitch = imuData[imuDataSubMark].Pitch;
     oneLostImageTraceData.Heading = imuData[imuDataSubMark].Heading;
-	oneLostImageTraceData.addPicName = "Null";
     return 0;
 }
 
 void dataFixed::saveImageTraceData(std::string &savePath,std::string &projectName,std::vector<imageTraceDataFormat> &imageTraceData,int saveMark){
-    LOG(INFO) << "savePath:" << savePath;
-    LOG(INFO) << "projectName:" << projectName;
-    LOG(INFO) << "imageTraceData.size() = " << imageTraceData.size();
+    LOG(INFO) << __FUNCTION__ << " start.";
     std::ofstream imageTraceDataFile;
     std::string imageEffectTracePartName="-RTimgpost.txt";
     int recordBeltNumber=0;
@@ -531,7 +534,7 @@ void dataFixed::saveImageTraceData(std::string &savePath,std::string &projectNam
             }
         }
         std::string seqNumString=std::to_string(i);
-        imageTraceDataFile << seqNumString << "\t" << imageTraceData[i].Pano_name << "\t" << imageTraceData[i].addPicName <<
+        imageTraceDataFile << seqNumString << "\t" << imageTraceData[i].Pano_name <<"\t" << imageTraceData[i].addPicName <<
         "\t" << imageTraceData[i].Date <<"\t"<< std::fixed << std::setprecision(2)
         << imageTraceData[i].GpsTime << "\t" << imageTraceData[i].BeijingTime << "\t"
         <<std::fixed <<std::setprecision(4) << imageTraceData[i].Easting << "\t"
@@ -679,10 +682,10 @@ int dataFixed::readOntimeTraceData(std::string &projectPath, std::vector<ontimeD
         std::string line(buffer);
         std::vector<std::string> parsedLine;
         boost::split(parsedLine, line, boost::is_any_of(",*") );
-        if(11 == parsedLine.size())
+        if(17 == parsedLine.size())
         {
             std::stringstream ss;
-            ss << parsedLine[0];
+            ss << parsedLine[2];
             double weekSecondTime;
             ss >> weekSecondTime;
             if(weekSecondTime < timeMark)
@@ -692,37 +695,41 @@ int dataFixed::readOntimeTraceData(std::string &projectPath, std::vector<ontimeD
             int modNumber=int(weekSecondTime)/totalDaySecondTime;
             imuonTimeData.GPSWeekTime=weekSecondTime-modNumber*totalDaySecondTime;
             ss.clear();
-            ss << parsedLine[1];
+            ss << parsedLine[3];
             ss >> imuonTimeData.Heading;
             ss.clear();
-            ss << parsedLine[2];
+            ss << parsedLine[4];
             ss >> imuonTimeData.Pitch;
             ss.clear();
-            ss << parsedLine[3];
+            ss << parsedLine[5];
             ss >> imuonTimeData.Roll;
             ss.clear();
-            ss << parsedLine[4];
+            ss << parsedLine[6];
             ss >> imuonTimeData.Latitude;
             ss.clear();
-            ss << parsedLine[5];
+            ss << parsedLine[7];
             ss >> imuonTimeData.Longitude;
             ss.clear();
-            ss << parsedLine[6];
+            ss << parsedLine[8];
             ss >> imuonTimeData.Height;
             ss.clear();
-			ss << parsedLine[7];
+            ss << parsedLine[9];
             ss >> imuonTimeData.Ve;
             ss.clear();
-			ss << parsedLine[8];
+            ss << parsedLine[10];
             ss >> imuonTimeData.Vn;
             ss.clear();
-			ss << parsedLine[9];
+            ss << parsedLine[11];
             ss >> imuonTimeData.Vu;
             ss.clear();
-            ss << parsedLine[10];
-            ss >> imuonTimeData.NSV2;
+            ss << parsedLine[12];
+            ss >> imuonTimeData.Baseline;
             ss.clear();
-
+            ss << parsedLine[13];
+            ss >> imuonTimeData.NSV1;
+            ss.clear();
+            ss << parsedLine[14];
+            ss >> imuonTimeData.NSV2;
             if(imuonTimeData.GPSWeekTime<minGPSTime)
             {
                 minGPSTime=imuonTimeData.GPSWeekTime;
@@ -790,11 +797,190 @@ void dataFixed::GeoToGauss(double longitude, double latitude, short beltWidth, d
     *y = 500000 + N * (m + (1.0 - pow(t, 2) + et2) * pow(m, 3) / 6.0 + (5.0 - 18.0 * pow(t, 2) + pow(t, 4) + 14.0 * et2 - 58.0 * et2 * pow(t, 2)) * pow(m, 5) / 120.0);
 }
 
+bool getFileList(std::string &cmd, std::vector<std::string> &fileList)
+{
+    LOG(INFO) << __FUNCTION__ << " start.";
+    FILE *fpin = popen(cmd.c_str(), "r");
+    if(NULL == fpin)
+    {
+        LOG(WARNING) << "creat: " << cmd << " pipe failed";
+        return false;
+    }
+    const size_t maxLine = 1000;
+    char result[maxLine];
+    while(1)
+    {
+        if( NULL == fgets(result, maxLine, fpin))
+            break;
+        std::string tmpString = result;
+        if(tmpString[tmpString.size() - 1] == 10)
+        {
+            fileList.push_back(tmpString.substr(0, tmpString.size() - 1));
+        }
+        else
+            fileList.push_back(tmpString);
+    }
+    if(0 != pclose(fpin))
+    {
+        LOG(WARNING) << "close: " << cmd <<" pipe failed";
+        return false;
+    }
+    return true;
+
+}
+
+
+bool readFPAGPSTime(std::string &projectPath, std::vector<double> &stdGpsTime)
+{
+    LOG(INFO) << __FUNCTION__ << " start.";
+    stdGpsTime.clear();
+    std::string recordFile = projectPath + "/Rawdata/IMU/*_timestamp.txt";
+    std::string cmd = "ls " + recordFile;
+    std::vector<std::string> recordFileList;
+    if(!getFileList(cmd, recordFileList))
+    {
+        LOG(ERROR) << "Got FPGA GPS Record Time File failed.";
+        return false;
+    }
+    if(1 != recordFileList.size())
+    {
+        LOG(ERROR) << "Got " << recordFileList.size() << " FPGA GPS Record Time File.should be 1.";
+        return false;
+    }
+    std::ifstream fileIn(recordFileList[0].c_str());
+    if(!fileIn)
+    {
+        LOG(ERROR) << "open file:" << recordFileList[0] << " failed.";
+        return false;
+    }
+    char buffer[256];
+    std::string lineString;
+    std::vector<std::string> lineVector;
+    double tmpTime;
+    double lastTimeRecord = -1.0;
+    std::vector<double> oneSetTime;
+    std::vector<std::vector<double>> allSetTime;
+    double oneDaySec = -1.0;
+    while(!fileIn.eof())
+    {
+        fileIn.getline(buffer, 256);
+        lineString = buffer;
+        boost::split(lineVector, lineString, boost::is_any_of(","));
+        if(2 > lineVector.size())
+        {
+            LOG(WARNING) << "the size of file line: " << lineString << " is " << lineVector.size() << ". should be 2.";
+            continue;
+        }
+        std::stringstream ss;
+        ss << lineVector[1];
+        ss >> tmpTime;
+        ss.clear();
+
+        tmpTime = tmpTime + 18.0 ;
+        if(tmpTime > 86400.0)
+        {
+            int tmpQuotient = tmpTime / 86400.0;
+            tmpTime = tmpTime - tmpQuotient * 86400.0;
+        }
+
+        if(tmpTime < lastTimeRecord && fabs(tmpTime - lastTimeRecord) > 100.0)
+        {
+            if(10 < oneSetTime.size())
+            {
+                allSetTime.push_back(oneSetTime);
+            }
+            oneSetTime.clear();
+        }
+
+        lastTimeRecord = tmpTime;
+        oneSetTime.push_back(tmpTime);
+    }
+    fileIn.close();
+    allSetTime.push_back(oneSetTime);
+    lastTimeRecord = -1.0;
+
+    for(int i = 0; i < allSetTime.size(); i++)
+    {
+        if(lastTimeRecord > allSetTime[i][0])
+        {
+            LOG(WARNING) << "across data is found in the FPGA time List.";
+            oneDaySec = 86400.0;
+        }
+        else
+        {
+            oneDaySec = 0;
+        }
+        for(int k = 0; k < allSetTime[i].size(); k++)
+        {
+            stdGpsTime.push_back(allSetTime[i][k] + oneDaySec);
+        }
+        lastTimeRecord = allSetTime[i][0];
+    }
+    if(0 == stdGpsTime.size())
+    {
+        LOG(INFO) << "load FPGA GPS Record Time File failed.";
+        return false;
+    }
+    return true;
+}
+
+bool imageTimeMatched(std::vector<double> &FPGAGPSTime, int stdIdx, int tmpIdx, std::vector<double> &sortPicTime, std::vector<double> &sortCameraTime, double &matchedImgTime)
+{
+    double ImageGPSTime = sortPicTime[stdIdx] + sortCameraTime[tmpIdx] - sortCameraTime[stdIdx];
+    //LOG(INFO) << "before matched to FPGA Time, the time is " << ImageGPSTime;
+    if(ImageGPSTime < FPGAGPSTime[0] | ImageGPSTime > FPGAGPSTime[FPGAGPSTime.size() - 1])
+    {
+        LOG(ERROR) << "the pic time :" << ImageGPSTime << " is out of FPGA time range.";
+        return false;
+    }
+    int sMark = 0;
+    int eMark = FPGAGPSTime.size() - 1;
+    int midMark = -1;
+    bool isFound = false;
+    while(true)
+    {
+        midMark = (sMark + eMark)/2;
+        if(FPGAGPSTime[midMark] > ImageGPSTime)
+        {
+            eMark = midMark;
+        }
+        else
+        {
+            sMark = midMark;
+        }
+        int tmpMark = eMark - sMark;
+        if(1 == tmpMark)
+        {
+            //LOG(INFO) << "eMark = " << eMark;
+            //LOG(INFO) << "sMark = " << sMark;
+            isFound = true;
+            ImageGPSTime = FPGAGPSTime[sMark];
+            break;
+        }
+    }
+    if(!isFound)
+    {
+        LOG(ERROR) << "can not find responding FPGAGPSTime in the pic :" << sortPicTime[tmpIdx];
+        return false;
+    }
+    if(ImageGPSTime > 86400.0)
+    {
+        int tmpQuotient = ImageGPSTime / 86400.0;
+        ImageGPSTime = ImageGPSTime - tmpQuotient * 86400.0;
+    }
+    matchedImgTime = ImageGPSTime;
+    //LOG(INFO) << "after matched, the final time is:" << ImageGPSTime;
+    return true;
+}
+
+
 int dataFixed::reNameImageAndMkTraceFile(std::string &projectPath,std::vector <ontimeDataFormat> &imuData){
+    LOG(INFO) << __FUNCTION__ << " start.";
     const size_t maxLine = 1000;
     char result[maxLine];
     FILE *fpin;
     std::vector <std::string> pictureName;
+    std::vector<std::string> sortPicName;
     std::string projectName = "-";
     std::string tmpProjectName;
     std::vector<std::string> filterString;
@@ -802,6 +988,20 @@ int dataFixed::reNameImageAndMkTraceFile(std::string &projectPath,std::vector <o
     mkdir(processPath.c_str(), S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);
     std::string imagePath=projectPath+"/Rawdata/Image/";
     int existImageMark = access(imagePath.c_str(), F_OK);
+    std::vector<std::vector<double>> imagTimeSet;
+    std::vector<std::vector<double>> cameraTimeSet;
+    std::vector<std::vector<int>> imageSetIdx;
+    std::vector<double> oneSetImageTime;
+    std::vector<double> oneSetCameraTime;
+    std::vector<int> oneSetImageIdx;
+    std::stringstream ss;
+    std::vector<std::string> splitVector;
+    double oneImageTime = -1.0;
+    double tmpCameraT= -1.0;
+    std::vector<double> sortPicTime;
+    std::vector<double> sortCameraTime;
+    int recordI = -1;
+    bool isFoundStdTime = false;
     if(-1 == existImageMark)
     {
         LOG(ERROR) << "There is no Image File in the " << imagePath;
@@ -839,7 +1039,10 @@ int dataFixed::reNameImageAndMkTraceFile(std::string &projectPath,std::vector <o
         LOG(ERROR) << "ProjectName: " << tmpProjectName << "is invalid!";
         return -1;
     }
-    const std::string cmd="cd " + imagePath + " && ls ";
+
+    //get Image File List
+    LOG(INFO) << "get Image File List.";
+    const std::string cmd="cd " + imagePath + " && ls";
     if(NULL == (fpin = popen(cmd.c_str(), "r") ) )
     {
         LOG(ERROR) << projectPath <<":Creat the Image PipeLine Failed";
@@ -853,12 +1056,41 @@ int dataFixed::reNameImageAndMkTraceFile(std::string &projectPath,std::vector <o
             break;
         }
         std::string onePictureName = result;
-        DLOG(INFO) << "onePictureName: " << onePictureName;
         if(onePictureName[onePictureName.size()-1] == 10)
-            pictureName.push_back(onePictureName.substr(0,onePictureName.size()-1 ) );
-        else
-            pictureName.push_back(onePictureName);
+        {
+            onePictureName = onePictureName.substr(0,onePictureName.size()-1 );
+        }
+        boost::split(splitVector, onePictureName, boost::is_any_of("_"));
+        if(4 > splitVector.size())
+        {
+            LOG(WARNING) <<  "picture name: " << onePictureName << " is invalid.";
+            continue;
+        }
+        pictureName.push_back(onePictureName);
+        ss << splitVector[0];
+        ss >> oneImageTime;
+        ss.clear();
+        ss << splitVector[2];
+        ss >> tmpCameraT;
+        ss.clear();
+        if(0 != oneSetImageTime.size() && fabs(oneImageTime - oneSetImageTime[oneSetImageTime.size() -1]) > 72000.0)
+        {
+            LOG(WARNING) << "across day data is Found in the pic List";
+            imagTimeSet.push_back(oneSetImageTime);
+            oneSetImageTime.clear();
+            cameraTimeSet.push_back(oneSetCameraTime);
+            oneSetCameraTime.clear();
+            imageSetIdx.push_back(oneSetImageIdx);
+            oneSetImageIdx.clear();
+        }
+        oneSetImageTime.push_back(oneImageTime);
+        oneSetCameraTime.push_back(tmpCameraT);
+        oneSetImageIdx.push_back(pictureName.size()-1);
     }
+    imagTimeSet.push_back(oneSetImageTime);
+    cameraTimeSet.push_back(oneSetCameraTime);
+    imageSetIdx.push_back(oneSetImageIdx);
+
     if(0 != pclose(fpin) ) {
         LOG(ERROR) << projectPath << "Close ImagePipeLine Failed";
         return -1;
@@ -867,10 +1099,76 @@ int dataFixed::reNameImageAndMkTraceFile(std::string &projectPath,std::vector <o
         LOG(ERROR) << projectPath <<"Load Picture List Failed";
         return -1;
     }
-    std::vector<int> editePictureNameMark(pictureName.size(),0);
-    std::string uselessImageMark = "sys";
-    std::vector<std::string> newPictureName(pictureName);
-    double imageTime;
+    if(imagTimeSet.size() > 2 | 0 == imagTimeSet.size())
+    {
+        LOG(ERROR) << "find " << imagTimeSet.size() << " time segements that means another day is coming. max value should be 2";
+        return -1;
+    }
+    if(2 == imagTimeSet.size())
+    {
+        for(int i = imagTimeSet.size() - 1; i > -1; i--)
+        {
+            for(int k = 0; k < imagTimeSet[i].size(); k++)
+            {
+                sortPicName.push_back(pictureName[imageSetIdx[i][k]]);
+                if(0 == i)
+                {
+                    sortPicTime.push_back(imagTimeSet[i][k] + 86400.0);
+                }
+                else
+                {
+                    sortPicTime.push_back(imagTimeSet[i][k]);
+                }
+
+                sortCameraTime.push_back(cameraTimeSet[i][k]);
+            }
+        }
+    }
+    else
+    {
+         for(int i = 0; i < imagTimeSet.size(); i++)
+        {
+            for(int k = 0; k < imagTimeSet[i].size(); k++)
+            {
+                sortPicName.push_back(pictureName[imageSetIdx[i][k]]);
+                sortPicTime.push_back(imagTimeSet[i][k]);
+                sortCameraTime.push_back(cameraTimeSet[i][k]);
+            }
+        }
+    }
+
+
+    for(int i = 0; (i + 9) < sortPicTime.size();)
+    {
+        recordI = i;
+        isFoundStdTime = true;
+        for(int k = recordI; k < (recordI+9); k++)
+        {
+            i++;
+            double picTimeDiff = fabs(sortPicTime[k] - sortPicTime[k + 1]);
+            double cameraTimeDiff = fabs(sortCameraTime[k] - sortCameraTime[k + 1]);
+            if(fabs(picTimeDiff - cameraTimeDiff) > 0.01)
+            {
+                isFoundStdTime = false;
+                break;
+            }
+        }
+        if(isFoundStdTime)
+        {
+            LOG(WARNING) << "the "<< recordI <<"th pic time:" << sortPicTime[recordI] << " is taken as accurate time.";
+            break;
+        }
+
+    }
+    if(!isFoundStdTime)
+    {
+        LOG(ERROR) << "can not find accurate time in the pic List.";
+        return -1;
+    }
+
+
+    std::vector<int> editePictureNameMark(sortPicName.size(),0);
+    std::vector<std::string> newPictureName(sortPicName);
     //unParsed
 
     double imageTimeInterval = 1.0/imageCollectionHz*2;
@@ -881,80 +1179,65 @@ int dataFixed::reNameImageAndMkTraceFile(std::string &projectPath,std::vector <o
     imageTraceDataFormat oneLostImageTraceData;
     std::vector<imageTraceDataFormat> allImageTraceData;
     std::vector<imageTraceDataFormat> allLostImageTraceData;
-	std::vector<std::string> splitVector;
-	std::string addNameString;
-	std::string copyString;
-    std::vector<std::string> picNameBackUp(pictureName);
-    for(unsigned long i=0; i < pictureName.size(); i++)
+    std::string addNameString;
+    std::string copyString;
+    std::vector<double> stdGpsTime;
+    double matchedImgTime = -1.0;
+    double deltDaySec = 0.0;
+
+    if(!readFPAGPSTime(projectPath, stdGpsTime))
     {
-        boost::split(splitVector, pictureName[i], boost::is_any_of("_"));
-		copyString = pictureName[i];
-		if(4 > splitVector.size())
-		{
-			LOG(WARNING) << "picture: " << pictureName[i] << " is invalid.";
-			continue;
-		}
-		pictureName[i] = splitVector[0];
-		for(int k = 1; k < splitVector.size() - 3; k++)
-		{
-			pictureName[i] += splitVector[i];
-		}
-        pictureName[i] += ".jpg";
-		boost::split(splitVector, copyString, boost::is_any_of("/"));
-		if(0 == splitVector.size())
-		{
-			LOG(WARNING) << "picture: " << copyString << " is invalid.";
-			continue;
-		}
-		addNameString = splitVector[splitVector.size() - 1];
-        addNameString = addNameString.substr(0, addNameString.size() - 4);
+        LOG(ERROR) << "open fille FPGARecord time file failed.";
+        return -1;
+    }
 
+    for(unsigned long i = 0; i < sortPicName.size(); i++)
+    {
 
-		std::string readPartImageName = pictureName[i].substr(0,3);
-        if(readPartImageName == uselessImageMark)
+        if(!imageTimeMatched(stdGpsTime, recordI, i, sortPicTime, sortCameraTime, matchedImgTime))
         {
-            editePictureNameMark[i] = 2;
+            LOG(WARNING) << "find the pic :" << sortPicName[i] << " FPGA time failed.";
             continue;
         }
-        std::vector<std::string> imageNameSplite;
-        boost::split(imageNameSplite, pictureName[i], boost::is_any_of(".") );
-        if(3 != imageNameSplite.size())
-        {
-            continue;
-        }
-        std::stringstream ss;
-        int q = pictureName[i].find_last_of('.');
-        ss << pictureName[i].substr(0,q-1);
-        ss >> imageTime;
+
         std::string reNewPicture;
         imageMark++;
-        mkImageTraceData(imageTime, projectName, imuData, reNewPicture, oneImageTraceData);
+        mkImageTraceData(matchedImgTime, projectName, imuData, reNewPicture, oneImageTraceData);
         if(reNewPicture.size()==0)
         {
+            LOG(WARNING) << "can not find the GPSTIME "<< matchedImgTime << " of the pic:" << sortPicName[i];
             imageMark--;
             continue;
         }
+        if(i > 0)
+        {
+            if(reNewPicture == newPictureName[i-1])
+            {
+                LOG(WARNING) << "the rename of " << sortPicName[i] << " is " << reNewPicture << " that is same to the last pic" << sortPicName[i-1] << "'s name:" << newPictureName[i-1];
+                editePictureNameMark[i] = 2;
+                continue;
+            }
+        }
         newPictureName[i] = reNewPicture;
-        //newPictureName[i] +=
-		oneImageTraceData.addPicName = addNameString;
+        oneImageTraceData.addPicName = sortPicName[i].substr(0, sortPicName[i].size() - 4);
         allImageTraceData.push_back(oneImageTraceData);
         editePictureNameMark[i] = 1;
         if(imageMark == 1)
-            imageTimeRecord = imageTime;
+            imageTimeRecord = matchedImgTime;
         else
         {
-            double imageTimediffer = fabs(imageTime-imageTimeRecord);
+            double imageTimediffer = fabs(matchedImgTime-imageTimeRecord);
             if(imageTimediffer > imageTimeInterval && imageTimediffer < setImageTimeInterval)
             {
                 double imageTimeCopy = imageTimeRecord;
-                while(imageTimeCopy < imageTime)
+                while(imageTimeCopy < matchedImgTime)
                 {
                     imageTimeCopy += imageTimeInterval;
                     mkLostImageTraceData(imageTimeCopy, projectName, imuData, oneLostImageTraceData);
                     allLostImageTraceData.push_back(oneLostImageTraceData);
                 }
             }
-            imageTimeRecord = imageTime;
+            imageTimeRecord = matchedImgTime;
         }
     }
     LOG(INFO) << "Generating Image ontime Trace Data";
@@ -967,39 +1250,38 @@ int dataFixed::reNameImageAndMkTraceFile(std::string &projectPath,std::vector <o
 
     //Rename Picture
     LOG(INFO) << "renaming Image";
-    LOG(INFO) << "newPictureName.size(): " << newPictureName.size() <<"; pictureName.size(): " << pictureName.size();
     for(unsigned long i = 0; i < editePictureNameMark.size(); i++)
     {
         if(0 == (i % img2LidarProsVeloRatio))
         {
+            LOG(INFO) << "processNum=" << processNum;
             processNum ++;
             (void)pubProgress(processNum, totalFileNum);
         }
         if(editePictureNameMark[i] == 1)
         {
            FILE * renameImageFpin;
-            const std::string renameImagecmd = "cd "+ imagePath +" && mv " + picNameBackUp[i] + " " + newPictureName[i];
+            const std::string renameImagecmd = "cd "+ imagePath +" && mv " + sortPicName[i] + " " + newPictureName[i];
+            //LOG(INFO) << "renameImagecmd = " << renameImagecmd;
             if(NULL == ( renameImageFpin = popen(renameImagecmd.c_str(),"w" ) ) )
                 LOG(ERROR) << projectPath <<":Rename Picture falied";
             if(0 != pclose(renameImageFpin))
             {
-                LOG(INFO) << "close renameImageFpin Pipe failed";
+                LOG(WARNING) << "close renameImageFpin Pipe failed";
                 continue;
             }
         }
-        else
+        if(editePictureNameMark[i] == 2)
         {
-            if(editePictureNameMark[i] == 2)
+            LOG(WARNING) << "gone to delete the picture:" << sortPicName[i];
+            FILE * deleImageFpin;
+            const std::string deleImagecmd="cd "+ imagePath+" && rm " + sortPicName[i];
+            if(NULL == ( deleImageFpin = popen(deleImagecmd.c_str(),"w" ) ) )
+                LOG(ERROR) << projectPath << ":delete Picture falied";
+            if(0 != pclose(deleImageFpin))
             {
-                FILE * deleImageFpin;
-                const std::string deleImagecmd="cd "+ imagePath+" && rm " + pictureName[i];
-                if(NULL == ( deleImageFpin = popen(deleImagecmd.c_str(),"w" ) ) )
-                    LOG(ERROR) << projectPath << ":delete Picture falied";
-                if(0 != pclose(deleImageFpin))
-                {
-                    LOG(INFO) << "close deleImageFpin Pipe failed";
-                    continue;
-                }
+                LOG(INFO) << "close deleImageFpin Pipe failed";
+                continue;
             }
         }
 
@@ -1021,7 +1303,7 @@ unsigned long dataFixed::findCorrespondImuIndex(double lidarTime) {
         subMarkRecord=(unsigned long)((lidarTime-beganGPSTime)/hzTime_);
     else
     {
-        subMarkRecord=(unsigned long)((lidarTime-beganGPSTime)/hzTime_)+minGPSTimeMark;
+        subMarkRecord=(unsigned long)((lidarTime-minGPSTime)/hzTime_)+minGPSTimeMark;
     }
 
     return subMarkRecord;
@@ -1116,15 +1398,14 @@ int dataFixed::mkLidarTraceFile(std::string &projectPath,std::vector <ontimeData
     }
 
     OGRFeature *poFeature = OGRFeature::CreateFeature(poLayer->GetLayerDefn() );
-    LOG(INFO) << "1";
     poFeature->SetField("Name", projectName.c_str() );
-    LOG(INFO) << "2";
 
     std::string saveLidarTracePath = projectPath + "/Process/" +projectName + "-RTlaser.txt";
     std::ofstream lidarTraceFile(saveLidarTracePath);
     pktDataFormat *pPktDatas;
     for(int i = 0; i < totalLidarFilePath.size(); i++)
     {
+        LOG(INFO) << "processing lidar File:" << totalLidarFilePath[i];
         FILE *lidarFilePointer = fopen(totalLidarFilePath[i].c_str(), "rb");
         if(lidarFilePointer == NULL)
         {
@@ -1133,6 +1414,7 @@ int dataFixed::mkLidarTraceFile(std::string &projectPath,std::vector <ontimeData
             (void)pubProgress(processNum, totalFileNum);
             continue;
         }
+        LOG(INFO) << "open lidar file successfully.";
 
         size_t readLength=0;
         fseek(lidarFilePointer,0,SEEK_END);
@@ -1163,9 +1445,10 @@ int dataFixed::mkLidarTraceFile(std::string &projectPath,std::vector <ontimeData
             }
 
             double oneLidarPointTime = (pPktDatas + k)->timeStamp;
+            //LOG(INFO) << "lidar time Stamp is " << oneLidarPointTime;
             unsigned long imuIndex = findCorrespondImuIndex(oneLidarPointTime);
 
-            if(imuIndex < 0) {
+            if(imuIndex < 0| imuIndex >= imuData.size()) {
                 LOG(WARNING) << "Failed to findCorrespondImuIndex: " << oneLidarPointTime;
                 continue;
             }

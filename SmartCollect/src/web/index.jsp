@@ -29,13 +29,13 @@
         $("#projname").html(projectNameWithDate);
     }
 
-    function smartcCheck_onclick() {
+    function SmartcCheck_OnClick() {
         var scCheckProjectName = "9999-1-T0001-000001";
         console.log('scCheckProjectName: ' + scCheckProjectName);
         $("#projname").html(scCheckProjectName);
     }
 
-    function createProject() {
+    function createProject(obj) {
         console.log("Submit a new project.");
         var projectNameWithDate = $('#projname').text();
         var clientMsg = new ROSLIB.Message({
@@ -44,6 +44,41 @@
         });
 
         pubCmd_.publish(clientMsg);
+        countDown(obj,3);
+    }
+
+    function SetDefaultDeviceId(hostName) {
+      console.log("SetDefaultDeviceId: " + hostName);
+      var idInHostname = hostName.replace(/[^0-9]/g, "");
+      for (var i = 0; i < deviceID.options.length; ++i) {
+        if (deviceID.options[i].text.indexOf(idInHostname) >= 0) {
+          deviceID.options[i].selected = true;
+          break;
+        }
+      }
+    }
+
+
+    function countDown(obj, second) {
+        // 如果秒数还是大于0，则表示倒计时还没结束
+        if (second >= 0) {
+            // 按钮置为不可点击状态
+            obj.disabled = true;
+            // 按钮里的内容呈现倒计时状态
+            obj.innerHTML = "<font color=red><b>"+second+"</b></font>s to close";
+            // 时间减一
+            second--;
+            // 一秒后重复执行
+            setTimeout(function () {
+                countDown(obj, second);
+            }, 1000);
+            // 否则，按钮重置为初始状态
+        }else{
+          obj.innerHTML = "Submit";
+          obj.disabled = false;
+          $("#myModal").modal('hide');
+        }
+
     }
 
   </script>
@@ -54,9 +89,7 @@
     <div class="modal-dialog">
       <div class="modal-content">
         <div class="modal-header">
-          <button type="button" class="close" data-dismiss="modal" aria-hidden="true">
-            &times;
-          </button>
+
           <h4 class="modal-title" id="myModalLabel">
               New Project
           </h4>
@@ -65,10 +98,10 @@
           Submit Project: <label id="projname"></label>
         </div>
         <div class="modal-footer">
-          <button type="button" class="btn btn-default" data-dismiss="modal">
+          <button type="button" class="btn btn-large btn-default" data-dismiss="modal">
             Cancel
           </button>
-          <button type="button" class="btn btn-primary" onclick="createProject();" data-dismiss="modal">
+          <button type="button" class="btn btn-large btn-primary" onclick="createProject(this);" data-dismiss="modal">
             Submit
           </button>
         </div>
@@ -80,9 +113,7 @@
     <div class="modal-dialog">
       <div class="modal-content">
         <div class="modal-header">
-          <button type="button" class="close" data-dismiss="modal" aria-hidden="true">
-            &times;
-          </button>
+
           <h4 class="modal-title" id="optModalLabel">
             Submit
           </h4>
@@ -92,10 +123,10 @@
           <input type="hidden" id="optid" value="0"/>
         </div>
         <div class="modal-footer">
-          <button type="button" class="btn btn-default" data-dismiss="modal">
+          <button type="button" class="btn btn-large btn-default" data-dismiss="modal">
             Cancel
           </button>
-          <button type="button" class="btn btn-primary" data-dismiss="modal" id="cmtBtn">
+          <button type="button" class="btn btn-large btn-primary" data-dismiss="modal" id="cmtBtn">
             Submit
           </button>
         </div>
@@ -171,9 +202,15 @@
                           <option>SC0006</option>
                           <option>SC0007</option>
                           <option>SC0008</option>
-                          <option selected>SC0009</option>
+                          <option>SC0009</option>
                           <option>SC0010</option>
                           <option>SC0011</option>
+                          <option>SC0012</option>
+                          <option>SC0013</option>
+                          <option>SC0014</option>
+                          <option>SC0015</option>
+                          <option>SC0016</option>
+                          <option>SC0017</option>
                         </select>
                       </div>
                     </div>
@@ -181,7 +218,7 @@
                       <label class="control-label"></label>
                       <div class="controls">
                         <button class="btn btn-inverse" id="smartcCheck" data-toggle="modal"
-                            data-target="#myModal" onclick="smartcCheck_onclick();">SmartC Check
+                            data-target="#myModal" onclick="SmartcCheck_OnClick();">SmartC Check
                         </button>
                         <button type="button" class="btn btn-inverse" id="newProject" data-toggle="modal"
                             data-target="#myModal" onclick="projlayer();">Build Project
@@ -206,20 +243,20 @@
                       </div>
                       </div>
                     </div>
-
-                    <br/>
+                    <!-- <br/> -->
                     <div class="form-actions">
-                      <button class="btn btn-inverse" id="removeData" data-toggle="modal"
-                          data-target="#optModal">Delete Data
-                      </button>
+
                       <button class="btn btn-inverse" id="fixData" data-toggle="modal"
                           data-target="#optModal">Collate Data
-                      </button>
+                      </button>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
                       <button class="btn btn-inverse" id="reboot" data-toggle="modal"
                           data-target="#optModal">Reboot OS
                       </button>
                       <button class="btn btn-inverse" id="shutdown" data-toggle="modal"
                           data-target="#optModal">Shutdown OS
+                      </button>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+                      <button class="btn btn-danger" id="removeData" data-toggle="modal"
+                              data-target="#optModal">Delete Data
                       </button>
                     </div>
                     </div>
@@ -234,6 +271,7 @@
   </div>
 
   <script>
+    document.getElementById("removeData").style.display = "none";
     console.log("Task ID should not empty or contains -.");
     $('#newProject').prop('disabled', true);
 
@@ -283,6 +321,7 @@
     });
 
     var doItOnce = 0;
+    var isDefaultDeviceIdSet = false;
     var serverListener_ = new ROSLIB.Topic({
       ros: ros_,
       name: '/sc_monitor',
@@ -292,6 +331,12 @@
       function(message) {
         console.log("I am listening " + serverListener_.name);
         console.log("Process status: " + message.process_num + "/" + message.total_file_num);
+
+        if (!isDefaultDeviceIdSet) {
+          SetDefaultDeviceId(message.host_name);
+          isDefaultDeviceIdSet = true;
+        }
+
         var fixPercent = message.process_num / (message.total_file_num + 0.00000001) * 100;
         fixPercent = fixPercent.toFixed(2);
         console.log("fixPercent: " + fixPercent);
@@ -317,7 +362,7 @@
             $('#deviceID').prop('disabled', false);
             $('#smartcCheck').prop('disabled', false);
             // $('#newProject').prop('disabled', false);
-            $('#removeData').prop('disabled', false);
+            // $('#removeData').prop('disabled', false);
             $('#reboot').prop('disabled', false);
             $('#shutdown').prop('disabled', false);
         }
@@ -329,7 +374,7 @@
             $('#deviceID').prop('disabled', true);
             $('#smartcCheck').prop('disabled', true);
             $('#newProject').prop('disabled', true);
-            $('#removeData').prop('disabled', true);
+            // $('#removeData').prop('disabled', true);
             $('#reboot').prop('disabled', true);
             $('#shutdown').prop('disabled', true);
 
@@ -359,7 +404,7 @@
                     $("#dirname").append("<option data-content=\"<span class='label label-success'>" +  message.projects[x] + "</span>\">" + message.projects[x] + "</option>");
                 }
                 else {
-                  $("#dirname").append("<option data-content=\"<span class='label label-info'>" +  message.projects[x] + "</span>\">" + message.projects[x] + "</option>");
+                    $("#dirname").append("<option data-content=\"<span class='label label-info'>" +  message.projects[x] + "</span>\">" + message.projects[x] + "</option>");
                 }
             }
             $("#dirname").selectpicker('refresh');
@@ -399,12 +444,15 @@
     });
 
     $('#cmtBtn').click(function() {
+        var PROJECT_NAME_LENGTH = "1002-1-20013-190327".length;
         var projectSelected = $("#dirname").selectpicker('val');
         console.log("projectSelected: " + projectSelected);
         var projects = "";
         if(projectSelected) {
           for(x in projectSelected) {
             console.log("projectSelected[" + x + "]: " + projectSelected[x]);
+            projectSelected[x] = projectSelected[x].substr(0, PROJECT_NAME_LENGTH);
+            console.log("projectSelected[" + x + "] after substring: " + projectSelected[x]);
             projects += projectSelected[x] + ",";
           }
         }
@@ -417,7 +465,7 @@
           cmd_arguments: projects
         });
         pubCmd_.publish(clientMsg);
-    })
+    });
 
   </script>
 </body>

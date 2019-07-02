@@ -17,6 +17,7 @@
 #include "sc_msgs/ProjectInfoMsg.h"
 #include "sc_msgs/DiskInfo.h"
 #include "sc_msgs/imu5651.h"
+#include "sc_msgs/Novatel.h"
 #include "velodyne_msgs/Velodyne2Center.h"
 #include "sc_msgs/scIntegrateImu.h"
 #include "sc_msgs/DataFixerProgress.h"
@@ -27,18 +28,19 @@
 
 class ServerDaemon {
 public:
-    ServerDaemon(ros::NodeHandle node, ros::NodeHandle private_nh);
+    ServerDaemon();
     ~ServerDaemon();
-    void run();
+    void Run();
+    void UpdateProjectInfo(const std::string &projectInfo);
 
 
 private:
+    ros::NodeHandle nh_;
     ros::Subscriber subClient_;
-
     ros::Subscriber subSerial_;
     ros::Subscriber subVelodyne_;
     ros::Subscriber sub422_;
-    ros::Subscriber subCameraImg_;
+    ros::Subscriber subCamera0Fps_, subCamera1Fps_, subCamera2Fps_;
     ros::Subscriber subProjectMonitor_;
     ros::Subscriber subDataFixer_;
     ros::Publisher pub2client_;
@@ -53,13 +55,19 @@ private:
     struct SharedMem *sharedMem_;
 
     boost::shared_ptr<DiskMonitor> pDiskMonitor_;
+    std::string projectInfo_;
+
+    double camera0Fps_, camera1Fps_, camera2Fps_;
 
     void clientCB(const sc_msgs::ClientCmd::ConstPtr& pClientMsg);
 
-    bool isGpsUpdated_, isVelodyneUpdated_, isRawImuUpdated_, isCameraUpdated_, isDiskInfoUpdated_;
+    bool isGpsUpdated_, isVelodyneUpdated_, isRawImuUpdated_, isCamera0FpsUpdated_, isCamera1FpsUpdated_, isCamera2FpsUpdated_, isDiskInfoUpdated_;
+    void ImuA1CB(const sc_msgs::Novatel::ConstPtr& pNovatelMsg);
     void SerialCB(const sc_msgs::imu5651::ConstPtr& pImu5651Msg);
     void velodyneCB(const velodyne_msgs::Velodyne2Center::ConstPtr& pVelodyneMsg);
-    void cameraImgCB(const std_msgs::Float64::ConstPtr& pCameraImgMsg);
+    void Camera0FpsCB(const std_msgs::Float64::ConstPtr& pCameraImgMsg);
+    void Camera1FpsCB(const std_msgs::Float64::ConstPtr& pCameraImgMsg);
+    void Camera2FpsCB(const std_msgs::Float64::ConstPtr& pCameraImgMsg);
     void projectMonitorCB(const sc_msgs::DiskInfo::ConstPtr& pDiskInfoMsg);
     void dataFixerCB(const sc_msgs::DataFixerProgress::ConstPtr& pDataFixerProgressMsg);
     void CheckHardware();
@@ -72,8 +80,10 @@ private:
     bool IsGpsTimeGood();
     bool IsScTimeBad();
     void RestartSelf();
-
-    void updateProjectInfo(const std::string &projectInfo);
+    void RegisterCBs();
+    bool IsFpsEqual(double a, double b);
+    bool IsFpsGood(double a, double b, double c);
+    void LogSystemStatus();
 };
 
 #endif // __SERVER_DAEMON_H

@@ -34,8 +34,6 @@
 #include <velodyne_driver/input.h>
 #include "../../../sc_lib_public_tools/src/public_tools.h"
 
-// #define NDEBUG
-#undef NDEBUG
 #include <glog/logging.h>
 
 namespace velodyne_driver

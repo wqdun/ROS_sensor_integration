@@ -7,6 +7,7 @@
 
 #include "FlyCapture2.h"
 #include "../../sc_lib_public_tools/src/thread_pool.h"
+#include "../../sc_lib_public_tools/src/shm_data.h"
 #include "sc_msgs/MonitorMsg.h"
 
 class PtgreySaveImageTask;
@@ -35,7 +36,7 @@ private:
     ros::NodeHandle nh_;
     ros::Subscriber subMonitor_;
     std::vector<SinglePtgreyCamera *> pSinglePtgreyCameras_;
-
+    struct SharedMem *sharedMem_;
 };
 
 #endif

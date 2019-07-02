@@ -6,6 +6,7 @@
 #include <string>
 #include <math.h>
 #include <sys/stat.h>
+#include <algorithm>
 
 namespace public_tools
 {
@@ -19,6 +20,8 @@ public:
     static bool IsFileExist(const std::string& fileName);
     static long GetFileSizeInByte(const std::string& filename);
     static double CalcUnixTimeByGpsWeek(int gpsWeek, double gpsWeekSecond);
+    static bool IsWhiteSpace(char c);
+    static void TrimWhiteSpaceInString(std::string &inputString);
 
     static bool isOK_;
 

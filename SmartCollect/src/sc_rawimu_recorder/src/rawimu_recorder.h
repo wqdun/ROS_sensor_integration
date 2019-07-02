@@ -14,7 +14,7 @@ public:
     ~RawimuRecorder();
     int Read();
     int Write();
-    int Run();
+    int Run(int baudrate);
 
 
 private:

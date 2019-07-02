@@ -1,4 +1,7 @@
 #include "dataFixed.h"
+#define NDEBUG
+// #undef NDEBUG
+#include <glog/logging.h>
 
 int main(int argc, char **argv) {
     FLAGS_log_dir = "/opt/smartc/log/";
@@ -10,7 +13,7 @@ int main(int argc, char **argv) {
     }
     ros::init(argc, argv, "data_fixer_node");
 
-    int imageCollectionHz = 5;
+    int imageCollectionHz = 10;
     dataFixed dataFixer(ros::NodeHandle(), ros::NodeHandle("~"), imageCollectionHz);
 
     const std::string projects(argv[1]);

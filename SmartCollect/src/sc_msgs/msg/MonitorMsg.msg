@@ -1,6 +1,7 @@
+string host_name
 float64 unix_time
 
-# below from 5651 RS232
+# below from 5651 GPFPD
 int32 GPSweek
 float64 GPStime
 Point3D lat_lon_hei
@@ -9,6 +10,7 @@ Point3D pitch_roll_heading
 float64 speed
 int32 status
 
+# below from 5651 GPGGA
 int32 no_sv
 float64 hdop
 
@@ -21,6 +23,11 @@ float64 velodyne_rpm
 
 # below from camera
 float64 camera_fps
+float64 camera0_fps
+float64 camera1_fps
+float64 camera2_fps
+
+int8 is_cameras_good
 
 # below from data fixer
 int32 total_file_num
@@ -33,6 +40,8 @@ ProjectInfoMsg project_info
 # e.g., 80% (80M / 100M)
 string disk_usage
 string[] projects
+
+int8 is_disk_error
 
 # below from project monitor
 int32 img_num

@@ -14,7 +14,7 @@ script_name=$(basename $0)
 mkdir -p /opt/smartc/log/
 result_log=/opt/smartc/log/${script_name}".log"
 
-ros_version="kinetic"
+[ -d "/opt/ros/kinetic/" ] && ros_version="kinetic" || ros_version="indigo"
 
 log_with_time() {
     local now_time=$(date +%Y/%m/%d-%H:%M:%S)
@@ -73,7 +73,8 @@ export_java_env() {
     log_with_time "$FUNCNAME start."
     log_with_time "JRE_HOME: $JRE_HOME"
 
-    export JAVA_HOME=/opt/java/jdk1.8.0_144/
+    local java_home=$(echo /opt/java/jdk*)
+    export JAVA_HOME=${java_home}
     export JRE_HOME=${JAVA_HOME}/jre
     export CLASSPATH=.:${JAVA_HOME}/lib:${JRE_HOME}/lib
     export PATH=${JAVA_HOME}/bin:$PATH
@@ -85,7 +86,7 @@ run_tomcat() {
 
     export_java_env
     /opt/apache-tomcat-*/bin/startup.sh >>$result_log 2>&1
-    sleep 5
+    sleep 2
     log_with_time "$FUNCNAME return $?."
 }
 
@@ -108,40 +109,12 @@ run_rosbridge() {
     . /opt/smartc/devel/setup.bash
     log_with_time "roslaunch start."
     roslaunch /opt/ros/${ros_version}/share/rosbridge_server/launch/rosbridge_websocket.launch >>$result_log 2>&1 &
-    sleep 5
+    sleep 2
     log_with_time "roslaunch end."
 
     . /opt/ros/${ros_version}/setup.bash
     /opt/ros/${ros_version}/lib/web_video_server/web_video_server >>$result_log 2>&1 &
-    sleep 5
-    log_with_time "$FUNCNAME return $?."
-}
-
-run_minemap_service() {
-    log_with_time "$FUNCNAME start."
-
-    service redis start >>$result_log 2>&1
-    sleep 5
-    service postgresql start >>$result_log 2>&1
-    sleep 5
-    service nginx start >>$result_log 2>&1
-    sleep 5
-    (
-        log_with_time "Run authorization script."
-        cd /data/minemap/program/minemap-business/authorization/ && ./start.sh || log_with_time "Failed to run authorization script."
-        sleep 5
-
-        log_with_time "Run minemap-data script."
-        cd /data/minemap/program/minemap-data/ && ./start.sh || log_with_time "Failed to run minemap-data script."
-        sleep 5
-
-        log_with_time "PATH: ${PATH}."
-        log_with_time "Run minemap-business script."
-        export PATH=/opt/ros/${ros_version}/bin:/data/minemap/program/postgres/bin:/opt/java/jdk1.8.0_144/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games
-        cd /data/minemap/program/minemap-business/minemap/ && ./start.sh || log_with_time "Failed to run minemap-business script."
-        sleep 5
-        log_with_time "Now PATH is ${PATH}."
-    )
+    sleep 2
     log_with_time "$FUNCNAME return $?."
 }
 
@@ -162,38 +135,68 @@ kill_tomcat() {
     log_with_time "$FUNCNAME return $?."
 }
 
-do_start() {
+set_networks() {
+    log_with_time "$FUNCNAME start."
+    local networks=$(/sbin/ip -s link | grep "^[0-9]" | grep -E "eth|enp" | awk -F: '{print $2}')
+    for network in ${networks}; do
+        log_with_time "Set ${network} RX."
+        /sbin/ethtool -G ${network} rx 2048
+        /sbin/ethtool -G ${network} rx 4096
+        /sbin/ethtool -g ${network} >>$result_log 2>&1
+    done
+}
+
+check_WiFi_network() {
     log_with_time "$FUNCNAME start."
 
+    for (( i = 1; i < 5; ++i )); do
+        /sbin/ip -s link | grep "^[0-9]" | grep -E "wl" | head -n1 | grep "NO-CARRIER" >>$result_log 2>&1
+        if [ $? -eq 0 ]; then
+            log_with_time "Failed to setup WiFi network, gonna restart NetworkManager ${i} time."
+            /usr/sbin/service NetworkManager restart
+            sleep 10
+        else
+            log_with_time "Setup WiFi network successfully ${i} time."
+            break
+        fi
+    done
+
+    log_with_time "$FUNCNAME end."
+}
+
+do_start() {
+    log_with_time "$FUNCNAME start; ros_version: ${ros_version}."
+
     mount_data_disk
+    set_networks
 
     . /opt/ros/${ros_version}/setup.bash
     /opt/ros/${ros_version}/bin/roscore >>$result_log 2>&1 &
     sleep 2
     mkdir -p /opt/smartc/record/
     run_sc_server_daemon_node
-    sleep 10
+    sleep 2
     run_tomcat
-    sleep 10
+    sleep 2
     run_rosbridge
-    # sleep 10
-    # run_minemap_service
+
+    check_WiFi_network
 
     log_with_time "$FUNCNAME return $?."
 }
 
 do_stop() {
-    log_with_time "$FUNCNAME start."
+    log_with_time "$FUNCNAME start; ros_version: ${ros_version}."
 
-    kill_rosbridge
-    kill_tomcat
+    # kill_rosbridge
+    # kill_tomcat
 
-    log_with_time "kill sc_server_daemon_node by key word."
-    pkill sc_server_d
-    kill $(pgrep roscore) >>$result_log 2>&1
+    # log_with_time "kill sc_server_daemon_node by key word."
+    # pkill sc_server_d
+    # kill $(pgrep roscore) >>$result_log 2>&1
 
-    log_with_time "umount /opt/smartc/record/ start."
-    umount /opt/smartc/record/ >>$result_log 2>&1
+    # log_with_time "umount /opt/smartc/record/ start."
+    # umount /opt/smartc/record/ >>$result_log 2>&1
 
     log_with_time "$FUNCNAME return $?."
 }

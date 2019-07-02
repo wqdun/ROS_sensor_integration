@@ -1,5 +1,8 @@
 #include "ptgrey_camera_manager.h"
 #include "ptgrey_save_image_task.h"
+#include <sys/shm.h>
+#include <sys/ipc.h>
+#include <sys/types.h>
 
 PtgreyCameraManager::PtgreyCameraManager(const std::string &_rawPath):
     threadPool_(4, 30)
@@ -16,6 +19,21 @@ PtgreyCameraManager::PtgreyCameraManager(const std::string &_rawPath):
         LogErrorTrace(error);
         exit(1);
     }
+
+    int shmid = shmget((key_t)1234, sizeof(struct SharedMem), 0666|IPC_CREAT);
+    if(shmid < 0) {
+        LOG(ERROR) << "shget failed.";
+        exit(1);
+    }
+    void *shm = shmat(shmid, 0, 0);
+    if(shm == (void *)-1) {
+        LOG(ERROR) << "shmat failed.";
+        exit(1);
+    }
+    LOG(INFO) << "Memory attached at " << shm;
+    sharedMem_ = (struct SharedMem*)shm;
+    sharedMem_->cameraNum = cameraNum;
+
     LOG(INFO) << "Number of cameras detected: " << cameraNum;
     if(cameraNum < 1) {
         LOG(INFO) << "Insufficient number of cameras: " << cameraNum;

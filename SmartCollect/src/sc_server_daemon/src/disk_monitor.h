@@ -6,18 +6,22 @@
 #include <boost/algorithm/string/split.hpp>
 #include "sc_msgs/MonitorMsg.h"
 #include "../../sc_lib_public_tools/src/public_tools.h"
+#include "../../sc_lib_public_tools/src/tools_no_ros.h"
 
 class DiskMonitor {
 public:
     DiskMonitor();
     ~DiskMonitor();
-    void run(const std::string &_projectPath, sc_msgs::MonitorMsg &_pMonitorMsg);
+    void Run(const std::string &_projectPath, sc_msgs::MonitorMsg &_pMonitorMsg);
 
 
 private:
-    bool isProject(const std::string &_dirName);
-    void getProjects(const std::string &_projectPath, sc_msgs::MonitorMsg &_monitorMsg);
-    void getDiskUsage(const std::string &_projectPath, sc_msgs::MonitorMsg &_monitorMsg);
+    static bool IsNotProject(const std::string &_dirName);
+    void GetProjects(const std::string &_projectPath, sc_msgs::MonitorMsg &_monitorMsg);
+    void GetDiskUsage(const std::string &_projectPath, sc_msgs::MonitorMsg &_monitorMsg);
+    void FilterProjects(std::vector<std::string> &dirs);
+    void SortProjects(std::vector<std::string> &projects);
+    bool IsProjectCollated(const std::string &_dirName);
 };
 
 #endif

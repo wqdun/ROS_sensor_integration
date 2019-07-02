@@ -1,6 +1,4 @@
 #include "tools_no_ros.h"
-#define NDEBUG
-// #undef NDEBUG
 #include <glog/logging.h>
 
 namespace public_tools
@@ -183,6 +181,14 @@ long ToolsNoRos::GetFileSizeInByte(const std::string& filename) {
 
 double ToolsNoRos::CalcUnixTimeByGpsWeek(int gpsWeek, double gpsWeekSecond) {
     return (gpsWeek * 7 * 24 * 3600 + gpsWeekSecond + 315964800);
+}
+
+bool ToolsNoRos::IsWhiteSpace(char c) {
+    return std::isspace(c);
+}
+
+void ToolsNoRos::TrimWhiteSpaceInString(std::string &inputString) {
+    inputString.erase(std::remove_if(inputString.begin(), inputString.end(), IsWhiteSpace), inputString.end());
 }
 
 }

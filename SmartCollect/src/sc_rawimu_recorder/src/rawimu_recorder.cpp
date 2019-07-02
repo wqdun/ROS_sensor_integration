@@ -52,6 +52,10 @@ void RawimuRecorder::Record2File(const std::string &rawInsFile) {
             continue;
         }
 
+        if (nread >= BUFFER_SIZE) {
+            LOG(WARNING) << "nread: " << nread;
+        }
+
 #ifndef NDEBUG
         for(size_t i = 0; i < nread; ++i) {
             LOG(INFO) << std::hex << (int)buf[i];

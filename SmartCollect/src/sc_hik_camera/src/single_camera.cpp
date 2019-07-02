@@ -124,6 +124,7 @@ bool SingleCamera::StartCamera() {
     (void)ConfigDevices();
     err = MV_CC_RegisterImageCallBackEx(cameraHandle_, ImageCB, this);
     assert(MV_OK == err);
+
     err = MV_CC_StartGrabbing(cameraHandle_);
     assert(MV_OK == err);
 
@@ -157,8 +158,8 @@ void SingleCamera::LogDeviceStatus() {
     MVCC_INTVALUE currentDeviceLinkSpeed = {};
     err = MV_CC_GetIntValue(cameraHandle_, "DeviceLinkSpeed", &currentDeviceLinkSpeed);
     assert(MV_OK == err);
-    LOG(INFO) << "Get DeviceLinkSpeed: " << currentDeviceLinkSpeed.nCurValue;
 
+    LOG(INFO) << "Get DeviceLinkSpeed: " << currentDeviceLinkSpeed.nCurValue;
     return;
 }
 
@@ -167,7 +168,7 @@ void __stdcall SingleCamera::ImageCB(unsigned char *pData, MV_FRAME_OUT_INFO_EX 
     gettimeofday(&now, NULL);
     const double unixTime = now.tv_sec + now.tv_usec / 1000000.;
     const double unixTimeMinusGpsTime = s_pManager_->unixTimeMinusGpsTime_;
-    LOG(INFO) << "unixTimeMinusGpsTime: " << std::fixed << unixTimeMinusGpsTime;
+    LOG_EVERY_N(INFO, 50) << "unixTimeMinusGpsTime: " << std::fixed << unixTimeMinusGpsTime;
     const double gpsTime = unixTime - unixTimeMinusGpsTime;
 
     SingleCamera *pSingleCamera = static_cast<SingleCamera *>(_pSingleCamera);
@@ -218,13 +219,12 @@ void __stdcall SingleCamera::ImageCB(unsigned char *pData, MV_FRAME_OUT_INFO_EX 
     uint32TOuint64_t uint32TOuint64;
     uint32TOuint64.uint32Data[0] = pFrameInfo->nDevTimeStampLow;
     uint32TOuint64.uint32Data[1] = pFrameInfo->nDevTimeStampHigh;
-    LOG(INFO) << "uint32TOuint64.uint64Data: " << uint32TOuint64.uint64Data;
     const double deviceTimeStamp = static_cast<double>(uint32TOuint64.uint64Data) / 100000000.;
     DLOG(INFO) << std::fixed << "deviceTimeStamp: " << deviceTimeStamp;
 
     pSingleCamera->imageFreq_ = 1 / (deviceTimeStamp - pSingleCamera->lastDeviceTimeStamp_);
     pSingleCamera->lastDeviceTimeStamp_ = deviceTimeStamp;
-    LOG_EVERY_N(INFO, 20) << "pSingleCamera->imageFreq_: " << pSingleCamera->imageFreq_;
+    LOG_EVERY_N(INFO, 50) << "pSingleCamera->imageFreq_: " << pSingleCamera->imageFreq_;
     pSingleCamera->PublishCamFps();
 
     const double gpsTimeDaySec = fmod(gpsTime, (3600 * 24));
@@ -235,7 +235,7 @@ void __stdcall SingleCamera::ImageCB(unsigned char *pData, MV_FRAME_OUT_INFO_EX 
     sprintf(triggerTimeDaySecCstr, "%012.6f", triggerTimeDaySec);
 
     const std::string picFileName(pSingleCamera->imagePath_ + triggerTimeDaySecCstr + "_" + std::to_string(pFrameInfo->nFrameNum) + "_" + std::to_string(deviceTimeStamp) + "_" + std::to_string(_cameraID) + ".jpg");
-    LOG(INFO) << "picFileName: " << picFileName;
+    DLOG(INFO) << "picFileName: " << picFileName;
 
     if (unixTimeMinusGpsTime < 0) {
         LOG(WARNING) << "No save image before unixTimeMinusGpsTime be updated: " << unixTimeMinusGpsTime;
@@ -248,7 +248,7 @@ void __stdcall SingleCamera::ImageCB(unsigned char *pData, MV_FRAME_OUT_INFO_EX 
     }
 
 ByeBye:
-    LOG_EVERY_N(INFO, 20) << __FUNCTION__ << " end.";
+    DLOG_EVERY_N(INFO, 20) << __FUNCTION__ << " end.";
 }
 
 void SingleCamera::PublishCamFps() {
@@ -301,6 +301,7 @@ void SingleCamera::EnterNightMode() {
 
     err = MV_CC_SetEnumValue(cameraHandle_, "GainAuto", 0);
     assert(MV_OK == err);
+
     err = MV_CC_SetFloatValue(cameraHandle_, "Gain", 20);
     assert(MV_OK == err);
 }

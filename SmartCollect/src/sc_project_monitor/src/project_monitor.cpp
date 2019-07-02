@@ -45,7 +45,7 @@ void ProjectMonitor::run() {
 }
 
 long ProjectMonitor::GetRawInsSizeInByte() {
-    LOG(INFO) << __FUNCTION__ << " start.";
+    DLOG(INFO) << __FUNCTION__ << " start.";
 
     std::vector<std::string> files_dat;
     (void)public_tools::PublicTools::getFilesInDir(rawdataPath_ + "/IMU/", "dat", files_dat);
@@ -58,7 +58,7 @@ long ProjectMonitor::GetRawInsSizeInByte() {
 }
 
 long ProjectMonitor::GetTimestampFileSizeInByte() {
-    LOG(INFO) << __FUNCTION__ << " start.";
+    DLOG(INFO) << __FUNCTION__ << " start.";
 
     std::vector<std::string> timestampFile;
     (void)public_tools::PublicTools::getFilesInDir(rawdataPath_ + "/IMU/", "timestamp", timestampFile);

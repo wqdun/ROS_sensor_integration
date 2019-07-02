@@ -76,7 +76,7 @@ void threadpool<T>::stop()
 
 template <class T>
 void threadpool<T>::start() {
-    LOG(INFO) << __FUNCTION__ << " start.";
+    DLOG(INFO) << __FUNCTION__ << " start.";
     for(int i = 0; i < thread_number; ++i) {
         LOG(INFO) << "Create the " << i << "th thread.";
         if(pthread_create(&(all_threads[i]), NULL, worker, this) != 0) {
@@ -109,7 +109,7 @@ bool threadpool<T>::append_task(T *task) {
 
 template <class T>
 void *threadpool<T>::worker(void *arg) {
-    LOG(INFO) << __FUNCTION__ << " start, pthreadId: " << (unsigned long)pthread_self();
+    DLOG(INFO) << __FUNCTION__ << " start, pthreadId: " << (unsigned long)pthread_self();
     threadpool *pool = (threadpool *)arg;
     pool->run();
     return pool;

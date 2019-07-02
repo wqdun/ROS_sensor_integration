@@ -159,7 +159,7 @@ void PublicTools::getFilesWithExtensionInDir(const std::string &baseDir, const s
             // only deal ROAD_LANE_MARKING_GEO mif & mid
             const std::string fileName(ptr->d_name);
             if( (fileName.size() - extension.size() ) == fileName.find(extension) ) {
-                LOG(INFO) << fileName.size() << ";" << extension.size() << ";" << fileName.find(extension);
+                DLOG(INFO) << fileName.size() << ";" << extension.size() << ";" << fileName.find(extension);
                 files.push_back(baseDir + "/" + fileName);
             }
             // else do nothing
@@ -332,7 +332,7 @@ bool PublicTools::isFileExist(const std::string& fileName) {
 
 
 bool PublicTools::isInChina(double lat, double lon) {
-    LOG(INFO) << __FUNCTION__ << " start.";
+    LOG_EVERY_N(INFO, 100) << __FUNCTION__ << " start.";
     if(lat >= 32 && lat <= 40 && lon >= 132 && lon <= 144) {
         LOG_EVERY_N(INFO, 100) << "I am in Japan.";
         return false;

@@ -27,7 +27,7 @@ Track::~Track() {
 void Track::run(bool _isRecord, const sc_msgs::Point2D &_gpsPoint) {
     DLOG(INFO) << __FUNCTION__ << " start, _isRecord: " << _isRecord;
     if(_gpsPoint.x <= 0.0001) {
-        LOG(WARNING) << "Got a wrong lat: " << _gpsPoint.x;
+        LOG_EVERY_N(WARNING, 20) << "Got a wrong lat: " << _gpsPoint.x;
         return;
     }
 
@@ -67,7 +67,7 @@ sc_msgs::Lines2D Track::sparse(const sc_msgs::Lines2D &lines2sparse) {
     for(auto &_line: lines2sparse.lines2D) {
         const size_t _pointNum = _line.line2D.size();
         sc_msgs::Line2D sparsedLine;
-        LOG(INFO) << "Never sparse start and end point.";
+        DLOG(INFO) << "Never sparse start and end point.";
         if(0 == (_pointNum % 2) ) {
             sparsedLine.line2D.push_back(_line.line2D.back() );
         }
@@ -85,7 +85,7 @@ sc_msgs::Lines2D Track::sparse(const sc_msgs::Lines2D &lines2sparse) {
 }
 
 void Track::addPoint(bool _isRecord, const sc_msgs::Point2D &_point) {
-    LOG(INFO) << __FUNCTION__ << " start, _isRecord: " << _isRecord;
+    DLOG(INFO) << __FUNCTION__ << " start, _isRecord: " << _isRecord;
 
     std::fstream file(layerFile_, std::ios::out | std::ios::app);
     if(!file) {
@@ -127,7 +127,7 @@ void Track::addPoint(bool _isRecord, const sc_msgs::Point2D &_point) {
     file.close();
     LOG_EVERY_N(INFO, 50) << "unrecordedLines_ counts: " << unrecordedLines_.lines2D.size();
     LOG_EVERY_N(INFO, 50) << "recordedLines_ counts: " << recordedLines_.lines2D.size();
-    LOG(INFO) << __FUNCTION__ << " end.";
+    DLOG(INFO) << __FUNCTION__ << " end.";
 }
 
 void Track::addLine(bool _isRecord, const sc_msgs::Point2D &_point) {

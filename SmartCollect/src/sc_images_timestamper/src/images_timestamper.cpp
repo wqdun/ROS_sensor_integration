@@ -68,7 +68,7 @@ void ImagesTimestamper::ReadSerial() {
             LOG(INFO) << i << ":" << std::hex << (int)framesBuf[i];
         }
 #endif
-        LOG(INFO) << "framesBuf.size(): " << framesBuf.size();
+        LOG_EVERY_N(INFO, 50) << "framesBuf.size(): " << framesBuf.size();
         size_t save4NextFrameIndex = framesBuf.size();
         for(size_t bufIndex = 0; bufIndex < framesBuf.size(); ++bufIndex) {
             if((HEADER_0 == framesBuf[bufIndex]) && (HEADER_1 == framesBuf[bufIndex + 1])) {

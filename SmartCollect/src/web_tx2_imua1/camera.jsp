@@ -44,34 +44,40 @@
             <h3>Camera 1</h3>
           </div>
           <div class="widget-content">
+            <a href="img.jsp?camerid=0">
             <img src="http://<%=ip%>:8080/stream?topic=/camera/image0" height="100%" width="100%" alt="http://<%=ip%>:8080/stream?topic=/camera/image0">
+            </a>
           </div>
         </div>
       </div>
 
-      <div class="span6">
+      <!-- <div class="span6">
         <div class="widget">
           <div class="widget-header">
             <i class="icon-list-alt"></i>
             <h3>Camera 2</h3>
           </div>
           <div class="widget-content">
+            <a href="img.jsp?camerid=6666">
             <img src="http://<%=ip%>:8080/stream?topic=/camera/image6666" height="100%" width="100%" alt="http://<%=ip%>:8080/stream?topic=/camera/image6666">
+            </a>
           </div>
         </div>
-      </div>
+      </div> -->
 
-      <div class="span6">
+      <!-- <div class="span6">
         <div class="widget">
           <div class="widget-header">
             <i class="icon-list-alt"></i>
             <h3>Camera 3</h3>
           </div>
           <div class="widget-content">
+            <a href="img.jsp?camerid=7777">
             <img src="http://<%=ip%>:8080/stream?topic=/camera/image7777" height="100%" width="100%" alt="http://<%=ip%>:8080/stream?topic=/camera/image7777">
+            </a>
           </div>
         </div>
-      </div>
+      </div> -->
     </div>
   </div>
 </div>

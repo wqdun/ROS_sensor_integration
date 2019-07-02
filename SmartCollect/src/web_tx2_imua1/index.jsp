@@ -245,7 +245,7 @@
                       </div>
                     </div>
 
-                    <br/>
+                    <!-- <br/> -->
                     <div class="form-actions">
 
                       <button class="btn btn-inverse" id="fixData" data-toggle="modal"

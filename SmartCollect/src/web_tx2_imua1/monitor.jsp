@@ -102,7 +102,7 @@
         function UpdateCameraStatus(_message) {
             var _isCameraError = false;
 
-            var _fps = _message.camera_fps.toFixed(2) + "," + _message.camera1_fps.toFixed(2) + "," + _message.camera2_fps.toFixed(2);
+            var _fps = _message.camera_fps.toFixed(2); // + "," + _message.camera1_fps.toFixed(2) + "," + _message.camera2_fps.toFixed(2);
             if (!_message.is_cameras_good) {
                 _isCameraError = true;
                 if (0 === _message.project_info.city_code) {
@@ -200,13 +200,13 @@
 
         function UpdateHardwareStatus(_message) {
             var _isHardwareError = false;
-
-            if (3 === _message.sc_check_camera_num) {
-                document.getElementById('camera_num').innerHTML = "<font color=green>3</font>";
+            var expected_cam_num = 1;
+            if (expected_cam_num === _message.sc_check_camera_num) {
+                document.getElementById('camera_num').innerHTML = "<font color=green>" + expected_cam_num + "</font>";
             }
             else {
                 _isHardwareError = true;
-                document.getElementById('camera_num').innerHTML = "<font color=red>" + _message.sc_check_camera_num + "( ≠ 3)</font>";
+                document.getElementById('camera_num').innerHTML = "<font color=red>" + _message.sc_check_camera_num + "( ≠ " + expected_cam_num + ")</font>";
             }
 
             return _isHardwareError;
@@ -320,7 +320,9 @@
                             <td colspan="2">Location: <br/><a href="#" id="location" class="alert-link">"bbb", "cc"</a></td>
                             <td colspan="1">Camera Num: <br/><a href="#" id="camera_num" class="alert-link">""</a></td>
                             <td colspan="2" rowspan="4" style="text-align:center;">
+                                <a href="img.jsp?camerid=0">
                                 <img src="http://<%=ip%>:8080/stream?topic=/camera/image0" width="340px" alt="http://<%=ip%>:8080/stream?topic=/camera/image0">
+                                </a>
                             </td>
                         </tr>
                         <tr>

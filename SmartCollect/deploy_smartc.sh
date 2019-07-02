@@ -439,10 +439,18 @@ print_results() {
     return
 }
 
+install_teamviewer() {
+    sudo dpkg -i teamviewer_12.0.85001_i386.deb
+    sudo apt-get -f install
+}
+
 main() {
     check_before_install
 
+    # ubuntu 14-->teamviewer12
     install_teamviewer
+
+    install_vim
 
     install_ros_indigo
     install_velodyne_essential
@@ -455,6 +463,7 @@ main() {
     install_sqlite3
     install_gdal
     install_cutecom
+    install_x11vnc
 
     install_rosbridge
     install_web_video_server
